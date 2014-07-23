@@ -1,0 +1,93 @@
+---
+title: Trolled
+---
+Another old post that I hadn't got around to publishing ;)
+
+I got caught up in a programming language debate with a colleague today, and I'm still under the impression that I've been massively trolled. Here's a summary of the points which were discussed:
+
+> Ha! Look how much code it takes to make a class in Javascript. In Java I can just say `class Foo {...}`
+
+That's because Javascript doesn't use classes; it uses a prototype object system. One object is cloned from another one. The reason it takes that much code is because you're defining the concept of a class, using a different type of object oriented programming. In Java, it's already built in, because Java uses the idea of classes.
+
+> Object oriented programming needs classes. You have classes and you have instances. That's why Javascript isn't object oriented.
+
+Erm, no. Classes and instances are one particular way of making an object oriented system, but prototypes are another. That's what Self uses and that's what Javascript uses. Prototypes have been shown to be strictly more powerful than classes and instances too, which is obvious if you look how little code it takes to define a class/instance system from scratch in Javascript.
+
+> You need an Object class to be object oriented, like Java. In Java, there is an Object class in java.lang and everything is a subclass of Object.
+
+Everything is certainly not a subclass of Object in Java! Classes are not a subclass of Object in Java, in fact classes are not even objects in Java!
+
+> No you are getting confused. Classes define the behaviour, and instances are the objects.
+
+I understand the concept completely. What I'm saying is that Java does not have a class called Class, a subclass of Object, which classes are instances of.
+
+*Much more of the same...*
+
+Look, I'll show you what I mean in Python:
+
+```python
+Python 2.7.3rc2 (default, Apr 22 2012, 22:35:38)
+[GCC 4.6.3] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> class A:
+...     pass
+...
+>>> mya = A()
+>>> mya.x = 12345
+>>> class B:
+...     def __init__(self):
+...         self.y = 123
+...
+>>> mya.__class__
+<class __main__.A at 0x845341c>
+>>> A
+<class __main__.A at 0x845341c>
+>>> B
+<class __main__.B at 0x845344c>
+>>> myb = B()
+>>> myb.y
+123
+>>> mya.x
+12345
+>>> mya.__class__ = B
+>>> mya.__class__
+<class __main__.B at 0x845344c>
+>>> B.z = 12345
+>>> B.z
+12345
+>>> B.f = lambda a: a*a
+>>> dir(B)
+['__doc__', '__init__', '__module__', 'f', 'z']
+>>>
+```
+See, it's perfectly possible to have classes which are objects. Python does it, Smalltalk does it, NewSpeak does it, Ruby does it.
+
+> That's such a hack! That's because Python is a scripting language, meant to replace Bash. You wouldn't find hacks like that in a proper, enterprise-ready language like Java.
+
+I wouldn't say it's a hack at all. It's just consistent. I'd say if anything, Java's a hack, since it claims to build an object oriented system, but vast parts of it aren't objects.
+
+> No, in Java everything is an object. Everything is a subclass of the Object class.
+
+What about the number 10?
+
+> That's not an object.
+
+Exactly. Why not?
+
+> Numbers are primitive data. They're not objects.
+
+In Java they're not, because Java's not object oriented. Like I said. Numbers are objects, and they can do useful things. For example, in Smalltalk we can run a block of code (a function object) by sending it to the `times` method of a number: `10 times [...]`. That also gets rid of for-loops, which are another thing in Java which is not an object.
+
+You can also use the `ifTrue` methods of the boolean objects True and False to get branches. We send 2 blocks, True's method runs the first and discards the second, False's method runs the second and discards the first. You can do a similar thing with pure functions. You could do this with Javascript.
+
+> Javascript's scoping is broken though.
+
+I agree. When a free variable isn't bound anywhere, it should cause an error, not define it globally.
+
+> No, what I mean is that the scoping levels in Javascript are all random and broken. You have to put things in functions and take them out of functions again.
+
+Javascript has lexical scoping, which is an incredibly good thing. It's not random and broken. It would be nice if more browsers supported "let", since only Firefox does at the moment. That would prevent having to define and call throwaway functions.
+
+> They should do it like Java. Class level, method level. Easy.
+
+Er, what?! That completely defeats the point of most of the language! Go and read up on lexical scope. It comes from ALGOL and is specifically included to make the language better. It's far better than that Java crap.

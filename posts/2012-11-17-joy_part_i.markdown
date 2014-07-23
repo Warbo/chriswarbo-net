@@ -1,0 +1,535 @@
+---
+title: Joy part I
+---
+No programmer can claim to be any good if they are only proficient in
+one language. In fact most languages can be grouped with similar ones,
+so that knowing several languages still gives a very limited outlook.
+
+Some examples of the most prevalent groups are:
+
+ * Imperative, procedural, structured programming languages. These solve problems using smart code and dumb data, in a sequence of steps.
+    * FORTRAN
+    * Pascal
+    * C
+    * ...
+ * Imperative, procedural, 'object-oriented' programming languages. These solve problems using smart code and smart data, in a sequence of steps.
+    * Java
+    * C++
+    * ...
+ * Imperative, 'dynamic', 'object-oriented' languages. These solve problems using dumb code and smart data, in concurrent sequences of steps.
+    * Smalltalk
+    * Self
+    * Python
+    * Ruby
+    * Javascript
+    * ...
+ * Imperative, 'dynamic', metaprogramming languages. These solve problems by first tailoring the language to the problem, then using concurrent sequences of steps.
+    * LISP
+    * Scheme
+    * Dylan
+    * Goo
+    * ...
+ * Actor/process-based languages. These solve problems by orchestrating parallel, concurrent, inter-communicating tasks.
+    * Erlang
+    * Mozart/Oz
+    * ...
+ * Functional programming languages. These solve problems by constructing solutions as Mathematical expressions.
+    * Haskell
+    * Clean
+    * ML
+    * Agda
+    * ...
+ * Term-rewriting languages. These solve problems by following rules to replace a bit of the problem at a time until it is turned into a solution.
+    * Maude
+    * Pure
+    * ...
+ * Logic languages. These solve problems by deducing a solution, given the required amount of relevant information.
+    * Prolog
+    * Mercury
+    * ...
+ * Concatenative languages. These solve problems by running tasks with access to a common 'working space', usually in the form of a stack.
+    * FORTH
+    * Factor
+    * Joy
+    * ...
+
+There are several others, which I haven't had too much exerience with
+(eg. those based on process calculi, pattern calculi, etc.). However,
+here I am concerned with the last of the above categories;
+concatenative languages.
+
+## Concatenative Languages ##
+
+In very general terms, a language is 'concatenative' if, given any
+program F which implements some function f, and any program G which
+implements some function g, we can always concatenate the two programs
+FG to implement the function h(f, g), where h is some way of combining
+functions.
+
+In less general and more concrete terms, we can take the language Joy
+as an example. Every Joy program implements a function from stacks to
+stacks; the input is on the incoming stack and the output will be on
+the resulting stack.
+
+We can write a program `dup` which implements the duplicate function,
+duplicating the top item of the stack. If we have a stack containing
+the number `3` (which I'll write as {3}) then duplicate({3}) = {3 3}.
+
+We can write another program `*` which implements the multiply
+function, replacing the top 2 items of a stack with their product:
+multiply({3 3}) = {9}.
+
+In Joy, concatenating programs combines their functions by composition
+which we write as ".". "f . g" is the function which runs f then runs
+g, so (f . g)(x) = g(f(g)). If we apply this to `dup` and `*` we can
+concatenate them to get the program `dup *`, and its function is
+(duplicate . multiply).
+
+```
+(duplicate . multiply)({3}) = multiply(duplicate({3}))
+                            = multiply({3 3})
+                            = {9}
+```
+
+So what might we call this (duplicate . multiply) function? It's none
+other than the squaring function! From now on I'll not make the
+distinction between programs (`dup`, `*`, `dup *`, etc.) and the
+functions they implement (duplicate, multiply, square, etc.). I'll
+also define square so I can refer to it later:
+
+```joy
+DEFINE sq = dup *
+```
+
+### Types and Stack Effects ###
+
+Of course, composing functions only works when their types are
+compatible. I'll use pseudo-Haskell notation for types, where single
+lowercase letters are type variables, single uppercase letters are
+'stack variables' which represent the (potentially empty) contents of
+a stack, Capitalised names are literal types and square brackets
+denote stacks (left-to-right is bottom-to-top). Here's `sq`:
+
+ * `dup :: [A a] -> [A a a]`{.haskell}
+    * `dup`{.haskell} takes a stack with an `a`{.haskell} on the top and returns a stack with another `a`{.haskell} on the top. The rest of the stack underneath the `a`{.haskell}s remains the same, denoted by `A`{.haskell}.
+ * `(*) :: [A Num Num] -> [A Num]`{.haskell}
+    * `*`{.haskell} takes a stack with two `Num`{.haskell}s on the top, and returns a stack with only one `Num`{.haskell} on top. The rest of the stack under the `Num`{.haskell}s remains the same.
+ * `(.) :: (a -> b) -> (b -> c) -> (a -> c)`{.haskell}
+    * Composition takes a function from `a`{.haskell} to `b`{.haskell}, a function from `b`{.haskell} to `c`{.haskell} and returns a function from `a`{.haskell} to `c`{.haskell}. The 'symbol' for composition in Joy is whitespace; ie. `x y`{.joy} is `x . y`{.haskell}.
+ * `sq :: [A Num] -> [A Num]`{.haskell}
+    * `sq`{.haskell} takes a stack with a `Num`{.haskell} on top and returns a stack with a `Num`{.haskell} on top.
+
+The nice thing about Joy, when compared to a language like FORTH, is
+that it's not only concatenative, it's also purely functional. The
+functions we define and use do everything with stacks. All of their
+input must be on the argument stack (no Input) and their effects are
+limited to effecting their returned stack (no Output). The stacks, of
+course, are immutable. In FORTH we have procedures which modify a few
+global stacks, but in Joy we consume input stacks and construct return
+stacks, just like tail-recursive lists which are so prevalent in
+functional programming.
+
+## Concatenative Combinators ##
+
+Rather than using the Lambda Calculus as a semantic model, like LISP,
+Haskell, ML, etc. do, Joy uses a form of Combinator Calculus. It
+doesn't use Schoenfinkel's famous combinators S and K, which are
+'applicative' (combinators are applied to combinators to make new
+combinators); instead Joy can be characterised by 'concatenative' or
+'compositional' combinators: combinators are composed with combinators
+to make new combinators. Even though we talk about 'stacks' in Joy,
+when we're programming we never actually see a single stack. What we
+really deal with are the 'stack effects' of our functions; the effects
+they would have on a stack, if we ever applied it to one. This makes
+Joy an inherently point-free (or 'pointless') language, and a
+'function-level' or 'tacit' language, since it never refers to any
+data.
+
+## Implementation strategies ##
+
+A surprising amount can be accomplished by just looking at stack
+effects. For example, if we use the `3` function, which pushes the
+number 3 on to a stack (`3 :: [A] -> [A {3}]`{.haskell}), we can then
+get 9 on the stack by using `sq`:
+
+```joy
+3 sq
+
+-- This expands to:
+3 dup *
+
+-- Since Joy is concatenative, we can ignore the "*" for now and focus
+-- on "3 dup", which has the following stack effect:
+-- 3 dup :: [A] -> [A {3} {3}]
+
+-- This is the same stack effect as "3 3", so we can swap it out to
+-- get:
+3 3 *
+
+-- We know that "3 3 *" has this stack effect:
+-- 3 3 * :: [A] -> [A {9}]
+-- This is the same as the stack effect of the "9" function, so we can
+-- write:
+9
+```
+
+Here we've taken the program `3 sq`, which takes a stack and performs
+4 pushes, 3 pops, a duplication and a multiplication and we've
+optimised it to a function with 1 push. The interesting thing is that
+we've lifted operations on stacks to operations on stack functions; we
+took a function which duplicates elements on a stack, and we optimised
+it away by duplicating functions-of-stacks. Likewise we optimised away
+multiplication of stack elements by multiplying functions-of-stacks.
+
+This can get us quite far, especially when we use functions like `zap`:
+
+```haskell
+-- Given these functions:
+-- zap :: [A a] -> [A]
+-- fermats_last_theorem :: [A] -> [A {fermats_last_theorem}]
+-- prove :: [A statement] -> [A proof]
+-- 5 :: [A] -> [A {5}]
+
+-- We can write this program:
+
+5 fermats_last_theorem prove zap
+-- 5 fermats_last_theorem prove zap :: [A] -> [A {5}]
+
+-- Since we're zapping the top item, proving Fermat's last theorem
+-- isn't necessary. "zap" is polymorphic in its argument, and constant
+-- in its effect, so zapping anything off a stack will have the same
+-- final result. Thus we can optimise away the proof function and zap
+-- the statement of the theorem rather than its result. We can only do
+-- this because of Joy's purity.
+
+5 fermats_last_theorem zap
+-- 5 fermats_last_theorem zap :: [A] -> [A {5}]
+
+-- Now we have a function which pushes a value, composed with a
+-- function which pops a value. Their stack effects cancel out, so we
+-- can optimise them away to get:
+
+5
+-- 5 :: [A] -> [A {5}]
+```
+
+Since the `zap` function pops an item off the stack and discards it, we
+can optimise it away by discarding the function which pushed that
+value in the first place; lifting the function from stacks to
+functions-of-stacks, just like before.
+
+We can generalise this notion to get a form of lazy evaluation. Stack
+functions can do two things: manipulate a stack and construct values
+to push. These are actually orthogonal things:
+
+ * Stack manipulation is polymorphic; if the stack contains an item, it doesn't matter what it is.
+ * Values never reference the stack. We can use the stack to take arguments, eg. `2 3 *`{.joy} will take 2 and 3 and push 6, but once we have the values it doesn't matter where they came from.
+
+The core principle of concatenative languages like Joy is to get
+arguments to functions in a more flexible way than the rigid name-
+binding used in many other languages. We could recover some of the
+rigid semantics by, for example, using de Bruijn indexing to get
+values from the stack. This would give us a stack language with no
+stack manipulation. Likewise we could only include functions to
+rearrange stacks, but nothing which ever pushed a new value. The
+elegance comes when we couple the two, but we can still treat them
+separately.
+
+Since calculaions only use stacks to get their arguments and return
+their results, once we have our arguments we can do our calculations
+without the stack. Importantly, we can defer it until an arbitrary
+time later. Consider these alternative implementations of `*`, written
+in Javascript:
+
+```javascript
+// Multiply 2 numbers
+var multiply = function(x, y) { return x * y; };
+
+// Take a stack, send the top 2 values to multiply and join the result
+// with the rest of the stack's values.
+var strict_multiply = function(stack) {
+    return [
+        multiply(stack[0], stack[1])
+    ].concat(stack.slice(2));
+};
+
+// Take a stack and return a closure joined with the stack, but
+// without the top two elements. When called, the closure gets the top
+// two elements from the stack and calls them (they'll also be
+// closures), passes their results to multiply and returns that.
+var lazy_multiply = function(stack) {
+    return [function() {
+        return multiply(stack[0](), stack[1]());
+    }].concat(stack.slice(2));
+}
+
+// Same as lazy_multiply, but less naive. Less concise, but prevents
+// entire stacks hanging around in memory.
+var lazier_multiply = (function() {
+    // Define multiplication out here, where there's no stack
+    var make_multiply = function(x, y) {
+        return function() {
+            return multiply(x(), y());
+        };
+    };
+
+    // Now make the stack-handler; the stack is only in scope long
+    // enough to split it into two heads and a tail
+    return function(stack) {
+        return [
+            make_multiply(stack[0], stack[1])
+        ].concat(stack.slice(2));
+    };
+})();
+
+// Same as lazier_multiply, but less naive. Don't bother running every
+// closure every time; memoise the results.
+var laziest_multiply = (function() {
+    var make_multiply = function(x, y) {
+        var result;
+        // "go" calculates the result, then replaces itself with an
+        // empty function so that it won't be recalculated
+        var go = function() {
+            result = multiply(x(), y());
+            go = function() {};
+        };
+        // This is our closure. It uses go to set the result then just
+        // returns the constant.
+        return function() {
+            go();
+            return result;
+        };
+    };
+
+    return function(stack) {
+        return [
+            make_multiply(stack[0], stack[1])
+        ].concat(stack.slice(2));
+    };
+});
+```
+
+`strict_multiply`{.javascript}, `lazy_multiply`{.javascript},
+`lazier_multiply`{.javascript} and `laziest_multiply`{.javascript} all do
+the same thing; they take a stack topped by two numbers and return a
+stack topped by their product. The difference is in how they represent
+numbers. (Side note: compare the verbosity of Javascript to Joy!)
+
+In the strict version we represent numbers on the stack by Javascript
+numbers, which forces us to perform the multiplication immediately, so
+everything must wait until it's finished.
+
+In the other versions we represent numbers on the stack by Javascript
+functions, which take no arguments and return a Javascript number.
+This is much more flexible. We initially pay a high price in memory
+usage and time complexity, since `lazy_multiply` stores the whole
+stack every time, and recalculates its arguments every time (which may
+recalculate their arguments, and so on exponentially). However, we can
+get the memory usage back down if we pay attention to scope, as
+`lazier_multiply` does, and we can turn that exponential complexity
+back into an (amortised) constant by memoising the result, as
+`laziest_multiply` does.
+
+We can recover a value-based stack by simply calling each closure:
+
+```javascript
+v_stack = c_stack.map(function(element) { return element(); });
+```
+
+The reason the closure-based approach is better is that we can clearly
+see the separation of value calculation and stack manipulation
+(they've become separate functions). The stack manipulation is strict,
+since it's become relativeley cheap. We could make it lazy, and write
+an optimiser which replaces ineffiencient combinations of functions,
+but most analysis performed by such an optimiser would be about as
+efficient as just performing the manipulations.
+
+Let's apply this to the two examples above. I'll write (x) to
+represent closures. First the value-based stack:
+
++-----------------+-------+-------+
+| Program         | Stack | Value |
++=================+=======+=======+
+| `3 sq`{.joy}    | {}    |       |
+| `3 dup *`{.joy} | {}    |       |
+| `dup *`{.joy}   | {3}   |       |
+| `*`{.joy}       | {3 3} |       |
+|                 | {3*3} |       |
+|                 | {9}   |       |
+|                 | {}    | 9     |
++-----------------+-------+-------+
+
+Now with closures:
+
+[code="Joy"]
+Program  Stack          Value
+3 sq     {}             ()
+3 dup *  {}             ()
+dup *    {(3)}          ()
+*        {(3) (3)}      ()
+         {((3) * (3))}  ()       -- Done, evaluate the result
+         {}             ((3) * (3))
+         {}             (3 * 3)  -- (3) is memoised; both eval at once
+         {}             (9)
+         {}             9
+[/code]
+
+They're both about the same, although the closure-based one goes
+through more 'unwrapping' steps.
+
+Now the second example on a value-based stack:
+
+[code="Joy"]
+Program                           Stack                     Value
+5 fermats_last_theorem prove zap  {}
+fermats_last_theorem prove zap    {5}
+prove zap                         {5 fermats_last_theorem}
+zap                               {5 proof_of_flt}
+                                  {5}
+                                  {}                        5
+[/code]
+
+Uh oh, we ended up proving Fermat's last theorem. That probably took a
+while! How about with closures?
+
+[code="Joy"]
+Program                           Stack                                 Value
+5 fermats_last_theorem prove zap  {}
+fermats_last_theorem prove zap    {(5)}
+prove zap                         {(5) (fermats_last_theorem)}
+zap                               {(5) (prove (fermats_last_theorem))}
+                                  {(5)}
+                                  {}                                    (5)
+                                  {}                                    5
+[/code]
+
+Much better, we just throw away the closure without running it!
+
+**Quotation**
+
+The final part of the calculus underlying Joy is that it features
+quotation, similar to LISP's. Quotes are written [in square brackets].
+
+We know that symbols like "a", "b" and "c" are functions from stacks
+to stacks, and we know that a concatenation of symbols "a b c" is a
+function from stacks to stacks (the composition of a, b and c). A
+quotation "[a b c]" is a function from stacks to stacks, which pushes
+a function on to the stack; in this case the stack would be topped
+with the "a b c" function.
+
+With quotation in our arsenal, Brent Kerby has shown that we only need
+two other functions in order to be Universal. There are a few
+(countably many) combinations to choose from, but a nice pair are what
+Kerby calls "k" (since it's similar to Schoenfinkel's applicative K
+combinator) and "cake" (pairs elements into a pair of head-recursive
+and tail-recursive quotations). Here's what they do:
+
+[code="Joy"]
+-- k :: [A b [a]] -> [A a]
+-- k pops a quotation and another element, and pushes the contents of
+-- the quotation (in other words, unquoting it). For example:
+
+5 7 11 [dup * +] k
+
+-- Let's look at the types, concatenating up to the whole thing:
+
+-- 5 pushes a 5
+-- 5 :: [A] -> [A {5}]
+
+-- 7 pushes a 7
+-- 7 :: [A] -> [A {7}]
+
+-- 5 7 pushes a 5 then a 7
+-- 5 7 :: [A] -> [A {5} {7}]
+
+-- 11 pushes an 11
+-- 11 :: [A] -> [A {11}]
+
+-- 5 7 11 pushes a 5 then a 7 then an 11
+-- 5 7 11 :: [A] -> [A {5} {7} {11}]
+
+-- dup pushes a copy of whatever's on the top of the stack
+-- dup :: [A a] -> [A a a]
+
+-- * pops two Nums and pushes their product
+-- * :: [A Num Num] -> [A Num]
+
+-- dup * pops a number and pushes its square (copies then multiply)
+-- dup * :: [A Num] -> [A Num]
+
+-- + pops two numbers and pushes their sum
+-- + :: [A Num Num] -> [A Num]
+
+-- dup * + pops two numbers and pushes the second plus the square of
+-- the first
+-- dup * +   :: [A Num Num] -> [A Num]
+
+-- [dup * +] pushes the "dup * +" function
+-- [dup * +] :: [A] -> [A ([A Num Num] -> [A Num])]
+
+-- 5 7 11 [dup * +] :: [A] -> [A {5} {7} {11} ([A Num Num] -> [A Num])]
+-- 5 7 11 [dup * +] pushes those three numbers and that function
+
+-- k :: [A b [a]] -> [A a]
+-- k pops a quotation, pops another element, then applies the quoted
+-- function to the rest of the stack
+
+5 7 11 [dup * +] k :: [A] -> [A Num]
+-- 5 7 11 [dup * +] k pushes some numbers and a function, then pops
+-- the function and the number 11, and applies the function to the
+-- stack containing 5 and 7. Let's see how it unfolds, showing the
+-- temporary values that are used by the functions too:
+
+Program             Stack               Temporary
+5 7 11 [dup * +] k  {}
+7 11 [dup * +] k    {5}
+11 [dup * +] k      {5 7}
+[dup * +] k         {5 7 11}
+k                   {5 7 11 [dup * +]}
+                    {5 7 11}            [dup * +]
+                    {5 7}               [dup * +]
+dup * +             {5 7}
+* +                 {5 7}               7
+* +                 {5 7 7}
++                   {5 7}               7
++                   {5}                 7 7
++                   {5}                 49
++                   {5 49}
+                    {5}                 49
+                    {}                  49 5
+                    {}                  54
+                    {54}
+[/code]
+
+What about cake?
+
+[code="Joy"]
+-- cake :: [A b [a]] -> [A [b a] [a b]]
+-- cakes pops a quotation and another item and pushes two quotations;
+-- both pairings of the second item and the contents of the first.
+-- For example:
+
+Program                Stack                            Temporary
+5 7 11 [dup * +] cake  {}
+7 11 [dup * +] cake    {5}
+11 [dup * +] cake      {5 7}
+[dup * +] cake         {5 7 11}
+cake                   {5 7 11 [dup * +]}
+                       {5 7 11}                         [dup * +]
+                       {5 7}                            [dup * +] 11
+                       {5 7}                            [dup * + 11] [11 dup * +]
+                       {5 7 [11 dup * +] [dup * + 11]}
+[/code]
+
+With k, cake and quotation we get a Universal language. Similarly to
+Lambda Calculus, we get no datatypes other than functions, but we can
+encode data as functions (in a similar way to Church encoding and the
+like in Lambda Calculus) to get as much richness as we need.
+
+What's interesting is the way types and stack effects work in
+concatenative languages, but I'll leave that for another post.
+
+I've thrown together a quick interpreter for the not-quite-Joy I've
+been using in this blog post (Joy features hard-coded datatypes for
+numbers, characters, etc. which I don't want to deal with), but due to
+gitorious troubles (damn you cookies!) I've not put it online yet.

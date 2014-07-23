@@ -1,0 +1,174 @@
+---
+title: Omega
+---
+Here' an old blog post I found floating about unpublished:
+
+For the past few years I've been fascinated by Algorithmic Information
+Theory, which is a generalisation of Shannon's Information Theory with
+rather profound results.
+
+## Information Theory ##
+
+Claude Shannon is famous for two things. In his Masters thesis,
+generally regarded as the most influential Masters thesis ever
+written, he showed that binary arithmetic, and the true/false logic of
+Boole, can be represented as electronic circuits containing switches.
+This could be seen as the beginning of digital electronics.
+
+His other great work kick started digital communications. Shannon was
+interested in how to send messages, for example over a telegraph wire.
+He defined the mathematical quantity of information, along with its
+fundamental unit the bit. His key insight was that the content of a
+message doesn't matter; only the information of the content needs to
+be sent. One way to think about information is as the answers to
+yes/no questions, like in the game 'twenty questions'. The distinction
+between data (the content of a message) and information (what needs to
+be transmitted) is that data can be answers to any questions at all,
+whereas information answers the minimum number of questions needed.
+
+For example, let's say I tell you that I can't remember my bank
+balance, but I know it's either £1000 or £1500. I then go off to an
+ATM and find out that it's £1500; delighted, I want to tell you. How
+can we phrase the message in binary zeros and ones? Well we can write
+the number 1500 in binary, which is 10111011100; at 11 bits long, this
+seems a bit long. We can see why if we think of the bits as answers to
+yes/no questions: if you sum up some numbers to get the result, we're
+sending answers to the questions:
+ - Do I need to include 1024 in the sum?
+ - Do I need to include 512 in the sum?
+ - Do I need to include 256 in the sum?
+ - Do I need to include 128 in the sum?
+ - Do I need to include 64 in the sum?
+ - Do I need to include 32 in the sum?
+ - Do I need to include 16 in the sum?
+ - Do I need to include 8 in the sum?
+ - Do I need to include 4 in the sum?
+ - Do I need to include 2 in the sum?
+ - Do I need to include 1 in the sum?
+
+We get 11 bits because we're answering 11 questions! These 11
+questions are a pretty good way to send any number between 0 and 2047,
+but that's overkill for what we need. How about we just use the
+following question:
+ - Is it £1000?
+
+We can answer this with 1 bit, because all we need to send is a 0.
+
+Notice that we didn't actually need to include the number 1500 in our
+message; we just needed to agree on the question, known as the
+protocol, which could equally well have been "Is it £1500" (making our
+message a 1). Shannon showed that if both ends agree on a protocol of
+possible messages, the information that is sent just needs to tell the
+true message apart from the other possibilities. The definition of a
+bit is the amount of information required to tell apart two equally
+likely possibilities. In this example we had two possibilities and
+thus we sent one bit. However, there may be some redundancy, even
+here. For example, let's say that I have a tendency to make
+conservative estimates, in fact I'm three times as likely to
+underestimate than overestimate (75%/25%). In this case £1500 is more
+likely than £1000, I may just be erring on the side of caution by
+thinking it's lower.
+
+Whilst we can't send less than one bit in a message, this bias does
+allow us to make more ingenious question schemes if we do it multiple
+times. If I tell you that I checked my balance once a week for a
+month, and it started at either £100 or £200, then went up to either
+£600 or £900, went up more to either £1000 or £1500, then finished at
+either £2000 or £2500. I then go to get a bank statement to check. I
+can send the real values as 4 bits: one to determine each measurement
+(let's say 0 for the lower, 1 for the higher). Instead, since we know
+I'll probably be underestimating 3 and overestimating 1, I can tell
+you which one I was overestimating. I can do this in 2 bits, for
+example "Is it an odd week?" and "Is it the earlier of the two?"; thus
+week 3 becomes the bits 10. Using 2 bits is much more optimal, since
+each week is equally likely and there are 2 pairs of weeks.
+
+The requirement for a common protocol may seem restrictive, but it
+could easily contain, for example, all characters used in the English
+language; or a high-definition video signal. Shannon then went on to
+show that not only can we remove redundant bits quite easily if we
+know the probabilities, but we can also add redundant extra bits in a
+systematic way to overcome unreliable, noisy communication channels.
+For example if we want to send a 100 bit message, and there's a 1%
+chance of each bit coming out wrong at the other end, then we can send
+a 101 bit message to take into account that one bit will probably go
+wrong and will need resending. Shannon showed how the probability of
+an error can be made arbitrarily small in a systematic way; messages
+take more bits, but they're more robust to failure.
+
+## Algorithmic Information Theory ##
+
+Shannon's theory is all about averages and probabilities. Each message
+is independent and identically distributed (IID); the best way to
+compress a message into a few bits is to tune your protocol to match
+the situation as well as possible.
+
+Algorithmic Information Theory takes a different approach. It chooses
+a single, fixed protocol with equally-likely zeros and ones (ie.
+optimum for evenly distributed choices, like the results of tossing a
+coin). When a message is received, the bits are fed directly into a
+computer, using a machine language which allows any combination of
+zeros and ones, and is "self-delimiting" (ie. it contains an "end of
+file" sequence which stops the machine reading any more bits). The
+computer's output is taken to be the original message.
+
+With the protocol fixed, the question of optimal, short messages (ie.
+information, rather than data) becomes the question of how we can make
+the programs we send as small as possible. In other words, how much
+can we compress our message, if we don't care about decompression
+time?
+
+This has been tackled by people like Solomonoff, Kolmogorov, Levin,
+Chaitin, Martin-Lof and others, and there are some very interesting
+results.
+
+We can swap the computer we're using and it will change the length of
+every optimal program by at most a constant amount, and the amount
+depends only on the computers, not on the messages. How? Well both
+computers are universal, so we can make the new computer emulate the
+old one, and include the same emulator with all of our messages.
+
+We can also never know whether particular programs are optimal (or
+"elegant" as Chaitin calls them), since we would have to know the
+output of every smaller program and show that they're different from
+this one. However, we can't do this due to the halting problem.
+
+Solomonoff has shown that, if we're part-way through
+receiving/decoding a message (the prefix), we can make excellent
+predictions about the as-yet-undecoded content (the suffix) of the
+message by ranking all possibilities in order of their compressed
+size. Specifically, for each suffix we find all of the programs which
+output the (known) prefix followed by that particular suffix, give
+them a probability of 1/2^program size, then sum these individual
+probabilities to get the probability of that suffix. This dominates
+any other prediction strategy, and works even when the prefix is empty
+(ie. we haven't received anything yet).
+
+Hutter has shown that Solomonoff's prediction results can be inserted
+into decision theory to produce a totally rational, super-intelligent,
+ultimate decision maker, known as AIXI.
+
+Chaitin has shown that any formal system (for example, set theory) can
+only prove theorems which can be compressed to a size smaller or equal
+to what the system can be compressed to. This is actually quite
+intuitive: given any formal system, we can enumerate it's theorems
+until the cows come home. Thus, for anything the system can prove, we
+can use the system itself (plus a brute-force enumeration loop and
+stop condition) as the compressed version of the theorem. Anything
+which requires more bits than the system cannot be proved in the
+system (otherwise it would appear in the list of theorems and wouldn't
+need more bits).
+
+This latter result is interesting, since it's a rigourous proof that
+proofs contain no information, or equivalently, that all theorems are
+present in the axioms/rules. So what is the point of proving stuff?
+Well, the obvious reason is that it's better to publish massively
+redundant proofs of useful, non-obvious theorems than it is to have
+everyone start from theorem 1 and work up whenever they need a result.
+This is effectively a space/time tradeoff: we require more storage
+space, but reduce the amount of computation which needs to be done.
+Essentially, every published proof is cached; every known theorem is
+memoised. Maths then becomes a joint venture into finding new,
+independent axioms so that more theorems become accessible, and
+striking a balance between what to publish and what to calculate on
+demand.

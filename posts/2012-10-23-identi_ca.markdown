@@ -1,0 +1,70 @@
+---
+title: Identi.ca
+---
+I've been absent from Identi.ca for a while, since they disabled their XMPP bot :(
+Now that my new operating system seems to be Emacs, I thought I'd find another way to read and post, using flat files and commandlines (no, I don't want to use a bloody Web interface!)
+
+The reading part is thankfully straightforward, since StatusNet generates RSS and Atom feeds of everything. The RSS 1 links seem to be broken, but the RSS 2 links point to http://identi.ca/api/statuses/friends_timeline/your-username.rss
+
+There are loads of commandline RSS readers out there, so I won't reiterate that. This is all, thankfully, standard.
+
+Posting is a little more difficult, and I originally tried [this commandline Identi.ca posting script](http://findingscience.com/identi.ca/2010/12/11/command-line-posting-to-identi.ca.html) but it was a little off from what I wanted.
+
+Firstly, this requires storing my password in plaintext (or at least in an easily recoverable way). That's just silly. Secondly I would prefer a dedicated status-posting REPL (Read Eval Print Loop) rather than having to prefix every line with the same command. An Emacs buffer would be nice, but a commandline is easier to throw together.
+
+These two requirements actually go hand in hand; if we don't store the password then we must take it as an argument, and since getting a password prompt every time woud be tedious, we may as well sit in a REPL and reuse the same password over and over.
+
+Here's the code I've come up with, based on the link above (replace `warbo` with your username):
+
+```python
+#!/usr/bin/env python
+"""Read a password then enter a REPL for posting messages to identi.ca"""
+
+# Define this now, since its scope is quite wide
+exit_commands = ('quit', 'exit')
+
+# Define some useful functions. We use def/call/del to capture state in closures
+
+def make_out():
+    """Returns a function for printing to stdout."""
+    from sys import stdout
+    return lambda msg: (lambda _: (stdout.write(msg), stdout.flush()))
+out = make_out()
+del(make_out)
+
+def make_dent():
+    """Creates a function for denting (posting to identi.ca)."""
+    from urllib import urlencode
+    from getpass import getpass
+    import urllib2 as u
+    url     = 'http://identi.ca/api/statuses/update.xml'
+    passman = u.HTTPPasswordMgrWithDefaultRealm()
+    passman.add_password(None, url, 'warbo', getpass())
+    opener  = u.build_opener(u.HTTPBasicAuthHandler(passman))
+    req     = u.Request(url)
+    return lambda msg: opener.open(req, urlencode({'status': msg}))
+dent = make_dent()
+del(make_dent)
+
+def quit(_):
+    """Exit the program."""
+    print 'Bye!'
+    from sys import exit
+    exit(0)
+
+# Handle messages based on their content. Works like LISP's cond; pop off
+# (condition, function) pairs until condition is True, then run function(msg)
+handle = lambda(msg): filter(lambda (x, y): x, [
+    (len(msg) > 140,               out('Too long: ' + str(len(msg)) + '\n')),
+    (msg in exit_commands,         quit),
+    (True,                         dent)
+])[0][1](msg.strip())
+
+# Finally 'tie the knot' between identi.ca and stdin, to make our REPL
+print 'To quit, type ' + ' or '.join(map(repr, exit_commands))
+while True: handle(raw_input('> '))
+```
+
+I'm not sure about the `def`{.python}/call/`del`{.python} style I've used here; it's reminiscent of Javascript, but Python doesn't allow anonymous procedures. Still, I quite like the way `handle`{.python} works ;) Note that it doesn't try to handle any exceptions, but in this case I don't see the point uglifying the code when seeing a stack trace is the most helpful output anyway.
+
+I've stuck this in Git and will publish it somewhere as soon as I get non-stupid access to Gitorious (bloody cookies, ruining the stateless purity of HTTP!)

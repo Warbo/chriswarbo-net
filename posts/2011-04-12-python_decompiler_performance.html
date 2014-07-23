@@ -1,0 +1,4 @@
+---
+title: Python Decompiler Performance
+---
+I knew the performance of Python Decompiler was rubbish, but I didn't realise how rubbish! Based on the code analysis I wrote about last time, I've put the node classes in order of frequency and reordered the comparisons made in "thing" to match this. That's all I've done, and it's given a 58% speed increase and a 47% RAM decrease compared to the alphabetical order! Running the tests file on itself now only takes 16 seconds and 69MB of RAM. If I compare it to before I had a go at optimising, back before it used the input stream as a stack, the current code takes 64% less time and 66% less RAM.<br /><br />Nice!<br /><br />Code, as always, is on Gitorious :)<div class="blogger-post-footer"><img alt="" height="1" src="https://blogger.googleusercontent.com/tracker/2304809778837392812-4095143617848367566?l=seriously-this-is-not-worth-reading.blogspot.com" width="1" /></div>
