@@ -1,0 +1,649 @@
+Fibonacci Sequence in PHP
+
+# This post is managed by Babel; here we set up some our environment.
+
+# Babel doesn't support PHP sessions yet, so we'll 'tangle' our code into a file "fib.php" instead:
+
+#+begin_src php :tangle yes :exports none
+  <?php
+
+  // Load useful functions from my 'PHP prelude'
+  include_once('prelude.php');
+#+end_src
+
+# If you don't have prelude.php, you can get it with this:
+
+#+begin_src sh :exports none :eval never
+  wget -o prelude.php http://chriswarbo.net/data_custom/prelude.txt
+#+end_src
+
+# We run our code using a shell session. This script will load fib.php then run our code:
+
+#+name: runphp
+#+begin_src sh :tangle runphp :exports none :shebang "#!/bin/sh"
+  cd ~/blogs
+  php -r "include_once('fib.php'); $@;"
+#+end_src
+
+# Prettier GNUPlot settings
+
+#+name: plotdefaults
+#+begin_src gnuplot :exports none
+  reset
+  set terminal postscript color solid eps enhanced 20
+  set size 1.4,1
+  unset x2tics
+  unset y2tics
+  set title ttl
+  set border 11
+  set xlabel xlab
+  set ylabel ylab
+  set tics nomirror
+  set logscale y
+#+end_src
+
+# GNUPlot's PNG rendering is ugly, hence we set postscript above.
+# We'd still like PNG results though, so we call ImageMagick
+
+#+name: eps2png
+#+begin_src sh :exports none :var f="test"
+  convert -density 128 $f.eps $f.png
+#+end_src
+
+* Exponential Definitions
+The Fibonacci sequence is a well-known series of numbers which follow a pattern: it starts "1, 1" and each subsequent number is the sum of the two preceding it. We can calculate the Nth element of the sequence like this in PHP (using handy functions from [[http://chriswarbo.net/data_custom/prelude.txt][prelude.php]]):
+
+#+begin_src php :tangle yes
+  defun('mkFib1', function($n) {
+                    return ($n < 2)? 1  // Base case
+                                   : mkFib1($n - 1) + mkFib1($n - 2);
+                  });
+#+end_src
+
+#+begin_src php :tangle yes :exports none
+  defun('testFibs', function($n) {
+                      return take($n % 10, [1, 1, 2, 3, 5, 8, 13, 21, 34, 55]);
+                    });
+  deftest('mkFib1', function($n) {
+                      return map('mkFib1', upto($n % 10)) === testFibs($n);
+                    });
+#+end_src
+
+This is an incredibly naive approach, since each call to mkFib1 can involve 2 more calls to mkFib1. This recursion is /well-founded/, since it will always head towards the /base case/ where $n < 2, but there are two problems:
+ - It's not /tail-recursive/, so it requires a linear number of stack frames, leading to /stack overflows/.
+ - It requires an exponential number of recursive calls to reach a base case, which gives us an exponential running time:
+
+#+begin_src php :tangle yes :exports none
+  // An instrumented version of mkFib1
+  $mkFib1_count_ = function($n) use (&$mkFib1_count_) {
+                     if ($n < 2) return [1, 1];  // Base cases count as 1 call
+                     list($c_1, $n_1) = $mkFib1_count_($n - 1);
+                     list($c_2, $n_2) = $mkFib1_count_($n - 2);
+                     return [$c_1 + $c_2 + 1, $n_1 + $n_2];
+                   };
+  $mkFib1_count  = ∘('head', $mkFib1_count_);
+  deftest('mkFib1_count', function($n) use ($mkFib1_count_) {
+                            return eq($mkFib1_count_($n % 10)[1],
+                                      mkFib1($n % 10));
+                          });
+#+end_src
+
+#+name: mkfibcount
+#+begin_src sh :results raw :exports none
+  ./runphp 'echo tabulate("N", ["Recursive_calls", "Time"],
+                          map(fanout([$mkFib1_count,
+                                      benchmark("mkFib1")]),
+                              upto(15)))'
+#+end_src
+
+#+name: mkfibcountplot
+#+header: :file mkfibcount.eps :noweb yes :exports none
+#+header: :var xlab="N" :var ylab="Recursive Calls" :var ttl="mkFib1(N)"
+#+begin_src gnuplot :var table=mkfibcount :results silent
+  <<plotdefaults>>
+  unset key
+  set ytics  nomirror tc lt 1
+  set y2tics nomirror tc lt 2
+  set logscale y2
+  set y2label "Time (seconds)"
+  plot table using 1:2 with line title "Recursive calls" linetype 1 lw 2, \
+       table using 1:3 with line title "Time" linetype 2 lw 2 axes x1y2
+#+end_src
+
+#+begin_src sh :exports none :results silent
+  ./eps2png mkfibcount
+#+end_src
+
+[[file:mkfibcount.png]]
+
+What's more, a function is a rather clumsy way of representing a sequence, since the structure isn't immediately available and must be inferred by our users via some sort of counter. This violates the /Once and Only Once/ rule, and is liable to cause off-by-one errors and such.
+
+So what's the alternative? The trick is to realise that we don't need to provide /every/ element, since our users will only use a /finite/ number. The difficulty is that we don't know how many they'll need!
+
+One simple approach that may spring to mind is asking the user up front how many elements they need:
+
+#+begin_src php :tangle yes
+  defun('mkFibs2', ∘(map('mkFib1'), 'upto'));
+#+end_src
+
+#+begin_src php :tangle yes :exports none
+  deftest('mkFibs2', function($n) {
+                       return eq($lhs = mkFibs2($n % 10), $rhs = testFibs($n))?:
+                              dump(['mkFibs2' => get_defined_vars()]);
+                     });
+#+end_src
+
+However, this doesn't do what we want. The requirement to know how many elements are needed is /too strong/; many useful functions like [[http://en.wikipedia.org/wiki/Filter_(higher-order_function)][filter]] and [[http://en.wikipedia.org/wiki/Fold_%28higher-order_function%29][fold]] (AKA "reduce") require an unknown number of elements in general; for example, filters don't know how many elements they'll need to discard before finding a match. This forces us to generate longer and longer sequences, slowing us down by a logarithmic factor compared to mkFib1:
+
+#+begin_src php :tangle yes :exports code
+  // Note: Since there are infinitely many fibs, we can't fold all of them.
+  //       Instead, $f returns a pair [$stop, $result], where $stop tells us
+  //       when to cut-off the fold and $result is treated in the usual way.
+
+  // Fold a sequence generated by mkFib1
+  defun('fold1', function($f) {
+                   // Fold over the Naturals $n = 0, 1, 2, ...
+                   return loop(function($x, $n) use ($f) {
+                                 return $f($x, mkFib1($n));
+                               });
+                 });
+
+  // Prevents us applying $f to too many fibs
+  defun('shortcircuit', function($f, $x, $fib) {
+                          return $x[0]? $x  // If $x says stop, return it as-is
+                                      : $f($x[1], $fib);  // Else call $f
+                        });
+
+  // Fold a sequence generated by mkFib2
+  defun('fold2', function($f) {
+                   // Fold over the Naturals $n = 0, 1, 2, ...
+                   return loop(function($x, $n) use ($f) {
+                                 // Fold over 2^$n fibs
+                                 list($s, $y) = array_reduce(mkFibs2(pow(2, $n)),
+                                                             shortcircuit($f),
+                                                             [false, $x]);
+                                 return [$s, $s? $y    // If $s(top), return $y
+                                               : $x];  // Else restart with $x
+                               });
+                 });
+#+end_src
+
+#+begin_src php :tangle yes :exports none
+    deftests(['fold1' => function($n) {
+                           $m   = $n % 10;
+                           $rhs = fold1(function($a, $x) use ($m) {
+                                          return [count($a) >= $m, snoc($x, $a)];
+                                        }, []);
+                           return eq($m + 1, count($rhs))?:
+                                  dump(['fold1' => get_defined_vars()]);
+                         },
+              'fold2' => function($n) {
+                           $m   = $n % 10;
+                           $rhs = fold2(function($a, $x) use ($m) {
+                                          return [count($a) >= $m, snoc($x, $a)];
+                                        }, []);
+                           return eq($m + 1, count($rhs))?:
+                                  dump(['fold2' => get_defined_vars()]);
+                         }]);
+
+    // Substitute fold2 which doesn't calculate fibs
+    defun('fold2_c', function($f, $_) {
+                       return loop(function($_, $n) use ($f) {
+                                     return array_reduce(upto(pow(2, $n)),
+                                                         $f,
+                                                         null);
+                                   }, null);
+                     });
+
+    // Simple fold examples
+    defun('fold_counter', function($fold, $n) {
+                            $calls = 0;
+                            $fold(function($_, $m) use ($n, &$calls) {
+                                    $calls++;
+                                    return [$m > $n, null];
+                                  }, null);
+                            return $calls;
+                          });
+    defun('fold1_example', fold_counter('loop'));
+    defun('fold2_example', fold_counter('fold2_c'));
+
+    defun('runmem', function($f, $x) { return mem(runphp($f, $x)); });
+#+end_src
+
+#+name: mkfib12
+#+begin_src sh :results raw :exports none
+  ./runphp "echo tabulate('N', 'fold1_calls fold2_calls',
+                          map(fanout(['fold1_example', 'fold2_example']),
+                              discard_keys(range(0, 150, 3))))"
+#+end_src
+
+#+name: mkfib12plot
+#+header: :file mkfib12.eps :noweb yes :exports none
+#+header: :var xlab="N" :var ylab="Memory (kB)" :var ttl="Folding N fibs"
+#+begin_src gnuplot :var table=mkfib12 :results silent
+  <<plotdefaults>>
+  unset logscale y;
+  set border 3
+  set key left noautotitle
+  set ytics  nomirror
+  set ylab  "Fibs generated (ignoring recursion in mkFib1)"
+  set xrange [0:150]
+  set style line 1 lc rgb "red"  lw 3
+  set style line 2 lc rgb "blue" lw 3
+  plot table using 1:2 with line title "fold1" ls 1, \
+       table using 1:3 with line title "fold2" ls 2
+#+end_src
+
+#+begin_src sh :exports none :results silent :var data=mkfib12plot
+  ./eps2png mkfib12
+#+end_src
+
+[[file:mkfib12.png]]
+
+In this blog post I'll show how we can improve all these things, ending up with a structured representation that, for any /unknown/ N, can fold N elements in O(1) memory, O(N) time and O(1) stack frames.
+
+* Inductive Definitions
+The problem with mkFib2 is that the size of a PHP array must be specified in advance, but we don't know how many elements we'll need. One simple alternative to the array is a /list/. Rather than storing all elements in a single place, a list stores them separately, then links them all together. There are many different kinds of list, but the simplest is called /tail recursive/ and can be implemented very easily in PHP by nesting arrays:
+
+#+begin_src php :tangle yes
+  // $x is our current element, $n is when to stop
+  defun('mkFibs3_', function($x, $n) {
+                      return ($x < $n)? [mkFib1($x), mkFibs3_($x+1, $n)]
+                                      : [];
+                    });
+  defun('mkFibs3',  mkFibs3_(0));  // Always start at 0
+#+end_src
+
+#+begin_src php :tangle yes :exports none
+  deftest('mkFibs3', function() {
+                       return eq($l = mkFibs3(7),
+                                 $r = [1, [1, [2, [3, [5, [8, [13, []]]]]]]])?:
+                              dump(get_defined_vars());
+                     });
+#+end_src
+
+The results look like this:
+
+#+begin_src sh :results verbatim :exports both
+  ./runphp "dump(mkFibs3(5))"
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+array(2) {
+  [0]=>
+  int(1)
+  [1]=>
+  array(2) {
+    [0]=>
+    int(1)
+    [1]=>
+    array(2) {
+      [0]=>
+      int(2)
+      [1]=>
+      array(2) {
+        [0]=>
+        int(3)
+        [1]=>
+        array(2) {
+          [0]=>
+          int(5)
+          [1]=>
+          array(0) {
+          }
+        }
+      }
+    }
+  }
+}
+#+end_example
+
+The results of mkFibs3 still have a finite size, but we're no longer at the mercy of PHP's implementation details. Each array has a known size (0 or 2), no matter how many elements we ask for. Like mkFib1, mkFibs3 isn't tail recursive, so it may overflow the stack if we ask for too many elements. Folding lists is a little awkward in PHP, since there's no built-in equivalent to array_reduce:
+
+#+begin_src php :tangle yes :exports code
+  defun('fold3', function($f, $x) {
+                   return trampoline(y(
+                     function($g, $n, $fibs, $acc, $_) use ($f, $x) {
+                       // If we've run out of $fibs, start again with more
+                       if ($fibs === [])
+                         return [false, $g($n+1, mkFibs3(pow(2, $n+1)), $x)];
+
+                       // Apply $f to the next $fib
+                       list($stop, $acc) = $f($acc, $fibs[0]);
+                       return [$stop, $stop? $acc
+                                           : $g($n, $fibs[1], $acc)];
+                     }, 0, [], null));
+                 });
+#+end_src
+
+We can now do away with the exponentially-inefficient mkFib1. If we log the arguments we're sending to mkFib1, we can see that mkFibs3 is asking for the same values over and over:
+
+#+begin_src php :tangle yes :exports none
+  // Recurse like mkFib1 but just log our arguments
+  defun('mkFib1_log', function($n) {
+                        return cons($n, ($n < 2)? []
+                                                : merge(mkFib1_log($n-1),
+                                                        mkFib1_log($n-2)));
+                      });
+  // Recurse like mkFibs3, but collects calls to mkFib1_log
+  defun('mkFibs3_log_', function($x, $n) {
+                          return ($x < $n)? merge(mkFib1_log($x),
+                                                  mkFibs3_log_($x+1, $n))
+                                          : [];
+                        });
+  defun('mkFibs3_log',  mkFibs3_log_(0));  // Always start at 0
+#+end_src
+
+#+begin_src sh :exports results
+  ./runphp 'echo tabulate("mkFibs3(...)", "mkFib1(...)",
+                          map(∘(implode_(","), "mkFibs3_log"), upto(7)))'
+#+end_src
+
+#+RESULTS:
+|   |                                                                     |
+| N | mkFib1_args                                                         |
+| 0 |                                                                     |
+| 1 | 0                                                                   |
+| 2 | 0,1                                                                 |
+| 3 | 0,1,2,0,1                                                           |
+| 4 | 0,1,2,0,1,3,1,2,0,1                                                 |
+| 5 | 0,1,2,0,1,3,1,2,0,1,4,2,0,1,3,1,2,0,1                               |
+| 6 | 0,1,2,0,1,3,1,2,0,1,4,2,0,1,3,1,2,0,1,5,3,1,2,0,1,4,2,0,1,3,1,2,0,1 |
+
+We can actually remove all of these calls, since mkFibs3 has all of the data it needs to construct each Fibonacci number itself. If we pass this data along the recursive calls, our runtime becomes linear:
+
+#+begin_src php :tangle yes
+  defun('mkFibs4_', function($fib_2, $fib_1, $x, $n) {
+                      if ($x >= $n) return [];  // Stopping condition
+                      $fib = ($x < 2)? 1 : ($fib_2 + $fib_1);
+                      return [$fib, mkFibs4_($fib_1, $fib, $x+1, $n)];
+                    });
+  defun('mkFibs4',  mkFibs4_(null, null, 0));
+#+end_src
+
+# If we went above 17, time4 would be indistinguishable from the x axis
+#+name: mkfibs34
+#+begin_src sh :results raw :exports none
+  ./runphp "echo tabulate('N', 'mem3 mem4 time3 time4',
+                          map(fanout([
+                            runmem('mkFibs3'),
+                            runmem('mkFibs4'),
+                            benchmark('mkFibs3'),
+                            benchmark('mkFibs4')
+                          ]), upto(17)))"
+#+end_src
+
+#+name: mkfibs34plot
+#+header: :file mkfibs34.eps :noweb yes :exports none
+#+header: :var xlab="N" :var ylab="Memory (kB)" :var ttl="mkFibs3(N) vs mkFibs4(N)"
+#+begin_src gnuplot :var table=mkfibs34 :results silent
+  <<plotdefaults>>
+  unset logscale y;
+  unset logscale y2;
+  set key left noautotitle
+  set ytics  nomirror
+  set y2tics nomirror
+  set ylab  "Memory (kB)"    tc lt 3
+  set y2lab "Time (seconds)" tc lt 1
+  set style line  1 lt 2 lc rgb "blue"  lw 3
+  set style line  2 lt 1 lc rgb "blue"  lw 3
+  set style line  3 lt 2 lc rgb "red"   lw 3
+  set style line  4 lt 1 lc rgb "red"   lw 3
+  set style line  5 lt 2 lc rgb "black" lw 3
+  set style line  6 lt 1 lc rgb "black" lw 3
+  set termoption dash
+  plot table using 1:2 with line notitle ls 1,           \
+       table using 1:3 with line notitle ls 2,           \
+       table using 1:4 with line notitle ls 3 axes x1y2, \
+       table using 1:5 with line notitle ls 4 axes x1y2, \
+       0               with line title "mkFibs3" ls 5 axes x1y2, \
+       0               with line title "mkFibs4" ls 6 axes x1y2
+#+end_src
+
+#+begin_src sh :var data=mkfibs34plot :exports none :results silent
+  ./eps2png mkfibs34
+#+end_src
+
+[[file:mkfibs34.png]]
+
+* Coinductive Definitions
+Now we can deal with the finiteness problem. Every time PHP sees one of our lists, it does the following:
+  - Construct the first element (the Fibonacci number, known as the /car/ or /head/)
+  - Construct the second element (the rest of the list, known as the /cdr/ or /tail/)
+  - Construct the array containing them
+
+Our problem is that we're forced to construct the whole tail before we know how long it needs to be. The solution is to /delay/ the tail, which we can do using a /thunk/: a function which returns a constant value. PHP will construct functions without running them, which gives us time to figure out how many elements we need.
+
+#+begin_src php :tangle yes
+  defun('mkFibs5_', function($fib_2, $fib_1, $x, $n) {
+                      if ($x >= $n) return [];  // Stopping condition
+                      $fib = ($x < 2)? 1 : ($fib_2 + $fib_1);
+                      return [$fib, function($_) use ($fib_1, $fib, $x, $n) {
+                                      return mkFibs5_($fib_1, $fib, $x+1, $n);
+                                    }];
+                    });
+  defun('mkFibs5',  mkFibs5_(null, null, 0));
+#+end_src
+
+Delaying computation this way is known as /lazy evaluation/, and this method of generating a bit of data and delaying the rest is called /co-induction/. Hence this kind of structure is known as a /co-data structure/.
+
+The nice thing about codata is that we can define never-ending chains of values, wrapping each link in a thunk so that it only gets evaluated when needed (known as /forcing/ the value). This is exactly what we need for our Fibonacci sequence, and all we need to do is throw away the stopping condition!
+
+Notice that I'm giving these thunks a parameter "$_" which is ignored. As far as PHP's concerned, I could have defined them as /nullary/ functions, ie. taking no arguments, but that makes them harder to reason about and prevents some later simplifications:
+
+#+begin_src php :tangle yes
+  defun('fibsFrom6', function($fib_2, $fib_1) {
+                       $fib = $fib_2 + $fib_1;
+                       return [$fib, function($_) use ($fib_1, $fib) {
+                                       return fibsFrom6($fib_1, $fib);
+                                     }];
+                     });
+  defun('fibs6',    function($_) {
+                        return [1, function($_) {
+                                     return [1, function($_) {
+                                                  return fibsFrom6(1, 1);
+                                                }];
+                                   }];
+                    });
+#+end_src
+
+This is the first of our definitions that's both infinite, like a function, and structured, like an array. This kind of codata structure is called a /stream/. Here's how to fold a stream, using a /trampoline/ to optimise tail-calls:
+
+#+begin_src php :tangle yes
+  defun('fold6',  function($f, $acc, $stream) {
+                    return trampoline(y(function($y, $acc, $s, $_) use ($f) {
+                                          list($h,    $t)    = $s(null);
+                                          list($stop, $acc)  = $f($acc, $h);
+                                          return [$stop, $stop? $acc
+                                                              : $y($acc, $t)];
+                                        }, $acc, $stream));
+                  });
+#+end_src
+
+#+begin_src php :tangle yes :exports none
+  deftest('fold6', function($n) {
+                     $m   = $n % 9;
+                     $lhs = testFibs($m+1);
+                     $rhs = fold6(function($acc, $fib) use ($m) {
+                                    return [count($acc) >= $m,
+                                            snoc($fib, $acc)];
+                                  }, [], 'fibs6');
+                     return eq($lhs, $rhs)?: dump(get_defined_vars());
+                   });
+#+end_src
+
+** Refactoring
+Now that we've created our infinite Fibonacci sequence, we can refactor the code to be a little less naff. I debated whether to define the "fibsFrom" function inline, but I think it's nice to keep two separate functions since they correspond exactly to the two rules defining the Fibonacci sequence: "fibsFrom" implements "sum the previous two", "fibs" implements "start with 1, 1".
+
+The first refactoring we can do is to notice that we have functions returning functions, which is a manual form of currying. We can remove this separation, since our functions are curried automatically by "defun" (we couldn't do this if our thunks were nullary):
+
+#+begin_src php :tangle yes
+  defun('fibsFrom7', function($l, $m, $_) {
+                       $n = $l + $m;
+                       return [$n, fibsFrom7($m, $n)];
+                     });
+  defun('fibs7',     function($_) {
+                       return [1, function($_) {
+                                    return [1, fibsFrom7(1, 1)];
+                                  }];
+                     });
+#+end_src
+
+Next we can remove the redundant "1"s in "fibs7". This redundancy is due to fibsFrom not including its arguments in the stream it returns, but of course if we naively change fibsFrom to include its arguments, we'd just be shifting around the redundancy, not eliminating it.
+
+The solution is to extrapolate the sequence backwards a couple of steps. In other words, we need to switch the initial "1, 1" to some other values x and y such that we get a sequence "x, y, 1, 1, 2, 3, 5, 8, ...". We can derive these values straight from the definition of the Fibonacci sequence:
+
+#+begin_src php :exports code :tangle no
+  $y + 1 = 1      // Since y, 1, 1 is in the sequence
+  $y     = 1 - 1
+  $y     = 0
+
+  $x + $y = 1  // Since x, y, 1 is in the sequence
+  $x + 0  = 1  // From the value of $y above
+  $x      = 1
+#+end_src
+
+Now we can pass $x and $y as arguments to fibsFrom and get back a stream of all fibs /after/ $x and $y, which is what we want. This simplifies our definition considerably:
+
+#+begin_src php :tangle yes
+  defun('fibs8', fibsFrom7(1, 0));
+#+end_src
+
+Finally, we can collapse fibsFrom into a one-liner, since PHP evaluates array elements in-order:
+
+#+begin_src php :tangle yes
+  defun('fibsFrom9', function($l, $m, $_) {
+                       return [$n = $l + $m, fibsFrom9($m, $n)];
+                     });
+  defun('fibs9',     fibsFrom9(1, 0));
+#+end_src
+
+** Results
+This is quite elegant, so let's leave it there and see how well our fold performs. Note that we can reuse fold6, since our interface hasn't changed:
+
+#+begin_src php :tangle yes :exports none
+  $fibs6_9 = map(cat('fibs'), between(6, 9));
+
+  deftests(array_combine($fibs6_9,
+                         map(curry(function($f, $n) {
+                                     $lhs = stream_take($n % 10, $f);
+                                     $rhs = testFibs($n);
+                                     return eq($lhs, $rhs)?:
+                                            dump(get_defined_vars());
+                                   }),
+                             $fibs6_9)));
+
+  // Define "fold_fibsN" for N=6..9
+  defuns(array_combine(map(cat('fold_'), $fibs6_9),
+                       map(curry(function($f, $n) {
+                                   // Pass nulls around $n times
+                                   fold6(function($a, $x) use (&$n) {
+                                           return [--$n <= 0, null];
+                                         }, null, $f);
+                                 }), $fibs6_9)));
+
+  defun('fibs_base', function($n) {
+                       for ($fib_2 = 1, $fib_1 = 1;
+                            $n--;
+                            list($fib_2, $fib_1) = [$fib_1, $fib_2 + $fib_1]);
+                     });
+
+  // Only go as far as PHP_INT_MAX
+  $fib_max = fold6(function($n, $fib) {
+                     return [$fib > PHP_INT_MAX / 2, $n+1];
+                   }, 0, 'fibs6');
+  $fibs_range = upto($fib_max);
+
+  defun('fib_bench', function($n) use ($fibs_range) {
+                       return tabulate('N', "fibs{$n}_time",
+                                       map(benchmark("fold_fibs{$n}"),
+                                           $fibs_range));
+                     });
+
+  defun('fib_bench_base', function($_) use ($fibs_range) {
+                            return tabulate('N', 'base_time',
+                                            map(benchmark('fibs_base'),
+                                                $fibs_range));
+                          });
+
+  defun('fib_mem', function($n) use ($fibs_range) {
+                     return tabulate('N', "fibs{$n}_mem",
+                                      map(runmem("fold_fibs{$n}"),
+                                          $fibs_range));
+                   });
+
+  defun('fib_mem_base', function($_) use ($fibs_range) {
+                          return tabulate('N', 'base_mem',
+                                          map(runmem('fibs_base'),
+                                              $fibs_range));
+                        });
+#+end_src
+
+#+name: fibs9_time
+#+begin_src sh :exports none
+  ./runphp 'echo fib_bench("9")'
+#+end_src
+
+#+name: base_time
+#+begin_src sh :exports none
+  ./runphp 'echo fib_bench_base(null)'
+#+end_src
+
+#+name: fibs9_mem
+#+begin_src sh :exports none
+  ./runphp 'echo fib_mem("9")'
+#+end_src
+
+#+name: base_mem
+#+begin_src sh :exports none
+  ./runphp 'echo fib_mem_base(null)'
+#+end_src
+
+#+name: fibs6_9plot
+#+header: :file fibs6_9.eps :noweb yes :exports none
+#+header: :var t9=fibs9_time :var tbase=base_time
+#+header: :var m9=fibs9_mem  :var mbase=base_mem
+#+header: :var xlab="N" :var ylab="Memory (kB)" :var ttl="mkFibs9(N) vs for-loop"
+#+begin_src gnuplot :var table="" :results silent
+  <<plotdefaults>>
+  unset logscale y
+  set   logscale y2
+  set ytics  nomirror tc ls 3
+  set y2tics nomirror tc ls 1
+  set ylab  "Memory (kB)"    ls 1
+  set y2lab "Time (seconds)" ls 2
+  set style line 1 lt 1 lc rgb "red"   lw 3
+  set style line 2 lt 2 lc rgb "red"   lw 3
+  set style line 3 lt 1 lc rgb "blue"  lw 3
+  set style line 4 lt 2 lc rgb "blue"  lw 3
+  set style line 5 lt 1 lc rgb "black" lw 3
+  set style line 6 lt 2 lc rgb "black" lw 3
+  set yrange [27500:28500]
+  set termoption dash
+  plot t9    using 1:2 with line notitle          ls 1 axes x1y2, \
+       tbase using 1:2 with line notitle          ls 2 axes x1y2, \
+       m9    using 1:2 with line notitle          ls 3,           \
+       mbase using 1:2 with line notitle          ls 4,           \
+       0               with line title "fibs9"    ls 5,           \
+       0               with line title "for-loop" ls 6
+#+end_src
+
+#+begin_src sh :exports none :results silent :var data=fibs6_9plot
+  ./eps2png fibs6_9
+#+end_src
+
+[[file:fibs6_9.png]]
+
+Note that this graph goes up to PHP_INT_MAX, which on my 32-bit laptop is around the 45th Fibonacci number. The memory usage is constant, and it turns out we don't pay any memory penalty for using streams compared to a hard-coded for-loop. We do pay a time penalty, most likely from all of the function calls involved, but it's only a constant factor so, as the log scale shows, the scaling behaviour isn't affected.
+
+So there we have it, a PHP implementation of the Fibonacci sequence which:
+ - Has a sequential structure, like the sequence itself
+ - Is never-ending, like the sequence itself (thanks to co-induction)
+ - Uses constant stack-space (thanks to a trampolines)
+ - Uses constant memory (thanks to lexical scope)
+ - Uses linear time (again, thanks to lexical scope)
+ - Only requires 4 lines to define, not counting the generic library functions from prelude.php
+ - Closely follows the two defining rules of the sequence
+ - Has a self-contained, abstract, composable, functional interface
