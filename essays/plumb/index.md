@@ -1,7 +1,7 @@
 ---
 title: Plumb: A Mini Language for Mini Functions
 ---
-Plumb is a Domain Specific Language (DSL) for defining small, incidental, throwaway functions. In other words, the 'plumbing' to join the component parts of a program.
+Plumb is a Domain Specific Language (DSL) for defining small, incidental, throwaway functions. In other words, the 'plumbing' to join the component parts of a program. It's a variant of [Lambda Calculus](http://en.wikipedia.org/wiki/Lambda_calculus).
 
 Not very useful on its own, Plumb is designed to be *embedded* into more capable 'host' languages. [Implementations](implementations.html) are simple to create.
 

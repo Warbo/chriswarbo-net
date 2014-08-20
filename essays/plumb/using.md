@@ -7,26 +7,26 @@ title: Using Plumb
 
 Plumb exists to make function definition easy: just use [square brackets]. Functions will return their argument by default, so an empty pair of brackets is an [identity function](http://en.wikipedia.org/wiki/Identity_function): `[]`{.python}
 
-+------------------------------------------------------+----------------+
-| ```php                                               |                |
-| <?                                                   |                |
-| $id = plumb([]);                                     | **PHP**        |
-| echo "Called {$id(__FUNCTION__)} at  {$id(time())}"; |                |
-| ```                                                  |                |
-+------------------------------------------------------+----------------+
-| ```javascript                                        |                |
-| elements.map(function process(x) {                   |                |
-|                var result = real_process(x);         |                |
-|                // Stop processing if finished        | **Javascript** |
-|                if (result) process = plumb([]);      |                |
-|                return result;                        |                |
-|              });                                     |                |
-| ```                                                  |                |
-+------------------------------------------------------+----------------+
++-------------------------------------------------------+---------+
+| ```php                                                |         |
+| <?                                                    |         |
+| $id = plumb([]);                                      | **PHP** |
+| echo "Called {$id(__FUNCTION__)} at  {$id(time())}";  |         |
+| ```                                                   |         |
++-------------------------------------------------------+---------+
+| ```php                                                |         |
+| <?                                                    |         |
+| $compose_all = function() {                           |         |
+|                  return array_reduce(func_get_args(), | **PHP** |
+|                                      'compose',       |         |
+|                                      plumb([]));      |         |
+|                };                                     |         |
+| ```                                                   |         |
++-------------------------------------------------------+---------+
 
 ## Returning Values ##
 
-A return value is just an expression written inside the brackets, in Plumb, the host language or a mixture of both. If there's any ambiguity, we assume you're writing Plumb. This makes it trivial to write [thunks](http://en.wikipedia.org/wiki/Thunk#Functional_programming):
+To return a value explicitly, just write it inside the brackets. Plumb will try interpreting the expression according to the rules on this page; if it fails, the host language's semantics will be used. This makes it trivial to write [thunks](http://en.wikipedia.org/wiki/Thunk#Functional_programming):
 
 +------------------------------------------------+---------+
 | ```php                                         |         |
@@ -47,12 +47,12 @@ Every Plumb function takes a single argument. Multi-argument functions can be si
 
 Plumb doesn't give arguments absolute names when they're introduced. Instead, arguments are referred to *numerically*, based on their position *relative* to the reference. For example:
 
- - `0`{.python} refers to the "current" argument (ie. of the function enclosing the `0`)
+ - `0`{.python} refers to the "current" argument (ie. of the function enclosing the `0`{.python})
  - `1`{.python} refers to the "parent's" argument (ie. of the the function enclosing the "current" function)
  - `2`{.python} refers to the "grandparent's" argument (ie. of the function enclosing the "parent" function)
  - and so on
 
-This naming scheme is known as [de Bruijn indexing](http://en.wikipedia.org/wiki/De_Bruijn_index). Scope is [lexical](http://en.wikipedia.org/wiki/Lexical_scope#Lexical_scoping) (AKA "static"); references are looked up relative to where they're *defined*, not where they're *used*.
+This naming scheme is known as [de Bruijn indexing](http://en.wikipedia.org/wiki/De_Bruijn_index). Scope is [lexical](http://en.wikipedia.org/wiki/Lexical_scope#Lexical_scoping): references are looked up relative to where they're *defined*, not where they're *used*.
 
 If there is no argument at a given position, for example `plumb([1])`{.python}, the resulting function will cause a (host-specific) error.
 
@@ -72,16 +72,17 @@ Notice that `[0]`{.python} is an identity function, just like `[]`{.python}.
 | f("baz") == Error            |                |
 | ```                          |                |
 +------------------------------+----------------+
-| ```javascript                |                |
+| ```python                    |                |
 | f = plumb([[0]]);            |                |
-|                              | **Javascript** |
-| f("baz")("quux") === "quux"; |                |
+|                              | **Python**     |
+| f("baz", "quux") == "quux";  |                |
 | ```                          |                |
 +------------------------------+----------------+
-| ```haskell                   |                |
-| f = plumb [[1]]              |                |
-|                              | **Haskell**    |
-| f "baz" "quux" == "baz"      |                |
+| ```php                       |                |
+| <?                           |                |
+| $f = plumb([[1]])            | **PHP**        |
+|                              |                |
+| $f("baz", "quux") === "baz"  |                |
 | ```                          |                |
 +------------------------------+----------------+
 
@@ -89,18 +90,16 @@ Notice that `[0]`{.python} is an identity function, just like `[]`{.python}.
 
 We can call a function using the infix "`,`{.python}" operator, with the function on the left and the argument on the right. This makes it easy to delay function calls, the second half of laziness:
 
-+-------------------------------------+------------------------------+----------------------------------+--------------------------------+
-| PHP                                 | Python                       | Javascript                       | Haskell                        |
-+=====================================+==============================+==================================+================================+
-| ```php                              | ```python                    | ```javascript                    | ```haskell                     |
-| <?                                  | count = plumb([len , "baz"]) | count = plumb([strlen , "baz"]); | count = plumb [length , "baz"] |
-| $count = plumb(["strlen" , "baz"]); |                              |                                  |                                |
-|                                     | count(None) == 3             | count(null) === 3;               | count () == 3                  |
-| $count(null) === 3;                 | ```                          | ```                              | ```                            |
-| ```                                 |                              |                                  |                                |
-+-------------------------------------+------------------------------+----------------------------------+--------------------------------+
-
-The Javascript version assumes `strlen = function(x) { return x.length; }`{.javascript}
++-------------------------------------+------------------------------+
+| PHP                                 | Python                       |
++=====================================+==============================+
+| ```php                              | ```python                    |
+| <?                                  | count = plumb([len , "baz"]) |
+| $count = plumb(["strlen" , "baz"]); |                              |
+|                                     | count(None) == 3             |
+| $count(null) === 3;                 | ```                          |
+| ```                                 |                              |
++-------------------------------------+------------------------------+
 
 ## Chaining Function Calls ##
 
@@ -116,16 +115,16 @@ Is equivalent to:
 ((0 , 1) , 2) , 3
 ```
 
-+----------------------------------------+---------------------------------+-------------------------------------+-------------------------+
-| PHP                                    | Python                          | Javascript                          | Haskell                 |
-+========================================+=================================+=====================================+=========================+
-| ```php                                 | ```python                       | ```javascript                       | ```haskell              |
-| <?                                     | f = plumb([[len] , 0 , "quux"]) | f = plumb([[parseInt] , null , 0]); | f = plumb [[1 , 0 , 0]] |
-| $f = plumb([['strlen' , 0] , "quux"]); |                                 |                                     |                         |
-|                                        | f(None) = 4                     | f("123") === 123                    | f (+) 4 == 8            |
-| $f(null) === 4                         | ```                             | ```                                 | ```                     |
-| ```                                    |                                 |                                     |                         |
-+----------------------------------------+---------------------------------+-------------------------------------+-------------------------+
++----------------------------------------+---------------------------------+
+| PHP                                    | Python                          |
++========================================+=================================+
+| ```php                                 | ```python                       |
+| <?                                     | f = plumb([[len] , 0 , "quux"]) |
+| $f = plumb([['strlen' , 0] , "quux"]); |                                 |
+|                                        | f(None) = 4                     |
+| $f(null) === 4                         | ```                             |
+| ```                                    |                                 |
++----------------------------------------+---------------------------------+
 
 ## Grouping Syntax ##
 
@@ -135,21 +134,23 @@ Chained commas cannot implement right-associative nesting patterns, like:
 0 , (1 , 2)
 ```
 
-To define these, Plumb provides *grouping syntax*, which is equivalent to writing the parentheses above.
+To define these, Plumb provides *grouping syntax*, which is equivalent to writing the parentheses above. We use the name "grouping syntax" since some host languages don't allow us to use parentheses in this way. For example, the PHP implementation uses `<? __(`{.php} instead of an opening parenthesis.
 
-To open a new group, we use an underscore followed by an open parenthesis: `_(`{.python}
++----------------------------------------+------------------------------------+
+| PHP                                    | Python                             |
++========================================+====================================+
+| ```php                                 | ```python                          |
+| <?                                     | f = plumb([len , ("foo")])         |
+| $f = plumb(['strlen' __([] , "foo")]); |                                    |
+|                                        | f(None) = 3                        |
+| $f(null) === 3                         |                                    |
+|                                        | compose = plumb([[[2 , (1 , 0)]]]) |
+| $compose = plumb([[[2 , __(1 , 0)]]]); |                                    |
+| ```                                    |                                    |
++----------------------------------------+------------------------------------+
 
-To close an existing group we use a regular closing parenthesis: `)`{.python}
+## That's It! ##
 
-This is the usual form, although some implementations may vary.
+Plumb [implementations](implementations.html) should conform to the behaviour described here; everything else may vary from host to host.
 
-+----------------------------------------+-----------------------------+----------------------------------------+---------------------------+
-| PHP                                    | Python                      | Javascript                             | Haskell                   |
-+========================================+=============================+========================================+===========================+
-| ```php                                 | ```python                   | ```javascript                          | ```haskell                |
-| <?                                     | f = plumb([len , _("foo")]) | f = plumb([strlen , _(parseInt , 0)]); | f = plumb [[1 , (1 , 0)]] |
-| $f = plumb(['strlen' _([] , "foo")]);  |                             |                                        |                           |
-|                                        | f(None) = 3                 | f("123") === 3                         | f (1 +) 2 == 4            |
-| $f(null) === 3                         | ```                         | ```                                    | ```                       |
-| ```                                    |                             |                                        |                           |
-+----------------------------------------+-----------------------------+----------------------------------------+---------------------------+
+If you have any ideas for improving Plumb, [let me know](/contact.html)!
