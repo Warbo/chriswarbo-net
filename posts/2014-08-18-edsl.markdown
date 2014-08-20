@@ -1,0 +1,408 @@
+---
+title: Plumb: A Domain-Specific Language Embedded in PHP
+---
+## Domain-Specific Languages (DSLs) ##
+
+DSLs are very useful for solving difficult problems. They do this by ignoring all *other* problems, giving their designers a lot of flexibility in how to approach the solution. Examples of domain-specific languages include:
+
+ - SQL
+    - Inject/project data in/out of a database
+    - No good as a robot controller
+ - Make
+    - Regenerate stale data when its sources are modified
+    - Not the best game engine
+ - POSIX shell
+    - Manages the execution and data-flow between other programs
+    - Can't decode MP3s very well
+
+## Embedded DSLs (EDSLs) ##
+
+Since DSLs are so narrowly-focused, we usually need a general purpose language alongside to handle those things the DSL isn't suited for. For example, SQL provides a nice way to interact with stored data, but usually we'll choose, process and display that data using another language.
+
+A lot of the time, there will be a clear separation between these languages; for example, most PHP+SQL programs will interface the two languages by manipulating SQL code as PHP strings. This isn't very satisfactory, for a few reasons:
+
+ 1) Each language is opaque to the other; PHP won't spot SQL syntax errors.
+ 1) Programmers must keep both execution contexts in sync, and mentally jump between them; a value might be known as `tbl.name`{.sql} in SQL but be `<? $data[0]`{.php} in PHP, for example.
+ 1) The facilities of each language aren't available to the other; PHP's `<? array_map`{.php} doesn't work on SQL tables.
+
+There is another way. If our general-purpose language is flexible enough, we can define terms which act like their DSL counterparts; for example, we might define `SELECT`{.sql}, `WHERE`{.sql} and `JOIN`{.sql} as functions. This is called "embedding" the DSL in a "host" language. Terms of the EDSL are terms in the host language, rather than being hidden in strings. The host language's facilities can be used by the EDSL and the EDSL's facilities are available to the host language.
+
+There is no clear distinction between an EDSL and a self-contained API; for example, Alan Kay originally envisaged Smalltalk classes as 'mini algebras', ie. DSLs. "Modern" OOP languages aren't nearly as sophisticated as Smalltalk, so this aspect tends to get lost amongst a sea of boilerplate and procedural code.
+
+Aside from Smalltalk's "mini algebras", EDSLs are also common in LISP (where they're known as "mini languages"), FORTH (which calls them "vocabularies") and Haskell (where I got the phrase "EDSL"). Here, I'll show that even mediocre languages like PHP can host rudimentary EDSLs.
+
+## Plumb: A DSL For "Plumbing" Functions ##
+
+A domain-specific language needs a domain. The problem I want to solve is how to define simple functions very succinctly. PHP requires a large amount of boilerplate to define functions, which is unfortunate since it causes a subconscious bias against small (< 4 line), composable functions. We're forced to choose between modularity and signal-to-noise ratio, which is a false dichotomy.
+
+In particular, it should be as quick as possible to perform "plumbing": one-liners which transform data in some simple way, like a predicate for `<? array_filter`{.php} or an inductive step for `<? array_reduce`{.php}.
+
+The things I'd like to avoid are:
+
+ - The `<? return`{.php} keyword
+ - The `<? function`{.php} keyword
+ - Having to rely on `<? call_user_func`{.php} to chain function calls
+ - Having to invent names for arguments, eg. `<? $x`{.php}, `<? $y`{.php}, `<? $z`{.php}
+ - Having to prefix all variables with `<? $`{.php} (the signal-to-noise ratio of the above names is 1:1!)
+ - Having to explicitly inherit scope with the `<? use`{.php} keyword
+ - Inconsistent calling conventions (ie. functions which aren't curried)
+
+In this section I'll explain how these problems can be avoided. Our running examples will be the [Z combinator](http://en.wikipedia.org/wiki/Fixed-point_combinator#Strict_fixed_point_combinator) and the [function composition operator](http://en.wikipedia.org/wiki/Function_composition):
+
+```php
+<?
+$z = function($f) {
+       return call_user_func(function($x) use ($f) {
+                               return $f(function($v) use ($x) {
+                                           return call_user_func($x($x), $v);
+                                         });
+                             },
+                             function($x) use ($f) {
+                               return $f(function($v) use ($x) {
+                                           return call_user_func($x($x), $v);
+                                         });
+                             });
+     };
+
+$∘ = function($f, $g) {
+       return function($x) use ($f, $g) {
+         return $f($g($x));
+       };
+     };
+```
+
+### Avoiding `<? function`{.php} ###
+
+The `<? function`{.php} keyword tells PHP that the following code block is a function definition. In Plumb, *all* code blocks are function definitions, so we don't need to state this explicitly. We can drop the `<? function`{.php} keyword from anything we pass to the `<? plumb`{.php} interpreter:
+
+```php
+<?
+$z = plumb(($f) {
+             return call_user_func(($x) use ($f) {
+                                     return $f(($v) use ($x) {
+                                                 return call_user_func($x($x), $v);
+                                               });
+                                   },
+                                   ($x) use ($f) {
+                                     return $f(($v) use ($x) {
+                                                 return call_user_func($x($x), $v);
+                                               });
+                                   });
+           });
+
+$∘ = plumb(($f, $g) {
+             return ($x) use ($f, $g) {
+               return $f($g($x));
+             };
+           });
+```
+
+Of course this isn't quite valid PHP, but we'll fix that as we go along.
+
+### Avoiding `<? return`{.php} ###
+
+PHP requires an explicit keyword to denote return values; without it, a function will throw away its result and return `<? null`{.php}. Since the whole point of Plumb functions is to return values, we shouldn't have to make this explicit. In fact, we shouldn't be able to do anything else!
+
+All code blocks passed to the `<? plumb`{.php} interpreter will have an implied `<? return`{.php} at the beginning:
+
+```php
+<?
+$z = plumb(($f) {
+             call_user_func(($x) use ($f) {
+                              $f(($v) use ($x) {
+                                   call_user_func($x($x), $v)
+                                 })
+                            },
+                            ($x) use ($f) {
+                              $f(($v) use ($x) {
+                                   call_user_func($x($x), $v)
+                                 })
+                            })
+           });
+
+$∘ = plumb(($f, $g) {
+             ($x) use ($f, $g) {
+               $f($g($x))
+             }
+           });
+```
+
+### Consistent Calling Convention ###
+
+PHP functions have an associated *arity*:
+
+ - *nullary* functions don't accept any arguments, and are called like `<? $f()`{.php}
+ - *unary* functions accept a single argument, and are called like `<? $f($x)`{.php}
+ - *binary* functions accept two arguments, and are called like `<? $f($x, $y)`{.php}
+ - In general, *n-ary* functions accept *n* arguments
+
+This makes everyone's lives more complicated for absolutely no reason. To prevent Plumb suffering this problem, all of our functions will be *unary*.
+
+We can simulate n-ary functions using *currying*, which is straightforward to implement in PHP. This makes no change to our Z combinator, since it's already curried, but our composition operator is altered:
+
+```php
+<?
+$∘ = plumb(($f) {
+             ($g) use ($f) {
+               ($x) use ($f, $g) {
+                 $f($g($x))
+               }
+             }
+           });
+```
+
+### Lexical Scope ###
+
+PHP requires us to specify all of our free variables with a `<? use`{.php} clause. This is trivial to implement automatically; the only reason not to is for garbage-collection purposes, but that's insignificant for the kind of throw-away one-liners which Plumb is aimed at. With automatic lexical scoping, our examples simplify to:
+
+```php
+<?
+$z = plumb(($f) {
+             call_user_func(($x) {
+                              $f(($v) {
+                                   call_user_func($x($x), $v)
+                                 })
+                            },
+                            ($x) {
+                              $f(($v) {
+                                   call_user_func($x($x), $v)
+                                 })
+                            })
+           });
+
+$∘ = plumb(($f) {
+             ($g) {
+               ($x) {
+                 $f($g($x))
+               }
+             }
+           });
+```
+
+### Avoiding Arbitrary Names ###
+
+Having to come up with names is onerous, and having to keep their usages in sync with their declarations is even more so. To avoid having to invent new names, we can just use numerals instead:
+
+```php
+<?
+$z = plumb(($_0) {
+             call_user_func(($_1) {
+                              $_0(($_2) {
+                                   call_user_func($_1($_1), $_2)
+                                 })
+                            },
+                            ($_1) {
+                              $_0(($_2) {
+                                   call_user_func($_1($_1), $_2)
+                                 })
+                            })
+           });
+
+$∘ = plumb(($_0) {
+             ($_1) {
+               ($_2) {
+                 $_0($_1($_2))
+               }
+             }
+           });
+```
+
+This notation is unnecessarily tedious; since Plumb doesn't implement arithmetic, we might as well use raw numerals `<? 0`{.php}, `<? 1`{.php}, `<? 2`{.php}, etc. for our argument names:
+
+```php
+<?
+$z = plumb((0) {
+             call_user_func((1) {
+                              0((2) {
+                                  call_user_func(1(1), 2)
+                                })
+                            },
+                            (1) {
+                              0((2) {
+                                  call_user_func(1(1), 2)
+                                })
+                            })
+           });
+
+$∘ = plumb((0) {
+             (1) {
+               (2) {
+                 0(1(2))
+               }
+             }
+           });
+```
+
+Since our argument names follow a clear pattern, there's no need for us to specify them explicitly:
+
+```php
+<?
+$z = plumb({ call_user_func({ 0({ call_user_func(1(1), 2) }) },
+                            { 0({ call_user_func(1(1), 2) }) }) });
+
+$∘ = plumb({{{ 0(1(2)) }}});
+```
+
+One problem with this pattern of argument names is that it's not very composable: functions at different levels of nesting must reference their argument using different numbers. This makes all of our terms *context-dependent*, which breaks locality and prevents reuse.
+
+There is an alternative naming pattern, called *de Bruijn indexing*, which works the other way around: a numeral *n* refers to the argument of the function *n* levels up. In other words:
+
+ - `<? 0`{.php} *always* refers to the *current* function's argument
+ - `<? 1`{.php} *always* refers to our parent function's argument
+ - `<? 2`{.php} *always* refers to our parent's parent's argument
+ - and so on
+
+In this scheme we can define local patterns once and they'll work anywhere; for example "call our argument with itself" will always be `<? 0(0)`{.php}.
+
+To use de Bruijn indexing in our Z and composition examples, we just swap the `<? 0`{.php}s with the `<? 2`{.php}s:
+
+```php
+<?
+$z = plumb({ call_user_func({ 1({ call_user_func(1(1), 0) }) },
+                            { 1({ call_user_func(1(1), 0) }) }) });
+
+$∘ = plumb({{{ 2(1(0)) }}});
+```
+
+### Avoiding `<? call_user_func`{.php} ###
+
+PHP's semantics has a clear notion of *expressions*; unfortunately, it's syntax doesn't. Instead, its lexer has a bunch of special-cases, which are handled inconsistently. Two expressions with the same function as their value may be treated differently, based on how they're written. For example, we can call a variable as a function `<? $x()`{.php}, but we can't call a function as a function `<? (function(){})()`{.php} and we can't call a return value as a function `<? ($y())()`{.php}. The latter two are syntax errors, which is why we need to use indirection like `<? call_user_func`{.php}.
+
+This is a fundamental bug in PHP's lexer, and is especially horrendous for a function-based DSL like Plumb! There's no clear way to avoid this bug when using PHP functions; instead, we'll have to abandon representing Plumb functions with PHP's functions and use some other PHP term.
+
+Looking at our Z and composition examples, it's clear that our syntax mostly depends on *structure*, denoted using `<? {}`{.php}. Our alternative needs to support structure, so it makes sense to switch to `<? []`{.php}, ie. define our functions using arrays instead of code blocks. This makes our examples look like:
+
+```php
+<?
+$z = plumb([call_user_func([1([call_user_func(1(1), 0)])],
+                           [1([call_user_func(1(1), 0)])])]);
+
+$∘ = plumb([[[2(1(0))]]]);
+```
+
+By abandoning PHP functions, we need an alternative syntax for *calling* Plumb functions. This is actually a good thing, since PHP's calling syntax is overly complicated anyway. There's no point marking the start and end of argument lists with `<? ()`{.php} when all functions are unary! We just need a binary operator which means "call the thing on my left with the thing on my right". Since our function bodies are arrays, we might as well use the comma `<? ,`{.php}:
+
+```php
+<?
+$z = plumb([call_user_func, [1, [call_user_func, (1, 1), 0]],
+                            [1, [call_user_func, (1, 1), 0]]]);
+
+$∘ = plumb([[[2, (1, 0)]]]);
+```
+
+PHP's lexer will happily parse any number of comma-separated values in an array definition, so there's no need for `<? call_user_func`{.php} anymore:
+
+```php
+<?
+$z = plumb([[1, [(1, 1), 0]],
+            [1, [(1, 1), 0]]]);
+
+$∘ = plumb([[[2, (1, 0)]]]);
+```
+
+### Associativity ###
+
+Notice that we still need parentheses to control precedence. Our function call operator `<? ,`{.php} associates to the left, so `<? $x, $y, $z`{.php} is `<? $x($y)($z)`{.php} rather than `<? $x($y($z))`{.php}. This is the form used in our Z combinator, so we can omit the parentheses there:
+
+```php
+<?
+$z = plumb([[1, [1, 1, 0]],
+            [1, [1, 1, 0]]]);
+```
+
+We need right-associativity in `<? $∘`{.php} so the parens are necessary. Unfortunately this is invalid PHP syntax, but we can work around that by prefixing parenthesised calls with a `<? __`{.php}:
+
+```php
+<?
+$z = plumb([[1, [1, 1, 0]],
+            [1, [1, 1, 0]]]);
+
+$∘ = plumb([[[2, __(1, 0)]]])
+```
+
+Note that function composition (and point-free functions in general) are useful for reducing the need for parentheses.
+
+## Implementing Plumb ##
+
+Now that we've defined our EDSL, we have to make it actually work.
+
+### Implementing `<? __`{.php} ###
+
+The easiest part is the `<? __()`{.php} syntax. This is just PHP's function call syntax, so `<? __`{.php} will be a function. What should its return value be?
+
+Since groups `<? __($a , $b , $c)`{.php} act like functions `<? [$a , $b , $c]`{.php} we can implement them the same way: as arrays. We'll need to include a marker to indicate that these arrays are *not* function definitions. We can use a string key for this, since it won't conflict with any of the integer keys that PHP assigns to the elements. Let's use `<? 'grouped'`{.php}:
+
+```php
+<?
+function __() {
+  return ['grouped' => true] + func_get_args();
+}
+```
+
+### Implementing `<? plumb`{.php} ###
+
+Next we need to implement `<? plumb`{.php}, for interpreting our function definitions. In fact, `<? plumb`{.php} can be generalised to a function I'll call `<? plumb_`{.php}. The general version interprets function definitions *in a (lexical) environment*. In the case of `<? plumb`{.php} this environment is empty:
+
+```php
+<?
+defun('plumb_', function($env, $f, $arg) {
+                  return chain(array_merge([$arg], $env), $f);
+                });
+
+defun('plumb', plumb_([]));
+```
+
+Note that `<? defun`{.php} will curry our functions. We use this in two ways:
+
+ - `<? plumb`{.php} is just `<? plumb_`{.php} *curried with* `<? []`{.php}, so there's no need to eta-expand anything
+ - Passing a definition `<? $f`{.php} to `<? plumb`{.php} or `<? plumb_`{.php} won't execute anything; we must also pass a value for `<? $arg`{.php}. This curried function is *exactly* the PHP equivalent of `<? $f`{.php}. In other words, currying *automatically* implements Plumb function interpretation!
+
+Next we define `<? chain`{.php}, which applies the first element of an array to the second, applies the result to the third, and so on. This is clearly a *fold*, which PHP calls `<? array_reduce`{.php}:
+
+```php
+<?
+defun('chain', function($env, $arr) {
+                 return array_reduce(array_slice($arr, 1),
+                                     call($env),
+                                     interpret($env, $arr[0]));
+               });
+```
+
+We slice off the first element and interpret it, combining the result with any other elements via the `<? call`{.php} function.
+
+The `<? call`{.php} function itself is very simple:
+
+```php
+<?
+defun('call', function($env, $f, $x) {
+                return $f(interpret($env, $x));
+              });
+```
+
+Interpret `<? $x`{.php} (an element of a chain) in the environment `<? $env`{.php}, then pass it to `<? $f`{.php}.
+
+The last piece is `<? interpret`{.php}, which converts Plumb values to PHP values based on their 'type' (tag):
+
+```php
+<?
+defun('interpret', function($env, $x) {
+                     if (is_int  ($x)) return $env[$x];
+                     if (is_array($x)) return isset($x['grouped'])
+                                                ? chain($env, $x)
+                                                : plumb_($env, $x);
+                     return $x;
+                   });
+```
+
+The logic is straightforward:
+
+ - Integers are treated as de Bruijn indices, so we look them up in the `<? $env`{.php}ironment
+ - Arrays with a `<? 'grouped'`{.php} key are chained in the current `<? $env`{.php}ironment
+ - Arrays without a `<? 'grouped'`{.php} key are interpreted as functions in the current `<? $env`{.php}ironment
+ - Anything else is left as its original PHP value
+
+## Availability ##
+
+I've put a cleaned-up version of this code into [git](https://www.gitorious.org/php-plumb) and it's also available via [composer](https://packagist.org/packages/warbo/plumb).
+
+It also has [its own site](/plumb/index.html).

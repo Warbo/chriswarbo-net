@@ -1,0 +1,8 @@
+# Auto-generated static files
+_cache
+_site
+
+# Compiled code
+site
+site.hi
+site.o
