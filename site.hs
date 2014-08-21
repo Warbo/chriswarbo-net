@@ -124,8 +124,6 @@ page cmp = do route $ setExtension "html"
 
 asHtml = setExtension "html"
 
-thing = undefined
-
 essayCompile = compile $ pandocCompiler
                >>= loadAndApplyTemplate "templates/default.html" defCtx
                >>= relativizeUrls
