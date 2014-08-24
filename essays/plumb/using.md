@@ -34,18 +34,23 @@ Plumb exists to make function definition easy: just use [square brackets]. Funct
 
 To return a value explicitly, just write it inside the brackets. Plumb will try interpreting the expression according to the rules on this page; if it fails, the host language's semantics will be used. This makes it trivial to write [thunks](http://en.wikipedia.org/wiki/Thunk#Functional_programming):
 
-+------------------------------------------------+---------+
-| ```php                                         |         |
-| <?                                             |         |
-| public function testInvalidThrowsException() { |         |
-|   try {                                        |         |
-|     $this->handler                             |         |
-|          ->handleWith(plumb([false]), rand()); | **PHP** |
-|     $this->fail('Threw exception');            |         |
-|   } catch (InvalidException $e) {}             |         |
-| }                                              |         |
-| ```                                            |         |
-+------------------------------------------------+---------+
++------------------------------------------------+----------------+
+| ```javascript                                  |                |
+| var func = plumb(['hello world!']);            | **Javascript** |
+| console.log(func(null));                       |                |
+| ```                                            |                |
++------------------------------------------------+----------------+
+| ```php                                         |                |
+| <?                                             |                |
+| public function testInvalidThrowsException() { |                |
+|   try {                                        |                |
+|     $this->handler                             |                |
+|          ->handleWith(plumb([false]), rand()); | **PHP**        |
+|     $this->fail('Threw exception');            |                |
+|   } catch (InvalidException $e) {}             |                |
+| }                                              |                |
+| ```                                            |                |
++------------------------------------------------+----------------+
 
 ## Function Arguments ##
 
