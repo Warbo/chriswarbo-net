@@ -1,4 +1,3 @@
-{$,Parser hint: pure}
 window.hill_searchers = [];
 window.hill_lines = [];
 window.gradient = [];
@@ -24,15 +23,15 @@ $(function() {
 		}
 	});
 	$('#hill_number').change();
-	
+
 	$('#hill_fitness_display').text(0);
-	
+
 	$('#hill_step').change(function(){
 		$('#hill_step_display').text(Math.round($('#hill_step').val()));
 	});
 	$('#hill_step').change();
 });
-	
+
 hill_init = function(svg) {
 	_.times(Math.round(Math.random() * 100 + 1), function(){
 		var l = Math.random();
@@ -94,7 +93,7 @@ hill_step = function(x, y, n) {
 	else {
 		var old_fit = fitn(x, y);
 		var new_fit = fitn(new_x, new_y);
-		
+
 		while (window.hill_lines.length < n + 1) { window.hill_lines.push([]); }
 		var cols = ['white', 'yellow', 'lime', 'green', 'cyan', 'blue', 'purple'];
 		window.hill_lines[n].push($('#hill_playfield').svg('get').line(x, y, new_x, new_y, {stroke: cols[n % cols.length], 'stroke-width': 1}));
@@ -104,11 +103,11 @@ hill_step = function(x, y, n) {
 			new_y = y;
 			new_fit = old_fit;
 		}
-		
+
 		// Find the fitness of this point
 		// Only update if it's more than the current value
 		$('#hill_fitness_display').text(new_fit+"");
-			
+
 		// Clean up old lines
 		while (window.hill_lines[n].length > 10) {
 			$('#hill_playfield').svg('get').remove(window.hill_lines[n].shift());

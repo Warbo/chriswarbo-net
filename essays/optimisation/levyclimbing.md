@@ -21,9 +21,10 @@ Each (x, y) point in the square is a solution, and our goal is to find the best 
   <label for="levyhill_scale">Scale:</label>&nbsp;&nbsp;<a id="levyhill_scale_display"></a>
 </div>
 </form>
-{$REQUIRE_JAVASCRIPT,javascript_jquery_svg}
-{$REQUIRE_JAVASCRIPT,javascript_underscore}
-{$REQUIRE_JAVASCRIPT,javascript_cedi_levyhill}
+<script src="/js/jquery.js"></script>
+<script src="/js/jquery_svg.js"></script>
+<script src="/js/underscore.js"></script>
+<script src="/js/optimisation/levyhill.js"></script>
 
 Moving the "Number of searches" slider will add and remove instances of the search. All of them are running the same code, but they start in random places and take random steps so their solutions will be different. The "Scale" is a parameter for the Pareto distribution which governs the probabilities of short and long steps. Like the random walk hill climber, we don't need a "Desired fitness" slider this time, since the search will stop once it can't find a better solution. We have no idea if the solution it finds will be the best one though; welcome to the [halting problem](http://en.wikipedia.org/wiki/Halting_problem)!
 

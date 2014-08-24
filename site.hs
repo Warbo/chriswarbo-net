@@ -9,8 +9,9 @@ import           Hakyll
 
 main :: IO ()
 main = hakyll $ do
+    cp "data/**"
     cp "images/*"
-    cp "js/*"
+    cp "js/**"
 
     match "css/*" $ do
         route   idRoute

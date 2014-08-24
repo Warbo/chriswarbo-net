@@ -1,4 +1,3 @@
-{$,Parser hint: pure}
 window.avoid_searchers = [];
 window.avoid_lines = [];
 window.gradient = [];
@@ -19,18 +18,18 @@ $(function() {
 		}
 	});
 	$('#avoid_number').change();
-	
+
 	$('#avoid_fitness').change(function(){
 		$('#avoid_fitness_display').text(Math.round($('#avoid_fitness').val()));
 	});
 	$('#avoid_fitness').change();
-	
+
 	$('#avoid_step').change(function(){
 		$('#avoid_step_display').text(Math.round($('#avoid_step').val()));
 	});
 	$('#avoid_step').change();
 });
-	
+
 avoid_init = function(svg) {
 	_.times(Math.round(Math.random() * 100 + 1), function(){
 		var l = Math.random();
@@ -65,7 +64,7 @@ avoid_init = function(svg) {
 	$('#avoid_playfield').svg('get').rect(0,0,$('#avoid_playfield').width(),$('#avoid_playfield').height(),{'fill': 'black'});
 	_.each(window.gradient, function(a){a(0, 0, true);});
 }
-	
+
 avoid_step = function(x, y, n) {
 	if (n + 1 > window.avoid_searchers.length) {
 		while (window.avoid_lines[n].length > 0) {
@@ -77,12 +76,12 @@ avoid_step = function(x, y, n) {
 	var angle = Math.random() * 2 * Math.PI;
 	var new_x = x + (length * Math.cos(angle));
 	var new_y = y + (length * Math.sin(angle));
-	
+
 	if ($.inArray([Math.round(new_x), Math.round(new_y)], window.avoid_searchers[n]) != -1) {
 		setTimeout(function(){ avoid_step(x, y, n); }, 0);
 		return;
 	}
-	
+
 	var w = $('#avoid_playfield').width();
 	var h = $('#avoid_playfield').height();
 	if ((new_x < 0) || (new_x >= w) || (new_y < 0) || (new_y >= h)) {
@@ -102,7 +101,7 @@ avoid_step = function(x, y, n) {
 			new_x = x;
 			new_y = y;
 		}
-			
+
 		// Clean up old lines
 		if (length != 1.0) {
 			while (window.avoid_lines[n].length > 10) {
@@ -116,4 +115,3 @@ avoid_step = function(x, y, n) {
 	}
 	window.setTimeout(function(){ avoid_step(new_x, new_y, n); }, 10);
 }
-

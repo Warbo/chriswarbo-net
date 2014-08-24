@@ -28,9 +28,10 @@ In the genetic algorithm on this page, I've only included "crossover", which is 
     <input type="checkbox" id="crossover_stable" value="0" /><label for="crossover_stable">Stable sort. Slower, but stops the green blob jumping between equal-fitness solutions.</label>
   </div>
 </form>
-{$REQUIRE_JAVASCRIPT,javascript_jquery_svg}
-{$REQUIRE_JAVASCRIPT,javascript_underscore}
-{$REQUIRE_JAVASCRIPT,javascript_cedi_crossover}
+<script src="/js/jquery.js"></script>
+<script src="/js/jquery_svg.js"></script>
+<script src="/js/underscore.js"></script>
+<script src="/js/optimisation/crossover.js"></script>
 
 In the example above, the same greyscale fitness landscape is used as in the individual (ie. non-population-based) search algorithms. Since our genetic algorithm contains a population of many competing solutions, there's no advantage to running multiple instances at the same time. Instead, we have a population slider which tells us how many solutions are kept in the population at any one time.
 

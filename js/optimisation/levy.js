@@ -1,4 +1,3 @@
-{$,Parser hint: pure}
 window.levy_searchers = [];
 window.levy_lines = [];
 window.gradient = [];
@@ -23,18 +22,18 @@ $(function() {
 		}
 	});
 	$('#levy_number').change();
-	
+
 	$('#levy_fitness').change(function(){
 		$('#levy_fitness_display').text(Math.round($('#levy_fitness').val()));
 	});
 	$('#levy_fitness').change();
-	
+
 	$('#levy_scale').change(function(){
 		$('#levy_scale_display').text(Math.round($('#levy_scale').val()));
 	});
 	$('#levy_scale').change();
 });
-	
+
 levy_init = function(svg) {
 	_.times(Math.round(Math.random() * 100 + 1), function(){
 		var l = Math.random();
@@ -69,7 +68,7 @@ levy_init = function(svg) {
 	$('#levy_playfield').svg('get').rect(0,0,$('#levy_playfield').width(),$('#levy_playfield').height(),{'fill': 'black'});
 	_.each(window.gradient, function(a){a(0, 0, true);});
 }
-	
+
 levy_step = function(x, y, n) {
 	if (n + 1 > window.levy_searchers.length) {
 		while (window.levy_lines[n].length > 0) {
@@ -91,7 +90,7 @@ levy_step = function(x, y, n) {
 		new_x = x + (length * Math.cos(angle));
 		new_y = y + (length * Math.sin(angle));
 	}
-	
+
 	while (window.levy_lines.length < n + 1) { window.levy_lines.push([]); }
 	var cols = ['white', 'yellow', 'lime', 'green', 'cyan', 'blue', 'purple'];
 	window.levy_lines[n].push($('#levy_playfield').svg('get').line(x, y, new_x, new_y, {stroke: cols[n % cols.length], 'stroke-width': 1}));
@@ -102,12 +101,11 @@ levy_step = function(x, y, n) {
 		new_x = x;
 		new_y = y;
 	}
-			
+
 	// Clean up old lines
 	while (window.levy_lines[n].length > 10) {
 		$('#levy_playfield').svg('get').remove(window.levy_lines[n].shift());
 	}
-	
+
 	window.setTimeout(function(){ levy_step(new_x, new_y, n); }, 10);
 }
-

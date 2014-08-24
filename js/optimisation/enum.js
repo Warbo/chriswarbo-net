@@ -1,4 +1,3 @@
-{$,Parser hint: pure}
 window.gradient = [];
 
 $(function() {
@@ -8,8 +7,8 @@ $(function() {
 		var fittest = -1;
 		var green = false;
 		var blobs = [];
-		
-		var worker = new Worker('/data_custom/enum.js');
+
+		var worker = new Worker('/js/optimisation/enum_worker.js');
 		worker.onmessage = function(event) {
 			var x = event.data[0];
 			var y = event.data[1];

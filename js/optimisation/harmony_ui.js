@@ -1,5 +1,3 @@
-{$,Parser hint: pure}
-
 $(function() {
 	var gradient = [];
 	var fittest = false;
@@ -45,7 +43,7 @@ $(function() {
             (function() {
                 var x = 0;
                 var y = 0;
-                var worker = new Worker('data_custom/harmony.js');
+                var worker = new Worker('/js/optimisation/harmony_worker.js');
                 var dots = [];
                 var fit = -1;
                 var new_fit = -1;
@@ -76,7 +74,7 @@ $(function() {
                         	$('#harmony_playfield').svg('get').remove(dots[data['removed']]);
                         }
                         dots[data['removed']] = $('#harmony_playfield').svg('get').circle(x, y, 2, {fill: 'red'});
-                        
+
                         if (new_fit > fit) {
 			    fit = new_fit;
                             $('#harmony_fitness_display').text(fit+'');
@@ -88,7 +86,7 @@ $(function() {
                     });
                     worker.postMessage('');
                 };
-                
+
                 worker.postMessage({
 		    hms: parseInt($('#hms').val()),
 		    hmcr: $('#hmcr').val()/10.0,

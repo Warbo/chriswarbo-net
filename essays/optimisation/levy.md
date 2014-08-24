@@ -26,9 +26,10 @@ Due to the random path lengths, the wrap-around technique used in the enumeratio
   <label for="levy_scale">Scale:</label>&nbsp;&nbsp;<a id="levy_scale_display"></a>
 </div>
 </form>
-{$REQUIRE_JAVASCRIPT,javascript_jquery_svg}
-{$REQUIRE_JAVASCRIPT,javascript_underscore}
-{$REQUIRE_JAVASCRIPT,javascript_cedi_levy}
+<script src="/js/jquery.js"></script>
+<script src="/js/jquery_svg.js"></script>
+<script src="/js/underscore.js"></script>
+<script src="/js/optimisation/levy.js"></script>
 
 Moving the "Number of searches" slider will add and remove instances of the search. All of them are running the same code, but their random angles and distances will make them go to different places. "Scale" changes the length distribution used. The "Desired fitness" slider tells the searches when to stop. Setting it low makes the search complete quickly, but with a poor solution; setting it high guarantees a better solution, but this may never be found. Welcome to the [halting problem](http://en.wikipedia.org/wiki/Halting_problem)!
 

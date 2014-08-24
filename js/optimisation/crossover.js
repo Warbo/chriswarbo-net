@@ -1,4 +1,3 @@
-{$,Parser hint: pure}
 window.crossover_population = [];
 window.crossover_blobs = [];
 window.gradient = [];
@@ -86,15 +85,15 @@ $(function() {
 		$('#crossover_population_display').text($('#crossover_population').val());
 	});
 	$('#crossover_population').change();
-	
+
 	$('#crossover_fitness').text('0');
-	
+
 	$('#crossover_rate').change(function(){
 		$('#crossover_rate_display').text(Math.round($('#crossover_rate').val()));
 	});
 	$('#crossover_rate').change();
 });
-	
+
 crossover_init = function(svg) {
 	_.times(Math.round(Math.random() * 100 + 1), function(){
 		var l = Math.random();
@@ -151,7 +150,7 @@ comp = function (a, b) {
 	}
 	return 0;
 };
-			
+
 crossover = function(a, b) {
 	if (typeof a === 'undefined' || typeof b == 'undefined') { return 0; }
 	// Duplicate the parents, turning [x, y] into xy
@@ -232,17 +231,17 @@ window.draw_blobs = function(x) {
 		$('#crossover_playfield').svg('get').circle(solution['solution'][0], solution['solution'][1], 5, {fill: 'lime'})
 	);
 };
-		
+
 crossover_step = function() {
 	// Grab our population first (if we keep reading the input, we
 	// may get inconsistent values)
 	var pop = parseInt($('#crossover_population').val());
-	
+
 	// We are swapping 1/4 of the population each time
 	var to_swap = Math.ceil(pop / 4.0);
-	
+
 	window.new_solutions = [];
-	
+
 	// Bulk out the population if the slider has been increased
 	if (pop > window.crossover_population.length) {
 		window.crossover_population.reverse();
@@ -254,9 +253,9 @@ crossover_step = function() {
 		}));
 		window.crossover_population.reverse();
 	}
-	
+
 	_.times(Math.ceil(to_swap / 2), window.reproduce);
-	
+
 	// Sort the population by fitness
 	if ($('#crossover_stable').is(':checked')) {
 		window.crossover_population = merge_sort(window.crossover_population, comp);
@@ -264,9 +263,9 @@ crossover_step = function() {
 	else {
 		window.crossover_population.sort(comp);
 	}
-	
+
 	$('#crossover_fitness').text(fitn(window.crossover_population[window.crossover_population.length - 1]['solution'])+"");
-	
+
 	// At this point we have a sorted array, so draw our blobs
 	while (window.crossover_blobs.length > 0) {
 		$('#crossover_playfield').svg('get').remove(window.crossover_blobs.shift());
@@ -283,11 +282,11 @@ crossover_step = function() {
 			$('#crossover_playfield').svg('get').remove(s['blob']);
 		}
 	}
-	
+
 	// Add the new solutions to the mix
 	window.crossover_population.reverse();
 	window.crossover_population.push.apply(window.crossover_population, window.new_solutions);
 	window.crossover_population.reverse();
-	
+
 	window.setTimeout(function(){ crossover_step(); }, 10);
 }

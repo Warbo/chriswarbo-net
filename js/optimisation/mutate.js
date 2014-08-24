@@ -1,4 +1,3 @@
-{$,Parser hint: pure}
 window.mutate_population = [];
 window.mutate_blobs = [];
 window.gradient = [];
@@ -86,15 +85,15 @@ $(function() {
 		$('#mutate_population_display').text($('#mutate_population').val());
 	});
 	$('#mutate_population').change();
-	
+
 	$('#mutate_fitness').text('0');
-	
+
 	$('#mutate_rate').change(function(){
 		$('#mutate_rate_display').text(Math.round($('#mutate_rate').val()));
 	});
 	$('#mutate_rate').change();
 });
-	
+
 mutate_init = function(svg) {
 	_.times(Math.round(Math.random() * 100 + 1), function(){
 		var l = Math.random();
@@ -151,7 +150,7 @@ comp = function (a, b) {
 	}
 	return 0;
 };
-			
+
 mutate = function(a) {
 	if (typeof a === 'undefined') { return 0; }
 	var x = a['solution'][0];
@@ -222,17 +221,17 @@ window.draw_blobs = function(x) {
 		$('#mutate_playfield').svg('get').circle(solution['solution'][0], solution['solution'][1], 5, {fill: 'lime'})
 	);
 };
-		
+
 mutate_step = function() {
 	// Grab our population first (if we keep reading the input, we
 	// may get inconsistent values)
 	var pop = parseInt($('#mutate_population').val());
-	
+
 	// We are swapping 1/4 of the population each time
 	var to_swap = Math.ceil(pop / 4.0);
-	
+
 	window.new_solutions = [];
-	
+
 	// Bulk out the population if the slider has been increased
 	if (pop > window.mutate_population.length) {
 		window.mutate_population.reverse();
@@ -244,9 +243,9 @@ mutate_step = function() {
 		}));
 		window.mutate_population.reverse();
 	}
-	
+
 	_.times(to_swap, window.reproduce);
-	
+
 	// Sort the population by fitness
 	if ($('#mutate_stable').is(':checked')) {
 		window.mutate_population = merge_sort(window.mutate_population, comp);
@@ -254,9 +253,9 @@ mutate_step = function() {
 	else {
 		window.mutate_population.sort(comp);
 	}
-	
+
 	$('#mutate_fitness').text(fitn(window.mutate_population[window.mutate_population.length - 1]['solution'])+"");
-	
+
 	// At this point we have a sorted array, so draw our blobs
 	while (window.mutate_blobs.length > 0) {
 		$('#mutate_playfield').svg('get').remove(window.mutate_blobs.shift());
@@ -275,11 +274,11 @@ mutate_step = function() {
 			$('#mutate_playfield').svg('get').remove(sol['blob']);
 		}
 	}
-	
+
 	// Add the new solutions to the mix
 	window.mutate_population.reverse();
 	window.mutate_population.push.apply(window.mutate_population, window.new_solutions);
 	window.mutate_population.reverse();
-	
+
 	window.setTimeout(function(){ mutate_step(); }, 10);
 }

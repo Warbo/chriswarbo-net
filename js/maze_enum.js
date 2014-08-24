@@ -1,4 +1,3 @@
-{$,Parser hint: pure}
 $(function() {
 	$('#maze').svg({
 		onLoad: function() {

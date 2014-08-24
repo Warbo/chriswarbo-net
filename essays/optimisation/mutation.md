@@ -28,9 +28,10 @@ In the genetic algorithm on this page, I've only included random genetic mutatio
     <input type="checkbox" id="mutate_stable" value="0" /><label for="mutate_stable">Stable sort. Slower, but stops the green blob jumping between equal-fitness solutions.</label>
   </div>
 </form>
-{$REQUIRE_JAVASCRIPT,javascript_jquery_svg}
-{$REQUIRE_JAVASCRIPT,javascript_underscore}
-{$REQUIRE_JAVASCRIPT,javascript_cedi_mutate}
+<script src="/js/jquery.js"></script>
+<script src="/js/jquery_svg.js"></script>
+<script src="/js/underscore.js"></script>
+<script src="/js/optimisation/mutate.js"></script>
 
 In the example above, the same greyscale fitness landscape is used as in the individual (ie. non-population-based) search algorithms. Since our genetic algorithm contains a population of many competing solutions, there's no advantage to running multiple instances at the same time. Instead, we have a population slider which tells us how many solutions are kept in the population at any one time.
 
@@ -50,4 +51,4 @@ This problem might seem surmountable in this case, since a solution that's 1 bit
 
 In my opinion, mutation-only genetic algorithms aren't worth using. If you're going to go to the effort of implementing all of the required population management for a search algorithm like this then you may as well go a bit further and use a more sophisticated technique than just random mutation.
 
- * The reason I'm apprehensive to use this phrase is that the scientific term "fittest" comes with all kinds of dangerous linguistic baggage. Eugenics and mass murder have been committed in the name of weeding out the "least fit"; however this misses the point entirely, which is that survival [i]defines[/i] the fittest. In nature, the only goal is to stay around for as long as possible, either as an individual or, more commonly, via reproduction. The goal is implied; you don't have to bother surviving, but those that didn't aren't around any more. Crucially, how you manage to survive is completely irrelevant. For example the plump, flightless, slow, clumsy chicken is the most successful bird on the planet; there are more chickens than there are any other bird. In fact, the chicken is the most successful dinosaur there's ever been. Their prospects look good too; human beings won't let them die out any time soon, and unless they turn out to be specifically unsuited for some reason, it's a pretty sure bet that once we colonise other planets the chicken won't be far behind. Of course chickens will never attain the unbelievably grand level of fitness enjoyed by bacteria, who's space colonies already boast far greater populations than there are humans on Earth. |
+ * The reason I'm apprehensive to use this phrase is that the scientific term "fittest" comes with all kinds of dangerous linguistic baggage. Eugenics and mass murder have been committed in the name of weeding out the "least fit"; however this misses the point entirely, which is that survival [i]defines[/i] the fittest. In nature, the only goal is to stay around for as long as possible, either as an individual or, more commonly, via reproduction. The goal is implied; you don't have to bother surviving, but those that didn't aren't around any more. Crucially, how you manage to survive is completely irrelevant. For example the plump, flightless, slow, clumsy chicken is the most successful bird on the planet; there are more chickens than there are any other bird. In fact, the chicken is the most successful dinosaur there's ever been. Their prospects look good too; human beings won't let them die out any time soon, and unless they turn out to be specifically unsuited for some reason, it's a pretty sure bet that once we colonise other planets the chicken won't be far behind. Of course chickens will never attain the unbelievably grand level of fitness enjoyed by bacteria, who's space colonies already boast far greater populations than there are humans on Earth.

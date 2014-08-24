@@ -1,10 +1,10 @@
 // This runs Levin Search for the BitBitJump language, see
 // http://mazonka.com/bbj/
-// 
+//
 // BitBitJump acts on a bitstring, which can be thought of as a
 // virtual machine's memory. It has a counter, initialised to
 // zero, and it runs a single instruction over and over:
-// 
+//
 //  1) Read a binary number from memory, m bits long, starting
 //     at the counter. Let's call this "A".
 //  2) Read another binary number from memory, m bits long,
@@ -12,7 +12,7 @@
 //  3) Copy the Ath bit of memory to Bth bit.
 //  4) Read a binary number from memory, m bits long, starting
 //     at (counter + 2m). Make this the new counter value.
-// 
+//
 // Numbers are big-endian, as they are in Mathematics, so the
 // only implementation detail is the value of m. This is
 // effectively the word-size for an m-bit BitBitJump machine.
@@ -89,7 +89,7 @@ onmessage = (function() {
 			postMessage(result);
 		};
 	})();
-	
+
 	return (function() {
 		var phase = 1;
 		var m = 1;

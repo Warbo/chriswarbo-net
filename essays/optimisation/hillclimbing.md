@@ -21,9 +21,10 @@ Each (x, y) point in the square is a solution, and our goal is to find the best 
   <label for="hill_step">Step size:</label>&nbsp;&nbsp;<a id="hill_step_display"></a>
 </div>
 </form>
-{$REQUIRE_JAVASCRIPT,javascript_jquery_svg}
-{$REQUIRE_JAVASCRIPT,javascript_underscore}
-{$REQUIRE_JAVASCRIPT,javascript_cedi_hill}
+<script src="/js/jquery.js"></script>
+<script src="/js/jquery_svg.js"></script>
+<script src="/js/underscore.js"></script>
+<script src="/js/optimisation/hill.js"></script>
 
 Moving the "Number of searches" slider will add and remove instances of the search. All of them are running the same code, but their random angles will be different (since they're, um, random). The "Step size" tells the searches how far to move from their current location when they take a step; low values mean that not much of the space gets explored, high values mean that nearby solutions get missed. We don't need a "Desired fitness" slider this time, since the search will stop once it can't find a better solution. We have no idea if the solution it finds will be the best one though; welcome to the [halting problem](http://en.wikipedia.org/wiki/Halting_problem)!
 

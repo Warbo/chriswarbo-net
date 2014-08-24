@@ -1,4 +1,3 @@
-{$,Parser hint: pure}
 window.walk_searchers = [];
 window.walk_lines = [];
 window.gradient = [];
@@ -19,18 +18,18 @@ $(function() {
 		}
 	});
 	$('#walk_number').change();
-	
+
 	$('#walk_fitness').change(function(){
 		$('#walk_fitness_display').text(Math.round($('#walk_fitness').val()));
 	});
 	$('#walk_fitness').change();
-	
+
 	$('#walk_step').change(function(){
 		$('#walk_step_display').text(Math.round($('#walk_step').val()));
 	});
 	$('#walk_step').change();
 });
-	
+
 walk_init = function(svg) {
 	_.times(Math.round(Math.random() * 100 + 1), function(){
 		var l = Math.random();
@@ -100,7 +99,7 @@ walk_step = function(x, y, n) {
 			new_x = x;
 			new_y = y;
 		}
-			
+
 		// Clean up old lines
 		while (window.walk_lines[n].length > 10) {
 			$('#walk_playfield').svg('get').remove(window.walk_lines[n].shift());

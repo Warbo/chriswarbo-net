@@ -1,4 +1,3 @@
-{$,Parser hint: pure}
 window.levin_searchers = [];
 window.levin_counter = 0;
 window.levin_round = 1;
@@ -25,7 +24,7 @@ $(function() {
 	});
 	$('#levin_fitness_display').text('-1');
 });
-	
+
 levin_init = function(svg) {
 	_.times(Math.round(Math.random() * 100 + 1), function(){
 		var l = Math.random();
@@ -207,4 +206,3 @@ window.make_rational = function(max_steps, n) {
    }
    return false;
 };
-

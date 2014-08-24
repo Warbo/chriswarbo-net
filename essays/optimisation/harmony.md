@@ -46,9 +46,10 @@ Levin Search will always find a solution if one exists, since it will eventually
   <label for="fw"></label><input type="range" min="0" max="10" value="" id="fw" />  fw
 </div>
 </form>
-{$REQUIRE_JAVASCRIPT,javascript_jquery_svg}
-{$REQUIRE_JAVASCRIPT,javascript_underscore}
-{$REQUIRE_JAVASCRIPT,javascript_cedi_harmony}
+<script src="/js/jquery.js"></script>
+<script src="/js/jquery_svg.js"></script>
+<script src="/js/underscore.js"></script>
+<script src="/js/optimisation/harmony_ui.js"></script>
 
 Click the square above to start the search. Since it's completely deterministic, there's no point running more than one instance at a time. The "Best fitness so far" slider tells us what the search has found so far.
 

@@ -27,9 +27,11 @@ This basically takes all of the odd coordinates, like (1, 1), (1, 3), (3, 1), et
 
 <div id="enum_playfield" style="width: 500px; height: 500px;"></div>
 <span>Fittest so far: <a id="enum_fitness_display">-1</a></span>
-{$REQUIRE_JAVASCRIPT,javascript_jquery_svg}
-{$REQUIRE_JAVASCRIPT,javascript_underscore}
-{$REQUIRE_JAVASCRIPT,javascript_cedi_enum}
+
+<script src="/js/jquery.js"></script>
+<script src="/js/jquery_svg.js"></script>
+<script src="/js/underscore.js"></script>
+<script src="/js/optimisation/enum.js"></script>
 
 Clicking the square above will start the search.
 

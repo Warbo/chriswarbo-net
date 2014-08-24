@@ -1,4 +1,3 @@
-{$,Parser hint: pure}
 window.tabu_searchers = [];
 window.tabu_lines = [];
 window.gradient = [];
@@ -19,18 +18,18 @@ $(function() {
 		}
 	});
 	$('#tabu_number').change();
-	
+
 	$('#tabu_fitness').change(function(){
 		$('#tabu_fitness_display').text(Math.round($('#tabu_fitness').val()));
 	});
 	$('#tabu_fitness').change();
-	
+
 	$('#tabu_step').change(function(){
 		$('#tabu_step_display').text(Math.round($('#tabu_step').val()));
 	});
 	$('#tabu_step').change();
 });
-	
+
 tabu_init = function(svg) {
 	_.times(Math.round(Math.random() * 100 + 1), function(){
 		var l = Math.random();
@@ -65,7 +64,7 @@ tabu_init = function(svg) {
 	$('#tabu_playfield').svg('get').rect(0,0,$('#tabu_playfield').width(),$('#tabu_playfield').height(),{'fill': 'black'});
 	_.each(window.gradient, function(a){a(0, 0, true);});
 }
-	
+
 tabu_step = function(x, y, n) {
 	if (n + 1 > window.tabu_searchers.length) {
 		while (window.tabu_lines[n].length > 0) {
@@ -83,12 +82,12 @@ tabu_step = function(x, y, n) {
 	angle = angle * 2 * Math.PI;
 	var new_x = x + (length * Math.cos(angle));
 	var new_y = y + (length * Math.sin(angle));
-	
+
 	if ($.inArray([Math.round(new_x), Math.round(new_y)], window.tabu_searchers[n]) != -1) {
 		setTimeout(function(){ tabu_step(x, y, n); }, 100);
 		return;
 	}
-	
+
 	var w = $('#tabu_playfield').width();
 	var h = $('#tabu_playfield').height();
 	if ((new_x < 0) || (new_x >= w) || (new_y < 0) || (new_y >= h)) {
@@ -108,7 +107,7 @@ tabu_step = function(x, y, n) {
 			new_x = x;
 			new_y = y;
 		}
-			
+
 		// Clean up old lines
 		if (length == 1.0) {
 			while (window.tabu_lines[n].length > window.tabu_searchers[n].length) {

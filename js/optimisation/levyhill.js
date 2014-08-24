@@ -1,4 +1,3 @@
-{$,Parser hint: pure}
 window.levyhill_searchers = [];
 window.levyhill_lines = [];
 window.gradient = [];
@@ -31,18 +30,18 @@ $(function() {
 		}
 	});
 	$('#levyhill_number').change();
-	
+
 	$('#levyhill_fitness').change(function(){
 		$('#levyhill_fitness_display').text(Math.round($('#levyhill_fitness').val()));
 	});
 	$('#levyhill_fitness').change();
-	
+
 	$('#levyhill_scale').change(function(){
 		$('#levyhill_scale_display').text(Math.round($('#levyhill_scale').val()));
 	});
 	$('#levyhill_scale').change();
 });
-	
+
 levyhill_init = function(svg) {
 	_.times(Math.round(Math.random() * 100 + 1), function(){
 		var l = Math.random();
@@ -77,7 +76,7 @@ levyhill_init = function(svg) {
 	$('#levyhill_playfield').svg('get').rect(0,0,$('#levyhill_playfield').width(),$('#levyhill_playfield').height(),{'fill': 'black'});
 	_.each(window.gradient, function(a){a(0, 0, true);});
 }
-	
+
 levyhill_step = function(x, y, n) {
 	if (n + 1 > window.levyhill_searchers.length) {
 		while (window.levyhill_lines[n].length > 0) {
@@ -99,25 +98,23 @@ levyhill_step = function(x, y, n) {
 		new_x = x + (length * Math.cos(angle));
 		new_y = y + (length * Math.sin(angle));
 	}
-	
+
 	var new_fit = fitn(new_x, new_y);
 	var old_fit = fitn(x, y);
-	
+
 	while (window.levyhill_lines.length < n + 1) { window.levyhill_lines.push([]); }
 	var cols = ['white', 'yellow', 'lime', 'green', 'cyan', 'blue', 'purple'];
 	window.levyhill_lines[n].push($('#levyhill_playfield').svg('get').line(x, y, new_x, new_y, {stroke: cols[n % cols.length], 'stroke-width': 1}));
-	
+
 	// Clean up old lines
 	while (window.levyhill_lines[n].length > 10) {
 		$('#levyhill_playfield').svg('get').remove(window.levyhill_lines[n].shift());
 	}
-	
+
 	if (new_fit < old_fit) {
 		new_x = x;
 		new_y = y;
 	}
-	
+
 	window.setTimeout(function(){ levyhill_step(new_x, new_y, n); }, 10);
 }
-
-

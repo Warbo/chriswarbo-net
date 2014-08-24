@@ -1,4 +1,3 @@
-{$,Parser hint: pure}
 window.mutatecross_population = [];
 window.mutatecross_blobs = [];
 window.gradient = [];
@@ -86,9 +85,9 @@ $(function() {
 		$('#mutatecross_population_display').text($('#mutatecross_population').val());
 	});
 	$('#mutatecross_population').change();
-	
+
 	$('#mutatecross_fitness').text('0');
-	
+
 	$('#mutatecross_cross_rate').change(function(){
 		$('#mutatecross_cross_rate_display').text(Math.round($('#mutatecross_cross_rate').val()));
 	});
@@ -98,7 +97,7 @@ $(function() {
 	});
 	$('#mutatecross_mutate_rate').change();
 });
-	
+
 mutatecross_init = function(svg) {
 	_.times(Math.round(Math.random() * 100 + 1), function(){
 		var l = Math.random();
@@ -155,7 +154,7 @@ comp = function (a, b) {
 	}
 	return 0;
 };
-			
+
 crossover = function(a, b) {
 	if (typeof a === 'undefined' || typeof b == 'undefined') { return 0; }
 	// Duplicate the parents, turning [x, y] into xy
@@ -276,7 +275,7 @@ window.draw_blobs = function(x) {
 		$('#mutatecross_playfield').svg('get').circle(solution[0], solution[1], 5, {fill: 'lime'})
 	);
 };
-		
+
 mutatecross_step = function() {
 	// Grab our population first (if we keep reading the input, we
 	// may get inconsistent values)

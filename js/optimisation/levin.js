@@ -1,7 +1,5 @@
-{$,Parser hint: pure}
 window.gradient = [];
 window.fittest = false;
-window.
 
 $(function() {
 	$('#levin_playfield').svg({onLoad: levin_init});
@@ -9,7 +7,7 @@ $(function() {
             (function() {
                 var x = 0;
                 var y = 0;
-                var worker = new Worker('data_custom/levin_bbj.js');
+                var worker = new Worker('/js/optimisation/levin_bbj.js');
                 var dots = [];
                 var phase = 0;
                 var m = 0;
@@ -55,7 +53,7 @@ $(function() {
                     }
                     worker.postMessage('');
                 };
-                
+
                 worker.postMessage('');
             })();
 
@@ -63,7 +61,7 @@ $(function() {
 	});
 	$('#levin_fitness_display').text('-1');
 });
-	
+
 levin_init = function(svg) {
 	_.times(Math.round(Math.random() * 100 + 1), function(){
 		var l = Math.random();

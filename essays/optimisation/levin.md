@@ -33,10 +33,11 @@ Levin Search will always find a solution if one exists, since it will eventually
 <div>
   <label for="#fill">Fill memory?</label><input type="checkbox" id="fill" checked="checked" />
 </form>
-{$REQUIRE_JAVASCRIPT,javascript_jquery_svg}
-{$REQUIRE_JAVASCRIPT,javascript_underscore}
-{$REQUIRE_JAVASCRIPT,javascript_cedi_levin}
-{$REQUIRE_JAVASCRIPT,javascript_cedi_zot}
+<script src="/js/jquery.js"></script>
+<script src="/js/jquery_svg.js"></script>
+<script src="/js/underscore.js"></script>
+<script src="/js/optimisation/levin.js"></script>
+<script src="/js/zot.js"></script>
 
 Click the square above to start the search. Since it's completely deterministic, there's no point running more than one instance at a time. The "Best fitness so far" slider tells us what the search has found so far.
 
