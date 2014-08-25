@@ -25,23 +25,13 @@ main = hakyll $ do
 
     match "posts/*.markdown" $ do
         route asHtml
-        compile $ pandocCompiler
-            >>= loadAndApplyTemplate "templates/post.html"    postCtx
-            >>= loadAndApplyTemplate "templates/default.html" postCtx
-            >>= relativizeUrls
+        compile $ pandocCompiler >>= renderPost
 
     match "posts/*.html" $ do
         route asHtml
-        compile $ getResourceBody
-            >>= loadAndApplyTemplate "templates/post.html"    postCtx
-            >>= loadAndApplyTemplate "templates/default.html" postCtx
-            >>= relativizeUrls
+        compile $ getResourceBody >>= renderPost
 
-    match "essays/*.md" $ do
-        route $ gsubRoute "essays/" (const "") `composeRoutes` asHtml
-        essayCompile
-
-    match "essays/*/*.md" $ do
+    match "essays/**.md" $ do
         route $ gsubRoute "essays/" (const "") `composeRoutes` asHtml
         essayCompile
 
@@ -108,7 +98,15 @@ main = hakyll $ do
             getResourceBody
                 >>= applyAsTemplate                               defCtx
                 >>= loadAndApplyTemplate "templates/default.html" defCtx
-
+{-
+    create ["atom.xml"] $ do
+        route idRoute
+        compile $ do
+            let feedCtx = postCtx `mappend` bodyField "description"
+            posts <- fmap (take 10) . recentFirst
+                 =<< loadAllSnapshots "posts/*.markdown" "content"
+            renderAtom feedConf feedCtx posts
+-}
 --------------------------------------------------------------------------------
 postCtx :: Context String
 postCtx = dateField "date" "%B %e, %Y" `mappend` defCtx
@@ -127,4 +125,16 @@ asHtml = setExtension "html"
 
 essayCompile = compile $ pandocCompiler
                >>= loadAndApplyTemplate "templates/default.html" defCtx
+               >>= relativizeUrls
+
+feedConf :: FeedConfiguration
+feedConf =  FeedConfiguration {feedTitle       = "Chris Warburton's Blog",
+                               feedDescription = "Programming languages",
+                               feedAuthorName  = "Chris Warburton",
+                               feedAuthorEmail = "chriswarbo@gmail.com",
+                               feedRoot        = "http://chriswarbo.net"}
+
+renderPost p =     loadAndApplyTemplate "templates/post.html"    postCtx p
+               >>= saveSnapshot "content"  -- for feeds
+               >>= loadAndApplyTemplate "templates/default.html" postCtx
                >>= relativizeUrls
