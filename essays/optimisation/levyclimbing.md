@@ -5,20 +5,12 @@ Hill climbing is a simple enhancement to levy flights that only takes a step if 
 
 In this example, like with the other random walks, the fitness of a particular location is shown by how light the grey colour is. This is randomly generated when the page loads.
 
-Each (x, y) point in the square is a solution, and our goal is to find the best (lightest). We start at a random location (otherwise multiple searches would be too similar to be interesting) and we move a random (Pareto-distributed) distance at a random angle at each step. If the new location has a lower fitness than our current location, we don't bother moving; otherwise we finish the move to the new location. Like the standard levy flight example, the edges don't wrap around. Instead, we forbid steps that go outside the search space.
+Each (x, y) point in the square is a solution, and our goal is to find the best (lightest). We start at a random location (otherwise multiple searches would be too similar to be interesting) and we move a random (Pareto-distributed) distance at a random angle at each step. If the new location has a lower fitness than our current location, we don't bother moving; otherwise we finish the move to the new location. Like the standard Levy flight example, the edges wrap around an arbitrary number of times.
 
 <div id="levyhill_playfield" style="width: 500px; height: 500px;"></div>
 <form action="#" type="get">
 <div>
-  <input type="range" name="_" id="levyhill_number" min="0" max="10" value="0" style="width: 500px;" />
-  <label for="levyhill_number">Number of searches:</label>&nbsp;&nbsp;<a id="levyhill_number_display"></a>
-</div>
-<div>
   <span>Current fitness:</label>&nbsp;&nbsp;<a id="levyhill_fitness_display"></a>
-</div>
-<div>
-  <input type="range" name="_" id="levyhill_scale" min="1" max="3" value="1" style="width: 500px;" />
-  <label for="levyhill_scale">Scale:</label>&nbsp;&nbsp;<a id="levyhill_scale_display"></a>
 </div>
 </form>
 <script src="/js/jquery.js"></script>
@@ -26,7 +18,7 @@ Each (x, y) point in the square is a solution, and our goal is to find the best 
 <script src="/js/underscore.js"></script>
 <script src="/js/optimisation/levyhill.js"></script>
 
-Moving the "Number of searches" slider will add and remove instances of the search. All of them are running the same code, but they start in random places and take random steps so their solutions will be different. The "Scale" is a parameter for the Pareto distribution which governs the probabilities of short and long steps. Like the random walk hill climber, we don't need a "Desired fitness" slider this time, since the search will stop once it can't find a better solution. We have no idea if the solution it finds will be the best one though; welcome to the [halting problem](http://en.wikipedia.org/wiki/Halting_problem)!
+Click the box to start the search. Since the search will only travel to points with higher fitness, there is no need for a separate "best so-far" marker.
 
 I haven't found an explicit example of hill climbing levy flights before (although I have seen random walk hill climbing, and levy flights used in more complex ways), so it is quite interesting to see how it performs. My instinct is that it beats hill climbing with random walks, but classifying it is difficult; it is certainly performing a global search of the whole space, since its possible steps can be at any angle and of any length; however, it is also performing a local search since it only considers a single point at a time (as opposed to population-based algorithms), and the higher it climbs on its current peak, the harder it has to try to find other peaks. Without a more in-depth analysis, it's hard to give advice about its use, but I would guess that it's worth using over random walk hill climbing, for those who don't want the complexity of a more sophisticated algorithm (like, for example, cuckoo search).
 
