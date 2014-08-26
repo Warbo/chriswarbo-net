@@ -9,28 +9,16 @@ In this example, like with random walks, the fitness of a particular location is
 
 Each (x, y) point in the square is a solution, and our goal is to find the best (lightest). We start in the centre and move a random distance at a random angle at each step, with distances following a Pareto distribution and angles being uniform.
 
-Due to the random path lengths, the wrap-around technique used in the enumeration and random walk examples isn't very easy to get right. Instead, if the next step ends up outside the visible area we do 2 things: if the step length is more than half the visible width then we keep choosing new ones until it's less; this avoids trying to take such a big step that it will never fit on the screen. Next we keep choosing new angles until we end up with a step that will fit on the screen. This biases the search a little compared to wrapping around, but makes it simpler to understand what's going on.
+Like the other algorithms, the edges will wrap around. For simplicity, when this happens we don't draw a line. Sometimes it may look like the search has teleported from one place to another, but it's actually gone off the edge and wrapped around!
 
 <div id="levy_playfield" style="width: 500px; height: 500px;"></div>
 <form action="#" type="get">
-<div>
-  <input type="range" name="_" id="levy_number" min="0" max="10" value="0" style="width: 500px;" />
-  <label for="levy_number">Number of searches:</label>&nbsp;&nbsp;<a id="levy_number_display"></a>
-</div>
-<div>
-  <input type="range" name="_" id="levy_fitness" min="0" max="100" value="10" style="width:500px;" />
-  <label for="levy_fitness">Desired fitness:</label>&nbsp;&nbsp;<a id="levy_fitness_display"></a>
-</div>
-<div>
-  <input type="range" name="_" id="levy_scale" min="1" max="3" value="1" style="width: 500px;" />
-  <label for="levy_scale">Scale:</label>&nbsp;&nbsp;<a id="levy_scale_display"></a>
-</div>
 </form>
 <script src="/js/jquery.js"></script>
 <script src="/js/jquery_svg.js"></script>
 <script src="/js/underscore.js"></script>
 <script src="/js/optimisation/levy.js"></script>
 
-Moving the "Number of searches" slider will add and remove instances of the search. All of them are running the same code, but their random angles and distances will make them go to different places. "Scale" changes the length distribution used. The "Desired fitness" slider tells the searches when to stop. Setting it low makes the search complete quickly, but with a poor solution; setting it high guarantees a better solution, but this may never be found. Welcome to the [halting problem](http://en.wikipedia.org/wiki/Halting_problem)!
+Click the box to start the search. The fittest solution found so far is highlighted in green.
 
 Levy flights are quite simple search algorithms, but their results can be pretty good compared to naive enumeration and random walks. Their lack of any form of memory is their major weakness, as memory can give us huge improvements.
