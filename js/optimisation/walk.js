@@ -53,18 +53,18 @@
       _.each(gradient, function(a){a(0, 0, true);});
   };
 
-  var fitn = _.memoize(function(x, y) {
-                         return _.reduce(_.map(gradient,
-                                               function(a) {
-                                                 return a(x, y, false);
-                                               }),
-                                         function(a,b) { return a + b; });
-                       });
+  function fitn(x, y) {
+    return _.reduce(_.map(gradient,
+                          function(a) {
+                            return a(x, y, false);
+                          }),
+                    function(a,b) { return a + b; });
+  }
 
   function walk_step(x, y) {
-    var angle  = Math.random() * 2 * Math.PI;
-    var new_x  = x + (length * Math.cos(angle));
-    var new_y  = y + (length * Math.sin(angle));
+    var angle = Math.random() * 2 * Math.PI;
+    var new_x = x + (length * Math.cos(angle));
+    var new_y = y + (length * Math.sin(angle));
     if ((new_x < 0) || (new_x >= w) ||
         (new_y < 0) || (new_y >= h)) {
       // Wrap edges, but don't draw lines
