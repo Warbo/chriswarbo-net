@@ -47,12 +47,12 @@ Purely-Functional Self-Modifying Code
 * Introduction
 One of my main research interests is self-improving code. Clearly such algorithms must be self-modifying, or else they'd never be able to perform improvements. The trouble with self-modifying code is that it tends to be implemented imperatively. Since imperative code is difficult to reason about, this makes it hard to restrict modifications to only those which produce improvement.
 
-In the next few posts I'll present one way of implementing self-modification in a purely functional way, which we can then verify as self-improving.
+In this post I'll present one way of implementing self-modification in a purely functional way, which we can then verify as self-improving.
 
 * Code As Data
-Since pure functions must take all input via function arguments, and since we're going to modify our own code, we must therefore take our own code as a function argument. To do this we'll need some way to represent our code as data, since functions themselves will be black-boxes. Imperatively this can be done by providing an access mechanism to mutable memory, but we can do better than that.
+Since pure functions must take all input via function arguments, and since we're going to modify our own code, we must therefore take our own code as a function argument. To do this we'll need some way to represent our code as data, since we'll be working in a lambda calculus where functions themselves are black-boxes. Imperatively this can be done by providing an access mechanism to mutable memory, but we can do better than that.
 
-Outside the world of self-modification, the usual way to represent code as data is via an Abstract Syntax Tree. ASTs are quite straightforward to define, especially in nice languages like Haskell, although for pedagogical purposes I'll stick to representing a simpler language than Haskell; namely Un(i)typed Lambda Calculus:
+Outside the world of self-modification, the usual way to represent code as data is via an Abstract Syntax Tree. ASTs are quite straightforward to define, especially in nice languages like Haskell; however, ASTs *of* Haskell are complicated, so I'll stick to representing ASTs *of* Lambda Calculus *in* Haskell:
 
 #+begin_src haskell :tangle yes
   data AST = F (AST -> AST)  -- Functions from ASTs to ASTs
