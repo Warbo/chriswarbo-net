@@ -12,14 +12,6 @@ Each (x, y) point in the square is a solution, and our goal is to find the best 
 <div id="avoid_playfield" style="width: 500px; height: 500px;"></div>
 <form action="#" type="get">
 <div>
-  <input type="range" name="_" id="avoid_number" min="0" max="10" value="0" style="width: 500px;" />
-  <label for="avoid_number">Number of searches:</label>&nbsp;&nbsp;<a id="avoid_number_display"></a>
-</div>
-<div>
-  <input type="range" name="_" id="avoid_fitness" min="0" max="100" value="10" style="width:500px;" />
-  <label for="avoid_fitness">Desired fitness:</label>&nbsp;&nbsp;<a id="avoid_fitness_display"></a>
-</div>
-<div>
   <input type="range" name="_" id="avoid_step" min="1" max="10" value="2" style="width: 500px;" />
   <label for="avoid_step">Step size:</label>&nbsp;&nbsp;<a id="avoid_step_display"></a>
 </div>
@@ -29,6 +21,6 @@ Each (x, y) point in the square is a solution, and our goal is to find the best 
 <script src="/js/underscore.js"></script>
 <script src="/js/optimisation/avoid.js"></script>
 
-Moving the "Number of searches" slider will add and remove instances of the search. All of them are running the same code, but their random angles will be different (since they're, um, random). The "Step size" tells the searches how far to move from their current location when they take a step; low values mean that not much of the space gets explored, high values mean that nearby solutions get missed. The "Desired fitness" slider tells the searches when to stop. Setting it low makes the search complete quickly, but with a poor solution; setting it high guarantees a better solution, but this may never be found. Welcome to the [halting problem](http://en.wikipedia.org/wiki/Halting_problem)! Note that, to prevent killing your computer, the searches will terminate themselves once their memories are full (this happens after taking 10,000 steps).
+Clicking the box will start the search. The "Step size" tells the search how far to move from its current location when taking a step; low values mean that not much of the space gets explored, high values mean that nearby solutions may get missed. The best solution found so far is marked in green. Note that, to prevent killing your computer, the search will start forgetting old locations once 10,000 steps have been taken.
 
 Whilst random walks are very simple search algorithms, their results can be pretty poor. Their lack of bias makes them easily applicable to many problems, but their repetition makes them not worth using ;)

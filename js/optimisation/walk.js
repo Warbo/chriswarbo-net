@@ -4,8 +4,6 @@
   var walk_lines = [];
   var gradient   = [];
   var best_fit   = 0;
-  var best_x     = 0;
-  var best_y     = 0;
   var best;
   var length;
 
@@ -87,14 +85,12 @@
       // Find the fitness of this point
       var fitness = fitn(new_x, new_y);
       if (fitness >= best_fit) {
-        best_x   = new_x;
-        best_y   = new_y;
         best_fit = fitness;
         if (best) {
           $('#walk_playfield').svg('get').remove(best);
         }
         best = $('#walk_playfield').svg('get')
-                                   .circle(best_x, best_y, 5, {fill: 'lime'});
+                                   .circle(new_x, new_y, 5, {fill: 'lime'});
       }
 
       // Clean up old lines
