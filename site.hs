@@ -1,16 +1,21 @@
 --------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts  #-}
+import           Control.Applicative ((<$>))
 import           Control.Monad
 import           Data.Char
+import           Data.Maybe
 import           Data.Monoid (mappend)
-import           Hakyll
-
+import           Hakyll hiding (renderTags)
+import           Text.HTML.TagSoup
+import           Text.Parsec
+import Debug.Trace
 --------------------------------------------------------------------------------
 
 main :: IO ()
 main = hakyll $ do
     cp "data/**"
-    cp "images/*"
+    cp "images/**"
     cp "js/**"
 
     match "css/*" $ do
@@ -30,6 +35,12 @@ main = hakyll $ do
     match "posts/*.html" $ do
         route asHtml
         compile $ getResourceBody >>= renderPost
+
+    match "posts/*.org" $ do
+        route asHtml
+        compile $     orgCompiler
+                  >>= loadAndApplyTemplate "templates/default.html" postCtx
+                  >>= relativizeUrls
 
     match "essays/**.md" $ do
         route $ gsubRoute "essays/" (const "") `composeRoutes` asHtml
@@ -71,7 +82,6 @@ main = hakyll $ do
             posts <- fmap (take 5) $ recentFirst =<< loadAll "posts/*"
             let indexCtx =
                     listField  "posts" postCtx (return posts) `mappend`
-                    --constField "title" "Home"                 `mappend`
                     defCtx
 
             getResourceBody
@@ -123,7 +133,7 @@ page cmp = do route $ setExtension "html"
 
 asHtml = setExtension "html"
 
-essayCompile = compile $ pandocCompiler
+essayCompile =     compile $ pandocCompiler
                >>= loadAndApplyTemplate "templates/default.html" defCtx
                >>= relativizeUrls
 
@@ -138,3 +148,35 @@ renderPost p =     loadAndApplyTemplate "templates/post.html"    postCtx p
                >>= saveSnapshot "content"  -- for feeds
                >>= loadAndApplyTemplate "templates/default.html" postCtx
                >>= relativizeUrls
+
+orgCompiler :: Compiler (Item String)
+orgCompiler = let render = unixFilter "./org2html.sh" [] in
+              do orgBody <- getResourceBody
+                 rendered <- render (itemBody orgBody)
+                 let ctx = postCtx `mappend` titleField (htmlHeading rendered)
+                     outBody = traceShow foo foo
+                     foo = htmlBody rendered
+                 loadAndApplyTemplate "templates/post.html" ctx
+                                      (itemSetBody outBody orgBody)
+
+tagOf (TagOpen t _) = t
+tagOf _             = ""
+
+getTag t = takeWhile (/= TagClose t) . dropWhile ((t /=) . tagOf)
+
+stripTag t = takeWhile ((t /=) . tagOf) . dropWhile (/= TagClose t)
+
+getAllTags t xs = let tag = getTag t xs in
+                      if tag == [] then []
+                                   else tag : getAllTags t (stripTag t xs)
+
+appendTags :: [Tag String] -> [Tag String] -> [Tag String]
+appendTags new old = init old ++ new ++ [last old]
+
+htmlHeading = renderTags . getTag "h1" . parseTags
+
+htmlBody s = let tags   = parseTags s
+                 body   = getTag "body" tags
+                 styles = concat $ getAllTags "style" tags
+                 body'  = appendTags styles (stripTag "h1" body) in
+                 renderTags body'
