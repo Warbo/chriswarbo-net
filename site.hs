@@ -9,7 +9,6 @@ import           Data.Monoid (mappend)
 import           Hakyll hiding (renderTags)
 import           Text.HTML.TagSoup
 import           Text.Parsec
-import Debug.Trace
 --------------------------------------------------------------------------------
 
 main :: IO ()
@@ -154,8 +153,7 @@ orgCompiler = let render = unixFilter "./org2html.sh" [] in
               do orgBody <- getResourceBody
                  rendered <- render (itemBody orgBody)
                  let ctx = postCtx `mappend` titleField (htmlHeading rendered)
-                     outBody = traceShow foo foo
-                     foo = htmlBody rendered
+                     outBody = htmlBody rendered
                  loadAndApplyTemplate "templates/post.html" ctx
                                       (itemSetBody outBody orgBody)
 
