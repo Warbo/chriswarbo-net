@@ -21,13 +21,13 @@ main = hakyll $ do
         route   idRoute
         compile compressCssCompiler
 
-    match (fromList ["contact.markdown"]) $ do
+    match (fromList ["contact.md"]) $ do
         route asHtml
         compile $ pandocCompiler
             >>= loadAndApplyTemplate "templates/default.html" defCtx
             >>= relativizeUrls
 
-    match "posts/*.markdown" $ do
+    match "posts/*.md" $ do
         route asHtml
         compile $ pandocCompiler >>= renderPost
 
@@ -113,7 +113,7 @@ main = hakyll $ do
         compile $ do
             let feedCtx = postCtx `mappend` bodyField "description"
             posts <- fmap (take 10) . recentFirst
-                 =<< loadAllSnapshots "posts/*.markdown" "content"
+                 =<< loadAllSnapshots "posts/*.md" "content"
             renderAtom feedConf feedCtx posts
 -}
 --------------------------------------------------------------------------------
