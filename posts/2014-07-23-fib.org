@@ -2,27 +2,36 @@ Fibonacci Sequence in PHP
 
 # This post is managed by Babel; here we set up some our environment.
 
-# Babel doesn't support PHP sessions yet, so we'll 'tangle' our code into a file "fib.php" instead:
+# PHP definitions are 'tangled' into a __content.php file:
 
 #+begin_src php :tangle yes :exports none
   <?php
 
-  // Load useful functions from my 'PHP prelude'
-  include_once('prelude.php');
+  // Load everything Composer's given us
+  include_once('vendor/autoload.php');
 #+end_src
 
-# If you don't have prelude.php, you can get it with this:
-
-#+begin_src sh :exports none :eval never
-  wget -o prelude.php http://chriswarbo.net/data_custom/prelude.txt
-#+end_src
-
-# We run our code using a shell session. This script will load fib.php then run our code:
+# We use a runphp script to evaluate PHP expressions:
 
 #+name: runphp
 #+begin_src sh :tangle runphp :exports none :shebang "#!/bin/sh"
-  cd ~/blogs
-  php -r "include_once('fib.php'); $@;"
+  php -r "include_once('__content.php'); $@;"
+#+end_src
+
+# External code is brought in via Composer:
+
+#+begin_src javascript :tangle composer.json :exports none
+  {"name"    : "fib",
+   "require" : {"warbo/prelude" : "dev-master"}}
+#+end_src
+
+#+begin_src sh :exports none :results silent
+  if [[ ! -d vendor ]]; then
+    if [[ ! -e composer.phar ]]; then
+      curl -sS https://getcomposer.org/installer | php
+    fi
+    php composer.phar install
+  fi
 #+end_src
 
 # Prettier GNUPlot settings
@@ -45,9 +54,8 @@ Fibonacci Sequence in PHP
 # GNUPlot's PNG rendering is ugly, hence we set postscript above.
 # We'd still like PNG results though, so we call ImageMagick
 
-#+name: eps2png
-#+begin_src sh :exports none :var f="test"
-  convert -density 128 $f.eps $f.png
+#+begin_src sh  :tangle eps2png :exports none :shebang "#!/bin/sh"
+  convert -density 128 "$1.eps" "$1.png"
 #+end_src
 
 * Exponential Definitions
@@ -81,7 +89,7 @@ This is an incredibly naive approach, since each call to mkFib1 can involve 2 mo
                      list($c_2, $n_2) = $mkFib1_count_($n - 2);
                      return [$c_1 + $c_2 + 1, $n_1 + $n_2];
                    };
-  $mkFib1_count  = ∘('head', $mkFib1_count_);
+  $mkFib1_count  = compose('head', $mkFib1_count_);
   deftest('mkFib1_count', function($n) use ($mkFib1_count_) {
                             return eq($mkFib1_count_($n % 10)[1],
                                       mkFib1($n % 10));
@@ -96,8 +104,10 @@ This is an incredibly naive approach, since each call to mkFib1 can involve 2 mo
                               upto(15)))'
 #+end_src
 
+#+RESULTS: mkfibcount
+
 #+name: mkfibcountplot
-#+header: :file mkfibcount.eps :noweb yes :exports none
+#+header: :file "mkfibcount.eps" :noweb yes :exports none
 #+header: :var xlab="N" :var ylab="Recursive Calls" :var ttl="mkFib1(N)"
 #+begin_src gnuplot :var table=mkfibcount :results silent
   <<plotdefaults>>
@@ -110,11 +120,16 @@ This is an incredibly naive approach, since each call to mkFib1 can involve 2 mo
        table using 1:3 with line title "Time" linetype 2 lw 2 axes x1y2
 #+end_src
 
-#+begin_src sh :exports none :results silent
+#+begin_src sh :exports result :results verbatim html
   ./eps2png mkfibcount
+  DATA=`base64 -w 0 mkfibcount.png`
+  echo "<img alt='mkfibcount' src='data:image/png;base64,$DATA' />"
 #+end_src
 
-[[file:mkfibcount.png]]
+#+RESULTS:
+#+BEGIN_HTML
+<img alt='mkfibcount' src='data:image/png;base64,' />
+#+END_HTML
 
 What's more, a function is a rather clumsy way of representing a sequence, since the structure isn't immediately available and must be inferred by our users via some sort of counter. This violates the /Once and Only Once/ rule, and is liable to cause off-by-one errors and such.
 
@@ -123,7 +138,7 @@ So what's the alternative? The trick is to realise that we don't need to provide
 One simple approach that may spring to mind is asking the user up front how many elements they need:
 
 #+begin_src php :tangle yes
-  defun('mkFibs2', ∘(map('mkFib1'), 'upto'));
+  defun('mkFibs2', compose(map('mkFib1'), 'upto'));
 #+end_src
 
 #+begin_src php :tangle yes :exports none
@@ -268,38 +283,6 @@ The results look like this:
   ./runphp "dump(mkFibs3(5))"
 #+end_src
 
-#+RESULTS:
-#+begin_example
-
-array(2) {
-  [0]=>
-  int(1)
-  [1]=>
-  array(2) {
-    [0]=>
-    int(1)
-    [1]=>
-    array(2) {
-      [0]=>
-      int(2)
-      [1]=>
-      array(2) {
-        [0]=>
-        int(3)
-        [1]=>
-        array(2) {
-          [0]=>
-          int(5)
-          [1]=>
-          array(0) {
-          }
-        }
-      }
-    }
-  }
-}
-#+end_example
-
 The results of mkFibs3 still have a finite size, but we're no longer at the mercy of PHP's implementation details. Each array has a known size (0 or 2), no matter how many elements we ask for. Like mkFib1, mkFibs3 isn't tail recursive, so it may overflow the stack if we ask for too many elements. Folding lists is a little awkward in PHP, since there's no built-in equivalent to array_reduce:
 
 #+begin_src php :tangle yes :exports code
@@ -338,19 +321,8 @@ We can now do away with the exponentially-inefficient mkFib1. If we log the argu
 
 #+begin_src sh :exports results
   ./runphp 'echo tabulate("mkFibs3(...)", "mkFib1(...)",
-                          map(∘(implode_(","), "mkFibs3_log"), upto(7)))'
+                          map(compose(implode_(","), "mkFibs3_log"), upto(7)))'
 #+end_src
-
-#+RESULTS:
-|   |                                                                     |
-| N | mkFib1_args                                                         |
-| 0 |                                                                     |
-| 1 | 0                                                                   |
-| 2 | 0,1                                                                 |
-| 3 | 0,1,2,0,1                                                           |
-| 4 | 0,1,2,0,1,3,1,2,0,1                                                 |
-| 5 | 0,1,2,0,1,3,1,2,0,1,4,2,0,1,3,1,2,0,1                               |
-| 6 | 0,1,2,0,1,3,1,2,0,1,4,2,0,1,3,1,2,0,1,5,3,1,2,0,1,4,2,0,1,3,1,2,0,1 |
 
 We can actually remove all of these calls, since mkFibs3 has all of the data it needs to construct each Fibonacci number itself. If we pass this data along the recursive calls, our runtime becomes linear:
 
