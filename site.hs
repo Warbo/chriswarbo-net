@@ -4,11 +4,15 @@
 import           Control.Applicative ((<$>))
 import           Control.Monad
 import           Data.Char
+import           Data.List
 import           Data.Maybe
 import           Data.Monoid (mappend)
 import           Hakyll hiding (renderTags)
+import           System.Process
 import           Text.HTML.TagSoup
 import           Text.Parsec
+import           Text.Pandoc
+import           Text.Pandoc.Walk (walkM)
 --------------------------------------------------------------------------------
 
 main :: IO ()
@@ -178,3 +182,26 @@ htmlBody s = let tags   = parseTags s
                  styles = concat $ getAllTags "style" tags
                  body'  = appendTags styles (stripTag "h1" body) in
                  renderTags body'
+
+-- Execute "pipe" and "file" attributes of code blocks
+gather :: Block -> State Map.M
+
+key = "pipe"
+
+runInOrder = traverse sequenceA
+
+pipe :: Block -> IO Block
+pipe b = case b of
+              CodeBlock as s -> runPipe as s
+              _              -> return b
+
+runPipe as s = case lookup m key of
+                    Nothing -> return CodeBlock as b
+                    Just p  -> fmap  (CodeBlock (noPipe as))
+                                     (readProcess p [] s)
+
+noPipe :: Attr -> Attr
+noPipe (x, y, zs) = (x, y, filter (fst . (/= key)) zs)
+
+transform :: Pandoc -> IO Pandoc
+transform = walkM pipe

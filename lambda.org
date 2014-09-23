@@ -70,4 +70,4 @@ class Just(x : A) extends Maybe[A] {
 }
 ```
 
- problem is that the Scala version doesn't know *which* monad it's referring to. The ad-hoc polymorphism exposed by Haskell's typeclasses uses "dictionary-passing"; essentially equivalent to the Scheme passing around the monad implementation explicitly, but done implicitly by the language. We would like Scala to do the same, but
+The problem is that the Scala version doesn't know *which* monad it's referring to. The ad-hoc polymorphism exposed by Haskell's typeclasses uses "dictionary-passing"; essentially equivalent to the Scheme passing around the monad implementation explicitly, but done implicitly by the language. We would like Scala to do the same, but

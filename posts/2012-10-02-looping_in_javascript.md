@@ -28,25 +28,25 @@ Our example will be the following, which makes heavy use of loops. It is a Javas
 var tableify = function(values) {
     var cells = [];
     for (var i=0; i < values.length; i++) {
-        for (var j=0; j < values*.length; j++) {
-            cells.push('<td>' + values*[j] + '<td>');
+        for (var j=0; j < values[1].length; j++) {
+            cells.push('<td>' + values[i][j] + '<td>');
         }
     }
     var row;
     for (var i=0; i < cells.length; i++) {
         row = '';
-        for (var j=0; j < cells*.length; j++) {
-            row += cells*[j];
+        for (var j=0; j < cells[i].length; j++) {
+            row += cells[1][j];
         };
-        cells* = row;
+        cells[1] = row;
     };
     var rows = [];
     for (var i=0; i < cells.length; i++) {
-        rows.push('<tr>' + cells* + '</tr>');
+        rows.push('<tr>' + cells[i] + '</tr>');
     }
     var all_rows = '';
     for (var i=0; i < rows.length; i++) {
-        all_rows += rows*;
+        all_rows += rows[i];
     }
     var table = '<table>' + all_rows + '</table>';
     return table;
@@ -73,7 +73,7 @@ var tableify = function(values) {
         v.forEach(function(c) {
             row += c;
         });
-        cells* = row;
+        cells[i] = row;
     });
     var rows = [];
     cells.forEach(function(r) {
