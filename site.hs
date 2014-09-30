@@ -33,17 +33,11 @@ main = hakyll $ do
 
     match "posts/*.md" $ do
         route asHtml
-        compile $ pandocCompiler >>= renderPost
+        compile $ panPipeCompiler >>= renderPost
 
     match "posts/*.html" $ do
         route asHtml
         compile $ getResourceBody >>= renderPost
-
-    match "posts/*.org" $ do
-        route asHtml
-        compile $     orgCompiler
-                  >>= loadAndApplyTemplate "templates/default.html" postCtx
-                  >>= relativizeUrls
 
     match "essays/**.md" $ do
         route $ gsubRoute "essays/" (const "") `composeRoutes` asHtml
@@ -136,7 +130,7 @@ page cmp = do route $ setExtension "html"
 
 asHtml = setExtension "html"
 
-essayCompile =     compile $ pandocCompiler
+essayCompile =     compile $ panPipeCompiler
                >>= loadAndApplyTemplate "templates/default.html" defCtx
                >>= relativizeUrls
 
@@ -152,56 +146,7 @@ renderPost p =     loadAndApplyTemplate "templates/post.html"    postCtx p
                >>= loadAndApplyTemplate "templates/default.html" postCtx
                >>= relativizeUrls
 
-orgCompiler :: Compiler (Item String)
-orgCompiler = let render = unixFilter "./org2html.sh" [] in
-              do orgBody <- getResourceBody
-                 rendered <- render (itemBody orgBody)
-                 let ctx = postCtx `mappend` titleField (htmlHeading rendered)
-                     outBody = htmlBody rendered
-                 loadAndApplyTemplate "templates/post.html" ctx
-                                      (itemSetBody outBody orgBody)
+panPipe = withItemBody (unixFilter "panpipe" [])
 
-tagOf (TagOpen t _) = t
-tagOf _             = ""
-
-getTag t = takeWhile (/= TagClose t) . dropWhile ((t /=) . tagOf)
-
-stripTag t = takeWhile ((t /=) . tagOf) . dropWhile (/= TagClose t)
-
-getAllTags t xs = let tag = getTag t xs in
-                      if tag == [] then []
-                                   else tag : getAllTags t (stripTag t xs)
-
-appendTags :: [Tag String] -> [Tag String] -> [Tag String]
-appendTags new old = init old ++ new ++ [last old]
-
-htmlHeading = renderTags . getTag "h1" . parseTags
-
-htmlBody s = let tags   = parseTags s
-                 body   = getTag "body" tags
-                 styles = concat $ getAllTags "style" tags
-                 body'  = appendTags styles (stripTag "h1" body) in
-                 renderTags body'
-
--- Execute "pipe" and "file" attributes of code blocks
-gather :: Block -> State Map.M
-
-key = "pipe"
-
-runInOrder = traverse sequenceA
-
-pipe :: Block -> IO Block
-pipe b = case b of
-              CodeBlock as s -> runPipe as s
-              _              -> return b
-
-runPipe as s = case lookup m key of
-                    Nothing -> return CodeBlock as b
-                    Just p  -> fmap  (CodeBlock (noPipe as))
-                                     (readProcess p [] s)
-
-noPipe :: Attr -> Attr
-noPipe (x, y, zs) = (x, y, filter (fst . (/= key)) zs)
-
-transform :: Pandoc -> IO Pandoc
-transform = walkM pipe
+panPipeCompiler = do piped <- getResourceBody >>= panPipe
+                     return (renderPandoc piped)
