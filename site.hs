@@ -33,7 +33,7 @@ main = hakyll $ do
 
     match "posts/*.md" $ do
         route asHtml
-        compile $ panPipeCompiler >>= renderPost
+        compile $ postCompiler >>= renderPost
 
     match "posts/*.html" $ do
         route asHtml
@@ -130,7 +130,7 @@ page cmp = do route $ setExtension "html"
 
 asHtml = setExtension "html"
 
-essayCompile =     compile $ panPipeCompiler
+essayCompile =     compile $ postCompiler
                >>= loadAndApplyTemplate "templates/default.html" defCtx
                >>= relativizeUrls
 
@@ -146,7 +146,7 @@ renderPost p =     loadAndApplyTemplate "templates/post.html"    postCtx p
                >>= loadAndApplyTemplate "templates/default.html" postCtx
                >>= relativizeUrls
 
-panPipe = withItemBody (unixFilter "panpipe" [])
+panPipe   = withItemBody (unixFilter "panpipe"   [])
+panHandle = withItemBody (unixFilter "panhandle" [])
 
-panPipeCompiler = do piped <- getResourceBody >>= panPipe
-                     return (renderPandoc piped)
+postCompiler = getResourceBody >>= panPipe >>= panHandle . renderPandoc
