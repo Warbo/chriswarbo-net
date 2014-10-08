@@ -149,4 +149,7 @@ renderPost p =     loadAndApplyTemplate "templates/post.html"    postCtx p
 panPipe   = withItemBody (unixFilter "panpipe"   [])
 panHandle = withItemBody (unixFilter "panhandle" [])
 
-postCompiler = getResourceBody >>= panPipe >>= panHandle . renderPandoc
+postCompiler =     getResourceString
+               >>= panPipe
+               >>= panHandle
+               >>= return . renderPandoc
