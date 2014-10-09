@@ -130,4 +130,4 @@ If you don't believe me, take a look at [this page's source][this]!
 [walk]: http://hackage.haskell.org/package/pandoc-types-1.10/docs/Text-Pandoc-Generic.html
 [ast]: https://hackage.haskell.org/package/pandoc-types-1.8/docs/Text-Pandoc-Definition.html#t:Block
 [panpipe]: https://gitorious.org/panpipe/panpipe/source/master:README
-[this]: http://google.com
+[this]: https://gitorious.org/chriswarbo-dot-net/chriswarbo-dot-net/raw/master:essays/pandoc/index.md
