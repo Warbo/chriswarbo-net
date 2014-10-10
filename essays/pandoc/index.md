@@ -2,6 +2,8 @@
 title: Pandoc Scripts
 ---
 
+## Introduction ##
+
 As I write this (2014-10-09), my Web site is built with [Hakyll][hakyll]. The
 content is mostly written in [Markdown][markdown] and compiled to static HTML
 files using [Pandoc][pandoc]. Hakyll automates all of this, and also provides a
@@ -12,7 +14,7 @@ This works well, but since I do all of my writing in [Emacs][emacs], and most of
 my site is about programming, I find myself missing one of the killer features
 of [Org Mode][org]: the [Babel][babel] 'active code' system.
 
-## Active Code ##
+### Active Code ###
 
 An active code system lets us write source code in our document. Babel uses the
 following syntax:
@@ -56,7 +58,7 @@ that we don't have to maintain separate copies of anything:
    *always* correspond exactly (eg. I can't update some code and forget to
    update the results, or vice versa)
 
-### Problems With Babel ###
+#### Problems With Babel ####
 
 So, why don't I use Babel to write my blog posts? There are a few drawbacks:
 
@@ -71,18 +73,32 @@ So, why don't I use Babel to write my blog posts? There are a few drawbacks:
    to incidental editor features (eg. syntax-highlighting based on the current
    Emacs theme). These can all be worked around, but it adds complexity and
    fragility.
+ - Templating: Once a page body is rendered, Hakyll splices it into templates
+   for titles, menus, CSS, etc. Org-mode outputs whole HTML pages, which I found
+   myself trying to parse in order to shoe-horn them into Hakyll.
  - Inconsistent features: Interpreting return values, maintaining a REPL session
    and passing input variables are implemented in Babel on a
    language-by-language basis. This is frustrating, since I'm a fan of obscure
    languages, but even popular languages like PHP have no support at the moment.
 
-## Hakyll/Pandoc/Markdown ##
+After wrestling with this stuff for a week, with nothing to show except an
+elaborate house of cards, I decided to go back to basics.
+
+### Hakyll/Pandoc/Markdown ###
 
 Markdown lets us write code blocks using the following syntax:
 
+```
+`echo "Inline code"`{.sh}
+```
+
+```
+    echo "Indented code blocks (4 spaces)"
+```
+
 ````
 ```sh
-echo "Hello world!"
+echo "Fenced code blocks"
 ```
 ````
 
@@ -95,28 +111,67 @@ some of the active code features found in Babel.
 
 ## PanPipe ##
 
-The [PanPipe][panpipe] script looks for code blocks annotated with a `pipe`
-attribute, like this:
+[PanPipe][panpipe] is a pre-processor for Pandoc documents, delivered via stdio.
+It looks for code blocks annotated with a `pipe` attribute, like this:
 
-````{pipe="tee pp.md"}
-```{pipe="sh"}
-echo "Hello world!"
-```
+`sh`{.hidden pipe="tee pipe"}
+
+`echo "Hello world!"`{.hidden pipe="tee body"}
+
+````{pipe="sh | tee pp.md"}
+echo -n '```{pipe="'
+cat pipe | tr -d '\n'
+echo '"}'
+cat body
+echo ""
+echo '```'
 ````
 
-The contents of this attribute, in this case `sh`, will be executed as a shell
-command. The contents of the code block, in this case `echo "Hello world!"`,
-will be taken out of the code block and piped into the command. The results
-(which will be `Hello world!`, if all goes well) will be used as the new
-contents of the code block.
+The contents of this attribute, in this case `cat pipe`{pipe="sh"}, will be
+executed as a shell command inside a temporary directory. The contents of the
+code block, in this case `cat body`{pipe="sh"}, will be taken out of the code
+block and piped into the command. The results (which will be
+`cat pp.md | panpipe`{pipe="sh"}, if all goes well) will be used as the
+new contents of the code block.
 
-Hence, the result of piping the above Markdown through `panpipe` will be:
+Hence, the result of piping the above Markdown through `panpipe` will give:
 
 ```{pipe="sh"}
 cat pp.md | panpipe
 ```
 
 If you don't believe me, take a look at [this page's source][this]!
+
+It turns out we can get most of Babel's features by using shell scripts in our
+code blocks. For example, if we want to refer to code from another block, we can
+pipe it through `tee`, then `cat` it later. This will all be cleaned up by
+PanPipe when it deletes the temporary directory.
+
+## PanHandler ##
+
+One problem with PanPipe is that its results are stuck inside code blocks. For
+example, if I want to generate a Markdown list with a script like this:
+
+`````{pipe="tee list" .hidden}
+
+```{pipe="php"}
+<?
+foreach (range(1, 10) as $x) {
+  echo " - Element $x\n";
+}
+```
+
+`````
+
+```{.php pipe="sh"}
+cat list
+```
+
+Instead, I get the Markdown syntax stuck inside a code block:
+
+```{pipe="sh"}
+cat list | panpipe
+```
 
 [hakyll]: http://jaspervdj.be/hakyll/
 [markdown]: http://commonmark.org/
