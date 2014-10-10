@@ -146,10 +146,8 @@ renderPost p =     loadAndApplyTemplate "templates/post.html"    postCtx p
                >>= loadAndApplyTemplate "templates/default.html" postCtx
                >>= relativizeUrls
 
-panPipe   = withItemBody (unixFilter "panpipe"   [])
-panHandle = withItemBody (unixFilter "panhandle" [])
+pandocFilter = withItemBody (unixFilter "pandoc" ["--filter", "panpipe",
+                                                  "--filter", "panhandle"])
 
 postCompiler =     getResourceString
-               >>= panPipe
-               >>= panHandle
-               >>= return . renderPandoc
+               >>= pandocFilter
