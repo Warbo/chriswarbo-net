@@ -17,5 +17,6 @@ code > span.al { color: #ff0000; font-weight: bold; }
 code > span.fu { color: #06287e; }
 code > span.er { color: #ff0000; font-weight: bold; }
 
-/* Hide <?php tags, which are only included for syntax highlighting */
+/* Hide <?php tags which are only included for syntax highlighting */
 code.php > span:first-child { display: none; }
+.fullphp code.php > span:first-child { display: inline; }
