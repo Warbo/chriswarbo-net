@@ -1,124 +1,52 @@
 ---
-title: Pandoc Scripts
+title: Active Code
 ---
+"Active code" is the term used by the [Babel][babel] system, part of
+[Emacs's][emacs] [Org-mode][org]. It refers to authoring systems which can
+execute code in our documents.
 
-## Introduction ##
+## Scripts ##
 
-As I write this (2014-10-09), my Web site is built with [Hakyll][hakyll]. The
-content is mostly written in [Markdown][markdown] and compiled to static HTML
-files using [Pandoc][pandoc]. Hakyll automates all of this, and also provides a
-handy `watch` command which serves a local version of the site, monitoring files
-for changes and recompiling them and their dependents.
+Babel relies on the 363kg gorilla that is Emacs, but I'd rather avoid such a
+large dependency for generating my site. Instead, I've written a few scripts to
+reproduce active code features outside Babel.
 
-This works well, but since I do all of my writing in [Emacs][emacs], and most of
-my site is about programming, I find myself missing one of the killer features
-of [Org Mode][org]: the [Babel][babel] 'active code' system.
+### Pandoc ###
 
-### Active Code ###
+[Pandoc][pandoc] is a great document conversion program by John MacFarlane. I
+use it to compile the [Markdown][markdown] [source][git] of my site into static
+HTML (via [Hakyll][hakyll]).
 
-An active code system lets us write source code in our document. Babel uses the
-following syntax:
+[Pandoc's Markdown][pandocmarkdown] supports code blocks, which are written like
+this:
 
-```
-{+begin_src sh}
-  echo "Hello, world!"
-{+end_src}
-```
-
-This code can be *executed* when the document is rendered, the output can be
-interpreted in a variety of ways, and spliced back into the document. Of course
-regular niceties like syntax highlighting still apply.
-
-Some nifty features offered by Babel:
-
- - Some languages can be interpreted using their REPL, which persists between
-   blocks. This lets us define variables in one block and use them in another.
- - All source blocks can be named, allowing them to be called explicitly in
-   other parts of the document.
- - Some languages can be given input variables; if the name of a source block is
-   used as the value, the named block will be executed and its result will be
-   used as the value (even if they're different languages)
- - A [Web][web]-like macro system can be used for text-replacement. This allows
-   text to be spliced into code blocks before they're executed.
-
-The advantage this gives when writing a programming blog (or a paper which uses
-code, either as the main focus or in a background, data analysis capacity) is
-that we don't have to maintain separate copies of anything:
-
- - *All* of the necessary code to [replicate][represearch] my results are
-   available right in the post itself (or at least in its [source][git])
- - I don't have to develop the code separately, in dedicated source files, and
-   copy-paste bits into the document.
- - If I *want* to develop the code separately, I can put scripts in the document
-   to fetch and import the code, rather than doing it manually.
- - I don't have to copy-paste snippets/commands out of the blog post into a
-   separate file/REPL in order to run it. I can run it right there, in the blog.
- - I don't have to copy-paste results from the REPL/output back into the blog.
- - Since there's no copy-pasting going on, the code and results being presented
-   *always* correspond exactly (eg. I can't update some code and forget to
-   update the results, or vice versa)
-
-#### Problems With Babel ####
-
-So, why don't I use Babel to write my blog posts? There are a few drawbacks:
-
- - Dependent on Emacs: Emacs is great, but it's *big*. I'd like the ability to
-   clone my blog repo and compile it, without installing such a big dependency.
- - Not easily scriptable: Hakyll's `unixFilter` function can pipe pages through
-   external programs for compilation; but Emacs requires a wrapper script to
-   convert these pipes to temporary files and back.
- - Awkward to script: Org-mode must be invoked in just the right way, most
-   commands are designed to be interactive, the API is unstable (eg.
-   `org-export-as-html` vs. `org-html-export-to-html`) and results are too tied
-   to incidental editor features (eg. syntax-highlighting based on the current
-   Emacs theme). These can all be worked around, but it adds complexity and
-   fragility.
- - Templating: Once a page body is rendered, Hakyll splices it into templates
-   for titles, menus, CSS, etc. Org-mode outputs whole HTML pages, which I found
-   myself trying to parse in order to shoe-horn them into Hakyll.
- - Inconsistent features: Interpreting return values, maintaining a REPL session
-   and passing input variables are implemented in Babel on a
-   language-by-language basis. This is frustrating, since I'm a fan of obscure
-   languages, but even popular languages like PHP have no support at the moment.
-
-After wrestling with this stuff for a week, with nothing to show except an
-elaborate house of cards, I decided to go back to basics.
-
-### Hakyll/Pandoc/Markdown ###
-
-Markdown lets us write code blocks using the following syntax:
-
-```
-`echo "Inline code"`{.sh}
+```bash
+`echo "Inline code"`
 ```
 
-```
-    echo "Indented code blocks (4 spaces)"
+```bash
+    echo "Indented code"
 ```
 
-````
-```sh
-echo "Fenced code blocks"
+````bash
+```
+echo "Fenced code"
 ```
 ````
 
-Hakyll can send these through Pandoc for rendering, but other than
-syntax-highlighting there are no active code facilities.
+As you can see, these are rendered in monospaced fonts. Syntax-highlighting uses
+language descriptions from [Kate][kate].
 
-Thankfully Pandoc provides a nice [Haskell API][walk] for processing its
-[ASTs][ast] programatically. The scripts on this page use this API to recreate
-some of the active code features found in Babel.
+### PanPipe ###
 
-## PanPipe ##
+[PanPipe][panpipe] is a Pandoc [filter][walk] which looks for code blocks
+annotated with a `pipe` attribute, like this:
 
-[PanPipe][panpipe] is a pre-processor for Pandoc documents, delivered via stdio.
-It looks for code blocks annotated with a `pipe` attribute, like this:
+`sh`{pipe="tee pipe > /dev/null"}
 
-`sh`{.hidden pipe="tee pipe"}
+`echo "Hello world!"`{pipe="tee body > /dev/null"}
 
-`echo "Hello world!"`{.hidden pipe="tee body"}
-
-````{pipe="sh | tee pp.md"}
+````{.bash pipe="sh | tee pp.md"}
 echo -n '```{pipe="'
 cat pipe | tr -d '\n'
 echo '"}'
@@ -127,50 +55,222 @@ echo ""
 echo '```'
 ````
 
-The contents of this attribute, in this case `cat pipe`{pipe="sh"}, will be
-executed as a shell command inside a temporary directory. The contents of the
-code block, in this case `cat body`{pipe="sh"}, will be taken out of the code
-block and piped into the command. The results (which will be
-`cat pp.md | panpipe`{pipe="sh"}, if all goes well) will be used as the
-new contents of the code block.
+The command given in the `pipe` attribute (`cat pipe`{pipe="sh" .bash}) is
+executed in a temporary directory; the body of the block
+(`cat body`{pipe="sh" .bash}) is sent to that command's stdin, and its stdout
+(`pandoc -f markdown -t markdown --filter panpipe pp.md`{pipe="sh"}) is put
+inside the block.
 
-Hence, the result of piping the above Markdown through `panpipe` will give:
+For example, running the above through
+`pandoc --filter panpipe`{.bash} gives:
 
-```{pipe="sh"}
-cat pp.md | panpipe
+```{.unwrap pipe="sh"}
+pandoc -t json --filter panpipe pp.md
 ```
 
-If you don't believe me, take a look at [this page's source][this]!
+### PanHandle ###
 
-It turns out we can get most of Babel's features by using shell scripts in our
-code blocks. For example, if we want to refer to code from another block, we can
-pipe it through `tee`, then `cat` it later. This will all be cleaned up by
-PanPipe when it deletes the temporary directory.
+[PanHandle][panhandler] is a Pandoc filter which looks for code in an `unwrap`
+class. It extracts the code, which is assumed to be 'Pandoc JSON', and splices
+it into the surrounding document.
 
-## PanHandler ##
+We can create Pandoc JSON using `pandoc -t json`{.bash pipe="tee json.sh"}
 
-One problem with PanPipe is that its results are stuck inside code blocks. For
-example, if I want to generate a Markdown list with a script like this:
+```{pipe="sh > /dev/null"}
+chmod +x json.sh
+```
 
-`````{pipe="tee list" .hidden}
+For example, if we take the JSON for this Markdown table:
 
-```{pipe="php"}
+```{pipe="tee bool.md"}
+X NOT(X)
+- ------
+T F
+F T
+```
+
+and wrap it in an `unwrap` code block, we get:
+
+<div style="overflow-x: scroll;">
+
+````{.javascript pipe="sh | tee bool2.md"}
+echo '```{.unwrap}'
+pandoc -t json bool.md
+echo '```'
+````
+
+</div>
+
+When we send our document through `pandoc --filter panhandle`{.bash}, the table
+will be spliced into the document, like this:
+
+```{.unwrap pipe="sh | pandoc -t json"}
+cat bool2.md
+```
+
+## Examples ##
+
+These simple scripts let us call out to the UNIX shell from our documents. This
+lets us recreate many of the active code features of Babel, just by piping
+between programs and reading/writing files.
+
+### Showing/Hiding Code ###
+
+To hide the output of a code block, just pipe it to `/dev/null`:
+
+
+````{.bash pipe="tee hide.md"}
+```{pipe="sh > /dev/null"}
+ls /
+```
+````
+
+The resulting HTML is:
+
+````{.html pipe="sh | pandoc --filter panpipe"}
+cat hide.md
+````
+
+### Showing Code *and* Output ###
+
+We can use `tee` to save a copy of our code into a file, then run it in another
+code block:
+
+````{.php .fullphp pipe="tee both.php"}
+```{.php pipe="tee script.php"}
+<?
+echo 10 + 20;
+```
+````
+
+````{.bash pipe="tee both.sh"}
+```{pipe="sh"}
+php script.php
+```
+````
+
+This results in:
+
+<div class="fullphp">
+
+```{.unwrap pipe="sh | pandoc -t json --filter panpipe"}
+cat both.php
+echo ""
+echo ""
+cat both.sh
+```
+
+</div>
+
+### Execution Order ###
+
+Blocks are executed from the top of a document to the bottom. We can change
+the order they're *displayed* in by capturing their output to files and dumping
+them out later. For example, to show a program listing *after* its results:
+
+````{.bash pipe="tee order.sh"}
+```{pipe="tee code.sh > /dev/null"}
+echo "Hello"
+echo "World"
+```
+
+```{pipe="sh"}
+sh code.sh
+```
+
+```{.bash pipe="sh"}
+cat code.sh
+```
+````
+
+This produces:
+
+```{.unwrap pipe="sh | pandoc --filter panpipe -t json"}
+cat order.sh
+```
+
+### Procedural Documents ###
+
+We can generate content using PanPipe, send it through Pandoc to get JSON, then
+use PanHandle to splice it into the document. For example:
+
+````{.php .fullphp pipe="tee proc.md"}
+```{.unwrap pipe="php | pandoc -t json"}
 <?
 foreach (range(1, 10) as $x) {
   echo " - Element $x\n";
 }
 ```
+````
 
-`````
+This produces:
 
-```{.php pipe="sh"}
-cat list
+```{.unwrap pipe="sh | pandoc --filter panpipe --filter panhandle -t json"}
+cat proc.md
 ```
 
-Instead, I get the Markdown syntax stuck inside a code block:
+### Importing Sub-Documents ###
 
-```{pipe="sh"}
-cat list | panpipe
+We can use PanPipe to dump the contents of files and PanHandle to combine them
+together. We can even call Pandoc recursively, using PanPipe.
+
+````{.bash}
+```{.unwrap pipe="sh"}
+pandoc -t json header.md
+```
+
+```{.unwrap pipe="sh"}
+pandoc -t json footer.md
+```
+````
+
+### Including Images ###
+
+We can obtain image files using PanPipe, then encode them in data URIs.
+PanHandle will splice these into the document:
+
+````{.php .fullphp pipe="tee image_php.md"}
+```{pipe="php > carpet.pbm"}
+<?
+$scale = 5;
+$dim   = pow(3, $scale);
+$max   = ($dim * $dim) - 1;
+
+function carpet($x, $y) {
+  if ($x % 3 == 1 && $y % 3 == 1) return 0;
+  return ($x || $y)? carpet(intval($x / 3),
+                            intval($y / 3))
+                   : 1;
+}
+
+$colour = function($c) use ($dim) {
+  $x =  $c       % $dim;
+  $y = ($c - $x) / $dim;
+  return carpet($x, $y);
+};
+
+echo "P1 $dim $dim\n";
+echo implode("\n", array_map($colour, range(0, $max)));
+```
+````
+
+````{.bash pipe="tee image_sh.md"}
+```{.unwrap pipe="sh | pandoc -t json"}
+convert carpet.pbm carpet_big.png
+pngcrush -brute carpet_big.png carpet.png
+echo -n '<img alt="Sierpinski Carpet" src="data:image/png;base64,'
+base64 -w 0 carpet.png
+echo -n '" />'
+```
+````
+
+This results in:
+
+```{.unwrap pipe="sh | pandoc --filter panpipe --filter panhandle -t json"}
+cat image_php.md
+echo ""
+echo ""
+cat image_sh.md
 ```
 
 [hakyll]: http://jaspervdj.be/hakyll/
@@ -182,7 +282,11 @@ cat list | panpipe
 [web]: http://en.wikipedia.org/wiki/WEB
 [represearch]: http://reproducibleresearch.net/
 [git]: https://gitorious.org/chriswarbo-dot-net
-[walk]: http://hackage.haskell.org/package/pandoc-types-1.10/docs/Text-Pandoc-Generic.html
+[walk]: http://johnmacfarlane.net/pandoc/scripting.html
 [ast]: https://hackage.haskell.org/package/pandoc-types-1.8/docs/Text-Pandoc-Definition.html#t:Block
 [panpipe]: https://gitorious.org/panpipe/panpipe/source/master:README
+[panhandler]: https://gitorious.org/pan-handler/pan-handler/source/master:README
 [this]: https://gitorious.org/chriswarbo-dot-net/chriswarbo-dot-net/raw/master:essays/pandoc/index.md
+[elpa]: http://orgmode.org/elpa.html
+[pandocmarkdown]: http://johnmacfarlane.net/pandoc/demo/example9/pandocs-markdown.html
+[kate]: http://kate-editor.org/
