@@ -114,7 +114,32 @@ These simple scripts let us call out to the UNIX shell from our documents. This
 lets us recreate many of the active code features of Babel, just by piping
 between programs and reading/writing files.
 
-### Showing/Hiding Code ###
+### This ###
+
+Take a look at [this page's source][this] to see how the results are generated
+from the examples.
+
+### Fibonacci Post ###
+
+I wrote PanPipe and PanHandle after trying and failing to integrate Babel into
+my site's build process. My [Fibonacci Sequence in PHP][fib] post was an
+experiment with Babel, so porting that post over to Pandoc was the motivating
+use-case for these scripts. Thankfully the port was a success, and that post is
+now managed by Hakyll like the rest of the site.
+
+If you compare it to [the source][fibsource] you'll see a few of the required
+features:
+
+ - A temporary directory for downloading dependencies
+ - Rendering, executing, or rendering *and* executing code snippets
+ - Concatenating code snippets together in a source file ("tangling")
+ - Rendering code output verbatim or interpreted (eg. as a table or image)
+ - Hidden blocks for writing helper functions and unit tests
+ - Aborting rendering when unit tests fail
+
+Here are some of the techniques I came up with for these tasks.
+
+### Hiding Output ###
 
 To hide the output of a code block, just pipe it to `/dev/null`:
 
@@ -161,6 +186,33 @@ cat both.sh
 ```
 
 </div>
+
+### Tangling ###
+
+Use `tee -a` to append to a file. Make sure to include extra newlines as needed:
+
+````{pipe="tee tangled.md"}
+```{.haskell pipe="tee -a tangled.hs"}
+foo = "Hello"
+
+```
+
+```{.haskell pipe="tee -a tangled.hs"}
+bar = "World"
+
+```
+
+```{.haskell pipe="ghci -v0"}
+:load tangled.hs
+print (foo ++ " " ++ bar)
+```
+````
+
+This gives:
+
+```{.unwrap pipe="sh"}
+pandoc -t json --filter panpipe tangled.md
+```
 
 ### Execution Order ###
 
@@ -212,7 +264,7 @@ cat proc.md
 ### Importing Sub-Documents ###
 
 We can use PanPipe to dump the contents of files and PanHandle to combine them
-together. We can even call Pandoc recursively, using PanPipe.
+together. We can even call Pandoc recursively:
 
 ````{.bash}
 ```{.unwrap pipe="sh"}
@@ -273,6 +325,17 @@ echo ""
 cat image_sh.md
 ```
 
+### Aborting ###
+
+A non-zero exit code will abort the rendering:
+
+````{.php .fullphp}
+```{pipe="php"}
+<?
+if (!$success) exit(1);
+```
+````
+
 [hakyll]: http://jaspervdj.be/hakyll/
 [markdown]: http://commonmark.org/
 [pandoc]: http://johnmacfarlane.net/pandoc/
@@ -286,7 +349,9 @@ cat image_sh.md
 [ast]: https://hackage.haskell.org/package/pandoc-types-1.8/docs/Text-Pandoc-Definition.html#t:Block
 [panpipe]: https://gitorious.org/panpipe/panpipe/source/master:README
 [panhandler]: https://gitorious.org/pan-handler/pan-handler/source/master:README
-[this]: https://gitorious.org/chriswarbo-dot-net/chriswarbo-dot-net/raw/master:essays/pandoc/index.md
+[this]: https://gitorious.org/chriswarbo-dot-net/chriswarbo-dot-net/raw/master:essays/activecode/index.md
 [elpa]: http://orgmode.org/elpa.html
 [pandocmarkdown]: http://johnmacfarlane.net/pandoc/demo/example9/pandocs-markdown.html
 [kate]: http://kate-editor.org/
+[fib]: /posts/2014-07-23-fib.html
+[fibsource]: https://gitorious.org/chriswarbo-dot-net/chriswarbo-dot-net/raw/master:posts/2014-07-23-fib.md
