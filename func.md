@@ -1,29 +1,42 @@
-Embedded Domain-Specific Languages in PHP (AKA Scrap Your Dependency Injection)
+---
+title: Embedded Domain-Specific Languages in PHP (AKA Scrap Your Dependency Injection)
+---
 
 There are few programming constructs as useful as the function; we can define all kinds of useful functions to make our code simpler, shorter, safer and easier to test (most of the functions in this tutorial are one-liners!). Unfortunately some languages, notably Java, don't have any support for functions (until Java 8, at least). This has lead to hacks and workarounds, known as "design patterns", proliferating through the world of software development, infecting all manner of codebases.
 
 The problem with design patterns is that they're 'opt-in', ie. they usually require programmers to sprinkle repeated bits of code ('patterns', for example constructing 'null objects') throughout their project in order to get any benefit. It's easy to omit a pattern by mistake, especially when inheriting someone else's code. This not only makes the pattern less powerful (eg. your return value won't be null-checked) but it can also bring down the whole house of cards (eg. if the code only handles null objects, a real null could bring the whole thing down).
 
-Functions, on the other hand, are designed precisely to [i]get rid[/i] of repeated patterns in code (for example, we can handle nulls automatically with [url="http://chriswarbo.net/index.php?page=news&type=view&id=admin-s-blog%2Fperhaps-perhaps"]maybe[/url]). Also, since functions are black-box entities, we can use them to encapsulate anything we don't want the rest of the project to see, making it impossible to accidentally bypass the architecture (classes try to do this, but if you've ever used Python or Javascript you'll know that classes are just a limited kind of function).
+Functions, on the other hand, are designed precisely to *get rid* of repeated patterns in code (for example, we can handle nulls automatically with [maybe](/posts/2012-09-11-perhaps__perhaps__perhaps.html)). Also, since functions are black-box entities, we can use them to encapsulate anything we don't want the rest of the project to see, making it impossible to accidentally bypass the architecture (classes try to do this, but if you've ever used Python or Javascript you'll know that classes are just a limited kind of function).
 
 Thankfully, most scripting languages have pretty good support for functions, but nevertheless seem to have caught a bad case of design pattern. To put this right, and hopefully save some codebases from ruthless obfuscation, I thought I'd write a tutorial on some useful functions within the context of the widely (ab)used language PHP. The motivating use-case for this tutorial will be to separate our business logic from potentially-dangerous procedure calls, so that our codebase is easier to test and debug.
 
-The approach we'll take, which is common in functional programming, is to define [i]values[/i] which [i]represent actions[/i]. Rather than, for example, performing an SQL query, instead we'll return a [i]request to perform an SQL query[/i]. How might we represent such requests? Well, the most general-purpose approach is to represent them as [i]programs[/i] in a [i]domain-specific language[/i] (DSL). There are two kinds of DSL: some are standalone, for example SQL, which are very limited in what they can do (which is why we have stored procedures, for example); others, known as embedded domain-specific languages (EDSLs) live inside another 'host' language, which we can use for anything the DSL can't handle.
+The approach we'll take, which is common in functional programming, is to define *values* which *represent actions*. Rather than, for example, performing an SQL query, instead we'll return a *request to perform an SQL query*. How might we represent such requests? Well, the most general-purpose approach is to represent them as *programs* in a *domain-specific language* (DSL). There are two kinds of DSL: some are standalone, for example SQL, which are very limited in what they can do (which is why we have stored procedures, for example); others, known as embedded domain-specific languages (EDSLs) live inside another 'host' language, which we can use for anything the DSL can't handle.
 
-We'll write our business logic in some EDSLs hosted by PHP. We can then interpret these languages however we like; crucially we will define [i]multiple interpreters[/i] and give ourselves the choice of which one to use. One may perform the requested action (eg. querying a database), another might just check the actions as part of a test ("was our SQL injection attempt foiled?"), yet another might log the actions (for example, to profile which data is the hottest), and so on.
+We'll write our business logic in some EDSLs hosted by PHP. We can then interpret these languages however we like; crucially we will define *multiple interpreters* and give ourselves the choice of which one to use. One may perform the requested action (eg. querying a database), another might just check the actions as part of a test ("was our SQL injection attempt foiled?"), yet another might log the actions (for example, to profile which data is the hottest), and so on.
 
-Some Utilities
+## Some Utilities ##
 
 Before we begin, I want to use the following functions. They're all generic and useful, it's just unfortunate that PHP doesn't have them built-in:
 
-[code="php"]
+```{pipe="tee append > /dev/null"}
+#!/bin/sh
+echo "" >> f.php
+echo "<?"
+tee -a f.php
+```
+
+```{pipe="sh > /dev/null"}
+chmod +x append
+```
+
+```{.php pipe="append"}
 // Identity function: returns its argument unchanged
 function id($x) { return $x; }
 
 // Since "array" isn't actually function :(
 function array_() { return func_get_args(); }
 
-// Function composition: apply $f to the return values of $g
+// Function composition: apply $f to the return value of $g
 function compose($f, $g) {
   return function($x) use ($f, $g) {
     return $f($g($x));
@@ -31,8 +44,7 @@ function compose($f, $g) {
 }
 
 // Partial application: supply some of $f's arguments now and some
-// later. This is a quick alternative to currying, which I'll write
-// up in another post ;)
+// later. This is a quick alternative to currying.
 function apply($f) {
   $args = array_slice(func_get_args(), 1);
   return function() use ($f, $args) {
@@ -40,7 +52,7 @@ function apply($f) {
                                                 func_get_args()));
   };
 }
-[/code]
+```
 
 Mapping
 
