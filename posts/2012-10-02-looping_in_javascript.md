@@ -1,6 +1,8 @@
 ---
 title: Looping in Javascript
 ---
+## TL;DR: Recursion combinators (fold/unfold) are always better than loops/iterables
+
 At work I've become the go-to-guy when it comes to Javascript, mainly because I keep ranting about it. Recently I was asked "what's the best way to do a loop?". My answer was, quite simply, "use a loop". That's the answer to the question that was asked, but the real question that **should** have been asked was "what's the best way to solve this problem?", and in that case, the answer is never a loop.
 
 I'll demonstrate this by "refactoring" a made up code example until we get a nice result. "Refactoring" is the practice of making small semantics-preserving changes, which on the whole improve a project. A piece of code has the same result before and after being refactored, but hopefully it has improved in other areas (performance, elegance, robustness, generality, etc.).
@@ -710,3 +712,32 @@ Some points to notice about this code:
 Whilst it can be difficult to write code directly in a point-free style, I find it useful to write code in a less terse way, then move it closer and closer to point-free. By doing this, we remove redundant cruft and reveal more of our problem's real structure, making it much clearer what's really involved. Once we've fished out the real solution hidden amongst our original, naive code, we can clean it up now that we know what we're doing.
 
 Do you notice how the vast majority of the code we started with had nothing to do with the problem? Most of it was trying to deal with the mess caused by other parts. Looking at the final definition, it's obvious what's going on: collapse our argument into a table, transforming each element by collapsing them into rows, transforming their elements by tagging them as cells. It's obviously right, since it *feels* so right. How could something so elegant be wrong?
+
+## Addendum: Don't Use Iterables Either! ##
+
+I pointed someone at this post after reviewing some horribly-nested code, and got the response "tl;dr use iterables". That's completely against what I'm saying! An Iterable collection has an internal cursor, a `reset` method, a `hasNext` method and a `getNext` method. How can we use this interface to process the elements in the collection? By using a loop:
+
+    c.reset();
+    while (c.hasNext()) {
+      do_something(c.getNext());
+    }
+
+But I've been saying we *shouldn't* use loops!
+
+For those who think this is an object-oriented approach to the problem, you clearly don't understand OO:
+
+ - OO programming uses *method calls* for control flow; loops are not method calls, so they're not OO (in fact they're *structured programming*).
+ - Iterables are poorly encapsulated, since they leak implementation details (the cursor).
+ - Iterables offer a poor interface: they're "sequentially coupled", since methods must be called in a particular order.
+ - To use an iterable, we have to make sure the methods we call in the loop body don't mess with the cursor in undesirable ways. This causes iterables to break:
+    - Polymorphism: Allowing arbitrary duck-types or sub-classes is dangerous, since they might interfere with the cursor.
+    - Encapsulation: For us to call a method, we must know its implementation details to prevent interference. For others to call our methods, they must know our implementation details to prevent interference.
+    - Modularity: Our iterating code must be developed alongside the code it uses, for the reasons mentioned above.
+
+Of course, OO programming isn't a pinnacle of excellence either. There are non-OO reasons to avoid iterables too:
+
+ - They don't compose: if we want to combine two iterables we have to create a brand-new one.
+ - They force an evaluation order: we can't defer the execution of our code, since it mutates the state of the iterable.
+ - We can't abstract: loops can't be passed around as functions or objects.
+
+So, don't use iterables either!
