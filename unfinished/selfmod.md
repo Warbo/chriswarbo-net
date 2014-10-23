@@ -1,1 +1,0 @@
-posts/2014-10-22-purely_functional_self_modifying_code.md
