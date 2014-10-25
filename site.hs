@@ -23,28 +23,16 @@ main = hakyll $ do
 
     postType "html" getResourceBody
 
-    archivePage "Blog" defCtx
-
-
-    create ["archive.html"] $ do
-        route idRoute
-        compile $ do
-            posts <- recentFirst =<< loadAll "posts/*"
-            let archiveCtx =
-                    listField  "posts" postCtx (return elems) `mappend`
-                    constField "title" "Archives"             `mappend`
-                    defCtx
-
-            makeItem ""
-                >>= loadAndApplyTemplate "templates/archive.html" archiveCtx
-                >>= loadAndApplyTemplate "templates/default.html" archiveCtx
-                >>= relativizeUrls
+    archivePage "Blog" $ listField "elems"
+                                   postCtx
+                                   (recentFirst =<< loadAll "posts/*") `mappend`
+                         defCtx
 
     -- Essays
 
     inDir "essays" essayCompile
 
-    archivePage "Essays" defCtx
+    archivePage "Essays" (elems "essays" defCtx `mappend` defCtx)
 
     -- Top-level pages
 
@@ -90,7 +78,7 @@ main = hakyll $ do
 
     inDir "unfinished" essayCompile
 
-    archivePage "Unfinished" defCtx
+    archivePage "Unfinished" (elems "unfinished" defCtx `mappend` defCtx)
 
     -- Assets
 
@@ -160,9 +148,10 @@ pandocFilter = withItemBody (unixFilter "pandoc" ["--filter", "panpipe",
 postCompiler =     getResourceString
                >>= pandocFilter
 
-archivePage title ctx = let name   = map toLower title
-                            aCtx   = elems name               `mappend`
-                                     constField "title" title `mappend`
+strToLower = map toLower
+
+archivePage title ctx = let name   = strToLower title
+                            aCtx   = constField "title" title `mappend`
                                      ctx
                             path p = fromFilePath $ "templates/" ++ p ++ ".html"
                             temp t = loadAndApplyTemplate (path t) aCtx
@@ -173,8 +162,10 @@ archivePage title ctx = let name   = map toLower title
                                     >>= temp "default"
                                     >>= relativizeUrls
 
-elems d = let [xs, ys] = loadAll . fromGlob . (d ++) <$> ["/*", "/*/index.md"]
-           in listField "elems" defCtx ((++) <$> xs <*> ys)
+elems d' c = let d  = strToLower d'
+                 es = liftM concat $ mapM (loadAll . fromGlob . (d ++))
+                                          ["/*", "/*/index.md"]
+              in listField "elems" c es
 
 postType t c = match (fromGlob ("posts/*." ++ t)) $ do
                    route asHtml
