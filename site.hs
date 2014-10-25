@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts  #-}
-import           Control.Applicative ((<$>))
+import           Control.Applicative ((<$>), (<*>))
 import           Control.Monad
 import           Data.Char
 import           Data.List
@@ -14,41 +14,24 @@ import           Text.Parsec
 import           Text.Pandoc
 import           Text.Pandoc.Walk (walkM)
 --------------------------------------------------------------------------------
-
 main :: IO ()
 main = hakyll $ do
-    cp "data/**"
-    cp "images/**"
-    cp "js/**"
 
-    match "css/*" $ do
-        route   idRoute
-        compile compressCssCompiler
+    -- Blog
 
-    match (fromList ["contact.md"]) $ do
-        route asHtml
-        compile $ pandocCompiler
-            >>= loadAndApplyTemplate "templates/default.html" defCtx
-            >>= relativizeUrls
+    postType "md"   postCompiler
 
-    match "posts/*.md" $ do
-        route asHtml
-        compile $ postCompiler >>= renderPost
+    postType "html" getResourceBody
 
-    match "posts/*.html" $ do
-        route asHtml
-        compile $ getResourceBody >>= renderPost
+    archivePage "Blog" defCtx
 
-    match "essays/**.md" $ do
-        route $ gsubRoute "essays/" (const "") `composeRoutes` asHtml
-        essayCompile
 
     create ["archive.html"] $ do
         route idRoute
         compile $ do
             posts <- recentFirst =<< loadAll "posts/*"
             let archiveCtx =
-                    listField  "posts" postCtx (return posts) `mappend`
+                    listField  "posts" postCtx (return elems) `mappend`
                     constField "title" "Archives"             `mappend`
                     defCtx
 
@@ -57,28 +40,20 @@ main = hakyll $ do
                 >>= loadAndApplyTemplate "templates/default.html" archiveCtx
                 >>= relativizeUrls
 
-    create ["essays.html"] $ do
-        route idRoute
-        compile $ do
-            topLevel <- loadAll "essays/*"
-            subLevel <- loadAll "essays/*/index.md"
-            let essays   = topLevel ++ subLevel
-                essayCtx =
-                    listField  "essays" defCtx (return essays) `mappend`
-                    constField "title"  "Essays"               `mappend`
-                    defCtx
+    -- Essays
 
-            makeItem ""
-                >>= loadAndApplyTemplate "templates/essays.html"  essayCtx
-                >>= loadAndApplyTemplate "templates/default.html" essayCtx
-                >>= relativizeUrls
+    inDir "essays" essayCompile
+
+    archivePage "Essays" defCtx
+
+    -- Top-level pages
 
     match "index.html" $ do
         route idRoute
         compile $ do
-            posts <- fmap (take 5) $ recentFirst =<< loadAll "posts/*"
-            let indexCtx =
-                    listField  "posts" postCtx (return posts) `mappend`
+            let elems = fmap (take 5) $ recentFirst =<< loadAll "posts/*"
+                indexCtx =
+                    listField "elems" postCtx elems `mappend`
                     defCtx
 
             getResourceBody
@@ -86,7 +61,21 @@ main = hakyll $ do
                 >>= loadAndApplyTemplate "templates/default.html" indexCtx
                 >>= relativizeUrls
 
-    -- Redirect old URLs
+    match (fromList ["contact.md"]) $ do
+        route asHtml
+        compile $ pandocCompiler
+            >>= loadAndApplyTemplate "templates/default.html" defCtx
+            >>= relativizeUrls
+
+    match "404.html" $ do
+        route idRoute
+        compile $
+            getResourceBody
+                >>= applyAsTemplate                               defCtx
+                >>= loadAndApplyTemplate "templates/default.html" defCtx
+
+    -- Redirects old ocPortal URLs to Hakyll
+
     create ["index.php"] $ do
         route idRoute
         compile $ do
@@ -97,14 +86,27 @@ main = hakyll $ do
             makeItem ""
                 >>= loadAndApplyTemplate "templates/redirect.html" redirectCtx
 
+    -- Unfinished pages
+
+    inDir "unfinished" essayCompile
+
+    archivePage "Unfinished" defCtx
+
+    -- Assets
+
+    cp "data/**"
+
+    cp "images/**"
+
+    cp "js/**"
+
+    match "css/*" $ do
+        route   idRoute
+        compile compressCssCompiler
+
     match "templates/*" $ compile templateCompiler
 
-    match "404.html" $ do
-        route idRoute
-        compile $
-            getResourceBody
-                >>= applyAsTemplate                               defCtx
-                >>= loadAndApplyTemplate "templates/default.html" defCtx
+    -- Feeds (not working yet)
 {-
     create ["atom.xml"] $ do
         route idRoute
@@ -146,8 +148,34 @@ renderPost p =     loadAndApplyTemplate "templates/post.html"    postCtx p
                >>= loadAndApplyTemplate "templates/default.html" postCtx
                >>= relativizeUrls
 
+inDir d c = match (fromGlob (d ++ "/**.md")) $ do
+                route $ customRoute (\i -> reverse $ (toFilePath i) ++ ".html")
+                  {-$ gsubRoute (d ++ "/") (const "") `composeRoutes` asHtml-}
+                c
+
+
 pandocFilter = withItemBody (unixFilter "pandoc" ["--filter", "panpipe",
                                                   "--filter", "panhandle"])
 
 postCompiler =     getResourceString
                >>= pandocFilter
+
+archivePage title ctx = let name   = map toLower title
+                            aCtx   = elems name               `mappend`
+                                     constField "title" title `mappend`
+                                     ctx
+                            path p = fromFilePath $ "templates/" ++ p ++ ".html"
+                            temp t = loadAndApplyTemplate (path t) aCtx
+                         in create [fromFilePath (name ++ ".html")] $ do
+                                route idRoute
+                                compile $ makeItem ""
+                                    >>= temp name
+                                    >>= temp "default"
+                                    >>= relativizeUrls
+
+elems d = let [xs, ys] = loadAll . fromGlob . (d ++) <$> ["/*", "/*/index.md"]
+           in listField "elems" defCtx ((++) <$> xs <*> ys)
+
+postType t c = match (fromGlob ("posts/*." ++ t)) $ do
+                   route asHtml
+                   compile $ c >>= renderPost
