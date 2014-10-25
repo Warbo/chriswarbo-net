@@ -23,10 +23,7 @@ main = hakyll $ do
 
     postType "html" getResourceBody
 
-    archivePage "Blog" $ listField "elems"
-                                   postCtx
-                                   (recentFirst =<< loadAll "blog/*") `mappend`
-                         defCtx
+    archivePage "Blog" blogCtx
 
     -- Essays
 
@@ -37,7 +34,7 @@ main = hakyll $ do
     -- Top-level pages
 
     match "index.html" $ do
-        route idRoute
+        idr
         compile $ do
             let elems = fmap (take 5) $ recentFirst =<< loadAll "blog/*"
                 indexCtx =
@@ -56,7 +53,7 @@ main = hakyll $ do
             >>= relativizeUrls
 
     match "404.html" $ do
-        route idRoute
+        idr
         compile $
             getResourceBody
                 >>= applyAsTemplate                               defCtx
@@ -65,7 +62,7 @@ main = hakyll $ do
     -- Redirects old ocPortal URLs to Hakyll
 
     create ["index.php"] $ do
-        route idRoute
+        idr
         compile $ do
             posts <- loadAll "blog/*"
             let redirectCtx = listField "posts" postCtx (return posts) `mappend`
@@ -97,7 +94,7 @@ main = hakyll $ do
     -- Feeds (not working yet)
 {-
     create ["atom.xml"] $ do
-        route idRoute
+        idr
         compile $ do
             let feedCtx = postCtx `mappend` bodyField "description"
             posts <- fmap (take 10) . recentFirst
@@ -156,7 +153,7 @@ archivePage title ctx = let name   = strToLower title
                             path p = fromFilePath $ "templates/" ++ p ++ ".html"
                             temp t = loadAndApplyTemplate (path t) aCtx
                          in create [fromFilePath (name ++ ".html")] $ do
-                                route idRoute
+                                idr
                                 compile $ makeItem ""
                                     >>= temp name
                                     >>= temp "default"
@@ -170,3 +167,8 @@ elems d' c = let d  = strToLower d'
 postType t c = match (fromGlob ("blog/*." ++ t)) $ do
                    route asHtml
                    compile $ c >>= renderPost
+
+idr = route idRoute
+
+blogCtx =           listField "elems" postCtx (recentFirst =<< loadAll "blog/*")
+          `mappend` defCtx
