@@ -19,23 +19,19 @@ main = hakyll $ do
 
     -- Blog
 
-    postType "md"   postCompiler
-
-    postType "html" getResourceBody
-
+    postType    "md"   postCompiler
+    postType    "html" getResourceBody
     archivePage "Blog" blogCtx
 
     -- Essays
 
-    inDir "essays" essayCompile
-
-    archivePage "Essays" (elems "essays" defCtx `mappend` defCtx)
+    inDir       "essays" essayCompile
+    archivePage "Essays" essayArchCtx
 
     -- Top-level pages
 
     match "index.html" $ do
-        idr
-        compile $ do
+        idr $ do
             let elems = fmap (take 5) $ recentFirst =<< loadAll "blog/*"
                 indexCtx =
                     listField "elems" postCtx elems `mappend`
@@ -52,18 +48,14 @@ main = hakyll $ do
             >>= loadAndApplyTemplate "templates/default.html" defCtx
             >>= relativizeUrls
 
-    match "404.html" $ do
-        idr
-        compile $
-            getResourceBody
-                >>= applyAsTemplate                               defCtx
-                >>= loadAndApplyTemplate "templates/default.html" defCtx
+    match "404.md" $ do
+        idr $     getResourceBody
+              >>= loadAndApplyTemplate "templates/default.html" defCtx
 
     -- Redirects old ocPortal URLs to Hakyll
 
     create ["index.php"] $ do
-        idr
-        compile $ do
+        idr $ do
             posts <- loadAll "blog/*"
             let redirectCtx = listField "posts" postCtx (return posts) `mappend`
                               defCtx
@@ -94,8 +86,7 @@ main = hakyll $ do
     -- Feeds (not working yet)
 {-
     create ["atom.xml"] $ do
-        idr
-        compile $ do
+        idr $ do
             let feedCtx = postCtx `mappend` bodyField "description"
             posts <- fmap (take 10) . recentFirst
                  =<< loadAllSnapshots "blog/*.md" "content"
@@ -153,8 +144,7 @@ archivePage title ctx = let name   = strToLower title
                             path p = fromFilePath $ "templates/" ++ p ++ ".html"
                             temp t = loadAndApplyTemplate (path t) aCtx
                          in create [fromFilePath (name ++ ".html")] $ do
-                                idr
-                                compile $ makeItem ""
+                                idr $ makeItem ""
                                     >>= temp name
                                     >>= temp "default"
                                     >>= relativizeUrls
@@ -168,7 +158,9 @@ postType t c = match (fromGlob ("blog/*." ++ t)) $ do
                    route asHtml
                    compile $ c >>= renderPost
 
-idr = route idRoute
+idr x = route idRoute >> compile x
 
 blogCtx =           listField "elems" postCtx (recentFirst =<< loadAll "blog/*")
           `mappend` defCtx
+
+essayArchCtx = elems "essays" defCtx `mappend` defCtx
