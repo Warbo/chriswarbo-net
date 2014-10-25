@@ -25,7 +25,7 @@ main = hakyll $ do
 
     archivePage "Blog" $ listField "elems"
                                    postCtx
-                                   (recentFirst =<< loadAll "posts/*") `mappend`
+                                   (recentFirst =<< loadAll "blog/*") `mappend`
                          defCtx
 
     -- Essays
@@ -39,7 +39,7 @@ main = hakyll $ do
     match "index.html" $ do
         route idRoute
         compile $ do
-            let elems = fmap (take 5) $ recentFirst =<< loadAll "posts/*"
+            let elems = fmap (take 5) $ recentFirst =<< loadAll "blog/*"
                 indexCtx =
                     listField "elems" postCtx elems `mappend`
                     defCtx
@@ -67,7 +67,7 @@ main = hakyll $ do
     create ["index.php"] $ do
         route idRoute
         compile $ do
-            posts <- loadAll "posts/*"
+            posts <- loadAll "blog/*"
             let redirectCtx = listField "posts" postCtx (return posts) `mappend`
                               defCtx
 
@@ -101,7 +101,7 @@ main = hakyll $ do
         compile $ do
             let feedCtx = postCtx `mappend` bodyField "description"
             posts <- fmap (take 10) . recentFirst
-                 =<< loadAllSnapshots "posts/*.md" "content"
+                 =<< loadAllSnapshots "blog/*.md" "content"
             renderAtom feedConf feedCtx posts
 -}
 --------------------------------------------------------------------------------
@@ -167,6 +167,6 @@ elems d' c = let d  = strToLower d'
                                           ["/*", "/*/index.md"]
               in listField "elems" c es
 
-postType t c = match (fromGlob ("posts/*." ++ t)) $ do
+postType t c = match (fromGlob ("blog/*." ++ t)) $ do
                    route asHtml
                    compile $ c >>= renderPost
