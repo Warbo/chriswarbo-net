@@ -125,9 +125,10 @@ renderPost p =     loadAndApplyTemplate "templates/post.html"    postCtx p
                >>= relativizeUrls
 
 inDir d c = match (fromGlob (d ++ "/**.md")) $ do
-                route $ customRoute (\i -> reverse $ (toFilePath i) ++ ".html")
+                route $ customRoute htmlExt
                   {-$ gsubRoute (d ++ "/") (const "") `composeRoutes` asHtml-}
                 c
+
 
 
 pandocFilter = withItemBody (unixFilter "pandoc" ["--filter", "panpipe",
@@ -164,3 +165,7 @@ blogCtx =           listField "elems" postCtx (recentFirst =<< loadAll "blog/*")
           `mappend` defCtx
 
 essayArchCtx = elems "essays" defCtx `mappend` defCtx
+
+setExt e = (++ e) . reverse . dropWhile (/= '.') . reverse . toFilePath
+
+htmlExt = setExt "html"
