@@ -29,4 +29,4 @@ Loading/importing/including Plumb in your [language of choice](implementations.h
 
 Check out the [usage guide](using.html) to see how Plumb definitions work.
 
-I've also written a blog post [explaining Plumb and its implementation](/posts/2014-08-18-edsl.html).
+I've also written a blog post [explaining Plumb and its implementation](/blog/2014-08-18-edsl.html).

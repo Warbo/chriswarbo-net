@@ -53,6 +53,6 @@ I believe this is more desirable than the weak guarantee of the original PowerPl
 
 I've [implemented these ideas in Coq](https://www.gitorious.org/powerplay) and there is further explanation in these blog posts:
 
- - [PowerPlay Improvement](/posts/2013-10-31-powerplay_improvement.html)
- - [PowerPlay Improvement Continued](/posts/2013-11-22-powerplay_improvement_continued.html)
- - [PowerPlay Implementations](/posts/2013-11-20-powerplay_implementations.html)
+ - [PowerPlay Improvement](/blog/2013-10-31-powerplay_improvement.html)
+ - [PowerPlay Improvement Continued](/blog/2013-11-22-powerplay_improvement_continued.html)
+ - [PowerPlay Implementations](/blog/2013-11-20-powerplay_implementations.html)

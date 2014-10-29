@@ -126,7 +126,7 @@ This is a form of 'writer monad', and we can use the same approach for self-modi
 
 If we re-use the above pattern for passing *programs* around, we get our first attempt at purely-functional self-modifying code.
 
-Since Haskell functions are opaque (we can't pattern-match them), we'll define a simple Lambda Calculus to represent our functions instead (this was explained in [a previous post](/posts/2014-02-07-lazy_lambda_calculus.html)):
+Since Haskell functions are opaque (we can't pattern-match them), we'll define a simple Lambda Calculus to represent our functions instead (this was explained in [a previous post](/blog/2014-02-07-lazy_lambda_calculus.html)):
 
 ```{.haskell pipe="./append"}
 -- Lambda Calculus terms

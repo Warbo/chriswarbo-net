@@ -1,7 +1,7 @@
 ---
 title: Try Plumb
 ---
-[Plumb](/plumb) has a Javascript implementation, so we can try it right in the browser (as long as it supports Javascript!)
+[Plumb](/essays/plumb) has a Javascript implementation, so we can try it right in the browser (as long as it supports Javascript!)
 
 <form id="plumb" action="#" />
 

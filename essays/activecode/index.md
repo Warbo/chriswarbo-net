@@ -353,5 +353,5 @@ if (!$success) exit(1);
 [elpa]: http://orgmode.org/elpa.html
 [pandocmarkdown]: http://johnmacfarlane.net/pandoc/demo/example9/pandocs-markdown.html
 [kate]: http://kate-editor.org/
-[fib]: /posts/2014-07-23-fib.html
-[fibsource]: https://gitorious.org/chriswarbo-dot-net/chriswarbo-dot-net/raw/master:posts/2014-07-23-fib.md
+[fib]: /blog/2014-07-23-fib.html
+[fibsource]: https://gitorious.org/chriswarbo-dot-net/chriswarbo-dot-net/raw/master:blog/2014-07-23-fib.md
