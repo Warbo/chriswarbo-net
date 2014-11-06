@@ -1,4 +1,8 @@
-As mentioned in a previous post, I went to a presentation on monads in Scala at Manchester Lambda Lounge and played around with Scala afterwards.
+---
+title: More Lambda Lounge
+---
+
+As mentioned in an earlier post, I went to a presentation on monads in Scala at Manchester Lambda Lounge and played around with Scala afterwards.
 
 Let's compare three implementations of the Maybe monad; one in Scheme, one in Haskell and what we ended up with in Scala (modulo some mis-rememberings and syntax errors by me, since I'd never read any Scala before last night!). In all three cases we write a function `foo` which passes `10` into the monad and uses `bind` to convert it into a string `"10"`:
 

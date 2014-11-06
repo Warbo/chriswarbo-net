@@ -1,5 +1,5 @@
 ---
-title: Self-Improving Code I Program-Passing
+title: Self-Improving Code 1, Program-Passing Style
 ---
 
 <!-- Some useful scripts -->
@@ -34,18 +34,6 @@ chmod +x run append ghci
 ```{.haskell pipe="./append > /dev/null"}
 module SelfMod where
 ```
-
-## Introduction ##
-
-One of my main research interests is self-*improving* code. Clearly such algorithms must be self-*modifying*, or else they'd never be able to perform those improvements. The trouble with self-modifying code is that it tends to be implemented *imperatively*, and imperative code is difficult to reason about, making the identification of improvements particularly hard.
-
-Those rare times when self-modification is used, it's behaviour is usually known in advance, eg. for compression or to evade malware scanners without altering semantics. Those times when it's not, the runtime is sandboxed to prevent any high-risk (and potentially high-reward) operations.
-
-I'm interested in truly novel, unpredicted, emergent modifications, but don't want to crudely restrict the available operations. Instead, I'd rather have an unrestricted language and allow any and all modifications, iff they're justified by a sound logical argument.
-
-The most obvious way to implement such a system is via strong types. We can define a type to represent program safety and ensure our programs only propose modifications which are also safe. Clearly, such strong types are only plausible when writing purely functional code, so we hit the conundrum of how to implement self-modification in a purely-functional way.
-
-## State-Passing Style ##
 
 The way we usually solve these kinds of problems is to use our pure functional language to implement a domain-specific language which has the feaures we want.
 
@@ -124,61 +112,7 @@ This is a form of 'writer monad', and we can use the same approach for self-modi
 
 ## Current-Program as State ##
 
-If we re-use the above pattern for passing *programs* around, we get our first attempt at purely-functional self-modifying code.
-
-Since Haskell functions are opaque (we can't pattern-match them), we'll define a simple Lambda Calculus to represent our functions instead (this was explained in [a previous post](/blog/2014-02-07-lazy_lambda_calculus.html)):
-
-```{.haskell pipe="./append"}
--- Lambda Calculus terms
-data Term a = Var Nat
-            | Lam (Term a)
-            | App (Term a) (Term a)
-            | Const a
-
--- De Bruijn indices
-data Nat = Z | S Nat
-
-lookUp :: [a] -> Nat -> Maybe a
-lookUp xs n = let toInt Z     = 0
-                  toInt (S m) = 1 + toInt m
-                  n'          = toInt n
-               in if n' < length xs
-                     then Just (xs !! n')
-                     else Nothing
-
--- Compiled closures
-data Val a = F (Partial (Val a) -> Partial (Val a))
-           | C a
-
--- Environment mapping indices to terms
-type Env a = [Partial (Val a)]
-
--- Lambda calculus evaluator
-eval' :: Term a -> Env a -> Partial (Val a)
-eval' (Const c) env = Now (C c)
-eval' (Var   n) env = let Just x = lookUp env n in x
-eval' (Lam   f) env = Now (F (\a -> eval' f (a:env)))
-eval' (App f x) env = do F f' <- eval' f env
-                         Later (f' (eval' x env))
-
-eval x = eval' x []
-
--- Turn the general recursion of Lambda Calculus into co-recursion, to avoid killing Haskell
-data Partial a = Now a | Later (Partial a)
-
-instance Functor Partial where
-  fmap f (Now   x) = Now        (f x)
-  fmap f (Later x) = Later (fmap f x)
-
-instance Monad Partial where
-  return = Now
-  (Now   x) >>= f = Later (f x)
-  (Later x) >>= f = Later (x >>= f)
-```
-
-### First Attempt ###
-
-Let's adapt the logger example to fit our new scenario. Here's what the logger's datastructure looked like:
+If we re-use the above pattern for passing *programs* around, we get our first attempt at purely-functional self-modifying code. Let's adapt the logger example to fit our new scenario. Here's what the logger's datastructure looked like:
 
 ```{pipe="sh" .haskell}
 cat lapair.hs
