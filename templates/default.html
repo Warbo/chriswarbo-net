@@ -24,7 +24,15 @@
       $body$
     </div>
     <div id="footer">
-      All content is Public Domain, unless stated otherwise
-    </div>
+      $if(path)$
+        <div style="float: left">
+          <a href="https://gitorious.org/chriswarbo-dot-net/chriswarbo-dot-net/source/master:$path$">
+            View Source
+          </a>
+        </div>
+      $endif$
+      <div style="float: right">
+        All content is Public Domain, unless stated otherwise
+      </div>
   </body>
 </html>
