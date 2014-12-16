@@ -1,6 +1,12 @@
 ---
 title: Lazy Lambda Calculus
 ---
+
+```{pipe="tee -a 1.hs > /dev/null"}
+import Test.SmallCheck
+
+```
+
 Recently I've been playing with meta-programming in [lambda calculus] [1] (originally I tried using [combinatory logic] [2] but the combinators rapidly became too large to understand :( ). For this, I wanted an LC implementation with the following characteristics:
 
  - Implemented in Haskell
@@ -15,7 +21,7 @@ Recently I've been playing with meta-programming in [lambda calculus] [1] (origi
 
 I tried implementing this myself, and here's the infrastructure I built to do it:
 
-```haskell
+```{.haskell pipe="tee -a 1.hs"}
 -- Peano-style natural numbers
 data Nat = Z
          | S Nat
@@ -40,13 +46,14 @@ data Term a = Const a       -- Opaque Haskell values
             | Var Nat       -- De Bruijn index
             | Lam (Term a)  -- Anonymous function
             | Term :@ Term  -- Function application
+
 ```
 
 My first attempt hit problems with [closure] [5]. Specifically, I was trying to make an evaluation function with Terms as input **and** output, but this gave me nowhere to store the associated environment:
 
 [5]: http://en.wikipedia.org/wiki/Closure_%28computer_programming%29
 
-```haskell
+```{.haskell pipe="tee -a 1.hs"}
 -- (Broken) evaluation function
 eval' :: [Partial (Term a)] -> Term a -> Partial (Term a)
 eval' (e:es) (Var  Z)    = e
@@ -59,11 +66,14 @@ eval'  e     (l :@ r)    = let ev = eval' e in
 eval'  e      t          = t
 
 eval = eval' []
+
 ```
 
 To see why this is incorrect, we can use [SmallCheck] [6]. Let's check the property that closed terms (ie. those with no free variables) remain closed after evaluation:
 
 [6]: http://hackage.haskell.org/package/smallcheck
+
+```{pipe="tee -a 1.hs > /dev/null"}```
 
 ```haskell
 -- Predicate to see if a Term has fewer than n free variables

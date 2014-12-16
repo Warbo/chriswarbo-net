@@ -4,13 +4,24 @@ title: A Framework for Self-Improving Code
 
 Since Haskell functions are opaque (we can't pattern-match them), we'll define a simple Lambda Calculus to represent our functions instead (this was explained in [a previous post](/blog/2014-02-07-lazy_lambda_calculus.html)):
 
+```{.haskell pipe="sh"}
+git clone ...
+cat ...
+```
+
+
 ```{pipe="cat > append"}
 #!/bin/sh
-cat
+tee -a code.hs
+echo "" >> code.hs
 ```
 
 ```{pipe="sh"}
 chmod +x append
+```
+
+```{pipe="./append > /dev/null"}
+import Test.QuickCheck
 ```
 
 ```{.haskell pipe="./append"}
@@ -59,4 +70,34 @@ instance Monad Partial where
   return = Now
   (Now   x) >>= f = Later (f x)
   (Later x) >>= f = Later (x >>= f)
+```
+
+```{pipe="./append"}
+instance Eq a => Eq (Val a) where
+  C x == C y = x == y
+  _   == _   = False
+
+instance Arbitrary a => Arbitrary (Term a) where
+  arbitrary = Var   <$> arbitrary
+              App   <$> arbitrary <*> arbitrary
+              Lam   <$> arbitrary
+              Const <$> arbitrary
+
+extractTo :: Int -> Partial a -> Maybe a
+extractTo _ (Now   x) = Just x
+extractTo n _ | n < 1 = Nothing
+extractTo n (Later x) = extractTo (n-1) x
+
+evalFor n t = extractTo n (eval t)
+
+normalIn :: Eq a => Int -> Term a -> Bool
+normalIn n t = evalFor n t /= Nothing
+
+testId :: Eq a => Int -> Term a -> Bool
+testId n t = not (normalIn n t) || evalFor (n * n) (App (Lam (Var Z)) t) == evalFor n t
+```
+
+```{pipe="ghci -v0"}
+:load code.hs
+quickCheck testId
 ```

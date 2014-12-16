@@ -149,7 +149,7 @@ What happens if our `Range`{.haskell} is unbounded (ie. `range 0`{.haskell})? Fo
 ```{.haskell pipe="./code"}
 checkerboard :: Shape
 checkerboard = let f        = (`mod` 2) . (`div` 8)
-                   g [x, y] = g x == g y
+                   g [x, y] = f x == f y
                 in Shape 2 0 g
 ```
 

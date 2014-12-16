@@ -3,7 +3,9 @@ title: Nat-like Types, or Dynamic and Static Information
 ---
 This is based on [an explanation I gave][mymail] on the [Idris mailing list][idrismail] about using dependent types to prove that a Vector contains some element.
 
-This post assumes some familiarity with the `Nat`{.haskell} type. If you've not encountered it before, take a look at [Peano arithmetic][peano]
+# The Skeleton #
+
+All of the types in this post will be variations of the `Nat`{.haskell} type. If you've not encountered it before, take a look at [Peano arithmetic][peano].
 
 ## `Nat`{.haskell} ##
 
@@ -30,6 +32,10 @@ numbers', where we're counting how many `S`{.haskell} wrappers there are around
 
 We can define types similar to `Nat`{.haskell} which are more informative, both
 statically (stronger types) and dynamically (contain more data).
+
+# Static Information #
+
+These types start with `Nat`{.haskell} and add *static* information (ie. stronger types).
 
 ## `Exactly n`{.haskell} ##
 
@@ -170,9 +176,13 @@ Hence we can think of `Elem x xs`{.haskell} as being 'proof that `x`{.haskell} i
 We get compile errors if we change the `Here`{.haskell} and `There`{.haskell} values in a program, because we're changing the proof. Since the proof tells Idris what
 the index of the element is, changing that index makes the proof wrong and the compiler rejects it.
 
+# Dynamic Information #
+
+These types start with `Nat`{.haskell} and add *dynamic* information (ie. data).
+
 ## `List t`{.haskell} ##
 
-Note that `List t`{.haskell} also follows the same constructor pattern as `Nat`{.haskell}:
+`List t`{.haskell} follows the same constructor pattern as `Nat`{.haskell}:
 
 ```haskell
 Nil : List t
@@ -198,6 +208,55 @@ a new type `FinList n t`{.haskell} for 'all lists of `t`{.haskell} up to length 
 In the same way that we went from `Fin n`{.haskell} to `NatLTE n m`{.haskell}, you might try
 making a new type `SuffixList l1 l2`{.haskell} for 'proofs that `l1`{.haskell} is a suffix of
 `l2`{.haskell}'.
+
+## `Delay t`{.haskell} ##
+
+`Delay t`{.haskell} is like `List t`{.haskell}, except it can only store data in the
+`Nil`{.haskell} constructor, not the `Cons`{.haskell} constructor. For this reason, we rename
+the constructors to `Now`{.haskell} and `Later`{.haskell}, respectively:
+
+```haskell
+Now x : Delay t
+Later : Delay t -> Delay t
+```
+
+If we throw away the dynamic information, we get a counter like `Nat`{.haskell}:
+
+```haskell
+plain : Delay t -> Nat
+plain (Now   x) = Z
+plain (Later x) = S (plain x)
+```
+
+What about the static information? `List t`{.haskell} was trivial for all `t`{.haskell}, since
+we can satisfy it with `Nil`{.haskell}. We can't do that with `Delay t`{.haskell}, since
+`Now`{.haskell} requires an argument of type `t`{.haskell}.
+
+In fact, we *can* satisfy `Delay t`{.haskell} trivially, by using `Later`{.haskell}:
+
+```haskell
+loop : Delay t
+loop = Later loop
+```
+
+This defines a never-ending chain of `Later (Later (Later (Later ...)))`{.haskell}. Since we never
+terminate the chain with a `Now`{.haskell}, we don't have to provide a value of type `t`{.haskell}.
+
+This kind of circular reasoning is called *co-induction*, and is logically sound as long as each
+constructor can be determined by a terminating function (in this case, we just step along the chain
+until we reach the desired depth, pattern-matching the (constant) constructors as we go). This
+condition is called *co-termination*.
+
+If a function doesn't terminate or co-terminate, it *diverges*. We can use `Delay t`{.haskell} to
+handle diverging functions in a safe way. For example, the Halting Problem tells us that it's
+impossible to calculate whether a Universal Turing Machine will halt for arbitrary inputs; ie. the
+UTM might *diverge*. However, we can always perform each *step* of the UTM in a finite amount of
+time.
+
+If we wrap the result of our UTM in a `Delay`{.haskell}, we can return a `Later`{.haskell} for each
+step, and if it does eventually halt we can return a `Now`{.haskell}. Whenever it diverges, our
+program doesn't freeze; instead, we get the same `Later (Later (Later ...))`{.haskell} chain as
+`loop`{.haskell}, which we can inspect to various depths.
 
 ## `Vect n t`{.haskell} ##
 
