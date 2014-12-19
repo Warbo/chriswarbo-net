@@ -34,77 +34,77 @@
 
 // This is a "Web Worker", which responds to message sends
 onmessage = (function() {
-	var run_prog = (function() {
-		var mem, index, counter, step, stream, size;
-		var result = {'x': 0, 'y':0};
-		var read_address = function(start, length) {
-		    return parseInt(mem.slice(start, start+length).join(''), 2);
-		}
+    var run_prog = (function() {
+        var mem, index, counter, step, stream, size;
+        var result = {'x': 0, 'y':0};
+        var read_address = function(start, length) {
+            return parseInt(mem.slice(start, start+length).join(''), 2);
+        }
 
-		// Runs program p on machine m in phase phase
-		// m is the size of a word
-		return function(phase, m, p) {
-			if (!p) {
-				// The first program, we must set up its machine
-				size = Math.pow(2, m)+2*m;
-			}
-			// Fill the memory with repetitions of p
-			mem = p.toString(2).split('').map(function(c) {
-				return parseInt(c, 2);
-			});
-			mem.reverse();  // We'll always have a leading 1 otherwise!
-			while (mem.length < size) {
-			    mem = mem.concat(mem);
-			}
-			while (mem.length > size) {
-			    mem.pop();
-			}
+        // Runs program p on machine m in phase phase
+        // m is the size of a word
+        return function(phase, m, p) {
+            if (!p) {
+                // The first program, we must set up its machine
+                size = Math.pow(2, m)+2*m;
+            }
+            // Fill the memory with repetitions of p
+            mem = p.toString(2).split('').map(function(c) {
+                return parseInt(c, 2);
+            });
+            mem.reverse();  // We'll always have a leading 1 otherwise!
+            while (mem.length < size) {
+                mem = mem.concat(mem);
+            }
+            while (mem.length > size) {
+                mem.pop();
+            }
 
-			for (var a=mem.length-m+1; a < mem.length; a++) {
-				mem[a] = 0;
-			}
+            for (var a=mem.length-m+1; a < mem.length; a++) {
+                mem[a] = 0;
+            }
 
-			// Run 2^(phase-m-length(p)) steps of p on m
-			counter = 0;
-			for (step=0; step <= Math.pow(2, phase - m - Math.log(2, p)); step++) {
-				mem[read_address(counter, m)] = mem[read_address(counter+m, m)];
-				counter = read_address(counter+2*m, m);
-			}
+            // Run 2^(phase-m-length(p)) steps of p on m
+            counter = 0;
+            for (step=0; step <= Math.pow(2, phase - m - Math.log(2, p)); step++) {
+                mem[read_address(counter, m)] = mem[read_address(counter+m, m)];
+                counter = read_address(counter+2*m, m);
+            }
 
-			// Return our result. The first 9 bits form our
-			// x coordinate, the next 9 are our y coordinate
-			if (mem.length - m + 1 >= 18) {
-				result['x'] = parseInt(mem.slice(0, 9).join(''), 2);
-				result['y'] = parseInt(mem.slice(9, 18).join(''), 2);
-			} else if (mem.length - m + 1 == 1) {
-				result['x'] = result['y'] = mem[0];
-			} else {
-				result['x'] = parseInt(mem.slice(0, (mem.length - m + 1) /2).join(''), 2);
-				result['y'] = parseInt(mem.slice((mem.length - m + 1) / 2, (mem.length - m + 1)).join(''), 2);
-			}
-			result['phase'] = phase;
-			result['m'] = m;
-			result['p'] = p;
+            // Return our result. The first 9 bits form our
+            // x coordinate, the next 9 are our y coordinate
+            if (mem.length - m + 1 >= 18) {
+                result['x'] = parseInt(mem.slice(0, 9).join(''), 2);
+                result['y'] = parseInt(mem.slice(9, 18).join(''), 2);
+            } else if (mem.length - m + 1 == 1) {
+                result['x'] = result['y'] = mem[0];
+            } else {
+                result['x'] = parseInt(mem.slice(0, (mem.length - m + 1) /2).join(''), 2);
+                result['y'] = parseInt(mem.slice((mem.length - m + 1) / 2, (mem.length - m + 1)).join(''), 2);
+            }
+            result['phase'] = phase;
+            result['m'] = m;
+            result['p'] = p;
 
-			postMessage(result);
-		};
-	})();
+            postMessage(result);
+        };
+    })();
 
-	return (function() {
-		var phase = 1;
-		var m = 1;
-		var p = 0;
-		return function(event) {
-			run_prog(phase, m, p);
-			p++;
-			if (p > Math.pow(2, m)) {
-				p = 0;
-				m++;
-				if (m > phase) {
-					m = 1;
-					phase++;
-				}
-			}
-		};
-	})();
+    return (function() {
+        var phase = 1;
+        var m = 1;
+        var p = 0;
+        return function(event) {
+            run_prog(phase, m, p);
+            p++;
+            if (p > Math.pow(2, m)) {
+                p = 0;
+                m++;
+                if (m > phase) {
+                    m = 1;
+                    phase++;
+                }
+            }
+        };
+    })();
 })();
