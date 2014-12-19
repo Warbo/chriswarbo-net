@@ -48,20 +48,14 @@ onmessage = (function() {
                 // The first program, we must set up its machine
                 size = Math.pow(2, m)+2*m;
             }
-            // Fill the memory with repetitions of p
-            mem = p.toString(2).split('').map(function(c) {
-                return parseInt(c, 2);
-            });
+            // Put p in the memory
+            mem = p.toString(2).split('');
             mem.reverse();  // We'll always have a leading 1 otherwise!
             while (mem.length < size) {
-                mem = mem.concat(mem);
+                mem.push("0");
             }
             while (mem.length > size) {
                 mem.pop();
-            }
-
-            for (var a=mem.length-m+1; a < mem.length; a++) {
-                mem[a] = 0;
             }
 
             // Run 2^(phase-m-length(p)) steps of p on m
@@ -71,20 +65,16 @@ onmessage = (function() {
                 counter = read_address(counter+2*m, m);
             }
 
-            // Return our result. The first 9 bits form our
-            // x coordinate, the next 9 are our y coordinate
-            if (mem.length - m + 1 >= 18) {
-                result['x'] = parseInt(mem.slice(0, 9).join(''), 2);
-                result['y'] = parseInt(mem.slice(9, 18).join(''), 2);
-            } else if (mem.length - m + 1 == 1) {
-                result['x'] = result['y'] = mem[0];
-            } else {
-                result['x'] = parseInt(mem.slice(0, (mem.length - m + 1) /2).join(''), 2);
-                result['y'] = parseInt(mem.slice((mem.length - m + 1) / 2, (mem.length - m + 1)).join(''), 2);
-            }
+            // Extract a coordinate from the start of the memory. Alternate bits
+            // go into x and y, respectively, until they're both 9 bits.
+            result['x'] = parseInt([mem[0],  mem[2],  mem[4],  mem[6], mem[8],
+                                    mem[10], mem[12], mem[14], mem[16]].join(''), 2);
+            result['y'] = parseInt([mem[1], mem[3], mem[5], mem[7], mem[9],
+                                    mem[11], mem[13], mem[15], mem[17]].join(''), 2);
+
             result['phase'] = phase;
-            result['m'] = m;
-            result['p'] = p;
+            result['m']     = m;
+            result['p']     = p;
 
             postMessage(result);
         };
@@ -92,8 +82,8 @@ onmessage = (function() {
 
     return (function() {
         var phase = 1;
-        var m = 1;
-        var p = 0;
+        var m     = 5;
+        var p     = 0;
         return function(event) {
             run_prog(phase, m, p);
             p++;
