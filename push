@@ -56,6 +56,11 @@ check = whileWatching $ do fails <- get404s . lines <$> crawl
 scp :: IO ExitCode
 scp = rawSystem "scp" ["-r", "_site", "chriswarbo.net:~/"]
 
+-- update
+
+update :: IO ExitCode
+update = rawSystem "ssh" ["-t", "chriswarbo.net", "/home/chris/update.sh"]
+
 -- main
 
 exitOnFailure :: IO ExitCode -> IO ()
@@ -68,7 +73,8 @@ write x = putStrLn x
 ops :: [(String, IO ExitCode)]
 ops = [("rebuild", write "Rebuilding"     >> rebuild),
        ("check",   write "Checking links" >> check  ),
-       ("copy",    write "Copying"        >> scp    )]
+       ("copy",    write "Copying"        >> scp    ),
+       ("update",  write "Updating"       >> update )]
 
 op :: String -> IO ()
 op n = case lookup n ops of
