@@ -12,5 +12,6 @@ stdenv.mkDerivation {
     haskellPackages.hakyll
     gnuplot
     pngcrush
+    coq
   ];
 }
