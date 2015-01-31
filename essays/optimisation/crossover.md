@@ -13,20 +13,20 @@ In the genetic algorithm on this page, I've only included "crossover", which is 
 
 <div id="crossover_playfield" style="width: 500px; height: 500px;"></div>
 <form action="#" type="get">
-  <div>
-    <input type="range" min="1" max="100" value="20" id="crossover_population" style="width: 500px;" />
-    <label for="crossover_population">Population:&nbsp;</label><a id="crossover_population_display"></a>
-  </div>
-  <div>
-    <input type="range" min="1" max="10" id="crossover_rate" value="1" style="width: 500px;" />
-    <label for="crossover_rate">Crossover rate:&nbsp;</label><a id="crossover_rate_display"></a>
-  </div>
-  <div>
-    Current fitness:&nbsp<a id="crossover_fitness"></a>
-  </div>
-  <div>
-    <input type="checkbox" id="crossover_stable" value="0" /><label for="crossover_stable">Stable sort. Slower, but stops the green blob jumping between equal-fitness solutions.</label>
-  </div>
+ <div>
+  <input type="range" min="1" max="100" value="20" id="crossover_population" style="width: 500px;" />
+  <label for="crossover_population">Population:&nbsp;</label><a id="crossover_population_display"></a>
+ </div>
+ <div>
+  <input type="range" min="1" max="10" id="crossover_rate" value="1" style="width: 500px;" />
+  <label for="crossover_rate">Crossover rate:&nbsp;</label><a id="crossover_rate_display"></a>
+ </div>
+ <div>
+  Current fitness:&nbsp;<a id="crossover_fitness"></a>
+ </div>
+ <div>
+  <input type="checkbox" id="crossover_stable" value="0" /><label for="crossover_stable">Stable sort. Slower, but stops the green blob jumping between equal-fitness solutions.</label>
+ </div>
 </form>
 <script src="/js/jquery.js"></script>
 <script src="/js/jquery_svg.js"></script>
