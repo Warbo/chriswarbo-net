@@ -4,9 +4,9 @@ title: Embedded Domain-Specific Languages in PHP (AKA Scrap Your Dependency Inje
 
 There are few programming constructs as useful as the function; we can define all kinds of useful functions to make our code simpler, shorter, safer and easier to test (most of the functions in this tutorial are one-liners!). Unfortunately some languages, notably Java, don't have any support for functions (until Java 8, at least). This has lead to hacks and workarounds, known as "design patterns", proliferating through the world of software development, infecting all manner of codebases.
 
-The problem with design patterns is that they're 'opt-in', ie. they usually require programmers to sprinkle repeated bits of code ('patterns', for example constructing 'null objects') throughout their project in order to get any benefit. It's easy to omit a pattern by mistake, especially when inheriting someone else's code. This not only makes the pattern less powerful (eg. your return value won't be null-checked) but it can also bring down the whole house of cards (eg. if the code only handles null objects, a real null could bring the whole thing down).
+The problem with design patterns is that they're 'opt-in', ie. they usually require programmers to sprinkle repeated bits of code ('patterns') throughout their project in order to get any benefit. It's easy to omit a pattern by mistake, especially when inheriting someone else's code. This not only makes the pattern less powerful, but it can also bring down the whole house of cards (if we're relying on the pattern to patch-up some problem with the straightforward, non-pattern approach).
 
-Functions, on the other hand, are designed precisely to *get rid* of repeated patterns in code (for example, we can handle nulls automatically with [maybe](/blog/2012-09-11-perhaps__perhaps__perhaps.html)). Also, since functions are black-box entities, we can use them to encapsulate anything we don't want the rest of the project to see, making it impossible to accidentally bypass the architecture (classes try to do this, but if you've ever used Python or Javascript you'll know that classes are just a limited kind of function).
+Functions, on the other hand, are designed precisely to *get rid* of repeated patterns in code (for example, we can handle null checking automatically by using [maybe](/blog/2012-09-11-perhaps__perhaps__perhaps.html)). Also, since functions are black-box entities, we can use them to encapsulate anything we don't want the rest of the project to see, making it impossible to accidentally bypass the architecture (classes try to do this, but if you've ever used Python or Javascript you'll know that classes are just a limited kind of function).
 
 Thankfully, most scripting languages have pretty good support for functions, but nevertheless seem to have caught a bad case of design pattern. To put this right, and hopefully save some codebases from ruthless obfuscation, I thought I'd write a tutorial on some useful functions within the context of the widely (ab)used language PHP. The motivating use-case for this tutorial will be to separate our business logic from potentially-dangerous procedure calls, so that our codebase is easier to test and debug.
 
@@ -62,6 +62,8 @@ function apply($f) {
 
 If we're going to make some languages, the first thing to consider is the *tokens*, ie. the individual commands of the language. Tokens form a structure known as a *functor*, which we can think of as a 'box'. The defining feature of a functor is a *map* function which applies a given function to the contents of a box (if any). This is a bit abstract, but some concrete examples will show you how trivial this is:
 
+### Arrays ###
+
 Arrays are 'boxes', so we can apply a function to their contents:
 
 ```{.php pipe="./append"}
@@ -89,13 +91,15 @@ function map_array($f, $x) { return array_map($f, $x); }
 Or even:
 
 ```{.php pipe="./tag"}
-$map_array = apply('array_map');
+$map_array = 'array_map';
 ```
 
   </div>
 </div>
 
-Objects are 'boxes' too, so we can apply a function to their properties:
+### Objects ###
+
+If we ignore their class, objects are 'boxes' too, so we can apply a function to their properties:
 
 ```{.php pipe="./append"}
 function map_object($f, $x) {
@@ -123,11 +127,15 @@ function map_object($f, $x) {
   </div>
 </div>
 
-A function is like a 'box' too, but it's a bit more complicated to imagine. If we think of a function as being a huge [lookup table](http://en.wikipedia.org/wiki/Lookup_table), where the argument is looked up in the table to find the return value, then the return values are the 'contents'. This means our map function needs to apply one function to the return values of another. This is just *[function composition](http://en.wikipedia.org/wiki/Function_composition)* which I defined at the beginning:
+### Functions ###
+
+A function is like a 'box' too, but it may be harder to see why. We can think of a function as a huge [lookup table](http://en.wikipedia.org/wiki/Lookup_table), where the argument is looked up in the table to find the return value. In other words, functions are like (associative) arrays! We can make a map function by applying one function to *the return values* of another. This is just *[function composition](http://en.wikipedia.org/wiki/Function_composition)* which I defined at the beginning:
 
 ```{.php pipe="./append"}
 function map_function($f, $g) { return compose($f, $g); }
 ```
+
+### Functor Rules ###
 
 Now, these map functions aren't completely arbitrary; they must obey a couple of rules. They are:
 
@@ -140,6 +148,8 @@ map($f, map($g, $x)) == map(compose($f, $g), $x)
 ```
 
 These rules might look confusing, but in practice it's easy to obey them (all of the definitions we've seen so far do).
+
+### Tokens ###
 
 Now, how does this relate to the tokens of an EDSL? How are tokens like boxes? We can split our tokens into two groups: 'results' and 'commands'. Results are like arrays, they contain a value we can map a function over. Commands are like functions, running them will produce a value we can map a function over.
 
