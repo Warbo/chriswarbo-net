@@ -109,7 +109,7 @@ circle = let centre = dim `div` 2
           in Shape 2 (2 * centre) p
 ```
 
-Here's what we get by mapping `circle`{.haskell}'s predicate over the coordinates of a bunch of pixels:
+Here's what we get when we use an axis-aligned curve to trace a black-to-white gradient through the `circle`{.haskell}:
 
 ```{.haskell pipe="./code"}
 drawCircle x y = sPred circle [x, y]
@@ -124,6 +124,12 @@ echo "f = drawCircle"
 ```{.unwrap pipe="sh"}
 ./includePic circ
 ```
+
+<div class="togglable odd">
+
+#### Aside ####
+
+<div class="toggled">
 
 Another thing we can do with `circle`{.haskell} is to approximate π:
 
@@ -142,7 +148,18 @@ Another thing we can do with `circle`{.haskell} is to approximate π:
  - Plugging these values into our definition of π gives `cat code.hs; echo ""; echo "main = print π"`{.haskell pipe="sh | runhaskell 2>> /tmp/err"}
     - Increasing the radius decreases the error, since the sampling gives a less 'jagged' approximation of our circle
 
-## An Unbounded Example ##
+  </div>
+</div>
+
+<script src="/js/jquery.js"></script>
+<script type="text/javascript">
+$('.togglable').click(function() {
+                        $('.toggled', $(this)).toggle();
+                      })
+               .click();
+</script>
+
+### An Unbounded Example ###
 
 What happens if our `Range`{.haskell} is unbounded (ie. `range 0`{.haskell})? For example, we might define an infinitely-repeating pattern:
 
@@ -153,7 +170,7 @@ checkerboard = let f        = (`mod` 2) . (`div` 8)
                 in Shape 2 0 g
 ```
 
-We can draw a finite section of it by mapping over the finite `Range`{.haskell} of our image:
+Obviously we can't draw the whole pattern, but we can draw a small section:
 
 ```{.haskell pipe="./code"}
 drawBoard x y = sPred checkerboard [x, y]
@@ -169,13 +186,13 @@ echo "f = drawBoard"
 ./includePic board
 ```
 
-Since the area of this `Shape`{.haskell} is infinite, so is the length of a `Curve`{.haskell} traced through the whole thing. However, an infinite `Curve`{.haskell} returned by `aaCurve` will *not* contain every `Point`{.haskell} in the `Shape`{.haskell}.
+Since the area of `checkerboard`{.haskell} is infinite, so is the length of a `Curve`{.haskell} traced through it. However, an infinite `Curve`{.haskell} returned by `aaCurve` will *not* contain every `Point`{.haskell} in the `Shape`{.haskell}.
 
 This is because we only add a `Point`{.haskell} from the second row once we've reached the end of the first row; since the first row never ends, we'll never add a `Point`{.haskell} from any other row!
 
 ## Diagonal Traces ##
 
-Cantor's approach traces *diagonal* lines across the shape, from one coordinate axis to another:
+Cantor's approach handles infinite patterns like `checkerboard`{.haskell} by tracing *diagonal* lines across the shape, from one coordinate axis to another:
 
  - Each `Point`{.haskell} on the `x` axis is the start of a diagonal line
  - To get from one `Point`{.haskell} in a line to the next, we decrement the `x` coordinate and increment the `y`
@@ -197,23 +214,7 @@ cantorShape :: Shape -> Curve
 cantorShape (Shape d r p) = filter p (cantorCurve r d)
 ```
 
-```
-{pipe="sh | runhaskell"}
-cat code.hs
-echo ""
-echo "main = print $ take 10 cantorTest"
-```
-
- - Add all of the coordinates together to find our position in this "level"
- - Drop our first coordinate
- - Repeat to find the next levels
-
-This gives us a sequence of indices `[I1, I2, I3, I4, ...]`, one for each dimension. The first levels are "coarser" than the later ones. We now need to find the size of these levels:
-
- - The finest (last) level goes up in increments of 1
- - Each other level goes up in increments of
-
-This is what happens if we use cantorShape to trace a black-to-white gradient across a square:
+To see how this works, we can trace a black-to-white gradient across a square, following the curve given by `cantorCurve`{.haskell}. Compare it to the axis-aligned version above:
 
 ```{.haskell pipe="tee cantorGrad.hs > /dev/null"}
 -- This works for 2D; higher dimensions are more complicated
@@ -225,69 +226,68 @@ cantor2DFrac :: Float
 cantor2DFrac = fromIntegral dim / fromIntegral cantor2DTotal
 
 cantor2DPosToGrey :: Int -> Grey
-cantor2DPosToGrey = toIntegral . (* cantor2DFrac) . fromIntegral
+cantor2DPosToGrey = round . (* cantor2DFrac) . fromIntegral
 
 -- Get which line a point is in
 cantor2DLine' a n = if n > a
                        then cantor2DLine' (a + 1) (n - a)
                        else (a, n)
 
-cantor2DLine = cantor2dLine' 0
+cantor2DLine = cantor2DLine' 0
 
 -- The index of a Point in a cantorCurve
 cantorIndex2D :: Point -> Int
 cantorIndex2D [x, y] = sum [1..x + y + 1] + y
 
-img    = Shape 2 (2 * dim) (\[x, y] -> x < dim && y < dim)
-curve  = cantorShape img
-white  = dim
-count  = length curve
-greys  = [(i * white) `div` count | i <- [0..]]
-pxls   = DM.fromList $ zip curve greys
-
-index =
-
 cantorGrad x y = cantor2DPosToGrey (cantorIndex2D [x, y])
 ```
 
-```{pipe="tee test.hs"}
-
-main = do print "4 1"
-          print $ cantorCurve 4 1
-          print "2 3"
-          print $ cantorCurve 2 3
-
-```
-
-```
-{pipe="sh | runhaskell"}
+```{pipe="sh > cantorgrad1.hs"}
 cat code.hs
 echo ""
-cat test.hs
-```
-
-```
-{pipe="sh | ./greyCode | runhaskell > cantorgrad.ppm"}
-cat code.hs
 cat cantorGrad.hs
+echo ""
 echo "f = cantorGrad"
 ```
 
-```
-{.unwrap pipe="sh"}
-./includePic cantograd | ./wrapCode .unwrap | pandoc -t json
+```{pipe="sh > cantorgrad2.hs"}
+./greyCode < cantorgrad1.hs
 ```
 
-Each of these individual lists is finite: they start on the `x` axis and go diagonally until they end on the `y` axis (and so on for `z`, `w`, etc. in higher dimensions).
+```{pipe="sh > cantorgrad.ppm"}
+runhaskell cantorgrad2.hs 2>&1 || true
+```
 
+```{.unwrap pipe="sh"}
+./includePic cantorgrad | ./wrapCode .unwrap | pandoc -t json
+```
+
+We start in the top left corner and draw a *diagonal* line from the top edge to the left edge, then draw another next to it, and another next to it, and so on. Note that Cantor's method naturally draws a *triangle*; to make it trace a square, we've had to filter out those points which extend too far to the right or the bottom.
+
+### A Finite Example ###
+
+Let's revisit our `circle`{.haskell}. If we trace a gradient across it using Cantor's method, we get the following:
+
+```
+
+```
+
+### Unbounded Example ###
+
+
+
+## Removing All Bounds ##
+
+Cantor's method can handle infinite patterns
 
 ## Going The Other Way ##
 
 So far we have a way to enumerate points, ie. to go from a 1D line to a space, like a 2D square. What about going the other direction, from a point to a position on the line?
 
-We can write a function to calculate this for us directly, but for simplicity we will just look up our coordinate in the enumeration:
-
-``
+```{pipe="tee cantorBack.hs"}
+cantorPosition :: Shape -> Point -> Int
+cantorPosition s p = fromJust . elemIndex p (cantorShape s)
+```
 
 ## Pretty Pictures ##
 

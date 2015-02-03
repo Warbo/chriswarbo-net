@@ -169,7 +169,7 @@ pandoc -t json < "$1.md"
 ```{pipe="sh 2>&1"}
 LOC=$(readlink -f root/data/scripts/wrapCode.sh)
 cd proc/
-ln -s "$LOC" wrapCode
+ln -s "$LOC" wrapCode 2>/dev/null || true
 chmod +x includePic *Code codeAndPic
 ```
 
