@@ -1,5 +1,5 @@
 ---
-title: NixOS
+title: Switching to NixOS
 author: Chris
 ---
 ## Introduction
