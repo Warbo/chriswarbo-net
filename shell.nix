@@ -12,6 +12,9 @@ stdenv.mkDerivation {
     haskellPackages.hakyll
     gnuplot
     pngcrush
+    imagemagick
     coq
+    panpipe
+    panhandle
   ];
 }
