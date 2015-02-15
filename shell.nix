@@ -10,6 +10,7 @@ stdenv.mkDerivation {
     php
     haskellPackages.ghc
     haskellPackages.hakyll
+    haskellPackages.QuickCheck
     gnuplot
     pngcrush
     imagemagick
