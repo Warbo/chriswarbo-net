@@ -32,7 +32,7 @@ echo "" >> code.hs
 
 ```{pipe="cat > haskell"}
 #!/bin/sh
-timeout 30 runhaskell -XExistentialQuantification
+timeout 60 runhaskell -XExistentialQuantification
 ```
 
 ```{pipe="cat > run"}
@@ -57,8 +57,15 @@ echo "$code" > /dev/stderr
 (cat code.hs; echo ""; echo "$code") | ./greyCode | ./haskell
 ```
 
+```{pipe="cat > runRgb"}
+#!/bin/sh
+code=$(cat /dev/stdin)
+echo "$code" > /dev/stderr
+(cat code.hs; echo ""; echo "$code") | ./colourCode | ./haskell
+```
+
 ```{pipe="sh > /dev/null"}
-chmod +x code replaceTicks runGrey run runMono haskell
+chmod +x code replaceTicks runGrey run runMono runRgb haskell
 ```
 
 <!-- Preamble -->
@@ -136,12 +143,6 @@ boxPixels = aaPixels img
 
 aaGrad x y = let this   = DM.lookup [x, y] boxPixels
               in maybe (error "Out of range") id this
-```
-
-```{pipe="sh"}
-echo "START" > /dev/stderr
-cat code.hs  > /dev/stderr
-echo "END"   > /dev/stderr
 ```
 
 ```{pipe="./runGrey > aagrad.ppm"}
@@ -391,23 +392,18 @@ f = cantorCheckerboard
 ./includePic cantorcheckerboard | ./wrapCode .unwrap | pandoc -t json
 ```
 
-## Removing All Bounds ##
+### Removing All Bounds ###
 
-The checkerboard example is unbounded on the right and bottom, but *does* have a bound on the top and the left. Cantor's method could exploit this to zig-zag across the pattern, but it doesn't *rely* on there being any bounds. Instead of zig-zagging, we can follow a *spiral*, starting from any point, and be guaranteed to eventually reach all points. For example, if we treat the checkerboard as unbounded in *all* directions:
+The checkerboard example is unbounded on the right and bottom, but *does* have a bound on the top and the left. Cantor's method can exploit this to zig-zag across the pattern, but it doesn't *rely* on there being any bounds. Instead of zig-zagging, we can follow a *spiral*, starting from any point, and be guaranteed to eventually reach all points. For example, if we treat the checkerboard as unbounded in *all* directions:
 
 ```{pipe="./code > /dev/null"}
 allCheckerboardPixels =
   let c    = dim `div` 2
       quad = cantorCurve c (sDim checkerboard)
-      br   = map (\[x, y] -> [c + x, c + y]) quad
-      tl   = map (\[x, y] -> [c - x, c - y]) quad
-      tr   = map (\[x, y] -> [c + x, c - y]) quad
-      bl   = map (\[x, y] -> [c - x, c + y]) quad
-      all  = filter (sPred checkerboard)
-                    (tr ++ tl ++ bl ++ br)
+      all  = [[[c+x,c-y], [c-x,c-y], [c-x,c+y], [c+x,c+y]] | [x,y] <- quad]
       f [x1, y1] [x2, y2] = compare (abs (x1 - c) + abs (y1 - c))
                                     (abs (x2 - c) + abs (y2 - c))
-      ord  = sortBy f all
+      ord  = sortBy f . filter (sPred checkerboard) . concat $ all
    in pixelsOf id ord
 
 allCheckerboard x y = let this = DM.lookup [x, y] allCheckerboardPixels
@@ -422,33 +418,63 @@ f = allCheckerboard
 ./includePic allcheckerboard | ./wrapCode .unwrap | pandoc -t json
 ```
 
-## Going The Other Way ##
+<!--
 
-So far we have a way to enumerate points, ie. to go from a 1D line to a space, like a 2D square. What about going the other direction, from a point to a position on the line?
+## Dimension Reduction ##
 
-```{pipe="tee cantorBack.hs"}
-cantorPosition :: Shape -> Point -> Int
-cantorPosition s p = fromJust . elemIndex p (cantorShape s)
+We can use Cantor's method to reduce the dimensions of a shape; for example, we can trace a line through the RBG colour cube to go from 3D to 1D, then trace the same line through an image to get a 2D representation:
+
+```
+{pipe="./code"}
+rgbCube :: Shape
+rgbCube = let pointCount = fromIntegral $ dim * dim
+              sideLength = floor $ pointCount ** 1/3
+           in Shape sideLength 3 (const True)
+
+rgbTrace :: [[Int]]
+rgbTrace = cantorShape rgbCube
+
+rgbIncreasing =
+  ("rgbTrace sums increase",
+   T $ \n -> n > 0 && n < (length rgbTrace) - 1 ==>
+             let x = sum (rgbTrace !! (n - 1))
+                 y = sum (rgbTrace !! n)
+              in x == y || x + 1 == y)
+
+rgb2D    :: [[Int]]
+rgb2D    = cantorShape (Shape scale 2 (const True))
+
+rgbAdjust :: [Int] -> RGB
+rgbAdjust [r, g, b] = (round $ fromIntegral r ** 3/2,
+                       round $ fromIntegral g ** 3/2,
+                       round $ fromIntegral b ** 3/2)
+
+rgbPixels :: DM.Map [Int] [Int]
+rgbPixels = DM.fromList $ zip rgb2D rgbTrace
+
+rgbEmbedding :: Int -> Int -> RGB
+rgbEmbedding x y = let this = DM.lookup [x, y] rgbPixels
+                    in maybe (255,255,255) rgbAdjust this
 ```
 
-## Pretty Pictures ##
-
-If we draw a gradient from black to white along the line traced by Cantor's method, we get an image like this (remember that most computer formats use the *top* left as `(0, 0)`):
-
-```{.unwrap pipe="./codeAndPic 1 grey"}
-f x y = (* adjust) $ count (toBits x) + count (toBits y)
-
-adjust = (2 ^ scale) `div` (2 * scale)
-
-count []         = 0
-count (True :xs) = 1 + count xs
-count (False:xs) =     count xs
 ```
+{pipe="./runRgb > rgb.ppm"}
+f = rgbEmbedding
+```
+
+```
+{.unwrap pipe="sh"}
+./includePic rgb | ./wrapCode .unwrap | pandoc -t json
+```
+
+-->
+
+<!-- Tests -->
 
 ```{pipe="./code > /dev/null"}
 -- allTests can contain different types of tests, if they're wrapped in a T
 allTests = [cantorNextIncrements, cantorNextBumpsUp, cantorNextList,
-            cantorNextMonotonic, cantorNextLength]
+            cantorNextMonotonic, cantorNextLength {-, rgbIncreasing -}]
 
 runTests [] = return ()
 runTests ((name, test):xs) = putStrLn ("Testing " ++ name) >>
@@ -456,6 +482,14 @@ runTests ((name, test):xs) = putStrLn ("Testing " ++ name) >>
                              runTests xs
 ```
 
-```{pipe="./run"}
+```{pipe="./run > results"}
 main = runTests allTests
+```
+
+```{pipe="sh"}
+if [ grep "FAIL" < results ]
+then
+  cat results > /dev/stderr
+  exit 1
+fi
 ```
