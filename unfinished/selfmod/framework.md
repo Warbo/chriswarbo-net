@@ -4,7 +4,8 @@ title: A Framework for Self-Improving Code
 
 Since Haskell functions are opaque (we can't pattern-match them), we'll define a simple Lambda Calculus to represent our functions instead (this was explained in [a previous post](/blog/2014-02-07-lazy_lambda_calculus.html)):
 
-```{.haskell pipe="sh"}
+```
+{.haskell pipe="sh"}
 git clone ...
 cat ...
 ```
@@ -22,6 +23,7 @@ chmod +x append
 
 ```{pipe="./append > /dev/null"}
 import Test.QuickCheck
+import Control.Applicative hiding (Const)
 ```
 
 ```{.haskell pipe="./append"}
@@ -30,9 +32,10 @@ data Term a = Var Nat
             | Lam (Term a)
             | App (Term a) (Term a)
             | Const a
+            deriving (Show)
 
 -- De Bruijn indices
-data Nat = Z | S Nat
+data Nat = Z | S Nat deriving (Show)
 
 lookUp :: [a] -> Nat -> Maybe a
 lookUp xs n = let toInt Z     = 0
@@ -66,6 +69,11 @@ instance Functor Partial where
   fmap f (Now   x) = Now        (f x)
   fmap f (Later x) = Later (fmap f x)
 
+instance Applicative Partial where
+  pure = return
+  (Now   f) <*> x =        f <$> x
+  (Later f) <*> x = Later (f <*> x)
+
 instance Monad Partial where
   return = Now
   (Now   x) >>= f = Later (f x)
@@ -78,10 +86,13 @@ instance Eq a => Eq (Val a) where
   _   == _   = False
 
 instance Arbitrary a => Arbitrary (Term a) where
-  arbitrary = Var   <$> arbitrary
-              App   <$> arbitrary <*> arbitrary
-              Lam   <$> arbitrary
-              Const <$> arbitrary
+  arbitrary = oneof [Var   <$> arbitrary,
+                     App   <$> arbitrary <*> arbitrary,
+                     Lam   <$> arbitrary,
+                     Const <$> arbitrary]
+
+instance Arbitrary Nat where
+  arbitrary = oneof [return Z, S <$> arbitrary]
 
 extractTo :: Int -> Partial a -> Maybe a
 extractTo _ (Now   x) = Just x

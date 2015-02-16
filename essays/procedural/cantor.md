@@ -103,7 +103,7 @@ The idea is very simple: we trace a curve back and forth across the space until 
  - `data Shape = Shape {sDim :: Dimensions, sRange :: Range, sPred :: Point -> Bool}`{.haskell pipe="./code"}
     - We define a `Shape`{.haskell} using a *predicate*, deciding whether a `Point`{.haskell} is in the `Shape`{.haskell} or not
 
-```{pipe="./code"}
+```{pipe="./code > /dev/null"}
 cPx = [[x, y] | n <- [0..10], x <- [0..n], y <- [0..n], x + y == n]
 
 instance Show Shape where
@@ -114,7 +114,7 @@ instance Show Shape where
 
 ## Axis-aligned `Curves`{.haskell} ##
 
-The most obvious way to trace a `Curve`{.haskell} across a `Shape`{.haskell} is to start at `(0, 0)` (which for our purposes will be the *top* left of the images) and increase, say, the `y` coordinate to get `(0, 1)`, then `(0, 2)`, etc. until we exhaust the `Shape`{.haskell}'s `Range`{.haskell}, then jump to `(1, 0)` and do the same thing, and so on:
+The most obvious way to trace a `Curve`{.haskell} across a `Shape`{.haskell} is to start at `(0, 0)` (which for our purposes will be the *top* left of the images) and increase, say, the `x` coordinate to get `(1, 0)`, then `(2, 0)`, etc. until we exhaust the `Shape`{.haskell}'s `Range`{.haskell}, then jump to `(0, 1)` and do the same thing, and so on:
 
 ```{.haskell pipe="./code"}
 aaCurve :: Range -> Dimensions -> Curve
@@ -190,8 +190,6 @@ f = drawCircle
 #### Aside ####
 
 <div class="toggled">
-
-# FIXME: Replace pi with entity #
 
 Another thing we can do with `circle`{.haskell} is to approximate pi:
 

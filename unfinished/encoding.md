@@ -2,26 +2,10 @@
 title: Purely-Functional Self-Modifying Code
 ---
 
-<!-- Tell Nix what our dependencies are -->
-
-```{pipe="tee shell.nix"}
-with import <nixpkgs> {};
-
-stdenv.mkDerivation {
-  name = "encoding";
-  src = ./.;
-  buildInputs = [
-    haskellPackages.ghc
-    haskellPackages.smallcheck
-    haskellPackages.quickcheck
-  ];
-}
-```
-
 ```{pipe="tee tangle > /dev/null"}
 #!/bin/sh
-echo "" >> code.hs
 tee -a code.hs
+echo "" >> code.hs
 ```
 
 ```{pipe="sh > /dev/null"}
@@ -29,36 +13,36 @@ chmod +x tangle
 ```
 
 ```{.haskell pipe="./tangle"}
-  {-# LANGUAGE RankNTypes, FlexibleContexts, FlexibleInstances #-}
-  {-# LANGUAGE MultiParamTypeClasses, DeriveGeneric #-}
-  module Encoding where
+{-# LANGUAGE RankNTypes, FlexibleContexts, FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses, DeriveGeneric #-}
+module Encoding where
 
-  --import Control.Monad.State
-  import Control.Applicative
-  import Data.Data
-  import Data.Typeable
-  import GHC.Generics
-  import Test.QuickCheck hiding (Testable)
-  import Test.SmallCheck hiding (Testable)
-  import Test.SmallCheck.Drivers
-  import Test.SmallCheck.Series hiding ((><))
-  import qualified Test.QuickCheck as Q (Testable)
-  import qualified Test.SmallCheck as S (Testable)
+--import Control.Monad.State
+import Control.Applicative
+import Data.Data
+import Data.Typeable
+import GHC.Generics
+import Test.QuickCheck hiding (Testable)
+import Test.SmallCheck hiding (Testable)
+import Test.SmallCheck.Drivers
+import Test.SmallCheck.Series hiding ((><))
+import qualified Test.QuickCheck as Q (Testable)
+import qualified Test.SmallCheck as S (Testable)
 
-  liftM f x = x >>= return . f
-  liftM2 f x y = do x' <- x
-                    y' <- y
-                    return (f x' y')
+liftM f x = x >>= return . f
+liftM2 f x y = do x' <- x
+                  y' <- y
+                  return (f x' y')
 
-  -- Runs tests with output suitable for the Web
-  check' :: (Q.Testable t{-, S.Testable IO t-}) => Int -> t -> IO String
-  check' n p = do s <- smallCheckM n p
-                  q <- quickCheckWithResult stdArgs {chatty = False} p
-                  return $ concat ["SmallCheck: ", maybe "OK" ppFailure s,
-                                   "\nQuickCheck: ", output q]
+-- Runs tests with output suitable for the Web
+check' :: (Q.Testable t, S.Testable IO t) => Int -> t -> IO String
+check' n p = do s <- smallCheckM n p
+                q <- quickCheckWithResult stdArgs {chatty = False} p
+                return $ concat ["SmallCheck: ", maybe "OK" ppFailure s,
+                                 "\nQuickCheck: ", output q]
 
-  check :: (Q.Testable t, S.Testable IO t) => t -> IO String
-  check = check' 5
+check :: (Q.Testable t, S.Testable IO t) => t -> IO String
+check = check' 5
 ```
 
 ## Introduction ##
@@ -74,43 +58,43 @@ Since pure functions must take all input via function arguments, and since we're
 Outside the world of self-modification, the usual way to represent code as data is via an Abstract Syntax Tree. ASTs are quite straightforward to define, especially in nice languages like Haskell; however, ASTs *of* Haskell are complicated, so I'll stick to representing ASTs *of* Lambda Calculus *in* Haskell:
 
 ```{.haskell pipe="./tangle"}
-  -- Peano Naturals
-  data Var = Z | S Var deriving (Eq)
+-- Peano Naturals
+data Var = Z | S Var deriving (Eq)
 
-  instance Num Var where
-    fromInteger 0 = Z
-    fromInteger n = S (abs (fromInteger n))
+instance Num Var where
+  fromInteger 0 = Z
+  fromInteger n = S (abs (fromInteger n))
 
-  instance Enum Var where
+instance Enum Var where
 
-  instance Ord Var where
+instance Ord Var where
 
-  instance Real Var where
+instance Real Var where
 
-  instance Integral Var where
-    toInteger  Z    = 0
-    toInteger (S n) = 1 + toInteger n
+instance Integral Var where
+  toInteger  Z    = 0
+  toInteger (S n) = 1 + toInteger n
 
-  var :: Integer -> Var
-  var = fromInteger
+var :: Integer -> Var
+var = fromInteger
 
-  data AST = F (AST -> AST)  -- Functions from ASTs to ASTs
-           | A AST AST       -- Applying one AST to another
-           | V Var           -- Free variable
-       deriving Generic
+data AST = F (AST -> AST)  -- Functions from ASTs to ASTs
+         | A AST AST       -- Applying one AST to another
+         | V Var           -- Free variable
+     deriving Generic
 
-  (!) = A  -- Infix application
+(!) = A  -- Infix application
 
-  instance Show AST where
-    show (F _)   = "λ"
-    show (A l r) = "(" ++ show l ++ ")(" ++ show r ++ ")"
-    show (V n)   = show (toInteger n)
+instance Show AST where
+  show (F _)   = "λ"
+  show (A l r) = "(" ++ show l ++ ")(" ++ show r ++ ")"
+  show (V n)   = show (toInteger n)
 
-  instance Eq AST where
-    F _   == F _   = undefined
-    A a b == A c d = a == c && b == d
-    V a   == V b   = a == b
-    _     == _     = False
+instance Eq AST where
+  F _   == F _   = undefined
+  A a b == A c d = a == c && b == d
+  V a   == V b   = a == b
+  _     == _     = False
 ```
 
 I'll use QuickCheck and SmallCheck to test things as I go, both of which require AST generators. There are a few considerations when generating ASTs:
@@ -151,9 +135,14 @@ instance Arbitrary Var where
   shrink  Z    = []
   shrink (S n) = [n]
 
-  -- Enumerating AST
-  instance Monad m => Serial m AST where
-    series = cons1 F \/ cons1 V \/ cons2 (\x -> A (noF x))
+instance Monad m => Serial m Var where
+  series = cons0 Z \/ cons1 S
+
+instance Monad m => CoSerial m Var where
+
+-- Enumerating AST
+instance Monad m => Serial m AST where
+  series = cons1 F \/ cons1 V \/ cons2 (\x -> A (noF x))
 
 -- Arbitrary AST -> AST
 instance CoArbitrary AST where
@@ -187,9 +176,10 @@ normal x = case x of
                 A l r     -> normal l && normal r
 ```
 
-```{pipe="nix-shell --pure --command ghci"}
-  :load code.hs
-  check normal
+```
+{pipe="ghci"}
+:load code.hs
+check normal
 ```
 
 Of course, an AST isn't much use if we can't run it. Here's a corresponding evaluation function:
@@ -234,7 +224,7 @@ if2 cond branch1 branch2 = cond branch1 branch2
 
 Since LC is un(i)typed we can ignore the Boolean2 type, which just leaves us with functions, which are simple to define in LC:
 
-```{.haskell shell="./tangle"}
+```{.haskell pipe="./tangle"}
 true3, false3, if3 :: AST
 
 --          \x.      \y.   x
@@ -343,17 +333,17 @@ This two-level approach of applying encoded values to pattern-matchable LC terms
 Let's show how this works with the simplest datatype, the unit type. Since we don't need to do any pattern-matching for the unit type (there's only one possible value), we can use the trivial identity function to represent it:
 
 ```{.haskell pipe="./tangle"}
-  unit2 :: Unit2
-  unit2 = id
+unit2 :: Unit2
+unit2 = id
 
-  type Unit2 = forall a. a -> a
+type Unit2 = forall a. a -> a
 ```
 
 In LC this gives:
 
 ```{.haskell pipe="./tangle"}
-  unit3 :: AST
-  unit3 = F id
+unit3 :: AST
+unit3 = F id
 ```
 
 We can now use this definition to implement the Encodable class:
@@ -366,9 +356,10 @@ instance Encodable () where
 
 Our "decode" function is easy: we know it should return "()" on success, so we don't even need any error cases. We can verify that it works by using QuickCheck to test our encode/decode assertion, specialised to the unit type:
 
-```{pipe="nix-shell --pure --command ghci"}
-  :load code.hs
-  check (enc_dec_test :: EncTest ())
+```
+{pipe="ghci"}
+:load code.hs
+check (enc_dec_test :: EncTest ())
 ```
 
 Now that we've seen how Encodable works, let's implement a useful type like the booleans. Again, the "encode" function can be built from our existing definitions. The "decode" function needs to pass two distinguishable AST values to the encoded term, then pattern-match to see which one gets returned. We can specify distinguishable ASTs using a set of simple combinators:
@@ -404,9 +395,10 @@ instance Encodable Bool where
                   _       -> Nothing     -- otherwise
 ```
 
-```{pipe="nix-shell --pure --command ghci"}
-  :load code.hs
-  check (enc_dec_test :: EncTest Bool)
+```
+{pipe="ghci"}
+:load code.hs
+check (enc_dec_test :: EncTest Bool)
 ```
 
 Next we implement Encodable for "Maybe a", which is only possible if "a" is Encodable:
@@ -422,9 +414,10 @@ instance (Encodable a) => Encodable (Maybe a) where
                   _         -> Nothing
 ```
 
-```{pipe="nix-shell --pure --command ghci"}
-  :load 2014-08-26-encoding.hs
-  check (enc_dec_test :: EncTest (Maybe Bool))
+```
+{pipe="ghci"}
+:load code.hs
+check (enc_dec_test :: EncTest (Maybe Bool))
 ```
 
 ```{.haskell pipe="./tangle"}
@@ -449,11 +442,13 @@ instance Encodable AST where
                   _                         -> Nothing
 ```
 
-```{pipe="nix-shell --pure --command ghci"}
-  :load code.hs
-  check (enc_dec_test :: EncTest AST)
+```
+{pipe="ghci"}
+:load code.hs
+check (enc_dec_test :: EncTest AST)
 ```
 
-```{pipe="sh"}
-ghc code.hs 2>&1 || true
+```
+{pipe="sh"}
+ghc code.hs
 ```
