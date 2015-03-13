@@ -83,18 +83,23 @@ main = hakyll $ do
 
     match "templates/*" $ compile templateCompiler
 
+    -- Git repositories. These are maintained separately. You can populate the
+    -- "git" directory using the "fetchGit" script
+
+    cp "git/**"
+
     -- Feeds (not working yet)
-{-
+    {-
     create ["atom.xml"] $ do
         idr $ do
             let feedCtx = postCtx `mappend` bodyField "description"
             posts <- fmap (take 10) . recentFirst
                  =<< loadAllSnapshots "blog/*.md" "content"
             renderAtom feedConf feedCtx posts
--}
+    -}
 --------------------------------------------------------------------------------
 postCtx :: Context String
-postCtx = dateField "date" "%B %e, %Y" `mappend` defCtx
+postCtx = dateField "date" "%F" `mappend` defCtx
 
 defCtx = defaultContext
 
@@ -104,7 +109,9 @@ cp path = match path $ do
 
 page cmp = do route $ setExtension "html"
               compile $ cmp
-                  >>= loadAndApplyTemplate "templates/default.html" postCtx
+                  >>= postTmp
+
+postTmp = loadAndApplyTemplate "templates/default.html" postCtx
 
 asHtml = setExtension "html"
 
@@ -121,7 +128,7 @@ feedConf =  FeedConfiguration {feedTitle       = "Chris Warburton's Blog",
 
 renderPost p =     loadAndApplyTemplate "templates/post.html"    postCtx p
                >>= saveSnapshot "content"  -- for feeds
-               >>= loadAndApplyTemplate "templates/default.html" postCtx
+               >>= postTmp
                >>= relativizeUrls
 
 inDir d c = match (fromGlob (d ++ "/**.md")) $ do
@@ -129,9 +136,8 @@ inDir d c = match (fromGlob (d ++ "/**.md")) $ do
                   {-$ gsubRoute (d ++ "/") (const "") `composeRoutes` asHtml-}
                 c
 
-
-
-pandocFilter = withItemBody (unixFilter "pandoc" ["--filter", "panpipe",
+pandocFilter = withItemBody (unixFilter "pandoc" ["--mathml",
+                                                  "--filter", "panpipe",
                                                   "--filter", "panhandle"])
 
 postCompiler =     getResourceString
