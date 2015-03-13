@@ -1,11 +1,7 @@
 ---
 title: Active Code
 ---
-"Active code" is the term used by the [Babel][babel] system, part of
-[Emacs's][emacs] [Org-mode][org]. It refers to authoring systems which can
-execute code embedded in the documents they're rendering. This page documents
-the active code system I use to write articles, whether they're published as
-HTML on [my Web site](http://chriswarbo.net) or PDFs in a journal.
+"Active code" is the term used by the [Babel][babel] system, part of [Emacs's][emacs] [Org-mode][org]. It refers to authoring systems which can execute code embedded in the documents they're rendering. This page documents the active code system I use to write articles, whether they're published as HTML on [my Web site](http://chriswarbo.net) or PDFs in a journal.
 
 <!-- Why not zoidberg? -->
 
@@ -202,34 +198,21 @@ df7jgX+cdbqw1nARtN5Y9/XFPv3ZYvALSv8f6os+Yusx/GQAAAAASUVORK5CYII="
   alt="Why not Babel?"
   style="width: 300px;" />
 
-Babel, Org mode and Emacs are all wonderful things, however there are a few
-reasons why we may want to avoid them, which can be summarised by saying
-"they're not UNIX":
+Babel, Org mode and Emacs are all wonderful things, however there are a few reasons why we may want to avoid them, which can be summarised by saying "they're not UNIX":
 
- - Emacs is a large dependency; it would be nice to have a small binary or
-   script which perform *only* the conversion process
- - Org mode is packed full of features; Babel alone has various ways of
-   handling input, output, sessions, variables, interpreting results, etc.
-   The UNIX approach would use a few simple, general principles rather than
-   exposing all of these separately.
- - Babel, Org mode, etc. are moving targets; it would be nice to avoid an
-   upgrade treadmill if possible.
+ - Emacs is a large dependency; it would be nice to have a small binary or script which perform *only* the conversion process
+ - Org mode is packed full of features; Babel alone has various ways of handling input, output, sessions, variables, interpreting results, etc. The UNIX approach would use a few simple, general principles rather than exposing all of these separately.
+ - Babel, Org mode, etc. are moving targets; it would be nice to avoid an upgrade treadmill if possible.
 
 ## The Alternative: Pandoc ##
 
-[Pandoc][pandoc] is a great document conversion program by John MacFarlane. It
-can convert between various markup languages, including HTML, LaTeX and
-Markdown. We can also mix and match the formats, for example embedding a
-mixture of HTML and LaTeX in a Markdown document and rendering it to a PDF.
+[Pandoc][pandoc] is a great document conversion program by John MacFarlane. It can convert between various markup languages, including HTML, LaTeX and Markdown. We can also mix and match the formats, for example embedding a mixture of HTML and LaTeX in a Markdown document and rendering it to a PDF.
 
-In particular, most of the [source][git] of [my Web site](http://chriswarbo.net)
-is written in [Markdown][markdown] and converted to HTML using Pandoc. I use
-[Hakyll][hakyll] to orchestrate the process, as a form of Make tool.
+In particular, most of the [source][git] of [my Web site](http://chriswarbo.net) is written in [Markdown][markdown] and converted to HTML using Pandoc. I use [Hakyll][hakyll] to orchestrate the process, as a form of Make tool.
 
 ### Embedded Code ###
 
-The following examples are all written in [Pandoc's Markdown][pandocmarkdown],
-but apply to the other formats supported by Pandoc too.
+The following examples are all written in [Pandoc's Markdown][pandocmarkdown], but apply to the other formats supported by Pandoc too.
 
 Pandoc supports *code blocks*, which are written like this in Markdown:
 
@@ -247,8 +230,7 @@ echo "Fenced code"
 ```
 ````
 
-As you can see, these get rendered in monospaced fonts. Code blocks can have
-"attributes", "classes" and an "id", like this:
+As you can see, these get rendered in monospaced fonts. Code blocks can have "attributes", "classes" and an "id", like this:
 
 ````bash
 ```{#SomeID .SomeClass .AnotherClass Attribute1="Value1" Attribute2="Value2"}
@@ -256,18 +238,13 @@ Some content
 ```
 ````
 
-This lets us manipulate blocks, for example if we're rendering to HTML we
-might use these IDs, classes and attributes from some associated Javascript.
-Pandoc also uses classes to apply syntax-highlighting, based on language
-descriptions from [Kate][kate].
+This lets us manipulate blocks, for example if we're rendering to HTML we might use these IDs, classes and attributes from some associated Javascript. Pandoc also uses classes to apply syntax-highlighting, based on language descriptions from [Kate][kate].
 
-This is the standard, off-the-shelf way to embed code snippets in a document.
-However, such code is not *active*.
+This is the standard, off-the-shelf way to embed code snippets in a document. However, such code is not *active*.
 
 ### PanPipe ###
 
-[PanPipe][panpipe] is a Pandoc [filter][walk] which walks the document tree
-looking for code blocks annotated with a `pipe` attribute, like this:
+[PanPipe][panpipe] is a Pandoc [filter][walk] which walks the document tree looking for code blocks annotated with a `pipe` attribute, like this:
 
 `sh`{pipe="tee pipe > /dev/null"}
 
@@ -284,16 +261,11 @@ echo '```'
 
 When such a block is found, the following steps take place:
 
- - The value of the `pipe` attribute (`cat pipe`{pipe="sh" .bash}) is executed
-   as a shell command.
- - The block's body (`cat body`{pipe="sh" .bash}) is removed and piped into the
-   shell command's standard input.
- - The standard output of the command
-   (`pandoc -f markdown -t markdown --filter panpipe pp.md`{pipe="sh"}) is
-   inserted into the block as its new body.
+ - The value of the `pipe` attribute (`cat pipe`{pipe="sh" .bash}) is executed as a shell command.
+ - The block's body (`cat body`{pipe="sh" .bash}) is removed and piped into the shell command's standard input.
+ - The standard output of the command (`pandoc -f markdown -t markdown --filter panpipe pp.md`{pipe="sh"}) is inserted into the block as its new body.
 
-For example, running the above through
-`pandoc --filter panpipe`{.bash} gives:
+For example, running the above through `pandoc --filter panpipe`{.bash} gives:
 
 ```{.unwrap pipe="sh"}
 pandoc -t json --filter panpipe pp.md
@@ -301,12 +273,9 @@ pandoc -t json --filter panpipe pp.md
 
 ### PanHandle ###
 
-[PanHandle][panhandler] is a Pandoc filter which looks for code in an `unwrap`
-class. It extracts the code, which is assumed to be in 'Pandoc JSON' format,
-and splices it into the surrounding document.
+[PanHandle][panhandler] is a Pandoc filter which looks for code in an `unwrap` class. It extracts the code, which is assumed to be in 'Pandoc JSON' format, and splices it into the surrounding document.
 
-We can turn any Pandoc-supported format into Pandoc JSON by piping it through
-`pandoc -t json`{.bash pipe="tee json.sh"}
+We can turn any Pandoc-supported format into Pandoc JSON by piping it through `pandoc -t json`{.bash pipe="tee json.sh"}
 
 ```{pipe="sh > /dev/null"}
 chmod +x json.sh
@@ -333,8 +302,7 @@ echo '```'
 
 </div>
 
-When we send our document through `pandoc --filter panhandle`{.bash}, the table
-will be spliced into the document, like this:
+When we send our document through `pandoc --filter panhandle`{.bash}, the table will be spliced into the document, like this:
 
 ```{.unwrap pipe="sh | pandoc -t json"}
 cat bool2.md
@@ -342,25 +310,17 @@ cat bool2.md
 
 ## Examples ##
 
-These simple scripts let us call out to the UNIX shell from our documents. This
-lets us recreate many of the active code features of Babel, just by piping
-between programs and reading/writing files.
+Some non-toy examples of this system in action:
 
-### This ###
+### [This Site](/) ###
 
-Take a look at [this page's source][this] to see how the results are generated
-from the examples.
+[This whole site](/) is static HTML generated from Markdown with these tools. Not every page takes advantage of these capabilities, but it's nice to know they're available when I need them. You may like to browse [this page's source][this] to see how the example output is derived straight from the examples themselves (note that this requires meta-programming, which complicates things a little).
 
 ### Fibonacci Post ###
 
-I wrote PanPipe and PanHandle after trying and failing to integrate Babel into
-my site's build process. My [Fibonacci Sequence in PHP][fib] post was an
-experiment with Babel, so porting that post over to Pandoc was the motivating
-use-case for these scripts. Thankfully the port was a success, and that post is
-now managed by Hakyll like the rest of the site.
+I wrote PanPipe and PanHandle after trying and failing to integrate Babel into my site's build process. My [Fibonacci Sequence in PHP][fib] post was an experiment with Babel, so porting that post over to Pandoc was the motivating use-case for these scripts. Thankfully the port was a success, and that post is now managed by Hakyll like the rest of the site.
 
-If you compare it to [the source][fibsource] you'll see a few of the required
-features:
+If you compare it to [the source][fibsource] you'll see a few of the required features which influenced my thinking:
 
  - A temporary directory for downloading dependencies
  - Rendering, executing, or rendering *and* executing code snippets
@@ -369,24 +329,58 @@ features:
  - Hidden blocks for writing helper functions and unit tests
  - Aborting rendering when unit tests fail
 
-Here are some of the techniques I came up with for these tasks.
+## Useful Tricks ##
+
+These simple scripts let us call out to the UNIX shell from our documents. This lets us recreate many of the active code features of Babel, just by piping between programs and reading/writing files. Here are some common tasks you may want to solve:
 
 ### Hiding Output ###
 
-To hide the output of a code block, just pipe it to `/dev/null`:
-
+You may want a code block to execute, but not show up in the output. The easiest way is to pipe the output to `/dev/null`, or an actual file if we plan to use it later:
 
 ````{.markdown pipe="tee hide.md"}
 ```{pipe="sh > /dev/null"}
 ls /
 ```
+
+```{pipe="sh > contents"}
+ls /
+```
 ````
 
-The resulting HTML is:
+This works well for HTML, and results in:
 
 ````{.html pipe="sh | pandoc --filter panpipe"}
 cat hide.md
 ````
+
+```{pipe="cat > dash"}
+echo -n '`'
+cat
+echo -n '`'
+```
+
+`chmod +x dash`{pipe="sh > /dev/null"}
+
+```{pipe="sh > inline_hidden"}
+echo 'ls /' | ./dash
+echo '{pipe="sh"}'
+```
+
+Sometimes this has undesirable effects, where these empty blocks interact badly with some styling rule. If this is the case, you might try using inline snippets instead, eg. `cat inline_hidden`{pipe="sh"}
+
+To *completely* eliminate the output takes a little more effort, but might be necessary in some cases; for example, I do this when producing PDFs. The key is that code blocks can never be *removed*, they can only be *unwrapped*; ie. have their content spliced into the document. With this in mind, the solution is obvious: we unwrap an *empty* block! This is *slightly* complicated by the requirement to emit JSON, but that's easy using the `pandoc` command:
+
+````{pipe="cat > blanker"}
+```{.unwrap pipe="sh | echo '' | pandoc -t json"}
+ls /
+```
+````
+
+Here's the result when converting to HTML (the div exists to catch remaining attributes of the code block):
+
+```{pipe="sh"}
+pandoc --filter panpipe --filter panhandle -t html < blanker
+```
 
 ### Showing Code *and* Output ###
 
@@ -552,16 +546,31 @@ This results in:
 cat image_php.md
 ```
 
-### Aborting ###
+### Handling Errors ###
 
-A non-zero exit code will abort the rendering:
+In general, errors should abort the rendering. We would rather have no document than an erroneous one.
 
-````{.markdown .fullphp}
-```{pipe="php"}
-<?
-if (!$success) exit(1);
+If you want to trigger an error from a script, just have it return a non-zero exit code:
+
+````{.markdown}
+```{pipe="sh"}
+if [ ! -e "foo" ]
+then
+  exit 1
+fi
+cat foo
 ```
 ````
+
+If you want to carry on rendering in the presence of errors, you must implement some kind of error handling. For example:
+
+````{.markdown}
+```{pipe="sh"}
+./dodgyCommand || echo "dodgyCommand didn't work; oh well!"
+```
+````
+
+Anything printed to stderr by a shell command will appear in the stderr of PanPipe. Likewise, when used as a Pandoc filter, PanPipe's stderr will appear in Pandoc's stderr. Note that there may be some buffering which prevents content showing immediately (eg. progress bars and such).
 
 [hakyll]: http://jaspervdj.be/hakyll/
 [markdown]: http://commonmark.org/

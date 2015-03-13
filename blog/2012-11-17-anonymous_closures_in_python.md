@@ -33,7 +33,7 @@ We read this as "Stick together the text `'http://'`{.javascript} with the value
 
 We use 3 names here (`domain`{.javascript}, `path`{.javascript} and `full_url`{.javascript}), so where does anonymity come in to it? The anonymous things are those I've referred to as "results". At one point we are manipulating the result of `('http://' + domain)`{.javascript}; what is the name of this temporary, unfinished piece of text? It doesn't have a name at all, we just pass it straight on to the next `+`{.javascript}. Likewise for all of the intermediate values, until eventually we give the name `full_url`{.javascript} to the result, which would otherwise be anonymous too.
 
-The same thing happens in our `toggle`{.javascript} example. Here we have anonymous functions, which are referred to in the English as 'a function which...'. We have two anonymous functions here: the first function which is defined, run then thrown away in favour of its output. This is similar to the text above which is created, sent to the next `+`{.javascript} then thrown away in favour of the output of the `+`{.javascript}. Likewise, inside the first anonymous function we have another function which is defined, only to be sent back as a return value. In this case we do eventually give it a name, `toggle`{.javascript}, but not in its original context. The ability to manipulate and pass around functions requires them to be values, just like bits of text, numbers, booleans, etc.
+The same thing happens in our `toggle`{.javascript} example. Here we have anonymous functions, which are referred to in the English as 'a function which...'. We have two anonymous functions here: the first function which is defined, run, then thrown away in favour of its output. This is similar to the text above which is created, sent to the next `+`{.javascript}, then thrown away in favour of the output of the `+`{.javascript}. Likewise, inside the first anonymous function we have another function which is defined, only to be sent back as a return value. In this case we do eventually give it a name, `toggle`{.javascript}, but not in its original context. The ability to manipulate and pass around functions requires them to be values, just like bits of text, numbers, booleans, etc.
 
 ### Closures ###
 
@@ -43,7 +43,7 @@ The outer function **does** define a variable called `state`{.javascript}, so th
 
 Closures are a very powerful tool, and they complement anonymous functions well. In this example, we create our closure and return it. This allows the closure to be stored in a variable (`toggle`{.javascript}) and called over and over, even though the function which defines `state`{.javascript} only gets called once. This simple idiom causes the value of `state`{.javascript} to persist between calls to `toggle`{.javascript}, so that it correctly returns alternating values each time.
 
-Since the value of `state`{.javascript} is only accessible by the outer and inner functions above, and since the outer function is anonymous and never stored in a variable, the only code which has access to `state`{.javascript} is `toggle`{.javascript}. This makes closures useful for `encapsulation`{.javascript}; looking after potentially-fragile data such that the rest of the world can only access it in safe and relevant ways. In our case above, it is safe to rely on `toggle`{.javascript} to give opposite answers every time it's called, since nothing can 'reset' the value of `state`{.javascript}, or break `toggle`{.javascript} by turning `state`{.javascript} into, for example, a number.
+Since the value of `state`{.javascript} is only accessible by the outer and inner functions above, and since the outer function is anonymous and never stored in a variable, the only code which has access to `state`{.javascript} is `toggle`{.javascript}. This makes closures useful for *encapsulation*; looking after potentially-fragile data such that the rest of the world can only access it in safe and relevant ways. In our case above, it is safe to rely on `toggle`{.javascript} to give opposite answers every time it's called, since nothing can 'reset' the value of `state`{.javascript}, or break `toggle`{.javascript} by turning `state`{.javascript} into, for example, a number.
 
 In Object Oriented languages there is the concept of "private members", but these are a crude approximation to free variables with closure. For example, in a class/instance Object Oriented language, objects can have private members and methods can access those private members. However, methods cannot have private members. Likewise methods generally aren't given methods. Everything in Object Oriented languages happens at the value level, which severely restricts the ability to abstract (since we don't have anonymous function values).
 
@@ -59,7 +59,7 @@ Python has anonymous functions, which look like the following:
 lambda x: x + 5
 ```
 
-`lambda x:`{.python} means the same as `function (x) {`{'javascript'} in Javascript, and there's no need to write `return`{.python}, since in Python an anonymous function can only ever contain a single expression. This restriction to one expression, and thus no statements, is a Good Thing(TM) since it can make reasoning about code much easier; if our functions can only do one thing, then we're encouraged to make small, simple, easy-to-understand functions, then compose them together. Also, since we're only allowed an expression, and not a statement, it is implied that anonymous functions will be pure and side-effect-free.
+`lambda x:`{.python} means the same as `function (x) {`{.javascript} in Javascript, and there's no need to write `return`{.python}, since in Python an anonymous function can only ever contain a single expression, which is assumed to be the return value. This restriction to one expression, and thus no statements, is a Good Thing^TM^ since it can make reasoning about code much easier; if our functions can only do one thing, then we're encouraged to make small, simple, easy-to-understand functions, then compose them together. Also, since we're only allowed an expression, and not a statement, it is implied that anonymous functions will be pure and side-effect-free.
 
 This restriction, however, also poses a problem when we try to use state. For example, we can't write the Javascript line `var state = false;`{.javascript}, since the Python equivalent `state = False`{.python} is a statement and not an expression.
 
@@ -94,7 +94,7 @@ lambda *_: (sys.stdout.write("hello"), "world")[1]
 
 This function ignores any arguments (it's a thunk), then it creates a tuple. The first value in the tuple is `None`{.python}, the result of `sys.stdout.write("hello")`{.python}, which has the side-effect of sending `"hello"`{.python} to the output buffer. The second value is the string `"world"`{.python}. We then pull out the second value of our tuple as our result, ie. we return `"world"`{.python}.
 
-Now we need to find an expression which is equivalent to the line `"state = !state;"`{.javascript} in our Javascript. Unfortunately we can't do this directly, since in the Javascript we're dealing with variable names, and simply changing which values they point to, whereas in our Python expressions we're dealing with the actual Boolean values `True`{.python} and `False`{.python} themselves. Understandably, Python will not let us change `True`{.python} into `False`{.python} or vice versa, so we need to create a pointer-based abstraction, similar to using variable names like the Javascript. A simple way to do this is to keep our values in lists, and replace the contents of the lists when we want to 'update' a value. Voila:
+Now we need to find an expression which is equivalent to the line "`state = !state;`{.javascript}" in our Javascript. Unfortunately we can't do this directly, since in the Javascript we're dealing with variable names, and simply changing which values they point to, whereas in our Python expressions we're dealing with the actual Boolean values `True`{.python} and `False`{.python} themselves. Understandably, Python will not let us change `True`{.python} into `False`{.python} or vice versa, so we need to create a pointer-based abstraction, similar to using variable names like the Javascript. A simple way to do this is to keep our values in lists, and replace the contents of the lists when we want to 'update' a value. Voila:
 
 ```python
 toggle = (lambda state:
@@ -102,15 +102,15 @@ toggle = (lambda state:
 )([False])
 ```
 
-Here our `state`{.python} value is given as `[False]`{.python}, which is a list containing the value `False`{.python}. The side-effecting expression we use is `state.append(not state.pop())`{.python} which first "pops" the last value out of `state`{.python}, so that `state`{.python} becomes an empty list `[]`{.python} and we receive the value `False`{.python}. We then use the `not`{.python} operator on this value (equivalent to Javascript's `!`{.javascript}) to receive a value of `True`{.python}. We then use the `state.append`{.python} method to push this value on to the end of `state`{.python}, so that `state`{.python} has become a list containing the value `True`{.python}, or `[True]`{.python}. Next time it will start with `[True]`{.python} and result in `[False]`{.python}, correctly implementing our toggle behaviour.
+Here our `state`{.python} value is given as `[False]`{.python}, which is a list containing the value `False`{.python}. The side-effecting expression we use is `state.append(not state.pop())`{.python} which first "pops" the last value out of `state`{.python}, so that `state`{.python} becomes an empty list `[]`{.python} and we receive the value `False`{.python}. We then use the `not`{.python} operator on this value (equivalent to Javascript's `!`{.javascript}) to receive a value of `True`{.python}. We then use the `state.append`{.python} method to push this value on to the end of `state`{.python}, so that `state`{.python} has become a list containing the value `True`{.python}, or `[True]`{.python}. Next time it will start with `[True]`{.python} and result in `[False]`{.python}. Like before, we extract the second element of our tuple to produce our return value, correctly implementing the toggling behaviour.
 
 ## Stacks ##
 
 The above may seem a pretty pointless exercise, and I would agree that production code should probably be written in a more straightforward way, but now that we've thrown away Python's built-in statement-sequencing and namespace implementations, we've actually exposed some pretty interesting problems, which we can apply some nifty Computer Science to.
 
-The observant of you will have spotted that popping and appending lists like I've just done is actually stack manipulation. Since I've just exposed a stack-oriented subset of Python, it makes sense to look at stack languages to begin with.
+The observant of you will have spotted that popping and appending lists like I've just done is actually stack manipulation. Since I've just exposed a stack-oriented subset of Python, it makes sense to look at some stack languages.
 
-The exemplar of a language oriented around stacks is Forth; however, in Forth everything is a procedure (statement), which goes against the nice expression-only form we were inching towards above. In Forth, the stacks are singletons, mutable and, most importantly, external entities. Forth procedures can be used to manipulate stacks, but only in the same way that C procedures can be used to manipulate memory. Neither actually has a "stack"(/"memory") datatype; the stack(/memory) lives outside the program, and the language provides means to access it. In fact, the only reason Forth is 'stack-oriented' rather than 'memory-oriented' is that its procedures are generally written to make heavy use of the stacks; but they don't have to, they could just as well write to memory instead.
+The exemplar of a language oriented around stacks is Forth; however, in Forth everything is a procedure (statement), which goes against the nice expression-only form we were inching towards above. In Forth, the stacks are global, mutable and, most importantly, external entities. Forth procedures can be used to manipulate stacks, but only in the same way that C procedures can be used to manipulate memory. Neither actually has a "stack"(/"memory") datatype; the stack(/memory) lives outside the program, and the language provides means to access it. In fact, the only reason Forth is 'stack-oriented' rather than 'memory-oriented' is that its procedures are generally written to make heavy use of the stacks; but they don't have to, they could just as well write to memory instead.
 
 There is actually another nice stack language out there which *is* expression-based; in fact it's purely functional! It's called Joy and rather than running procedures which may happen to modify an external stack, in Joy everything is a function which accepts a stack and returns a stack.
 
@@ -130,7 +130,7 @@ There are a lots of other stack functions we can make; in fact, since stack lang
 
 [1]: http://tunes.org/~iepos/joy.html
 
-```python
+```{.python pipe="tee -a stack.py"}
 # Pops off two values, calling the top one on the remaining stack.
 # Similar to Schoenfinkel's K combinator 'lambda x: lambda y: x'
 k = lambda xs: xs[-1](xs[:-2])
@@ -138,12 +138,42 @@ k = lambda xs: xs[-1](xs[:-2])
 # Pops off two values and pushes two new functions. The first function
 # pushes the second value then calls the first value. The second
 # function calls the first value then pushes the second.
-cake = lambda xs: xs[:-2]               + \\
-    [lambda ys: xs[-1](ys  + [xs[-2]])] + \\
+cake = lambda xs: xs[:-2]               + \
+    [lambda ys: xs[-1](ys  + [xs[-2]])] + \
     [lambda ys: xs[-1](ys) + [xs[-2]] ]
 
 # Optional; function composition (saves writing lambda all the time!)
 o = lambda f: lambda g: lambda x: f(g(x))
+```
+
+```{pipe="cat >> stack.py"}
+
+from random  import randint
+from inspect import getargspec
+r = lambda *_: randint(-1000, 1000)
+
+def test(f):
+  (args,_,_,_) = getargspec(f)
+  for _ in range(0, 10):
+    vals = map(r, args)
+    f(*vals)
+
+@test
+def k_test(x, y):
+  msg = "K behaves for " + str([x, y])
+  assert k([y, x, lambda a: a[0] == y]), msg
+
+@test
+def cake_length(x, y):
+  out = cake([x, y])
+  assert len(out) == 2, "Out length for " + str(out)
+
+@test
+def cake_fst(x, y):
+  f   = lambda a: a
+  out = cake([x, f])[-1]([y])
+  assert out == [y, x], "cake_fst 1 " + str([x, y, out])
+
 ```
 
 With these functions defined we can create any mapping we like from lists to lists, which means we can express any kind of mutable state we like by putting values in lists and updating them with closures.
@@ -168,23 +198,22 @@ Let's say we have a Javascript function like this:
 
 We can write this in Python using the techniques above, to get the following:
 
-```python
+```{.python pipe="tee -a stack.py"}
 # Direct use of Python
-(lambda a:
-    (lambda b:
-        (lambda c: (
-            a.append(a.pop() + b[-1]),
-            b.append(b.pop() * c),
-            a[-1] + b[-1] + c
-        )[-1])
-    )([2])
-)([1])
+direct = (lambda a:
+           (lambda b:
+             (lambda c: (
+               a.append(a.pop() + b[-1]),
+               b.append(b.pop() * c),
+               a[-1] + b[-1] + c
+             )[-1])
+           )([2])
+         )([1])
 
-# Using stack manipulation we would need to discard the function
-# above and start from scratch with stack manipulation. My first
-# attempt gives a function someting like this, where q() is quotation
-# and the rest of the functions are Kerby's concatenative combinators (note,
-# this code probably won't run ;) ):
+# Using stack manipulation we would need to discard the function above and start
+# from scratch. My first attempt gives a function something like this, where q()
+# is quotation and the rest of the functions are Kerby's concatenative
+# combinators (note, this code probably won't run ;) ):
 i    = lambda xs: xs[-1](xs[:-1])
 dip  = lambda xs: xs[-1](xs[:-2]) + [xs[-2]]
 swap = lambda xs: xs[:-2] + [xs[-1], xs[-2]]
@@ -440,3 +469,8 @@ i([[2, 0, 1]])
 I'll wrap this up here, but will revisit some of these topics in later posts. It's interesting to see how inter-related many topics are in Computer Science. Even in a language which takes many implementation choices away from us, like Python, a little hackery can bring them back and allow us to compose our programs in new and interesting ways.
 
 Also, it's always fun to mis-use any language and see what we can get away with ;)
+
+```{pipe="sh"}
+# Run tests
+python stack.py
+```

@@ -26,5 +26,6 @@ stdenv.mkDerivation {
     panhandle
     utillinux
     time
+    python
   ];
 }
