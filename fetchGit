@@ -1,0 +1,171 @@
+#!/usr/bin/env runhaskell
+
+-- Fetch my git repos and dump them a "git" directory
+--   -- Chris Warburton
+
+import System.Directory
+import System.Exit
+import System.Process
+
+type Target = String
+type Source = String
+type Repo   = (Target, Source)
+
+-- Git repository names. A repo "R" will be put in "./git/R.git".
+
+dir = "git"
+
+repos = let mkRepos n []     = []
+            mkRepos n (s:ss) = (defTarget s, defSource s) : mkRepos (n+1) ss
+            defSource r = "http://chriswarbo.net/git/" ++ r ++ ".git"
+            defTarget r = dir ++ "/" ++ r ++ ".git"
+        in  mkRepos 0 ["ant-colony",
+                       "apt-repo-tools",
+                       "arduino-json-client",
+                       "arrowlets-for-nodejs",
+                       "bitbitjump-maude",
+                       "chriswarbo-net",
+                       "chrome-duplicate-tab-detector",
+                       "clutter-file-browser",
+                       "debian-repo-packager",
+                       "dependent-types-talk",
+                       "genetic-turing-machines",
+                       "gnucleon",
+                       "gnucleon-clutter",
+                       "gpu-simulations",
+                       "iddish",
+                       "iron",
+                       "java-spider",
+                       "javascript-base64",
+                       "js-plumb",
+                       "lazy-lambda-calculus",
+                       "mc-aixi-ctw",
+                       "ml4hs",
+                       "ml4pg",
+                       "ocportal-salmon",
+                       "panpipe",
+                       "panhandle",
+                       "particle-storage-ring-simulation",
+                       "php-prelude",
+                       "php-core",
+                       "php-easycheck",
+                       "php-plumb",
+                       "powerplay",
+                       "pubsubclient",
+                       "purely-functional-self-modifying-code",
+                       "python-clutter-experiments",
+                       "python-decompiler",
+                       "python-pipes-simulation",
+                       "python-plumb",
+                       "search-optimisation-streams",
+                       "tree-features",
+                       "turtleviewer",
+                       "warbo-dotfiles",
+                       "warbo-utilities"]
+
+-- Filesystem manipulation
+
+-- UI
+
+repl :: [Repo] -> IO ()
+repl rs = do putStr (menu rs)
+             line <- getLine
+             rs'  <- readOption rs line
+             repl rs'
+
+menu :: [Repo] -> String
+menu repos = concat ["\nRepositories:\n",
+                     showRepos repos, "\n\n",
+                     showCommands, "\n",
+                     prompt]
+
+showRepos :: [Repo] -> String
+showRepos = showRepos' 0
+
+showRepos' n []     = ""
+showRepos' n (x:xs) = concat [show n, ") ",
+                              showRepo x, "\n",
+                              showRepos' (n+1) xs]
+
+showRepo :: Repo -> String
+showRepo (t,s) = concat ["Target '", t, "', ",
+                         "Source '", s, "'"]
+
+showCommands :: String
+showCommands = concat ["Commands:\n",
+                       "t: Set a repo's target\n",
+                       "s: Set a repo's source\n",
+                       "g: Get a repo\n",
+                       "a: Get all repos\n",
+                       "q: Quit"]
+
+prompt = "Choose a command: "
+
+-- Choose an action based on user input
+readOption :: [Repo] -> String -> IO [Repo]
+readOption rs s = case s of
+                       "t" -> withNumFor  rs readTarget
+                       "s" -> withNumFor  rs readSource
+                       "g" -> withNumFor  rs getRepo
+                       "a" -> getAllRepos rs
+                       "q" -> exitSuccess >> return rs
+                       _   -> unknown >> return rs
+
+unknown = putStr "Invalid input"
+
+getNums :: Int -> [Int]
+getNums n = let inRange x = x >= 0 && x < n
+            in  filter inRange . map fst . reads
+
+prompt s = putStr s >> getLine
+
+withNumFor :: [Repo] -> ([Repo] -> Int -> IO [Repo]) -> IO [Repo]
+withNumFor rs f = do line <- prompt "Enter a repository number: "
+                     let xs       = map (f rs) (getNums f (length rs) line)
+                     let fallback = unknown >> return rs
+                     head (xs ++ fallback)
+
+replaceElem :: ((a, a) -> a -> (a, a)) -> String -> [Repo] -> Int -> IO [Repo]
+replaceElem f s rs n = do let r = rs !! n
+                          putStr ("Enter new " ++ s ++ ": ")
+                          l <- getLine
+                          return $ take n rs ++ [f r l] ++ drop (n+1) rs
+
+readTarget :: [Repo] -> Int -> IO [Repo]
+readTarget = replaceElem (\(t, s) t' -> (t', s)) "target directory"
+
+readSource :: [Repo] -> Int -> IO [Repo]
+readSource = replaceElem (\(t, s) s' -> (t, s')) "source repo"
+
+getRepo :: [Repo] -> Int -> IO [Repo]
+getRepo rs n = do let (t, s) = rs !! n
+                  let f      = t ++ "/hooks/post-update"
+                  run "git" ["clone", "--bare", s, t]
+                  renameFile (f ++ ".sample") f
+                  run "chmod" ["a+x", f]
+                  run "sh"  ["cd " ++ t ++ " && sh hooks/post-update"]
+                  return rs
+
+run c as = do p <- runProcess c as Nothing Nothing Nothing Nothing Nothing
+              waitForProcess p
+
+getAllRepos :: [Repo] -> IO [Repo]
+getAllRepos rs = let f 0 = return rs
+                     f n = getRepo rs (n-1) >> f (n-1)
+                 in  f (length repos)
+
+-- Sanity checks, before we attempt anything destructive
+
+check :: IO ()
+check = let run []          = return ()
+            run ((s, b):xs) = do putStrLn s
+                                 b' <- b
+                                 if b' then putStrLn "OK"   >> f xs
+                                       else putStrLn "FAIL" >> exitFailure
+        in  run [("Looking for 'git' command",
+                  fmap (Nothing /=) (findExecutable "git"))]
+
+-- Entry point
+
+main :: IO ()
+main = check >> createDirectoryIfMissing True dir >> repl repos
