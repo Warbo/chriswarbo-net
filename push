@@ -53,8 +53,24 @@ check = whileWatching $ do fails <- get404s . lines <$> crawl
 
 -- scp
 
+chain :: [IO ExitCode] -> IO ExitCode
+chain []     = return ExitSuccess
+chain (f:fs) = do c <- f
+                  case c of
+                   ExitSuccess   -> chain fs
+                   ExitFailure _ -> exitWith c
+
 scp :: IO ExitCode
-scp = rawSystem "scp" ["-r", "_site", "chriswarbo.net:~/"]
+scp = rawSystem "rsync" ["-e", "ssh", "-r", "-p", "-z", "--info=progress2",
+                         "--append", "_site", "chriswarbo.net:~/"]
+
+{-
+  let f = "site.tar.gz"
+      in  chain [--rawSystem "rm"  [f],
+                 --rawSystem "tar" ["czf", f, "_site"],
+                 ]
+                 --rawSystem "rm"  [f]]
+-}
 
 -- update
 
@@ -63,22 +79,17 @@ update = rawSystem "ssh" ["-t", "chriswarbo.net", "/home/chris/update.sh"]
 
 -- main
 
-exitOnFailure :: IO ExitCode -> IO ()
-exitOnFailure = let f ExitSuccess = return ()
-                    f code        = exitWith code
-                 in (>>= f)
-
-write x = putStrLn x
+write x =  x
 
 ops :: [(String, IO ExitCode)]
-ops = [("rebuild", write "Rebuilding"     >> rebuild),
-       ("check",   write "Checking links" >> check  ),
-       ("copy",    write "Copying"        >> scp    ),
-       ("update",  write "Updating"       >> update )]
+ops = [("rebuild", putStrLn "Rebuilding"     >> rebuild),
+       ("check",   putStrLn "Checking links" >> check  ),
+       ("copy",    putStrLn "Copying"        >> scp    ),
+       ("update",  putStrLn "Updating"       >> update )]
 
-op :: String -> IO ()
-op n = case lookup n ops of
-            Just x  -> exitOnFailure x
-            Nothing -> return ()
+op :: String -> IO ExitCode
+op n = maybe (putStr ("Unknown op " ++ n) >> return (ExitFailure 1))
+             id
+             (lookup n ops)
 
-main = getArgs >>= sequence . map op >> return ()
+main = getArgs >>= chain . map op
