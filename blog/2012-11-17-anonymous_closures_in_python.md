@@ -130,7 +130,7 @@ There are a lots of other stack functions we can make; in fact, since stack lang
 
 [1]: http://tunes.org/~iepos/joy.html
 
-```{.python pipe="tee -a stack.py"}
+```{.python}
 # Pops off two values, calling the top one on the remaining stack.
 # Similar to Schoenfinkel's K combinator 'lambda x: lambda y: x'
 k = lambda xs: xs[-1](xs[:-2])
@@ -198,7 +198,7 @@ Let's say we have a Javascript function like this:
 
 We can write this in Python using the techniques above, to get the following:
 
-```{.python pipe="tee -a stack.py"}
+```{.python}
 # Direct use of Python
 direct = (lambda a:
            (lambda b:
@@ -238,6 +238,7 @@ dup,
 q(i, q(dup), dip),
 dip,
 i
+```
 
 # This takes a stack:
 
@@ -472,5 +473,5 @@ Also, it's always fun to mis-use any language and see what we can get away with 
 
 ```{pipe="sh"}
 # Run tests
-python stack.py
+#python stack.py
 ```
