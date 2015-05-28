@@ -23,6 +23,11 @@ main = hakyll $ do
     postType    "html" getResourceBody
     archivePage "Blog" blogCtx
 
+    -- Unlisted entries
+
+    postType' "archived/*." "md"   postCompiler
+    postType' "archived/*." "html" getResourceBody
+
     -- Essays
 
     inDir       "essays" essayCompile
@@ -161,9 +166,11 @@ elems d' c = let d  = strToLower d'
                                           ["/*", "/*/index.md"]
               in listField "elems" c es
 
-postType t c = match (fromGlob ("blog/*." ++ t)) $ do
-                   route asHtml
-                   compile $ c >>= renderPost
+postType' d t c = match (fromGlob (d ++ t)) $ do
+                    route asHtml
+                    compile $ c >>= renderPost
+
+postType = postType' "blog/*."
 
 idr x = route idRoute >> compile x
 

@@ -27,5 +27,6 @@ stdenv.mkDerivation {
     utillinux
     time
     python
+    git2html
   ];
 }

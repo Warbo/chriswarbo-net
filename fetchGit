@@ -58,6 +58,7 @@ repos = let mkRepos n []     = []
                        "python-pipes-simulation",
                        "python-plumb",
                        "search-optimisation-streams",
+                       "service-packs",
                        "tree-features",
                        "turtleviewer",
                        "warbo-dotfiles",
@@ -77,7 +78,7 @@ menu :: [Repo] -> String
 menu repos = concat ["\nRepositories:\n",
                      showRepos repos, "\n\n",
                      showCommands, "\n",
-                     prompt]
+                     "Choose a command: "]
 
 showRepos :: [Repo] -> String
 showRepos = showRepos' 0
@@ -98,8 +99,6 @@ showCommands = concat ["Commands:\n",
                        "g: Get a repo\n",
                        "a: Get all repos\n",
                        "q: Quit"]
-
-prompt = "Choose a command: "
 
 -- Choose an action based on user input
 readOption :: [Repo] -> String -> IO [Repo]
@@ -160,7 +159,7 @@ check :: IO ()
 check = let run []          = return ()
             run ((s, b):xs) = do putStrLn s
                                  b' <- b
-                                 if b' then putStrLn "OK"   >> f xs
+                                 if b' then putStrLn "OK"   >> run xs
                                        else putStrLn "FAIL" >> exitFailure
         in  run [("Looking for 'git' command",
                   fmap (Nothing /=) (findExecutable "git"))]
