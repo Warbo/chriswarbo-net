@@ -19,7 +19,7 @@ Next we write an interpreter function which opens a socket, performs all of the 
 
 You can do the same thing as with the socket example, except you can strengthen the type of your program (operation-combining) datastructure to enforce that locks are released. As a simplified example, we can force a serial computation to release locks by only allowing AQUIRE and RELEASE to be inserted together:
 
-```agda
+```haskell
 data Op = Foo | Bar | Aquire ID | Release ID
 
 data SafeOp = SFoo | SBar
@@ -42,13 +42,13 @@ interleave []     ys = ys
 interleave (x:xs) ys = [x] ++ interleave ys xs
 ```
 
-Notice that `progToOps`{.agda} can never output a list containing `Aquire`{.agda} without also containing a `Release`{.agda} with the same `ID`{.agda}. Also notice that we can define arbitrary combinations of the other `Ops`{.agda}:
+Notice that `progToOps`{.haskell} can never output a list containing `Aquire`{.haskell} without also containing a `Release`{.haskell} with the same `ID`{.haskell}. Also notice that we can define arbitrary combinations of the other `Ops`{.haskell}:
 
- - `[]`{.agda} is `NoOp`{.agda}
- - `[Foo, Bar]`{.agda} is `PrefixOp SFoo (PrefixOp SBar NoOp)`{.agda}
- - `[Foo, Aquire A, Bar, Aquire B, Release A, Foo, Release B]`{.agda} is `Interleave (PrefixOp SFoo (PrefixOp SBar NoOp)) (Interleave (WithLock A NoOp) (WithLock B (PrefixOp SFoo NoOp)))`{.agda}
+ - `[]`{.haskell} is `NoOp`{.haskell}
+ - `[Foo, Bar]`{.haskell} is `PrefixOp SFoo (PrefixOp SBar NoOp)`{.haskell}
+ - `[Foo, Aquire A, Bar, Aquire B, Release A, Foo, Release B]`{.haskell} is `Interleave (PrefixOp SFoo (PrefixOp SBar NoOp)) (Interleave (WithLock A NoOp) (WithLock B (PrefixOp SFoo NoOp)))`{.haskell}
 
-Of course these datastructures would be build up by helper functions instead of by hand, would be tree-like for concurrency, would probably provide guarantees per sub-tree, would allow arbitrary functions (of some suitable type) in place of `Foo`{.agda}, `Bar`{.agda}, etc.
+Of course these datastructures would be build up by helper functions instead of by hand, would be tree-like for concurrency, would probably provide guarantees per sub-tree, would allow arbitrary functions (of some suitable type) in place of `Foo`{.haskell}, `Bar`{.haskell}, etc.
 
 > But in your example the program doesn't represent the code itself but a program written in some new language.
 
@@ -58,9 +58,9 @@ If I write some Java like `DB.connect(credentials).select("users").where("name",
 
 > My math background made me realize that each object could have several algebras associated with it, and there could be families of these, and that these would be very very useful.
 
-The only difference between my Java example and my earlier Haskell/Agda example is that the functional version operates in two phases: calculating which operations to perform (building a `Program`{.agda} containing `Ops`{.agda}) is separate to performing those operations (applying an interpreter function to a `Program`{.agda}).
+The only difference between my Java example and my earlier Haskell/Agda example is that the functional version operates in two phases: calculating which operations to perform (building a `Program`{.haskell} containing `Ops`{.haskell}) is separate to performing those operations (applying an interpreter function to a `Program`{.haskell}).
 
-However, keep in mind that we're not doing imperative programming, so there's is no inherent notion of time: we get the same result no matter which order we evaluate stuff in (that's the [Church-Rosser Theorem](http://en.wikipedia.org/wiki/Church%E2%80%93Rosser_theorem)). Hence these two "phases" are *logically* distinct (defined separately), but not necessarily *temporally* distinct (running separately). In practice, we tend to define our `Program`{.agda} lazily, so it gets constructed on-demand by the interpreter.
+However, keep in mind that we're not doing imperative programming, so there's is no inherent notion of time: we get the same result no matter which order we evaluate stuff in (that's the [Church-Rosser Theorem](http://en.wikipedia.org/wiki/Church%E2%80%93Rosser_theorem)). Hence these two "phases" are *logically* distinct (defined separately), but not necessarily *temporally* distinct (running separately). In practice, we tend to define our `Program`{.haskell} lazily, so it gets constructed on-demand by the interpreter.
 
 This is a bit like having a `main`{.c} loop containing a `switch`{.c}, for example (forgive mistakes; I've never used function pointers in C):
 
@@ -90,9 +90,9 @@ void main(op* instruction, int* length, void* callback) {
 }
 ```
 
-This `main`{.c} function is basically the same as our interpreter; it's keeping the dangerous socket-related stuff in one place, providing some safety that the socket will be closed after use, etc. The values of `data`{.c} and `instruction`{.c} are being computed by arbitrary C code living at `callback`{.c}, just like our `Program`{.agda} can be computed by arbitrary Haskell/Agda/whatever code. In this case the interleaving of choosing and executing instructions is explicit, but a lazily-evaluated `Program`{.agda} will behave similarly in practice.
+This `main`{.c} function is basically the same as our interpreter; it's keeping the dangerous socket-related stuff in one place, providing some safety that the socket will be closed after use, etc. The values of `data`{.c} and `instruction`{.c} are being computed by arbitrary C code living at `callback`{.c}, just like our `Program`{.haskell} can be computed by arbitrary Haskell/Agda/whatever code. In this case the interleaving of choosing and executing instructions is explicit, but a lazily-evaluated `Program`{.haskell} will behave similarly in practice.
 
-Does this mean that those callbacks are in "some different language" to C? No; everything is regular C except that we just-so-happen to be labelling some ints as `READ`{.c}, `WRITE`{.c} and `CLOSE`{.c}. Likewise, in Haskell/Agda/etc. we have the full breadth of the whole language available to us; we just-so-happen to be returning values of type `Op`{.agda} and `Program`{.agda}. All of our logic, concurrency, etc. is done in the "host" language; we only define `Op`{.agda}s for the things we want to restrict, like `Read`{.agda} and `Write`{.agda}; there's absolutely no point defining operations for boolean logic, arithmetic, string manipulation, arrays/lists, etc. because that's available already. Of course, once we've finished defining our socket library, that too will be available to everyone (if we release it); just because it might use some crazy `Op`{.agda}, `Program`{.agda} and `runSocket`{.agda} things internally doesn't mean anyone has to care about that; it's just an implementation detail.
+Does this mean that those callbacks are in "some different language" to C? No; everything is regular C except that we just-so-happen to be labelling some ints as `READ`{.c}, `WRITE`{.c} and `CLOSE`{.c}. Likewise, in Haskell/Agda/etc. we have the full breadth of the whole language available to us; we just-so-happen to be returning values of type `Op`{.haskell} and `Program`{.haskell}. All of our logic, concurrency, etc. is done in the "host" language; we only define `Op`{.haskell}s for the things we want to restrict, like `Read`{.haskell} and `Write`{.haskell}; there's absolutely no point defining operations for boolean logic, arithmetic, string manipulation, arrays/lists, etc. because that's available already. Of course, once we've finished defining our socket library, that too will be available to everyone (if we release it); just because it might use some crazy `Op`{.haskell}, `Program`{.haskell} and `runSocket`{.haskell} things internally doesn't mean anyone has to care about that; it's just an implementation detail.
 
 Notice that this is very similar to an OOP dynamic dispatch system, where `READ`{.c}, `WRITE`{.c} and `CLOSE`{.c} are method names and the callbacks just-so-happen to be kept together in a struct which we call an "object".
 
