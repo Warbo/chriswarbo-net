@@ -1,3 +1,4 @@
+#!/usr/bin/env runhaskell
 --------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts  #-}
@@ -87,11 +88,6 @@ main = hakyll $ do
         compile compressCssCompiler
 
     match "templates/*" $ compile templateCompiler
-
-    -- Git repositories. These are maintained separately. You can populate the
-    -- "git" directory using the "fetchGit" script
-
-    cp "git/**"
 
     -- Feeds (not working yet)
     {-
