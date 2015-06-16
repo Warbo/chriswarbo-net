@@ -335,6 +335,8 @@ These simple scripts let us call out to the UNIX shell from our documents. This 
 
 ### Hiding Output ###
 
+#### `/dev/null` ####
+
 You may want a code block to execute, but not show up in the output. The easiest way is to pipe the output to `/dev/null`, or an actual file if we plan to use it later:
 
 ````{.markdown pipe="tee hide.md"}
@@ -363,12 +365,16 @@ echo -n '`'
 
 ```{pipe="sh > inline_hidden"}
 echo 'ls /' | ./dash
-echo '{pipe="sh"}'
+echo '{pipe="sh > /dev/null"}'
 ```
 
-Sometimes this has undesirable effects, where these empty blocks interact badly with some styling rule. If this is the case, you might try using inline snippets instead, eg. `cat inline_hidden`{pipe="sh"}
+Sometimes this has undesirable effects, where these empty blocks interact badly with some styling rule. If this is the case, you might try using inline snippets instead, eg. `cat inline_hidden`{pipe="sh"}.
 
-To *completely* eliminate the output takes a little more effort, but might be necessary in some cases; for example, I do this when producing PDFs. The key is that code blocks can never be *removed*, they can only be *unwrapped*; ie. have their content spliced into the document. With this in mind, the solution is obvious: we unwrap an *empty* block! This is *slightly* complicated by the requirement to emit JSON, but that's easy using the `pandoc` command:
+#### Splicing Nothing ####
+
+To eliminate the code block takes a little more effort, but might be necessary in some cases. To remove a code block, we can use `panhandle` to splice an empty document in place of the code block.
+
+Remember that `panhandle` accepts JSON, which we can generate using `pandoc`:
 
 ````{pipe="cat > blanker"}
 ```{.unwrap pipe="sh | echo '' | pandoc -t json"}
@@ -376,11 +382,49 @@ ls /
 ```
 ````
 
+```{pipe="sh"}
+cat blanker
+```
+
 Here's the result when converting to HTML (the div exists to catch remaining attributes of the code block):
 
 ```{pipe="sh"}
 pandoc --filter panpipe --filter panhandle -t html < blanker
 ```
+
+#### Format-specific ####
+
+If you're targetting a specific output format, you can use techniques specific to that format.
+
+For example, if you're rendering to HTML, you can hide code blocks with CSS:
+
+````{pipe="cat > hideCss"}
+```{pipe="sh" style="display: none;"}
+ls /
+```
+````
+
+```{pipe="sh"}
+cat hideCss
+```
+
+This results in:
+
+```{.html pipe="sh | pandoc --filter panpipe -t html"}
+cat hideCss
+```
+
+If you're using LaTeX you can use `if` statements to skip over the block:
+
+````
+\iffalse
+
+```{pipe="sh"}
+ls /
+```
+
+\fi
+````
 
 ### Showing Code *and* Output ###
 
