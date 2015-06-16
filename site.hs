@@ -1,4 +1,5 @@
-#!/usr/bin/env runhaskell
+#! /usr/bin/env nix-shell
+#! nix-shell -i runhaskell
 --------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts  #-}
