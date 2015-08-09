@@ -7,6 +7,14 @@
     <title>$title$</title>
     <link rel="stylesheet" type="text/css" href="/css/default.css" />
     <link rel="stylesheet" type="text/css" href="/css/syntax.css" />
+    <link rel='alternate'
+          type='application/rss+xml'
+          title='RSS'
+          href='/rss.xml'>
+      <link rel='alternate'
+            type='application/atom+xml'
+            title='Atom'
+            href='/atom.xml'>
   </head>
   <body>
     <div id="header">
@@ -26,9 +34,11 @@
     <div id="footer">
       $if(path)$
         <div style="float: left">
-          <a href="https://gitorious.org/chriswarbo-dot-net/chriswarbo-dot-net/source/master:$path$">
+          <a href="http://chriswarbo.net/git/chriswarbo-net/branches/master/$path$">
             View Source
           </a>
+          <a href="/atom.xml">Atom</a>
+          <a href="/rss.xml">RSS</a>
         </div>
       $endif$
       <div style="float: right">
