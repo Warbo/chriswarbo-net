@@ -91,13 +91,16 @@ main = hakyll $ do
     match "templates/*" $ compile templateCompiler
 
     -- Feeds
-    create ["atom.xml"] $ do
-        idr $ do
-            let feedCtx = postCtx `mappend` bodyField "description"
-            posts <- fmap (take 10) . recentFirst
-                 =<< loadAllSnapshots "blog/*" "content"
-            renderAtom feedConf feedCtx posts
+    blogFeed "atom.xml" renderAtom
+    blogFeed "rss.xml"  renderRss
 --------------------------------------------------------------------------------
+blogFeed t f = create [t] $ do
+                   idr $ do
+                       let feedCtx = postCtx `mappend` bodyField "description"
+                       posts <- fmap (take 10) . recentFirst
+                            =<< loadAllSnapshots "blog/*" "content"
+                       f feedConf feedCtx posts
+
 postCtx :: Context String
 postCtx = dateField "date" "%F" `mappend` defCtx
 
