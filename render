@@ -1,0 +1,27 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -p gnumake -p bash -p haskellPackages.pandoc-citeproc -p panpipe -p panhandle -p ditaa -i bash
+make -j2 -f <(tail -n+4 "$0") "$@"; exit "$?"
+
+all : rendered/contact.html
+
+rendered/contact.html : rendered
+	pandoc contact.md -o rendered/contact.html
+
+rendered :
+	mkdir -p rendered
+
+#html_blogs := $(wildcard blog/*.html)
+#md_blogs   := $(wildcard blog/*.md)
+#blogs      := $(html_blogs) $(md_blogs)
+
+#projects := $(wildcard essays/*)
+
+#all : $(blogs) $(projects)
+
+#rendered/index.html : archive.
+
+## rendered/projects
+## rendered/essays should redirect to redered/projects
+## rendered/blog
+## RSS & ATOM
+## Archive
