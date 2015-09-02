@@ -1,14 +1,37 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -p gnumake -p bash -p haskellPackages.pandoc-citeproc -p panpipe -p panhandle -p ditaa -i bash
-make -j2 -f <(tail -n+4 "$0") "$@"; exit "$?"
+mkdir -p rendered; make -j2 -f <(tail -n+4 "$0") "$@"; exit "$?"
 
-all : rendered/contact.html
+pd := pandoc --filter panpipe --filter panhandle --template templates/default.html
 
-rendered/contact.html : rendered
-	pandoc contact.md -o rendered/contact.html
+css := $(addprefix rendered/, $(wildcard css/*))
 
-rendered :
-	mkdir -p rendered
+all : rendered/contact.html rendered/index.php rendered/index.html css
+
+rendered/contact.html :
+	$(pd) contact.md -o rendered/contact.html
+
+rendered/index.php :
+	$(pd) templates/redirect.html -o rendered/index.php
+
+rendered/index.html :
+	$(pd) index.md -o rendered/index.html
+
+rendered/archive.html :
+	$(pd) archive.html -o rendered/archive.html
+
+clean :
+	rm -rf rendered
+
+css : $(css)
+
+$(css) : rendered/css
+	cp css/$(notdir $@) rendered/css/
+
+rendered/css :
+	mkdir -p rendered/css
+
+.PHONY : css
 
 #html_blogs := $(wildcard blog/*.html)
 #md_blogs   := $(wildcard blog/*.md)
