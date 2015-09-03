@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+# Check calling convention
+if [[ -z "$1" ]]
+then
+    echo "showPost requires an argument" >> /dev/stderr
+    exit 1
+fi
+
+# Strip local prefix off argument to get the post's URL
+URL="$1"
+while true
+do
+    PREFIX=$(echo "$URL" | cut -d '/' -f 1)
+    [[ "x$PREFIX" = "xblog" ]] && break
+    [[ -z "$PREFIX" ]]         && break
+    URL=$(echo "$URL" | cut -d '/' -f 2-)
+done
+
+# Get date from filename
+DATE=$(basename "$1" | cut -c 1-10)
+
+# Get the title
+TITLE=$(xidel - --extract "/html/head/title/text()" < "$1")
+if [[ -z "$TITLE" ]]
+then
+    # If there is no <title />, fall back to a <h1 />
+    TITLE=$(xidel - --extract "//h1/text()" < "$1")
+    echo "No title for $1, falling back to '$TITLE'" >> /dev/stderr
+fi
+
+# Render link
+printf '<li><a href="/%s">%s</a> - %s</li>' "$URL" "$TITLE" "$DATE"

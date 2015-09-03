@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+DIR=$(dirname "$0")
+
+echo '<ul>'
+
+while read -r POST
+do
+    "$DIR/showPost" "$POST"
+done
+
+echo '</ul>'
