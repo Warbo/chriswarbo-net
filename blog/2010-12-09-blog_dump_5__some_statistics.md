@@ -1,5 +1,5 @@
 ---
-title: Blog Dump 5: Some Statistics
+title: "Blog Dump 5: Some Statistics"
 ---
 Statistical models are well suited to computer simulations. The most interesting results can usually be found in random processes, so here's an example showing the St Petersburg Lottery:
 

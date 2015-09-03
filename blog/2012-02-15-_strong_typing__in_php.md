@@ -1,5 +1,5 @@
 ---
-title: "Strong typing" in PHP
+title: "'Strong typing' in PHP"
 ---
 I was sent a link today to a description of ["strong" typing in PHP] [1]. The article describes "autoboxing", which is a technique for wrapping non-object data in objects. The technique is to carry on using the non-object data types, but encapsulate them inside some kind of object/class. This ends up being pretty ugly, with all kinds of static horribleness. However, there's a much simpler way to enforce types simply by using classes. Behold.
 
