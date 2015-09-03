@@ -403,7 +403,12 @@ kmncRhGDhO+7HxoDLIy7WL/wF4p/AS8w83ou4ct8AAAAAElFTkSuQmCC"
   opinions, etc. Updated frequently but rarely revised.
 </p>
 
-$partial("templates/post-list.html")$
+```{.unwrap pipe="bash | pandoc -t json"}
+find root/rendered/blog -type f |
+  sort -r                       |
+  head                          |
+  ./root/static/showPosts
+```
 
 <h2><a href="/essays.html">Essays</a></h2>
 
