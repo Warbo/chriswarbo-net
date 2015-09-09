@@ -1,5 +1,6 @@
 ---
 title: Unfinished
+dependencies: static/showPost*
 ---
 
 Unfinished posts live here so I can preview them:

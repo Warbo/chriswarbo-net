@@ -1,5 +1,6 @@
 ---
 title: Blog
+dependencies: static/showPost*
 ---
 
 Here you can find all my previous posts:

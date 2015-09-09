@@ -1,5 +1,6 @@
 ---
 title: Chris Warburton's Homepage
+dependencies: rendered/blog.html static/showPost*
 ---
 <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAawAAAENCAMAAABkVqHVAAABtlBMVEUAAAC2trZra2tvb2+GhobF
 xcWgoKBpaWlmZmazs7N1dXWvr691dXVUVFSamppwcHC9vb2ysrJ5eXmbm5ujo6PFxcWampq4uLhu
