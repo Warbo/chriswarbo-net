@@ -1,5 +1,5 @@
 ---
-title: PowerPlay: A General Learning Framework
+title: "PowerPlay: A General Learning Framework"
 ---
 
 [PowerPlay](http://www.idsia.ch/~juergen/interest.html) is a very simple, very general architecture for an AI agent. It uses:

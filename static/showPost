@@ -8,20 +8,13 @@ then
 fi
 
 # Strip local prefix off argument to get the post's URL
-URL="$1"
-while true
-do
-    PREFIX=$(echo "$URL" | cut -d '/' -f 1)
-    [[ "x$PREFIX" = "xblog" ]] && break
-    [[ -z "$PREFIX" ]]         && break
-    URL=$(echo "$URL" | cut -d '/' -f 2-)
-done
+URL=$(echo "$1" | sed -e 's@.*/blog/@blog/@g')
 
 # Get date from filename
 DATE=$(basename "$1" | cut -c 1-10)
 
 # Get the title
-TITLE=$(xidel - --extract "/html/head/title/text()" < "$1")
+TITLE=$(xidel - -q --extract "/html/head/title/text()" < "$1")
 if [[ -z "$TITLE" ]]
 then
     # If there is no <title />, fall back to a <h1 />

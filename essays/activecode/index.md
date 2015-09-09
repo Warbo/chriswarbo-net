@@ -576,8 +576,7 @@ echo implode("\n", array_map($colour, range(0, $max)));
 ```
 
 ```{.unwrap pipe="sh | pandoc -t json"}
-convert carpet.pbm carpet_big.png
-pngcrush -brute carpet_big.png carpet.png
+convert carpet.pbm carpet.png
 echo -n '<img alt="Sierpinski Carpet" src="data:image/png;base64,'
 base64 -w 0 carpet.png
 echo -n '" />'

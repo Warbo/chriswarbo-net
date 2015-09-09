@@ -1,0 +1,4 @@
+echo "import Pic"
+cat
+echo ""
+echo "main = putStr (greyFrom f)"

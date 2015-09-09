@@ -4,7 +4,7 @@ title: Nix Packages
 
 ```{pipe="tee graph.sh > /dev/null"}
 #!/bin/sh
-dot -Tpng | ./root/data/scripts/file2img.sh | pandoc -t json
+dot -Tpng | ./root/static/file2img.sh | pandoc -t json
 ```
 
 ```{pipe="sh > /dev/null"}

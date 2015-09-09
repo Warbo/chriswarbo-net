@@ -1,5 +1,5 @@
 ---
-title: Plumb: A Mini Language for Mini Functions
+title: "Plumb: A Mini Language for Mini Functions"
 ---
 Plumb is a [Domain Specific Language](http://en.wikipedia.org/wiki/Domain-specific_language) for defining small, incidental, throwaway functions. In other words, the 'plumbing' to join the component parts of a program.
 

@@ -2,72 +2,83 @@
 #! nix-shell -i bash
 mkdir -p rendered; make -j2 -f <(tail -n+4 "$0") "$@"; exit "$?"
 
-# Everything cascades down from index.html, except index.php
+# Convert back and forth between source and destination filenames
 
-index := rendered/index.html
+# rendered/a/b.html -> rendered/a/b -> a/b -> a/b.* -> a/b.md
+source   = $(wildcard $(addsuffix .*, $(subst rendered/,,$(basename $1))))
 
-all : $(index) rendered/index.php
+# a/b.md -> a/b -> a/b.html -> rendered/a/b.html
+rendered = $(addprefix rendered/, $(addsuffix .html, $(basename $1)))
+
+# Some pages have sub-entries, eg. blog.md has blog/
+
+get_entries = $(call rendered,\
+                     $(shell for ENTRY in $1; \
+                             do [[ ! -x $$ENTRY ]] || find $$ENTRY -type f;\
+                             done))
+    entries = $(call get_entries,$(basename $(call source,$1)))
+
+top_level  = $(call rendered,$(shell ls *.md))
+all_pages := $(top_level) $(call entries,$(top_level))
+
+# Styling
+
+    css := $(shell find css -type f)
+out_css := $(addprefix rendered/, $(css))
+    tmp := templates/default.html
+
+# Entry point
+
+all : $(all_pages) $(out_css) $(redirect)
 
 # We use Pandoc, PanPipe and PanHandle to render pages
 
-tmp := templates/default.html
-pd   = pandoc --filter panpipe --filter panhandle --template $(tmp) -o $2 $1
-base = $(notdir $(basename $1))
+pd     = pandoc --filter panpipe --filter panhandle --template $(tmp) -o $2 $1
+render = $(call pd,$(call source,$1),$1)
+
+# Dependencies of a page
+
+deps = $(call source,$1) $(call entries,$1) $(tmp)
+
+# Use PAGE as a template for rendering every page
+
+# $1 - Target HTML file
+# $2 - Dependencies
+define PAGE
+$1 : $2 $3
+	mkdir -p $$(dir $$@)
+	$$(call render, $$@)
+endef
+
+$(foreach p,$(all_pages),$(eval $(call PAGE,$p,$(call deps,$p))))
 
 # Copy css/* as-is
 
-css  := $(wildcard css/*)
-rcss := $(addprefix rendered/, $(css))
-
-$(rcss) : css/$(notdir $@)
+$(out_css) : css/$(notdir $@)
 	mkdir -p rendered/css
 	cp css/$(notdir $@) rendered/css/
 
-# Render blog posts
+# Redirect old URLs to their new location
 
-# blog/foo.* -> rendered/blog/foo.html
-rendered = $(addprefix rendered/, $(addsuffix .html, $(basename $1)))
+redirect := rendered/index.php
 
-# rendered/blog/foo.html -> blog/foo.*
-blog_source = $(wildcard $(addsuffix .*, $(addprefix blog/, $(call base, $1))))
+redirect : redirect.html
+	$(call pd, redirect.html, rendered/index.php)
 
-posts  := $(wildcard blog/*)
-rposts := $(call rendered, $(posts))
+## RSS & ATOM
 
-$(rposts) : $(call blog_source, $@) $(tmp)
-	mkdir -p rendered/blog
-	$(call pd, $(call blog_source, $@), $@)
-
-# Top-level pages
-
-contact := rendered/contact.html
-
-$(contact) : contact.md $(tmp)
-	$(call pd, contact.md, rendered/contact))
-
-showPost := static/showPost static/showPosts
-blog     := rendered/blog.html
-
-$(blog) : blog.md $(rposts) $(tmp) $(showPost)
-	$(call pd, blog.md, $(blog))
-
-$(index) : index.md $(contact) $(blog)
-	$(call pd, index.md, rendered/index.html)
-
-# Redirects legacy URLs
-
-rendered/index.php : templates/redirect.html
-	$(call pd, templates/redirect.html, rendered/index.php)
-
-# Clean up everything
+# Extra functionality
 
 clean :
 	rm -rf rendered
 
-.PHONY : clean
+# Tests
 
-#projects := $(wildcard essays/*)
+tests := $(addsuffix .pass, $(wildcard tests/*))
 
-## rendered/projects
-## rendered/essays should redirect to redered/projects
-## RSS & ATOM
+test : $(tests)
+
+$(tests) : all
+	$(basename $@)
+
+.PHONY : all clean test
