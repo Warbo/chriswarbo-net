@@ -1,0 +1,6 @@
+#!/bin/sh
+TEMP=$(pwd)
+convert "$1.ppm" "$1.png"
+DIR=$(dirname "$0")
+cd "$DIR"
+"../file2img.sh" "$TEMP/$1" < "$TEMP/$1.png" | pandoc -t json
