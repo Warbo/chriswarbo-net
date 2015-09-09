@@ -36,9 +36,10 @@ all : $(all_pages) $(out_css) $(redirect)
 pd     = pandoc --filter panpipe --filter panhandle --template $(tmp) -o $2 $1
 render = $(call pd,$(call source,$1),$1)
 
-# Dependencies of a page
-
-deps = $(call source,$1) $(call entries,$1) $(tmp)
+# Dependencies of a page: the source, template and any "dependencies: ..." line
+extradeps = $(wildcard $(shell ./static/getDeps $1))
+deps = $(call source,$1) $(call entries,$1) \
+       $(call extradeps,$(call source,$1)) $(tmp)
 
 # Use PAGE as a template for rendering every page
 

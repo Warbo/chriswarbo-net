@@ -2,10 +2,9 @@
 CODE=$(cat)
 
 DIR=$(dirname "$0")
-cd "$DIR"
-echo "$CODE" | "./$2Code" > "$1.hs"
-runhaskell "$1.hs" > "$1.ppm"
-echo "$CODE" | ../wrapCode.sh .haskell >> "$1.md"
+echo "$CODE" | "$DIR/$2Code" > "$1.hs"
+runhaskell -i"$DIR" "$1.hs" > "$1.ppm"
+echo "$CODE" | "$DIR/../wrapCode.sh" .haskell >> "$1.md"
 echo "" >> "$1.md"
-./includePic "$1" | ../wrapCode.sh .unwrap >> "$1.md"
+"$DIR/includePic" "$1" | "$DIR/../wrapCode.sh" .unwrap >> "$1.md"
 pandoc -t json < "$1.md"

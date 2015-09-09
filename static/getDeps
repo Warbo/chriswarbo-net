@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
+[[ -n "$1" ]] || exit 0
+[[ -f "$1" ]] || {
+    echo "Can't get dependencies of '$1'" >> /dev/stderr
+    exit 1
+}
 
-DIR=$(dirname "$0")
-
-# Get extra dependencies of a Markdown file, via a "dependencies" YAML entry
-LINES=$(wc -l < "$1")
-grep -B "$LINES" '^---$' < "$1" | grep -v '^---$' |
-    "$DIR/yamlQuery" '.dependencies'
+grep "dependencies[ ]*:" < "$1" | sed -e 's/.*dependencies[ ]*://g'
