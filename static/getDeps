@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+DIR=$(dirname "$0")
+
+# Get extra dependencies of a Markdown file, via a "dependencies" YAML entry
+LINES=$(wc -l < "$1")
+grep -B "$LINES" '^---$' < "$1" | grep -v '^---$' |
+    "$DIR/yamlQuery" '.dependencies'
