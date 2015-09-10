@@ -88,7 +88,7 @@ clean :
 push : copy
 	ssh -t chriswarbo.net /home/chris/update.sh
 
-copy : all
+copy : test
 	rsync -e ssh -r -p -z --info=progress2 --append rendered chriswarbo.net:~/
 
 # Tests
@@ -100,4 +100,4 @@ test : $(tests)
 $(tests) : all
 	$(basename $@)
 
-.PHONY : all clean test
+.PHONY : all clean test copy push

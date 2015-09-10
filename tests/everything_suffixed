@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+ERR=0
+for FILE in *.md
+do
+    DIR=$(basename "$FILE" .md)
+    if [[ -d "$DIR" ]]
+    then
+        while read -r ENTRY
+        do
+            if ! echo "$ENTRY" | grep "[^/][^/]*\.[^/][^/]*" > /dev/null
+            then
+                echo "File '$ENTRY' has no extension" >> /dev/stderr
+                ERR=1
+            fi
+        done < <(find "$DIR" -type f)
+    fi
+done
+
+exit "$ERR"
