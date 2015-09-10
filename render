@@ -19,54 +19,66 @@ get_entries = $(call rendered,\
     entries = $(call get_entries,$(basename $(call source,$1)))
 
 top_level  = $(call rendered,$(shell ls *.md))
-all_pages := $(top_level) $(call entries,$(top_level))
+all_pages := $(top_level) $(call entries,$(top_level)) \
+             $(call rendered,$(shell find archived -type f))
 
-# Styling
+# Resources
 
-    css := $(shell find css -type f)
-out_css := $(addprefix rendered/, $(css))
-    tmp := templates/default.html
+out_css   := $(addprefix rendered/, $(shell find css -type f))
+out_js    := $(addprefix rendered/, $(shell find js -type f))
+out_feeds := rendered/rss.xml rendered/atom.xml
+
+resources := $(out_css) $(out_js) $(out_feeds)
+
+tmp := templates/default.html
+
+# Extra bits of infrastructure
+
+redirect := rendered/index.php
 
 # Entry point
 
-all : $(all_pages) $(out_css) $(redirect)
+all : $(all_pages) $(resources) $(redirect)
 
-# We use Pandoc, PanPipe and PanHandle to render pages
-
-pd     = pandoc --filter panpipe --filter panhandle --template $(tmp) -o $2 $1
-render = $(call pd,$(call source,$1),$1)
+render_to = SOURCE="$1" DEST="$2" ./static/render_page
+render    = $(call render_to,$(call source,$1),$1)
 
 # Dependencies of a page: the source, template and any "dependencies: ..." line
 extradeps = $(wildcard $(shell ./static/getDeps $1))
-deps = $(call source,$1) $(call entries,$1) \
-       $(call extradeps,$(call source,$1)) $(tmp)
+     deps = $(call source,$1) $(call entries,$1) \
+            $(call extradeps,$(call source,$1)) $(tmp)
 
 # Use PAGE as a template for rendering every page
 
 # $1 - Target HTML file
 # $2 - Dependencies
 define PAGE
-$1 : $2 $3
+$1 : $2
 	mkdir -p $$(dir $$@)
-	$$(call render, $$@)
+	$$(call render,$$@)
 endef
 
 $(foreach p,$(all_pages),$(eval $(call PAGE,$p,$(call deps,$p))))
 
-# Copy css/* as-is
+# Resources
 
 $(out_css) : css/$(notdir $@)
 	mkdir -p rendered/css
 	cp css/$(notdir $@) rendered/css/
 
-# Redirect old URLs to their new location
+js_source = $(subst rendered/,,$1)
 
-redirect := rendered/index.php
+$(out_js) : $(call js_source,$@)
+	mkdir -p $(dir $@)
+	cp $(call js_source,$@) $@
 
-redirect : redirect.html
-	$(call pd, redirect.html, rendered/index.php)
+$(redirect) : redirect.html
+	$(call render_to,redirect.html,rendered/index.php)
 
-## RSS & ATOM
+# RSS & ATOM
+
+$(out_feeds) : $(call source,$(out_feeds)) rendered/blog.html
+	echo pandoc -o $@ $(call source,$@)
 
 # Extra functionality
 

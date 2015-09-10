@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+if [[ -n "$SOURCE" ]] && [[ -n "$DEST" ]]
+then
+    pandoc --filter panpipe   \
+           --filter panhandle \
+           --template templates/default.html \
+           -o "$DEST" "$SOURCE"
+else
+    pandoc --filter panpipe   \
+           --filter panhandle \
+           --template templates/default.html
+fi

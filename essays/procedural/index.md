@@ -11,7 +11,7 @@ for FILE in root/essays/procedural/*
 do
     NAME=$(basename "$FILE" | rev | cut -d '.' -f 2- | rev)
     TITLE=$(grep "title[ ]*:" < "$FILE" | sed -e 's/.*title[ ]*:[ ]*//g')
-    #[[ "x$NAME" = "xindex" ]] && continue
+    [[ "x$NAME" = "xindex" ]] && continue
     echo "<li><a href='$NAME.html' title='$TITLE'>$TITLE</a></li>"
 done
 echo '</ul>'
