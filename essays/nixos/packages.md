@@ -158,5 +158,5 @@ If we have a large collection of machines to manage, we can abstract over them u
 I have to admit I've not used NixOps or DisNix!
 
 [nixos]: http://nixos.org
-[nixpost]: /blog/2014-07-14-nixos.html
+[nixpost]: /essays/nixos/switching_to_nixos.html
 [hackernews]: https://news.ycombinator.com/item?id=8729061

@@ -34,7 +34,7 @@ tmp := templates/default.html
 
 # Extra bits of infrastructure
 
-redirect := rendered/index.php
+redirect := rendered/index.php rendered/archive.html
 
 # Entry point
 
@@ -73,7 +73,7 @@ $(out_js) : $(call js_source,$@)
 	cp $(call js_source,$@) $@
 
 $(redirect) : redirect.html
-	$(call render_to,redirect.html,rendered/index.php)
+	$(call render_to,redirect.html,$@)
 
 # RSS & ATOM
 

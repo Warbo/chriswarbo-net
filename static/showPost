@@ -8,7 +8,7 @@ then
 fi
 
 # Strip local prefix off argument to get the post's URL
-URL=$(echo "$1" | sed -e 's@.*/blog/@blog/@g')
+URL=$(echo "$1" | sed -e 's@.*rendered/@@')
 
 # Get date from filename
 DATE=$(basename "$1" | cut -c 1-10)
@@ -19,6 +19,16 @@ if [[ -z "$TITLE" ]]
 then
     # If there is no <title />, fall back to a <h1 />
     TITLE=$(xidel - --extract "//h1/text()" < "$1")
+    if [[ -z "$TITLE" ]]
+    then
+        # If there's no <h1 />, fall back to filename
+        TITLE=$(basename "$1" .html)
+    fi
+    if [[ -z "$TITLE" ]]
+    then
+        # Last resort
+        TITLE="Untitled"
+    fi
     echo "No title for $1, falling back to '$TITLE'" >> /dev/stderr
 fi
 

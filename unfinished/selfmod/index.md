@@ -13,5 +13,3 @@ The most obvious way to implement such a system is via strong types. We can defi
 **[Part 1: Framework](framework.html)**
 
 **[Part 2: Program-Passing](programpass.html)**
-
-**[Part 3: ](.html)**
