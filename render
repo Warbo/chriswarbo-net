@@ -85,6 +85,12 @@ $(out_feeds) : $(call source,$(out_feeds)) rendered/blog.html
 clean :
 	rm -rf rendered
 
+push : copy
+	ssh -t chriswarbo.net /home/chris/update.sh
+
+copy : all
+	rsync -e ssh -r -p -z --info=progress2 --append rendered chriswarbo.net:~/
+
 # Tests
 
 tests := $(addsuffix .pass, $(wildcard tests/*))
