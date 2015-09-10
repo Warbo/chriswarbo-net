@@ -30,10 +30,16 @@ fi
 
 TICK='`'
 
-echo "*Last updated: $DATE*"
-echo
-echo "${TICK}git clone http://chriswarbo.net/git/$1.git${TICK}"
-echo
-echo "[View repository](/git/$1/)"
-echo
-echo "$README"
+cat <<EOF
+---
+title: "$1"
+---
+
+*Last updated: $DATE*
+
+${TICK}git clone http://chriswarbo.net/git/$1.git${TICK}
+
+[View repository](/git/$1/)
+
+$README
+EOF
