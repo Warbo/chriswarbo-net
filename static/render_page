@@ -2,9 +2,10 @@
 
 if [[ -n "$SOURCE" ]] && [[ -n "$DEST" ]]
 then
-    pandoc --filter panpipe   \
-           --filter panhandle \
+    pandoc --filter panpipe                  \
+           --filter panhandle                \
            --template templates/default.html \
+           -M path="$SOURCE"                 \
            -o "$DEST" "$SOURCE"
 else
     pandoc --filter panpipe   \
