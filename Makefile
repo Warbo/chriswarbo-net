@@ -74,9 +74,9 @@ $(redirect) : redirect.html
 
 # RSS & ATOM
 
-$(out_feeds) : $(call source,$(out_feeds)) rendered/blog.html
+$(out_feeds) : templates/$(notdir $@) rendered/blog.html
 	mkdir -p $(dir $@)
-	echo pandoc -o $@ $(call source,$@)
+	echo pandoc -o $@ templates/$(notdir $@)
 
 # Extra functionality
 
