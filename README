@@ -1,0 +1,32 @@
+## ChrisWarbo.net
+
+This is the source for chriswarbo.net. To render the site, you will need the
+[Nix package manager](http://nix.nixos.org). Once you have Nix, you can render
+everything using:
+
+```
+./render
+```
+
+This will fetch all dependencies, then call GNU Make to build the site. Options
+to the `render` script will be sent to `make`, so you can use all of the usual
+tricks (eg. `-j 8` to build 8 things in parallel).
+
+The site itself will be created in a directory called `rendered`. For example,
+if you just want to build `blog.html`, you can call:
+
+```
+./render rendered/blog.html
+```
+
+This will also build all of the dependencies, eg. the contents of the
+`rendered/blog/` directory.
+
+A few special commands are available too:
+
+ - `all` will build all the the contents of `rendered/`. This is the default.
+ - `clean` will delete `rendered/`.
+ - `test` will build the site, then run the scripts in `tests/`
+ - `copy` will test the site, then copy it to the chriswarbo.net
+   server (which you will presumably have no access to).
+ - `push` will copy the site, then point the server to the new version.
