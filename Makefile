@@ -1,7 +1,3 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash
-mkdir -p rendered; make -j2 -f <(tail -n+4 "$0") "$@"; exit "$?"
-
 # Convert back and forth between source and destination filenames
 
 # rendered/a/b.html -> rendered/a/b -> a/b -> a/b.* -> a/b.md
@@ -73,11 +69,13 @@ $(out_js) : $(call js_source,$@)
 	cp $(call js_source,$@) $@
 
 $(redirect) : redirect.html
+	mkdir -p $(dir $@)
 	$(call render_to,redirect.html,$@)
 
 # RSS & ATOM
 
 $(out_feeds) : $(call source,$(out_feeds)) rendered/blog.html
+	mkdir -p $(dir $@)
 	echo pandoc -o $@ $(call source,$@)
 
 # Extra functionality
