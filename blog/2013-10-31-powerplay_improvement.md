@@ -153,4 +153,4 @@ By making this change to PowerPlay, we gain the following:
  - The original PowerPlay definition guarantees that it won't lose the ability to solve the `Problem`{.ocaml}s in its `list`{.ocaml}; this new variant guarantees that it will never lose the ability to solve any `Problem`{.ocaml} ever.
  - The code ends up being simpler!
 
-This work is still incomplete, but it's living at [https://gitorious.org/powerplay](https://gitorious.org/powerplay) for anyone who's interested.
+This work is still incomplete, but it's [living in git](/git/powerplay) for anyone who's interested.

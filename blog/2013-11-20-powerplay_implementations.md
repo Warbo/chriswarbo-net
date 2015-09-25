@@ -2,10 +2,7 @@
 title: PowerPlay implementations
 ---
 I've begun writing some implementations of the PowerPlay spec I've talked about
-in [other] [1] [posts] [2].
-
-[1]: http://chriswarbo.net/index.php?page=news&type=view&id=admin-s-blog%2Fpowerplay-improvement
-[2]: http://chriswarbo.net/index.php?page=news&type=view&id=admin-s-blog%2Fpowerplay-improvement_2
+[elsewhere](/essays/powerplay).
 
 ## Lookup Tables ##
 

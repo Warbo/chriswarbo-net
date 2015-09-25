@@ -3,9 +3,7 @@ title: PowerPlay Improvement continued
 ---
 ## Defining Improvement ##
 
-Over the past few weeks I've been hacking on the PowerPlay implementation I mentioned in a [previous post] [1]. PowerPlay is a meta-algorithm, which may allow existing problem-solving algorithms to improve over time.
-
-[1] http://chriswarbo.net/index.php?page=news&amp;type=view&amp;id=admin-s-blog%2Fpowerplay-improvement
+Over the past few weeks I've been hacking on the PowerPlay implementation I mentioned in a [previous post](/blog/2013-10-31-powerplay_improvement.html). PowerPlay is a meta-algorithm, which may allow existing problem-solving algorithms to improve over time.
 
 The definition of 'improve' used by PowerPlay is to keep a list of regression tests: problems which we know can already be solved. We consider a solver S2 to be an improvement over a solver S1 if S2 can solve all of our regression tests and we can find a problem it can solve which S1 cannot solve. If we manage to do this, we put this new problem in our list of tests and start using S2 as our problem solver.
 
@@ -94,8 +92,6 @@ nix-shell -p ditaa --run "ditaa chart2.dit" > /dev/null
 ./root/static/file2img.sh "Chart 2" < chart2.png
 ```
 
-I spent some time trying to support both of these notions of improvement, as pluggable modules, but the code got pretty hairy pretty quickly. I've now abandoned the list-based criterion entirely in favour of the universally-quantified one. This has resulted in a much simpler specification, available in the Simple.v file of the [git repository] [2].
-
-[2]: https://gitorious.org/powerplay
+I spent some time trying to support both of these notions of improvement, as pluggable modules, but the code got pretty hairy pretty quickly. I've now abandoned the list-based criterion entirely in favour of the universally-quantified one. This has resulted in a much simpler specification, available in the Simple.v file of the [git repository](/git/powerplay).
 
 The specification is currently quite conservative: it guarantees that implementations never lose the ability to solve a problem, but it allows trivial implementations which never improve. It is simple to prove perpetual improvement for particular problem domains (eg. those mentioned below), but I haven't yet worked out a nice set of sufficient and necessary conditions which are general enough to bake into the spec.

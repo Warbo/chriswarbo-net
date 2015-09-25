@@ -4,7 +4,7 @@ title: Essays
 
 A curated collection of (hopefully) well-maintained ramblings:
 
-```{.unwrap pipe="sh | pandoc -t json"}
+```{.unwrap pipe="nix-shell -p xidel --run sh | pandoc -t json"}
 function show {
     URL=$(echo "$1" | sed -e 's@.*/essays/@/essays/@g')
     TITLE=$(xidel - -q --extract '/html/head/title/text()' < "$1")
