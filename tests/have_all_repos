@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+ERR=0
+for REPO in ~/Programming/repos/*.git
+do
+    NAME=$(basename "$REPO" .git)
+    if [[ ! -e "rendered/essays/repos/$NAME.html" ]]
+    then
+        ERR=1
+        echo "No repo page for $NAME" >> /dev/stderr
+    fi
+done
+
+exit "$ERR"

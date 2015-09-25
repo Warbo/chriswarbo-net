@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+# Make sure READMEs get included into repo pages
+
+ERR=0
+for REPO in rendered/essays/repos/*.html
+do
+    NAME=$(basename "$REPO" .html)
+    [[ "x$NAME" = "xindex" ]] && continue
+
+    if grep "No README found" "$REPO" > /dev/null
+    then
+        for DIR in /home/chris/Programming/repos/$NAME.git
+        do
+            pushd "$DIR" > /dev/null || continue
+            READMES=$(git ls-files | grep "^README")
+            if [[ -n "$READMES" ]]
+            then
+                ERR=1
+                echo "'$NAME' has no README, but found '$DIR/$READMES'" >> /dev/stderr
+            fi
+            popd > /dev/null
+        done
+    fi
+done
+
+exit "$ERR"

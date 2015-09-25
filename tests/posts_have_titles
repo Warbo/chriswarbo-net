@@ -1,4 +1,5 @@
-#!/usr/bin/env bash
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p bash xidel
 xidel - -q --extract "//div[@id='content']//ul/li/a" < rendered/blog.html |
     while read -r TITLE
     do
