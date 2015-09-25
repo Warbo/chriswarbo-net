@@ -34,7 +34,7 @@ redirect := rendered/index.php rendered/archive.html
 
 # Entry point
 
-all : $(all_pages) $(resources) $(redirect)
+all : $(all_pages) $(resources) $(redirect) rendered/posts
 
 render_to = SOURCE="$1" DEST="$2" ./static/render_page
 render    = $(call render_to,$(call source,$1),$1)
@@ -72,11 +72,16 @@ $(redirect) : redirect.html
 	mkdir -p $(dir $@)
 	$(call render_to,redirect.html,$@)
 
+# FIXME: An index.php-like redirect might be nicer?
+rendered/posts : rendered/blog.html
+	mkdir -p rendered/posts
+	cp rendered/blog/* rendered/posts/
+
 # RSS & ATOM
 
 $(out_feeds) : templates/$(notdir $@) rendered/blog.html
 	mkdir -p $(dir $@)
-	echo pandoc -o $@ templates/$(notdir $@)
+	pandoc -o $@ templates/$(notdir $@)
 
 # Extra functionality
 
