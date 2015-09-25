@@ -1,3 +1,4 @@
 [checking]
 
 localwebroot=file:///home/chris/blog/rendered/
+ignorewarnings=file-missing-slash
