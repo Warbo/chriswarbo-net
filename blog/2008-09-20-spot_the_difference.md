@@ -1,4 +1,38 @@
 ---
 title: Spot The Difference
 ---
-Here's Google Chrome on Fedora:<br /><a href="http://farm4.static.flickr.com/3292/2860981151_d7f6d5b387_o.png"><img alt="" border="0" src="http://farm4.static.flickr.com/3292/2860981151_d7f6d5b387_o.png" style="margin: 0px auto 10px; display: block; text-align: center; cursor: pointer; width: 320px;" /></a><br />Here's Firefox with a "Google Chrome theme" on Fedora:<a href="http://blog.titax.fr/public/blog/chromifox.png"><img alt="" border="0" src="http://blog.titax.fr/public/blog/chromifox.png" style="margin: 0px auto 10px; display: block; text-align: center; cursor: pointer; width: 320px;" /></a><br />What's the WTF-were-you-thinking mistake? Can't figure it out? How about if I tell you it also applies to the default Firefox theme on OSX:<a href="http://farm3.static.flickr.com/2290/2088075583_bdac0801ed.jpg"><img alt="" border="0" src="http://farm3.static.flickr.com/2290/2088075583_bdac0801ed.jpg" style="margin: 0px auto 10px; display: block; text-align: center; cursor: pointer; width: 320px;" /></a><br /><br />But not in the default theme for Windows:<br /><a href="http://mozillalinks.org/wp/wp-content/uploads/2008/02/vista_theme.png"><img alt="" border="0" src="http://mozillalinks.org/wp/wp-content/uploads/2008/02/vista_theme.png" style="margin: 0px auto 10px; display: block; text-align: center; cursor: pointer; width: 320px;" /></a><br />Or Ubuntu:<br /><a href="http://mozillalinks.org/wp/wp-content/uploads/2007/11/screenshot-firefox-3-beta-1-review-mozilla-links-minefield-1.png"><img alt="" border="0" src="http://mozillalinks.org/wp/wp-content/uploads/2007/11/screenshot-firefox-3-beta-1-review-mozilla-links-minefield-1.png" style="margin: 0px auto 10px; display: block; text-align: center; cursor: pointer; width: 320px;" /></a><br />Still can't see? How about an analogy:<a href="http://3.bp.blogspot.com/_6BhjMzysLTs/SNRJIUBfLqI/AAAAAAAAALs/7PLtfnTj6zc/s1600-h/tronguy.jpg"><img alt="" border="0" id="BLOGGER_PHOTO_ID_5247899872956198562" src="http://3.bp.blogspot.com/_6BhjMzysLTs/SNRJIUBfLqI/AAAAAAAAALs/7PLtfnTj6zc/s320/tronguy.jpg" style="margin: 0px auto 10px; display: block; text-align: center; cursor: pointer;" /></a><br /><br />Still don't understand? Let me spell it out:<a href="http://2.bp.blogspot.com/_6BhjMzysLTs/SNRJcDRfc8I/AAAAAAAAAL0/v7a6P1LsrbM/s1600-h/tabposition.png"><img alt="" border="0" id="BLOGGER_PHOTO_ID_5247900212057306050" src="http://2.bp.blogspot.com/_6BhjMzysLTs/SNRJcDRfc8I/AAAAAAAAAL0/v7a6P1LsrbM/s320/tabposition.png" style="margin: 0px auto 10px; display: block; text-align: center; cursor: pointer;" /></a><br />Chrome gets this (as does Opera, but I don't give a shit because their browser is still proprietary), but this supposedly-Chrome theme (as well as the OSX theme) have made the bad UI of Firefox EVEN WORSE. The default Windows and Gnome themes have tabbed pages, with some unknown, magical force changing the address bar when switching tabs. This is BAD since it requires either reverse-engineering, or study of the code, to find out the behaviour. However, with those 'upside-down' tab themes the tabs are now controlling the address bar, with an unknown, magical force changing the page content accordingly. This is EVEN WORSE since it is the page contents that people actually care about! Hype Firefox all you want, but I prefer looking at Web SITES to looking at Web BROWSERS.<br /><br />In short: EPIC FAIL
+Here's Google Chrome on Fedora:
+
+![](http://farm4.static.flickr.com/3292/2860981151_d7f6d5b387_o.png)
+
+Here's Firefox with a "Google Chrome theme" on Fedora:
+
+![](http://blog.titax.fr/public/blog/chromifox.png)
+
+What's the WTF-were-you-thinking mistake? Can't figure it out? How about if I tell you it also applies to the default Firefox theme on OSX:
+
+![](http://farm3.static.flickr.com/2290/2088075583_bdac0801ed.jpg)
+
+But not in the default theme for Windows:
+
+![](http://mozillalinks.org/wp/wp-content/uploads/2008/02/vista_theme.png)
+
+Or Ubuntu:
+
+![](http://mozillalinks.org/wp/wp-content/uploads/2007/11/screenshot-firefox-3-beta-1-review-mozilla-links-minefield-1.png)
+
+Still can't see? How about an analogy:
+
+```{.unwrap pipe="sh | pandoc -t json"}
+./root/static/file2img.sh "" < ./root/static/images/tronguy.jpg
+```
+
+Still don't understand? Let me spell it out:
+
+```{.unwrap pipe="sh | pandoc -t json"}
+./root/static/file2img.sh "" < ./root/static/images/tabposition.png
+```
+
+Chrome gets this (as does Opera, but I don't give a shit because their browser is still proprietary), but this supposedly-Chrome theme (as well as the OSX theme) have made the bad UI of Firefox EVEN WORSE. The default Windows and Gnome themes have tabbed pages, with some unknown, magical force changing the address bar when switching tabs. This is BAD since it requires either reverse-engineering, or study of the code, to find out the behaviour. However, with those 'upside-down' tab themes the tabs are now controlling the address bar, with an unknown, magical force changing the page content accordingly. This is EVEN WORSE since it is the page contents that people actually care about! Hype Firefox all you want, but I prefer looking at Web SITES to looking at Web BROWSERS.
+
+In short: EPIC FAIL
