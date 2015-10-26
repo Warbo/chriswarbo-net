@@ -148,3 +148,16 @@ in order to avoid hand-coding theories for
 shenanigans should be replacable by a simple call out to `eval`, and even better
 I should be able to simply discard failures, rather than have GHC flat out
 refuse to touch anything else in the project.
+
+There are still tricky issues like running `nix-shell`s inside `nix-shell`s. For
+example, this page's source is a little complicated since the Haskell code is
+running `nix-shell` (via `nix-eval`); yet that Haskell code *itself* is running
+in `nix-shell`, in order to satisfy the `nix-eval` dependency; and all of this
+is inside another `nix-shell` which is rendering my site.
+
+That's required a couple of tricks, eg. using
+[`nix-shell` shebangs](/essays/nixos/nix_shell_shebangs.html) rather than direct
+invocations from the shell; and using `nix-shell` to *build* the required GHC +
+packages, but actually *invoking* it from outside the shell.
+
+Hopefully the edge-cases will become less painful as Nix evolves :)
