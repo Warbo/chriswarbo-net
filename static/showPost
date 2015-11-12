@@ -18,7 +18,7 @@ TITLE=$(xidel - -q --extract "/html/head/title/text()" < "$1")
 if [[ -z "$TITLE" ]]
 then
     # If there is no <title />, fall back to a <h1 />
-    TITLE=$(xidel - --extract "//h1/text()" < "$1")
+    TITLE=$(xidel - -q --extract "//h1/text()" < "$1")
     if [[ -z "$TITLE" ]]
     then
         # If there's no <h1 />, fall back to filename
