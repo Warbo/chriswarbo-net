@@ -118,6 +118,14 @@ we try to use something which isn't listed as a dependency, we will get an error
 `default.nix` to ensure that it will *always* be available whenever our software
 is used.
 
+## Continuous Integration ##
+
+Since writing this page, I've built up [a new habit](continuous_integration.html)
+which is analogous to continuous integration in the world of online services.
+Namely, I tie my Nix packages to their git repositories, such that the package
+source is always the latest commit, and a simple `git push` can make any change
+instantly available to `nix-env` or `nix-shell`.
+
 ## Conclusions ##
 
 That's about as far as I've got with Nix/NixOS so far. If I develop some better

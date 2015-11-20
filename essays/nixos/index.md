@@ -6,5 +6,6 @@ I'm very interested in the Nix package manager, NixOS Linux distribution and the
 
  - [Switching to NixOS](switching_to_nixos.html)
  - [Developing on NixOS](developing_on_nixos.html)
+ - [Continuous Integration](continuous_integration.html)
  - [`nix-shell` shebangs](nix_shell_shebangs.html)
  - [`nix-eval` for run-time evaluation of Haskell code](nix_eval.html)
