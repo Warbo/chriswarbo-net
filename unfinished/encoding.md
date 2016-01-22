@@ -12,7 +12,7 @@ echo "" >> code.hs
 chmod +x tangle
 ```
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 {-# LANGUAGE RankNTypes, FlexibleContexts, FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses, DeriveGeneric #-}
 module Encoding where
@@ -57,7 +57,7 @@ Since pure functions must take all input via function arguments, and since we're
 
 Outside the world of self-modification, the usual way to represent code as data is via an Abstract Syntax Tree. ASTs are quite straightforward to define, especially in nice languages like Haskell; however, ASTs *of* Haskell are complicated, so I'll stick to representing ASTs *of* Lambda Calculus *in* Haskell:
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 -- Peano Naturals
 data Var = Z | S Var deriving (Eq)
 
@@ -115,7 +115,7 @@ I'll use QuickCheck and SmallCheck to test things as I go, both of which require
    - We satisfy this for QuickCheck using "CoArbitrary".
    - We satisfy this for SmallCheck using "CoSerial".
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 -- Arbitrary AST
 instance Arbitrary AST where
   arbitrary = let f  = liftM  F    arbitrary
@@ -168,7 +168,7 @@ noF x = case x of
 
 Now we can check that only normal terms are generated:
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 normal x = case x of
                 F _       -> True
                 V _       -> True
@@ -184,7 +184,7 @@ check normal
 
 Of course, an AST isn't much use if we can't run it. Here's a corresponding evaluation function:
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 eval e = let app (F f) x = eval (f x)  -- Call a function's body
              app    f  x = f ! x       -- Don't apply non-functions
          in case e of
@@ -209,7 +209,7 @@ The simplest distinction we can make is between the booleans 'true' and 'false';
 
 Booleans are only useful when passed to 2-branch 'case' statements, so we might as well combine these concepts and pass the branches straight to our booleans:
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 true2, false2 :: Boolean2
 true2  x y = x  -- Accept 2 branches, return the first
 false2 x y = y  -- Accept 2 branches, return the second
@@ -224,7 +224,7 @@ if2 cond branch1 branch2 = cond branch1 branch2
 
 Since LC is un(i)typed we can ignore the Boolean2 type, which just leaves us with functions, which are simple to define in LC:
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 true3, false3, if3 :: AST
 
 --          \x.      \y.   x
@@ -247,7 +247,7 @@ The next issue we need to deal with is constructors which take arguments. For ex
 
 We can distinguish between the "Nothing" and "Just" constructors just like we did with "True" and "False"; in fact "Nothing" turns out to be equivalent to "True"! In the case of "Just", we don't immediately return the second argument like we did for "False"; instead, we call it as a function, passing in the value which was wrapped by "Just":
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 nothing2 :: Maybe2 a
 nothing2 x y = x
 
@@ -260,7 +260,7 @@ type Maybe2 a = forall b. b -> (a -> b) -> b
 
 For LC we can again ignore the types and just implement the functions:
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 nothing3, just3 :: AST
 
 --            \x.      \y.   x
@@ -276,7 +276,7 @@ Again, this principle of passing along constructor arguments can be scaled up to
 
 With these two techniques in hand, we can model our AST type itself using nothing but functions:
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 f2 :: (AST2 -> AST2) -> AST2
 f2 f = AST2 (\x y z -> x (f2 f))
 
@@ -295,7 +295,7 @@ newtype AST2 = AST2 { getAST2 :: (AST2 -> AST2)         ->
 
 Again we can ignore the (more complicated) type and keep the functions. We can clearly see that the f2, a2 and v2 constructor functions match the argument types of the AST2 type, which gives us confidence that we're on the right track. Let's see how these functions look as LC terms:
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 f3, a3, v3 :: AST
 
 --               \f.      \x.      \y.      \z.   x   f
@@ -312,7 +312,7 @@ v3 =          F (\v -> F (\x -> F (\y -> F (\z -> z ! v))))
 
 Now that we have LC terms equivalent to our Haskell terms, we should make functions to convert between the two. For ease of notation, I'll wrap these functions up in a type class:
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 class Encodable a where
   encode :: a -> AST
   decode :: AST -> Maybe a
@@ -332,7 +332,7 @@ This two-level approach of applying encoded values to pattern-matchable LC terms
 
 Let's show how this works with the simplest datatype, the unit type. Since we don't need to do any pattern-matching for the unit type (there's only one possible value), we can use the trivial identity function to represent it:
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 unit2 :: Unit2
 unit2 = id
 
@@ -341,14 +341,14 @@ type Unit2 = forall a. a -> a
 
 In LC this gives:
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 unit3 :: AST
 unit3 = F id
 ```
 
 We can now use this definition to implement the Encodable class:
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 instance Encodable () where
   encode _ = unit3
   decode _ = Just ()
@@ -364,7 +364,7 @@ check (enc_dec_test :: EncTest ())
 
 Now that we've seen how Encodable works, let's implement a useful type like the booleans. Again, the "encode" function can be built from our existing definitions. The "decode" function needs to pass two distinguishable AST values to the encoded term, then pattern-match to see which one gets returned. We can specify distinguishable ASTs using a set of simple combinators:
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 -- Mutually-distinguishable ASTs
 
 -- Terminal symbols
@@ -384,7 +384,7 @@ b1 = F (\x -> F (\y -> (t1 ! x) ! (t1 ! y)))
 
 Now we can define our Encodable instance:
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 instance Encodable Bool where
   encode b = case b of
                   True  -> true3
@@ -403,7 +403,7 @@ check (enc_dec_test :: EncTest Bool)
 
 Next we implement Encodable for "Maybe a", which is only possible if "a" is Encodable:
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 instance (Encodable a) => Encodable (Maybe a) where
   encode v = case v of
                   Nothing -> nothing3
@@ -420,7 +420,7 @@ instance (Encodable a) => Encodable (Maybe a) where
 check (enc_dec_test :: EncTest (Maybe Bool))
 ```
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 instance Encodable Var where
   encode    n  = V n
   decode (V n) = Just n
@@ -429,7 +429,7 @@ instance Encodable Var where
 
 Now we're ready to tackle ASTs themselves. This is a little more complicated, since we have multiple constructors with multiple parameters:
 
-```{.haskell pipe="./tangle"}
+```{.haskell pipe="tee -a code.hs"}
 instance Encodable AST where
   encode v = case v of
                   F f   -> f3 ! F f

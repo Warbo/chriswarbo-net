@@ -9,4 +9,4 @@ Arduino is a liberally licensed microcontroller system. Since I'm a fan of Objec
 
 This sketch has been written with the goal of loading it onto my Arduino and never having to replace it; ie. all of my Arduino programming can be done in a more comfortable language like Python, and all pin usage is done over USB.
 
-The code can be found on [Gitorious](https://gitorious.org/arduino-json-client) and is in the Public Domain.
+The code can be found in [Git](http://chriswarbo.net/git/arduino-json-client) and is in the Public Domain.

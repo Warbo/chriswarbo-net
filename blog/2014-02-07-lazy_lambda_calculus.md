@@ -287,6 +287,6 @@ zFalse x = equalIn 5 x (zComb :@ Lam (Lam (Var 0)) :@ Const x)
 
 I'm reasonably confident that this interpreter is correct, but if anyone can spot a problem (or an improvement) then please let me know!
 
-As usual, the code for this is living on [Gitorious] [12].
+As usual, the code for this is living in [Git] [12].
 
-[12]: https://gitorious.org/lazy-lambda-calculus
+[12]: http://chriswarbo.net/git/lazy-lambda-calculus

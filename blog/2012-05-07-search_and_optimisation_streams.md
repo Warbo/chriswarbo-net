@@ -76,6 +76,6 @@ Finally `counter()` gives us a stream of the Natural numbers (0, 1, 2, ...).
 
 As you can see, the nice property of combinators is that they compose nicely (as you would hope!). The result of one combinator can be passed as an argument to another. Indeed, the chain of `map -> chooser -> interleave` doesn't stop there. There are combinators which specialise the interleave combinator; notably the `exhaustive` combinator, which interleaves its argument with a brute-force enumeration. By wrapping a stream in `exhaustive`, we may at worst halve its rate of convergence, but we guarantee that a solution will eventually be found, if there is one in the domain (since the brute-force enumeration will eventually find one).
 
-The code is available, as always, on [Gitorious] [1] and is Public Domain. I plan to show off some examples here at some point, but given my track record for abandoning code we'll just have to see ;)
+The code is available, as always, in [Git] [1] and is Public Domain. I plan to show off some examples here at some point, but given my track record for abandoning code we'll just have to see ;)
 
-[1]: https://gitorious.org/search-optimisation-streams
+[1]: http://chriswarbo.net/git/search-optimisation-streams

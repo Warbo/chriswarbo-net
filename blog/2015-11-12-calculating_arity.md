@@ -270,8 +270,7 @@ main = mapM_ putStrLn [
 ```
 
 ```{pipe="sh"}
-runhaskell -XTypeFamilies -XFlexibleContexts < typefamily3.hs 2>&1
-true
+runhaskell -XTypeFamilies -XFlexibleContexts < typefamily3.hs
 ```
 
 ```{pipe="sh 1>&2"}
