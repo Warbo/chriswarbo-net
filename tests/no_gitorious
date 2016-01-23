@@ -1,23 +1,8 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -p xidel bash -i bash
-
-function get_urls() {
-    xidel - -q --extract "//a/@href" < "$1"
-}
+#! /usr/bin/env bash
 
 ERR=0
-while read -r FILE
-do
-    if get_urls "$FILE" | grep "gitorious.org/"
-    then
-        echo "Found references to gitorious.org in '$FILE'" >> /dev/stderr
-        ERR=1
-    fi
-    if get_urls "$FILE" | grep "freewebs.com"
-    then
-        echo "Found references to freewebs.com in '$FILE'" >> /dev/stderr
-        ERR=1
-    fi
-done < <(find rendered -name "*.html")
+
+grep -r "gitorious.org/"          rendered/ && ERR=1
+grep -r "freewebs.com/chriswarbo" rendered/
 
 exit "$ERR"

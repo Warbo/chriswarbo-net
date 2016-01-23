@@ -11,10 +11,9 @@ function get_urls() {
 ERR=0
 while read -r FILE
 do
-    if get_urls "$FILE" | grep "chriswarbo.net"
+    if get_urls "$FILE" | grep "chriswarbo\.net"
     then
         echo "Found absolute links to chriswarbo.net in '$FILE'" >> /dev/stderr
-        ERR=1
     fi
 done < <(find rendered -name "*.html")
 
