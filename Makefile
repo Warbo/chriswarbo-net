@@ -10,7 +10,7 @@ rendered = $(addprefix rendered/, $(addsuffix .html, $(basename $1)))
 
 get_entries = $(call rendered,\
                      $(shell for ENTRY in $1; \
-                             do [[ ! -x $$ENTRY ]] || find $$ENTRY -type f;\
+                             do [[ ! -e $$ENTRY ]] || find $$ENTRY -type f;\
                              done))
     entries = $(call get_entries,$(basename $(call source,$1)))
 
