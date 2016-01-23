@@ -5,10 +5,12 @@ then
     pandoc --filter panpipe                  \
            --filter panhandle                \
            --template templates/default.html \
+           -s                                \
            -M path="$SOURCE"                 \
            -o "$DEST" "$SOURCE"
 else
     pandoc --filter panpipe   \
            --filter panhandle \
+           -s                 \
            --template templates/default.html
 fi

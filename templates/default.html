@@ -10,11 +10,12 @@
     <link rel='alternate'
           type='application/rss+xml'
           title='RSS'
-          href='/rss.xml'>
-      <link rel='alternate'
-            type='application/atom+xml'
-            title='Atom'
-            href='/atom.xml'>
+          href='/rss.xml' />
+    <link rel='alternate'
+          type='application/atom+xml'
+          title='Atom'
+          href='/atom.xml' />
+    $extra_head$
   </head>
   <body>
     <div id="header">
@@ -34,7 +35,7 @@ $body$
     <div id="footer">
       $if(path)$
         <div style="float: left">
-          <a href="http://chriswarbo.net/git/chriswarbo-net/branches/master/$path$">
+          <a href="/git/chriswarbo-net/branches/master/$path$">
             View Source
           </a>
           <a href="/atom.xml">Atom</a>
