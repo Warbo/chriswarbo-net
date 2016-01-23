@@ -13,5 +13,6 @@ stdenv.mkDerivation {
     panpipe
     panhandle
     python
+    pandoc
   ];
 }

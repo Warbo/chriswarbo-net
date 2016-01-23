@@ -7,14 +7,14 @@ title: Cantor Tuples
 <!-- I haven't figured out how to escape backticks in inline code yet -->
 
 ```{pipe="tee replaceTicks > /dev/null"}
-#!/bin/sh
+#!/usr/bin/env bash
 sed 's/TICK/`/g'
 ```
 
 <!-- Shorthand for appending code to our main Haskell file -->
 
 ```{pipe="cat > code"}
-#!/bin/sh
+#!/usr/bin/env bash
 tee -a     code.hs
 echo "" >> code.hs
 ```
@@ -24,36 +24,36 @@ echo "" >> code.hs
   -->
 
 ```{pipe="cat > haskell"}
-#!/bin/sh
-nix-shell -E 'with import <nixpkgs> {}; runCommand "dummy" { buildInputs = [ (haskellPackages.ghcWithPackages (p: [p.QuickCheck])) ]; } ""' --run "timeout 60 runhaskell -XExistentialQuantification"
+#!/usr/bin/env bash
+nix-shell -E 'with import <nixpkgs> {}; runCommand "dummy" { buildInputs = [ (haskellPackages.ghcWithPackages (p: [p.QuickCheck p.ghc])) ]; } ""' --run "runhaskell -v -XExistentialQuantification"
 ```
 
 ```{pipe="cat > run"}
-#!/bin/sh
+#!/usr/bin/env bash
 code=$(cat)
 (cat code.hs; echo ""; echo "$code") | ./haskell
 
 ```
 
 ```{pipe="cat > runMono"}
-#!/bin/sh
+#!/usr/bin/env bash
 code=$(cat)
 (cat code.hs; echo ""; echo "$code") | ./root/static/procedural/monoCode | ./haskell
 ```
 
 ```{pipe="cat > runGrey"}
-#!/bin/sh
+#!/usr/bin/env bash
 code=$(cat)
 (cat code.hs; echo ""; echo "$code") | ./root/static/procedural/greyCode | ./haskell
 ```
 
 ```{pipe="cat > runRgb"}
-#!/bin/sh
+#!/usr/bin/env bash
 code=$(cat)
 (cat code.hs; echo ""; echo "$code") | ./root/static/procedural/colourCode | ./haskell
 ```
 
-```{pipe="sh > /dev/null"}
+```{pipe="bash > /dev/null"}
 chmod +x code replaceTicks runGrey run runMono runRgb haskell
 ln -s ./root/static/procedural/Pic.hs Pic.hs
 ```
@@ -139,7 +139,7 @@ aaGrad x y = let this   = DM.lookup [x, y] boxPixels
 f = aaGrad
 ```
 
-```{.unwrap pipe="sh"}
+```{.unwrap pipe="bash"}
 ./root/static/procedural/includePic aagrad | ./root/static/wrapCode.sh .unwrap | pandoc -t json
 ```
 
@@ -171,7 +171,7 @@ drawCircle x y = let this = DM.lookup [x, y] circlePixels
 f = drawCircle
 ```
 
-```{.unwrap pipe="sh"}
+```{.unwrap pipe="bash"}
 ./root/static/procedural/includePic circ
 ```
 
@@ -195,7 +195,7 @@ Another thing we can do with `circle`{.haskell} is to approximate pi:
     - `aaArea     = length . aaShape`{.haskell pipe="./code"} gives us the area inside a `Shape`{.haskell}
     - `circleArea = fromIntegral $ aaArea circle`{.haskell pipe="./code"}
     - `boxArea    = fromIntegral $ aaArea (Shape (sDim circle) (sRange circle) (const True))`{.haskell pipe="./code"}
- - Plugging these values into our definition of pi gives `cat code.hs; echo ""; echo "main = print pi"`{.haskell pipe="sh | ./haskell"}
+ - Plugging these values into our definition of pi gives `cat code.hs; echo ""; echo "main = print pi"`{.haskell pipe="bash | ./haskell"}
     - Increasing the radius decreases the error, since the sampling gives a less 'jagged' approximation of our circle
 
   </div>
@@ -230,7 +230,7 @@ drawBoard x y = sPred checkerboard [x, y]
 f = drawBoard
 ```
 
-```{.unwrap pipe="sh"}
+```{.unwrap pipe="bash"}
 ./root/static/procedural/includePic board
 ```
 
@@ -334,7 +334,7 @@ cantorGrad x y = cantor2DPosToGrey (cantorIndex2D [x, y])
 f = cantorGrad
 ```
 
-```{.unwrap pipe="sh"}
+```{.unwrap pipe="bash"}
 ./root/static/procedural/includePic cantorgrad | ./root/static/wrapCode.sh .unwrap | pandoc -t json
 ```
 
@@ -357,7 +357,7 @@ cantorCircle x y = let this = DM.lookup [x, y] circleCantorPixels
 f = cantorCircle
 ```
 
-```{.unwrap pipe="sh"}
+```{.unwrap pipe="bash"}
 ./root/static/procedural/includePic cantorcircle | ./root/static/wrapCode.sh .unwrap | pandoc -t json
 ```
 
@@ -376,7 +376,7 @@ cantorCheckerboard x y = let this = DM.lookup [x, y] checkerboardCantorPixels
 f = cantorCheckerboard
 ```
 
-```{.unwrap pipe="sh"}
+```{.unwrap pipe="bash"}
 ./root/static/procedural/includePic cantorcheckerboard | ./root/static/wrapCode.sh .unwrap | pandoc -t json
 ```
 
@@ -402,7 +402,7 @@ allCheckerboard x y = let this = DM.lookup [x, y] allCheckerboardPixels
 f = allCheckerboard
 ```
 
-```{.unwrap pipe="sh"}
+```{.unwrap pipe="bash"}
 ./root/static/procedural/includePic allcheckerboard | ./root/static/wrapCode.sh .unwrap | pandoc -t json
 ```
 
@@ -451,7 +451,7 @@ f = rgbEmbedding
 ```
 
 ```
-{.unwrap pipe="sh"}
+{.unwrap pipe="bash"}
 ./root/static/procedural/includePic rgb | ./root/static/wrapCode.sh .unwrap | pandoc -t json
 ```
 
@@ -474,7 +474,7 @@ runTests ((name, test):xs) = putStrLn ("Testing " ++ name) >>
 main = runTests allTests
 ```
 
-```{pipe="sh >> /dev/stderr"}
+```{pipe="bash >> /dev/stderr"}
 if grep "FAIL" < results
 then
   cat results >> /dev/stderr

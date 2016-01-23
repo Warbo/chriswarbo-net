@@ -278,6 +278,6 @@ runhaskell -XTypeFamilies -XFlexibleContexts < typefamily3.hs
 for FILE in *.hs
 do
   echo -e "\nmain = return ()" > "$FILE"
-  ghc --make "$FILE"
+  nix-shell -p haskellPackages.ghc --run "ghc --make '$FILE'"
 done
 ```
