@@ -27,10 +27,26 @@
       </div>
     </div>
 
-    <div id="content">
-      <h1>$title$</h1>
+    <div $if(date)$ class="h-entry" $endif$ id="content">
+      <h1 class="p-name">$title$</h1>
 
+      <div class="info">
+        Posted
+
+        $if(date)$
+        on <time class="dt-published" datetime="$date$">$date$</time>
+        $endif$
+
+        by
+        <a class="p-author h-card" href="http://chriswarbo.net">
+          Chris Warburton
+        </a>
+      </div>
+
+      <!-- Don't indent body, in case its content is whitespace-sensitive -->
+      <div class="e-content">
 $body$
+      </div>
     </div>
     <div id="footer">
       $if(path)$

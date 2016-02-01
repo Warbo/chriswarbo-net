@@ -1,16 +1,24 @@
 #!/usr/bin/env bash
 
+# Common options
+OPTIONS=(--filter panpipe
+         --filter panhandle
+         --template templates/default.html
+         -s)
+
+# Look for a date
+if echo "$SOURCE" | grep -P "blog/\d{4}-\d{2}-\d{2}" > /dev/null
+then
+    D=$(echo "$SOURCE" | grep -oP "blog/\d{4}-\d{2}-\d{2}" | grep -oP "\d{4}-\d{2}-\d{2}")
+    OPTIONS+=(-M date="$D")
+fi
+
 if [[ -n "$SOURCE" ]] && [[ -n "$DEST" ]]
 then
-    pandoc --filter panpipe                  \
-           --filter panhandle                \
-           --template templates/default.html \
-           -s                                \
-           -M path="$SOURCE"                 \
-           -o "$DEST" "$SOURCE"
-else
-    pandoc --filter panpipe   \
-           --filter panhandle \
-           -s                 \
-           --template templates/default.html
+    OPTIONS+=(-M path="$SOURCE")
+
+    # These should always go at the end, so add extra options above here
+    OPTIONS+=(-o "$DEST" "$SOURCE")
 fi
+
+pandoc "${OPTIONS[@]}"

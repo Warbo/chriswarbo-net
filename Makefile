@@ -22,9 +22,8 @@ all_pages := $(top_level) $(call entries,$(top_level)) \
 
 out_css   := $(addprefix rendered/, $(shell find css -type f))
 out_js    := $(addprefix rendered/, $(shell find js -type f))
-out_feeds := rendered/rss.xml rendered/atom.xml
 
-resources := $(out_css) $(out_js) $(out_feeds)
+resources := $(out_css) $(out_js)
 
 tmp := templates/default.html
 
@@ -76,12 +75,6 @@ $(redirect) : redirect.html
 rendered/posts : rendered/blog.html
 	mkdir -p rendered/posts
 	cp rendered/blog/* rendered/posts/
-
-# RSS & ATOM
-
-$(out_feeds) : templates/$(notdir $@) rendered/blog.html
-	mkdir -p $(dir $@)
-	pandoc -o $@ templates/$(notdir $@)
 
 # Extra functionality
 
