@@ -141,7 +141,7 @@ to another (like Haskell's `$`); `withPkgs` and `withMods` which append to an
 `Expr`'s context; and `qualified` which appends to the context *and* prefixes
 the expression.
 
-I wrote this to help simplify my [`mlspec`](http://chriswarbo.net/git/mlspec/)
+I wrote this to help simplify my [`mlspec`](/git/mlspec/)
 project, which currently generates entire Haskell projects (Cabal files and all)
 in order to avoid hand-coding theories for
 [QuickSpec](https://hackage.haskell.org/package/quickspec). All of that

@@ -23,7 +23,7 @@ Theorem oneplusone (x : nat) : 1 + 1 = 2.
 
 <!-- Check the Coq script -->
 
-```{pipe="sh" .unwrap}
+```{pipe="nix-shell -p coq --run sh" .unwrap}
 if $(coqc gm.v > result)
 then
   echo "Success" | pandoc -t json

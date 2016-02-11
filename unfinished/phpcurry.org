@@ -1,6 +1,6 @@
 [semihtml]<h2>History</h2>[/semihtml]
 
-It's been a while since I wrote about [url="http://en.wikipedia.org/wiki/Currying"]currying[/url] in [url="http://chriswarbo.net/index.php?page=news&type=view&id=admin-s-blog%2Fbetter-currying-in"]Javascript[/url] and I've been meaning to do the same in PHP. I've had a prototype PHP implementation knocking around from the same time as my Javascript one, but I was never happy with it, specifically because it took a function's parameter number explicitly. In other words, whereas in Javascript we can do this:
+It's been a while since I wrote about [url="http://en.wikipedia.org/wiki/Currying"]currying[/url] in [url="/index.php?page=news&type=view&id=admin-s-blog%2Fbetter-currying-in"]Javascript[/url] and I've been meaning to do the same in PHP. I've had a prototype PHP implementation knocking around from the same time as my Javascript one, but I was never happy with it, specifically because it took a function's parameter number explicitly. In other words, whereas in Javascript we can do this:
 
 [code="javascript"]
 var my_func = curry(function(x, y) { return $x + y; });

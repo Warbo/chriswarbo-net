@@ -1,7 +1,7 @@
 ---
 title: Active Code
 ---
-"Active code" is the term used by the [Babel][babel] system, part of [Emacs's][emacs] [Org-mode][org]. It refers to authoring systems which can execute code embedded in the documents they're rendering. This page documents the active code system I use to write articles, whether they're published as HTML on [my Web site](http://chriswarbo.net) or PDFs in a journal.
+"Active code" is the term used by the [Babel][babel] system, part of [Emacs's][emacs] [Org-mode][org]. It refers to authoring systems which can execute code embedded in the documents they're rendering. This page documents the active code system I use to write articles, whether they're published as HTML on [my Web site](/) or PDFs in a journal.
 
 <!-- Why not zoidberg? -->
 
@@ -208,7 +208,7 @@ Babel, Org mode and Emacs are all wonderful things, however there are a few reas
 
 [Pandoc][pandoc] is a great document conversion program by John MacFarlane. It can convert between various markup languages, including HTML, LaTeX and Markdown. We can also mix and match the formats, for example embedding a mixture of HTML and LaTeX in a Markdown document and rendering it to a PDF.
 
-In particular, most of the [source][git] of [my Web site](http://chriswarbo.net) is written in [Markdown][markdown] and converted to HTML using Pandoc. I use [Hakyll][hakyll] to orchestrate the process, as a form of Make tool.
+In particular, most of the [source][git] of [my Web site](/) is written in [Markdown][markdown] and converted to HTML using Pandoc. I use [Hakyll][hakyll] to orchestrate the process, as a form of Make tool.
 
 ### Embedded Code ###
 
@@ -623,14 +623,14 @@ Anything printed to stderr by a shell command will appear in the stderr of PanPi
 [babel]: http://orgmode.org/worg/org-contrib/babel/
 [web]: http://en.wikipedia.org/wiki/WEB
 [represearch]: http://reproducibleresearch.net/
-[git]: http://chriswarbo.net/git/chriswarbo-dot-net
+[git]: /git/chriswarbo-dot-net
 [walk]: http://johnmacfarlane.net/pandoc/scripting.html
 [ast]: https://hackage.haskell.org/package/pandoc-types-1.8/docs/Text-Pandoc-Definition.html#t:Block
-[panpipe]: http://chriswarbo.net/git/panpipe/branches/master/README.md
-[panhandler]: http://chriswarbo.net/git/panhandle/branches/master/README.md
-[this]: http://chriswarbo.net/git/chriswarbo-net/branches/master/essays/activecode/index.md
+[panpipe]: /git/panpipe/branches/master/README.md
+[panhandler]: /git/panhandle/branches/master/README.md
+[this]: /git/chriswarbo-net/branches/master/essays/activecode/index.md
 [elpa]: http://orgmode.org/elpa.html
 [pandocmarkdown]: http://johnmacfarlane.net/pandoc/demo/example9/pandocs-markdown.html
 [kate]: http://kate-editor.org/
 [fib]: /blog/2014-07-23-fib.html
-[fibsource]: http://chriswarbo.net/git/chriswarbo-net/branches/master/blog/2014-07-23-fib.md
+[fibsource]: /git/chriswarbo-net/branches/master/blog/2014-07-23-fib.md
