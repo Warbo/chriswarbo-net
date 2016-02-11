@@ -1,5 +1,7 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -i bash -p bash xidel
+
+# Bring in xidel since it's used by showPost
 DIR=$(dirname "$0")
 
 echo '<ul>'

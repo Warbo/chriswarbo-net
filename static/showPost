@@ -7,30 +7,59 @@ then
     exit 1
 fi
 
-# Strip local prefix off argument to get the post's URL
-URL=$(echo "$1" | sed -e 's@.*rendered/@@')
+function getTitle {
+    # Get the contents of <title />
+    TTL=$(xidel - -q --extract "/html/head/title/text()" < "$1")
+    [[ -n "$TTL" ]] && {
+        echo "$TTL"
+        return
+    }
 
-# Get date from filename
-DATE=$(basename "$1" | cut -c 1-10)
+    TTL=$(xidel - -q --extract "//h1/text()" < "$1")
+    [[ -n "$TTL" ]] && {
+        echo "No <title /> element for '$1', falling back to <h1 />" >> /dev/stderr
+        echo "$TTL"
+        return
+    }
 
-# Get the title
-TITLE=$(xidel - -q --extract "/html/head/title/text()" < "$1")
-if [[ -z "$TITLE" ]]
-then
-    # If there is no <title />, fall back to a <h1 />
-    TITLE=$(xidel - -q --extract "//h1/text()" < "$1")
-    if [[ -z "$TITLE" ]]
-    then
-        # If there's no <h1 />, fall back to filename
-        TITLE=$(basename "$1" .html)
-    fi
-    if [[ -z "$TITLE" ]]
-    then
-        # Last resort
-        TITLE="Untitled"
-    fi
-    echo "No title for $1, falling back to '$TITLE'" >> /dev/stderr
-fi
+    TTL=$(basename "$1" .html)
+    [[ -n "$TTL" ]] && {
+        echo "No <title /> element for '$1', falling back to filename" >> /dev/stderr
+        echo "$TTL"
+        return
+    }
 
-# Render link
-printf '<li><a href="/%s">%s</a> - %s</li>' "$URL" "$TITLE" "$DATE"
+    TTL="Untitled"
+    echo "No <title /> element for '$1', falling back to '$TTL'" >> /dev/stderr
+    echo "$TTL"
+}
+
+function getDate {
+    # Dates are in filenames
+    basename "$1" | cut -c 1-10
+}
+
+function getUrl {
+    # Strip local prefix off argument to get the post's URL
+    echo "$1" | sed -e 's@.*rendered/@@'
+}
+
+function renderTime {
+    DATE=$(getDate "$1")
+    printf '<time class="dt-published" datetime="%s">%s</time>' "$DATE" "$DATE"
+}
+
+function renderLink {
+    BASE="http://chriswarbo.net"
+    TITLE=$(getTitle "$1")
+    URL=$(getUrl "$1")
+    printf '<a class="p-name u-url" href="%s/%s">%s</a>' "$BASE" "$URL" "$TITLE"
+}
+
+function renderEntry {
+    TIME=$(renderTime "$1")
+    LINK=$(renderLink "$1")
+    printf '<li class="h-entry">%s - %s</li>' "$LINK" "$TIME"
+}
+
+renderEntry "$1"
