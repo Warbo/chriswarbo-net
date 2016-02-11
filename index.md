@@ -2,6 +2,7 @@
 title: Chris Warburton's Homepage
 extra_head:
   <link href="mailto:chriswarbo@gmail.com" rel="me">
+
 dependencies: rendered/blog.html static/showPost*
 ---
 

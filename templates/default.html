@@ -7,14 +7,7 @@
     <title>$title$</title>
     <link rel="stylesheet" type="text/css" href="/css/default.css" />
     <link rel="stylesheet" type="text/css" href="/css/syntax.css" />
-    <link rel='alternate'
-          type='application/rss+xml'
-          title='RSS'
-          href='/rss.xml' />
-    <link rel='alternate'
-          type='application/atom+xml'
-          title='Atom'
-          href='/atom.xml' />
+    <link rel="author" href="http://chriswarbo.net" />
     $extra_head$
   </head>
   <body>
@@ -27,24 +20,21 @@
       </div>
     </div>
 
-    <div $if(date)$ class="h-entry" $endif$ id="content">
+    <div class="$if(date)$ h-entry $endif$ $content_classes$" id="content">
       <h1 class="p-name">$title$</h1>
 
-      <div class="info">
-        Posted
-
-        $if(date)$
-        on <time class="dt-published" datetime="$date$">$date$</time>
-        $endif$
-
-        by
-        <a class="p-author h-card" href="http://chriswarbo.net">
-          Chris Warburton
-        </a>
-      </div>
+      $if(date)$
+        <div class="info">
+          Posted on <time class="dt-published" datetime="$date$">$date$</time>
+          by
+          <a class="p-author h-card" href="http://chriswarbo.net">
+            Chris Warburton
+          </a>
+        </div>
+      $endif$
 
       <!-- Don't indent body, in case its content is whitespace-sensitive -->
-      <div class="e-content">
+      <div $if(date)$ class="e-content" $endif$>
 $body$
       </div>
     </div>
@@ -54,8 +44,6 @@ $body$
           <a href="/git/chriswarbo-net/branches/master/$path$">
             View Source
           </a>
-          <a href="/atom.xml">Atom</a>
-          <a href="/rss.xml">RSS</a>
         </div>
       $endif$
       <div style="float: right">

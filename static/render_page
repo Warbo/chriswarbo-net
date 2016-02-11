@@ -13,12 +13,60 @@ then
     OPTIONS+=(-M date="$D")
 fi
 
-if [[ -n "$SOURCE" ]] && [[ -n "$DEST" ]]
+if [[ -n "$SOURCE" ]]
 then
     OPTIONS+=(-M path="$SOURCE")
+fi
 
-    # These should always go at the end, so add extra options above here
+# These should always go at the end, so add extra options above here
+if [[ -n "$SOURCE" ]] && [[ -n "$DEST" ]]
+then
     OPTIONS+=(-o "$DEST" "$SOURCE")
 fi
 
-pandoc "${OPTIONS[@]}"
+# Capture programmatic input using cat, i.e. don't prompt the user if there's
+# none available
+if [ -t 0 ]
+then
+    INPUT=""
+else
+    INPUT=$(cat)
+fi
+
+OUTPUT=$(echo "$INPUT" | pandoc "${OPTIONS[@]}")
+
+# Get out input, either from stdin or $SOURCE
+if [[ -n "$SOURCE" ]]
+then
+    CONTENT=$(cat "$SOURCE")
+else
+    CONTENT="$INPUT"
+fi
+
+# Check if there is YAML (between two "---" lines) specifying a postprocessor
+PP=""
+YAML=$(echo "$CONTENT" | sed -n '/^---$/,/^---$/p')
+if [[ -n "$YAML" ]]
+then
+    if LINE=$(echo "$YAML" | grep "postprocessor[ ]*:")
+    then
+        PP=$(echo "$LINE" | sed -e 's/.*postprocessor[ ]*://g')
+    fi
+fi
+
+# Run any postprocessor we found
+if [[ -n "$PP" ]]
+then
+    if [[ -n "$DEST" ]]
+    then
+        echo "Running postprocessor '$PP' on '$DEST' in-place"
+        TOPROCESS=$(cat "$DEST")
+        rm "$DEST"
+        echo "$TOPROCESS" | "$PP" > "$DEST"
+    else
+        echo "Running postprocessor '$PP' on pandoc output"
+        echo "$OUTPUT" | "$PP"
+    fi
+else
+    echo "$OUTPUT"
+fi
