@@ -1,0 +1,42 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i python -p pythonPackages.python mf2py
+
+import mf2py
+import os
+import sys
+
+def fail(m):
+    print('FAIL: ' + m)
+    sys.exit(1)
+
+def run_checks_on(to_check, checks):
+    map(lambda(b, m): b or fail(m + ': ' + repr(to_check)), checks)
+
+def check_feed(feed):
+    posts = os.listdir('rendered/blog/')
+
+    run_checks_on(feed, [
+        (feed['type'] == ['h-feed'],          'Not a h-feed'),
+        (len(feed['children']) == len(posts), "Entries don't match posts"),
+        (map(check_entry, feed['children']),  'check_entry has its own messages')
+    ])
+
+def check_entry(entry):
+    run_checks_on(entry, [
+        (entry['type'] == ['h-entry'],
+         'Child is not a h-entry'),
+
+        (len(entry['properties']['published']) == 1,
+         "Entry doesn't have one published date"),
+
+        (len(entry['properties']['name']) == 1,
+         "Entry doesn't have one title (name)")
+    ])
+
+f = 'rendered/blog.html'
+with open(f, 'r') as file:
+    parser = mf2py.Parser(doc=file, html_parser='html5lib')
+    items  = parser.to_dict(filter_by_type='h-feed')
+    if len(items) != 1:
+        fail('Found ' + str(len(items)) + ' h-feeds in ' + f)
+    check_feed(items[0])

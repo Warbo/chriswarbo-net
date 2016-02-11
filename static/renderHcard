@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+cat <<'EOF'
+<a class="p-author h-card" href="http://chriswarbo.net">
+  Chris Warburton
+</a>
+EOF
