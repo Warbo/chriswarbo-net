@@ -6,7 +6,7 @@ title: Partial Application & Currying in PHP
 It's been a while since I wrote about [currying] [1] in [Javascript] [2] and I've been meaning to do the same in PHP. I've had a prototype PHP implementation knocking around from the same time as my Javascript one, but I was never happy with it, specifically because it took a function's parameter number explicitly. In other words, whereas in Javascript we can do this:
 
 [1]: http://en.wikipedia.org/wiki/Currying
-[2]: http://chriswarbo.net/index.php?page=news&type=view&id=admin-s-blog%2Fbetter-currying-in
+[2]: /blog/2012-10-01-better_currying_in_javascript.html
 
 ```javascript
 var my_func = curry(function(x, y) { return $x + y; });

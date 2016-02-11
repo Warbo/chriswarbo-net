@@ -2,7 +2,7 @@
 title: Better Currying in Javascript
 ---
 Whilst indulging in some purely functional PHP, I came across an
-improvement that can be made to our [beloved Curry function](http://chriswarbo.net/index.php?page=news&type=view&id=currying-in-javascript).
+improvement that can be made to our [beloved Curry function](/blog/2012-02-20-currying_in_javascript.html).
 
 Let's say we have an `id`{.javascript}entity function, defined as follows:
 

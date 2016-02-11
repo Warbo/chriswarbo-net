@@ -78,4 +78,4 @@ As you can see, the nice property of combinators is that they compose nicely (as
 
 The code is available, as always, in [Git] [1] and is Public Domain. I plan to show off some examples here at some point, but given my track record for abandoning code we'll just have to see ;)
 
-[1]: http://chriswarbo.net/git/search-optimisation-streams
+[1]: /git/search-optimisation-streams

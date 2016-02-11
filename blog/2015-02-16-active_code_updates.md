@@ -24,8 +24,8 @@ For example, we might be writing [a document](/blog/2014-07-23-fib.html) which c
 I solve the three requirements of active code using three interacting programs:
 
  - [Pandoc](http://johnmacfarlane.net/pandoc/) is an excellent document conversion program, supporting many input and output formats. I tend to write in Markdown and render to HTML or PDF (via LaTeX). Pandoc fulfils the first requirement because it has the concept of *code blocks* ("dumb" source code listings).
- - [PanPipe](http://chriswarbo.net/git/panpipe) is a script I made to allow execution of Pandoc code blocks. In fact, it solves a much simpler and more general problem: processing the contents of code blocks using arbitrary shell commands. By choosing a program interpreter as our shell command (eg. `bash`, `php`, `python`, `runhaskell`, etc.) then we fulfil the second requirement.
- - [PanHandle](http://chriswarbo.net/git/pan-handler) fulfils the third requirement by extracting the contents of code blocks and splicing them into the document tree. Without PanHandle, the results (standard output) of our shell commands are locked inside their associated code blocks.
+ - [PanPipe](/git/panpipe) is a script I made to allow execution of Pandoc code blocks. In fact, it solves a much simpler and more general problem: processing the contents of code blocks using arbitrary shell commands. By choosing a program interpreter as our shell command (eg. `bash`, `php`, `python`, `runhaskell`, etc.) then we fulfil the second requirement.
+ - [PanHandle](/git/pan-handler) fulfils the third requirement by extracting the contents of code blocks and splicing them into the document tree. Without PanHandle, the results (standard output) of our shell commands are locked inside their associated code blocks.
 
 ## The Problem ##
 

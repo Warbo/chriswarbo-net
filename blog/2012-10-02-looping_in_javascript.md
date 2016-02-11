@@ -295,7 +295,7 @@ var tableify = (function() {
 })();
 ```
 
-If we use [the currying function](http://chriswarbo.net/index.php?page=news&type=view&id=currying-in-javascript) [I've blogged about previously](http://chriswarbo.net/index.php?page=news&type=view&id=admin-s-blog%2Fbetter-currying-in) then we can collapse these functions-of-functions and they become much nicer. There's a slight complication with `map`{.javascript} and `reduce`{.javascript}, since the native versions supply more arguments than we use, and the currying function will try to exhaust its argument list. The workaround is to wrap our callback functions so that the extra arguments are ignored (and we may as well inline `flip`{.javascript}, so I've done that too):
+If we use [the currying function](/blog/2012-02-20-currying_in_javascript.html) [I've blogged about previously](/blog/2012-10-01-better_currying_in_javascript.html) then we can collapse these functions-of-functions and they become much nicer. There's a slight complication with `map`{.javascript} and `reduce`{.javascript}, since the native versions supply more arguments than we use, and the currying function will try to exhaust its argument list. The workaround is to wrap our callback functions so that the extra arguments are ignored (and we may as well inline `flip`{.javascript}, so I've done that too):
 
 ```javascript
 var tableify = (function() {

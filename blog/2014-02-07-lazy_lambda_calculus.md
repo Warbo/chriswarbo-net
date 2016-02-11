@@ -289,4 +289,4 @@ I'm reasonably confident that this interpreter is correct, but if anyone can spo
 
 As usual, the code for this is living in [Git] [12].
 
-[12]: http://chriswarbo.net/git/lazy-lambda-calculus
+[12]: /git/lazy-lambda-calculus
