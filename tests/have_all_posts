@@ -1,6 +1,8 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -i bash -p bash xidel
 
+LINKS=$(xidel - -q --extract "//a/@href" < rendered/blog.html)
+
 ERR=0
 while read -r SOURCE
 do
@@ -11,8 +13,7 @@ do
         echo "Can't find rendered$DEST" >> /dev/stderr
         ERR=1
     fi
-    LINK=$(xidel - -q --extract "//a[@href='$DEST']/@href" < rendered/blog.html)
-    if ! echo "$LINK" | grep "$NAME" > /dev/null
+    if ! echo "$LINKS" | grep "$NAME" > /dev/null
     then
         echo "blog/$NAME.html doesn't appear in blog.html" >> /dev/stderr
         ERR=1
