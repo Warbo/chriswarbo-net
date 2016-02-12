@@ -1,0 +1,14 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p bash w3c-validator
+
+function fail {
+    echo "FAIL: $1" >> /dev/stderr
+    exit 1
+}
+
+while read DIR
+do
+    echo "Checking '$DIR'"
+    w3c-validator --skip-non-html "$DIR" ||
+        fail "Failed to validate contents of '$DIR'"
+done < <(find rendered -type d)
