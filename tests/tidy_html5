@@ -6,6 +6,12 @@ function fail {
     exit 1
 }
 
+function allowedPatterns {
+    # Data URIs can contain whitespace (indeed, they *should* according to the
+    # base64 spec!)
+    echo "Warning: <img> discarding newline in URI reference"
+}
+
 function check {
     # Return immediately if tidy gives no errors
     ERR=$(tidy -e 2>&1) && return
@@ -28,15 +34,14 @@ function check {
     ALLOWED=0
     OUTPUT="$ERR"
 
-    # Data URIs can contain whitespace (indeed, they *should* according to the
-    # base64 spec!)
-    for PAT in "Warning: <img> discarding newline in URI reference"
+
+    while read -r PAT
     do
         OUTPUT=$(echo "$OUTPUT" | grep -v "$PAT")
 
         FOUND=$(echo "$ERR" | grep -c "$PAT")
         ALLOWED=$(( ALLOWED + FOUND ))
-    done
+    done < <(allowedPatterns)
 
     if [[ "$TOTAL" -gt "$ALLOWED" ]]
     then
