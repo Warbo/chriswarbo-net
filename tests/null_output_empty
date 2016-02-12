@@ -1,0 +1,53 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p bash pandoc panpipe panhandle
+
+function fail {
+    echo "FAIL: $1" >> /dev/stderr
+    exit 1
+}
+
+TEST=$(echo -e '\n```{pipe="root/static/null"}\n```\n')
+
+CHECK=$(echo "$TEST" | pandoc --filter panpipe -f markdown -t html) ||
+    fail "Error running test input '$TEST'"
+
+# Slight obfuscation, to ensure it's only the second occurrence which appears
+MSG="I should appear"
+REV=$(echo "$MSG" | rev)
+
+INPUT=$(cat <<'EOF'
+One
+
+```{.unwrap pipe="sh | root/static/null"}
+echo "I should not appear"
+echo "REV" > temp
+```
+
+Two
+
+```{.unwrap pipe="sh | pandoc -f markdown -t json"}
+cat temp | rev
+```
+
+Three
+EOF
+)
+
+OUTPUT=$(echo "$INPUT"         |
+         sed -e "s/REV/$REV/g" |
+         pandoc --filter panpipe --filter panhandle -t html) ||
+    fail "Rendering test aborted: $INPUT"
+
+for WANTED in One Two Three "$MSG"
+do
+    echo "$OUTPUT" | grep "$WANTED" > /dev/null ||
+        fail "'$WANTED' didn't appear in output: $OUTPUT"
+done
+
+for UNWANTED in "I should not appear" "<code" "<pre" "$REV"
+do
+    echo "$OUTPUT" | grep "$UNWANTED" > /dev/null &&
+        fail "'$UNWANTED' found in output"
+done
+
+echo "Success"
