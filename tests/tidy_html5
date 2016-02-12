@@ -1,0 +1,13 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p bash tidy-html5
+
+function fail {
+    echo "FAIL: $1" >> /dev/stderr
+    exit 1
+}
+
+while read -r FILE
+do
+    ERR=$(tidy < "$FILE" 2>&1 > /dev/null) ||
+        fail "Tidy failed for '$FILE': $ERR"
+done < <(find rendered -type f -name "*.html")
