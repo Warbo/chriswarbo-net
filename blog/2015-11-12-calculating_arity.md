@@ -224,7 +224,7 @@ format s x = concat ["Arity of '", s, "' is ", show (intArity x)]
 
 Now, at last, we can get the arity of values:
 
-```{pipe="sh > /dev/null"}
+```{.unwrap pipe="sh | root/static/null"}
 cp typefamily.hs typefamily2.hs
 cp typefamily.hs typefamily3.hs
 ```
@@ -273,11 +273,11 @@ main = mapM_ putStrLn [
 runhaskell -XTypeFamilies -XFlexibleContexts < typefamily3.hs
 ```
 
-```{pipe="sh 1>&2"}
+```{.unwrap pipe="sh | root/static/null"}
 # Try compiling/type-checking every Haskell file
 for FILE in *.hs
 do
   echo -e "\nmain = return ()" > "$FILE"
-  nix-shell -p haskellPackages.ghc --run "ghc --make '$FILE'"
+  nix-shell -p haskellPackages.ghc --run "ghc --make '$FILE'" 1>&2
 done
 ```
