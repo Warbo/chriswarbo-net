@@ -3,7 +3,8 @@ title: <a class="h-card" rel="me" href="http://chriswarbo.net">Chris Warburton</
 extra_head:
   <link href="mailto:chriswarbo@gmail.com" rel="me" />
 
-dependencies: rendered/blog.html static/showPost*
+dependencies: rendered/blog.html static/showPost* static/stripTitle
+postprocessor: ./static/stripTitle
 ---
 
 <div style="float: right; margin: 0 10px 10px 10px;" >
