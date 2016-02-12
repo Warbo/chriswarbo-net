@@ -14,6 +14,5 @@ for f_ in os.listdir(dir):
     f = os.path.join(dir, f_)
     with open(f, 'r') as file:
         entries = mf2py.Parser(doc=file, html_parser="html5lib").to_dict(filter_by_type="h-entry")
-        print(repr(entries))
         if len(entries) != 1:
             fail("Found " + str(len(entries)) + " h-entries in " + f)
