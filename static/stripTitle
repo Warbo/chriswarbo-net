@@ -1,0 +1,14 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i python -p pythonPackages.python pythonPackages.beautifulsoup4
+
+from bs4 import BeautifulSoup
+import fileinput
+
+stdin = reduce(lambda content, line: content + line, fileinput.input(), "")
+doc   = BeautifulSoup(stdin, 'html.parser')
+title = doc.title
+plain = reduce(lambda ttl, txt: ttl + txt, title.strings, "").strip()
+
+title.string = plain
+
+print(doc)
