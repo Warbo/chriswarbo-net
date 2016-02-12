@@ -6,8 +6,46 @@ function fail {
     exit 1
 }
 
+function check {
+    # Return immediately if tidy gives no errors
+    ERR=$(tidy -e 2>&1) && return
+
+    # There doesn't seem to be a way to disable individual checks,
+    # so we skip them ourselves
+
+    WARNINGS=$(echo "$ERR"              |
+               grep "^Tidy found"       |
+               grep -o "[0-9]* warning" |
+               grep -o "[0-9]*")
+
+    ERRORS=$(echo "$ERR"            |
+             grep "^Tidy found"     |
+             grep -o "[0-9]* error" |
+             grep -o "[0-9]*")
+
+    TOTAL=$(( WARNINGS + ERRORS ))
+
+    ALLOWED=0
+    OUTPUT="$ERR"
+
+    # Data URIs can contain whitespace (indeed, they *should* according to the
+    # base64 spec!)
+    for PAT in "Warning: <img> discarding newline in URI reference"
+    do
+        OUTPUT=$(echo "$OUTPUT" | grep -v "$PAT")
+
+        FOUND=$(echo "$ERR" | grep -c "$PAT")
+        ALLOWED=$(( ALLOWED + FOUND ))
+    done
+
+    if [[ "$TOTAL" -gt "$ALLOWED" ]]
+    then
+        echo "$OUTPUT" >> /dev/stderr
+        return 1
+    fi
+}
+
 while read -r FILE
 do
-    ERR=$(tidy < "$FILE" 2>&1 > /dev/null) ||
-        fail "Tidy failed for '$FILE': $ERR"
+    check < "$FILE" || fail "Tidy failed for '$FILE'"
 done < <(find rendered -type f -name "*.html")
