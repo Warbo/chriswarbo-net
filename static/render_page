@@ -50,7 +50,10 @@ if [[ -n "$YAML" ]]
 then
     if LINE=$(echo "$YAML" | grep "postprocessor[ ]*:")
     then
-        PP=$(echo "$LINE" | sed -e 's/.*postprocessor[ ]*://g')
+        PP=$(echo "$LINE"                       |
+             sed -e 's/.*postprocessor[ ]*://g' |
+             sed -e 's/^ *//g'                  |
+             sed -e 's/ *$//g')
     fi
 fi
 
