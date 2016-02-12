@@ -51,7 +51,7 @@ h2 {
     font-size: 20px;
 }
 
-h2 a {
+h2 a, h1 a {
     color: currentcolor;
     text-decoration: none;
 }
