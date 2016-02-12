@@ -1,7 +1,7 @@
 ---
-title: Chris Warburton's Homepage
+title: <a class="h-card" rel="me" href="http://chriswarbo.net">Chris Warburton</a>'s Homepage
 extra_head:
-  <link href="mailto:chriswarbo@gmail.com" rel="me">
+  <link href="mailto:chriswarbo@gmail.com" rel="me" />
 
 dependencies: rendered/blog.html static/showPost*
 ---

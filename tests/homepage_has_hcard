@@ -1,0 +1,16 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i python -p pythonPackages.python mf2py
+
+import mf2py
+import os
+import sys
+
+def fail(m):
+    print("FAIL: " + m)
+    sys.exit(1)
+
+f='rendered/index.html'
+with open(f, 'r') as file:
+    entries = mf2py.Parser(doc=file, html_parser="html5lib").to_dict(filter_by_type="h-card")
+    if len(entries) != 1:
+        fail("Found " + str(len(entries)) + " h-cards in " + f)
