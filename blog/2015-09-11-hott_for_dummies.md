@@ -138,7 +138,7 @@ One point is to give a topological perspective for types: a type is like a space
 
 One question we might ask is whether all equality values are the same; ie. are they all just `refl`{.haskell}? That's known as the "Uniqueness of Identity Proofs" (UIP), and it's an assumption that many people have been making for decades. However, if we think of equalities as paths through a space, then UIP says that all those paths can be transformed into each other. Yet that's not the case if the space contains a hole! Consider two paths going from a point `X` back to itself; if one of those paths loops around a hole, and the other doesn't, then there's no way to smoothly transform between the two (without "cutting and sticking"):
 
-```{pipe="cat > hole.dit"}
+```{.unwrap pipe="tee hole.dit | root/static/null"}
 /----------------------\
 |                      |
 |  /----\              |
