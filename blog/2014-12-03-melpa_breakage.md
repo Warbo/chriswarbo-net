@@ -10,4 +10,4 @@ Eventually I found [a forum thread](https://bbs.archlinux.org/viewtopic.php?pid=
 
 Once we've done this, we need to restart Emacs. However, then I was getting an error about no such package "melpa-"!
 
-This turns out to be caused by [Emacs Prelude](), the pre-built configuration I'm using. That contains a file `~/.emacs.d/core/prelude-packages.el` which checks for a bunch of packages and installs those it can't find. Since that list included `melpa`, it was being looked for every time I started Emacs. Removing `melpa` from `package-archives` and `prelude-packages` and restarting Emacs solved it for me!
+This turns out to be caused by [Emacs Prelude](http://batsov.com/prelude/), the pre-built configuration I'm using. That contains a file `~/.emacs.d/core/prelude-packages.el` which checks for a bunch of packages and installs those it can't find. Since that list included `melpa`, it was being looked for every time I started Emacs. Removing `melpa` from `package-archives` and `prelude-packages` and restarting Emacs solved it for me!
