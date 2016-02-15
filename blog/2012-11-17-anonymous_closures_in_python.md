@@ -146,7 +146,7 @@ cake = lambda xs: xs[:-2]               + \
 o = lambda f: lambda g: lambda x: f(g(x))
 ```
 
-```{pipe="cat >> stack.py"}
+```{pipe="tee -a stack.py | root/static/null"}
 
 from random  import randint
 from inspect import getargspec
@@ -471,7 +471,7 @@ I'll wrap this up here, but will revisit some of these topics in later posts. It
 
 Also, it's always fun to mis-use any language and see what we can get away with ;)
 
-```{pipe="sh"}
+```{pipe="sh | root/static/null"}
 # Run tests
 #python stack.py
 ```

@@ -1,5 +1,7 @@
 ---
 title: PowerPlay implementations
+dependencies: static/summariseTables
+postprocessor: ./static/summariseTables
 ---
 I've begun writing some implementations of the PowerPlay spec I've talked about
 [elsewhere](/essays/powerplay).
@@ -7,6 +9,9 @@ I've begun writing some implementations of the PowerPlay spec I've talked about
 ## Lookup Tables ##
 
 The first one can be found in Sqrt.v and is a very simple proof-of-concept. The problem it tries to solve is finding integer square roots, which it does using a lookup table. This may sound odd, but it has a nice result: since the implementation language (lookup tables) can never be perfect (there will always be numbers missing), it's quite straightforward to make a system which keeps improving itself forever. However, since our meta-language (Coq) can solve the square root problem quite easily, we don't run into any difficulties in our proofs. The result is an ever-increasing list of numbers and their square roots, which Coq curries into our interpreter to make solver functions:
+
+<div class="summarise">
+<span class="summary">Execution trace of Solver</span>
 
 +-----------+--------------+------------------------------------------------------+
 | Iteration | Lookup Table | Auto-generated Solver                                |
@@ -67,6 +72,8 @@ The first one can be found in Sqrt.v and is a very simple proof-of-concept. The 
 +-----------+--------------+------------------------------------------------------+
 | ...       | ...          | ...                                                  |
 +-----------+--------------+------------------------------------------------------+
+
+</div>
 
 Notice how the code works: our branches are **not** checking for different values of `p`, since that would look like this:
 
