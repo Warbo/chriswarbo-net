@@ -15,18 +15,18 @@ In the genetic algorithm on this page, I've included the two commonly used solut
 <form action="#" type="get">
  <div>
   <input type="range" min="1" max="100" value="20" id="mutatecross_population" style="width: 500px;" />
-  <label for="mutatecross_population">Population:&nbsp;</label><a id="mutatecross_population_display"></a>
+  <label for="mutatecross_population">Population:&nbsp;</label><a href="#" id="mutatecross_population_display"></a>
  </div>
  <div>
   <input type="range" min="1" max="10" id="mutatecross_cross_rate" value="1" style="width: 500px;" />
-  <label for="mutatecross_cross_rate">Crossover rate:&nbsp;</label><a id="mutatecross_cross_rate_display"></a>
+  <label for="mutatecross_cross_rate">Crossover rate:&nbsp;</label><a href="#" id="mutatecross_cross_rate_display"></a>
  </div>
  <div>
   <input type="range" min="2" max="50" id="mutatecross_mutate_rate" value="16" style="width: 500px;" />
-  <label for="mutatecross_mutate_rate">Mutation factor (lower = more mutation):&nbsp;</label><a id="mutatecross_mutate_rate_display"></a>
+  <label for="mutatecross_mutate_rate">Mutation factor (lower = more mutation):&nbsp;</label><a href="#" id="mutatecross_mutate_rate_display"></a>
  </div>
  <div>
-  Current fitness:&nbsp;<a id="mutatecross_fitness"></a>
+  Current fitness:&nbsp;<a href="#" id="mutatecross_fitness"></a>
  </div>
  <div>
   <input type="checkbox" id="mutatecross_stable" value="0" /><label for="mutatecross_stable">Stable sort. Slower, but stops the green blob jumping between equal-fitness solutions.</label>

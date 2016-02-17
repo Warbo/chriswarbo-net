@@ -6,19 +6,19 @@ title: Harmony Search
 <div id="harmony_playfield" style="width: 500px; height: 500px;"></div>
 <form action="#" type="get">
 <div>
-  Best fitness so far: <a id="harmony_fitness_display"></a>
+  Best fitness so far: <a href="#" id="harmony_fitness_display"></a>
 </div>
 <div>
-  Fittest program: <a id="harmony_winner"></a>
+  Fittest program: <a href="#" id="harmony_winner"></a>
 </div>
 <div>
-  Current phase: <a id="harmony_phase">0</a>
+  Current phase: <a href="#" id="harmony_phase">0</a>
 </div>
 <div>
-  Current machine size: <a id="harmony_m">1</a>
+  Current machine size: <a href="#" id="harmony_m">1</a>
 </div>
 <div>
-  Current enumeration: <a id="harmony_this_enum">0</a> (Max so far: <a id="harmony_enum">0</a>)
+  Current enumeration: <a href="#" id="harmony_this_enum">0</a> (Max so far: <a href="#" id="harmony_enum">0</a>)
 </div>
 <div>
   <label for="#fill">Fill memory?</label><input type="checkbox" id="fill" checked="checked" />

@@ -15,14 +15,14 @@ In the genetic algorithm on this page, I've only included random genetic mutatio
 <form action="#" type="get">
  <div>
   <input type="range" min="1" max="100" value="20" id="mutate_population" style="width: 500px;" />
-  <label for="mutate_population">Population:&nbsp;</label><a id="mutate_population_display"></a>
+  <label for="mutate_population">Population:&nbsp;</label><a href="#" id="mutate_population_display"></a>
  </div>
  <div>
   <input type="range" min="1" max="10" id="mutate_rate" value="1" style="width: 500px;" />
-  <label for="mutate_rate">Mutation rate:&nbsp;</label><a id="mutate_rate_display"></a>
+  <label for="mutate_rate">Mutation rate:&nbsp;</label><a href="#" id="mutate_rate_display"></a>
  </div>
  <div>
-  Current fitness:&nbsp;<a id="mutate_fitness"></a>
+  Current fitness:&nbsp;<a href="#" id="mutate_fitness"></a>
  </div>
  <div>
   <input type="checkbox" id="mutate_stable" value="0" /><label for="mutate_stable">Stable sort. Slower, but stops the green blob jumping between equal-fitness solutions.</label>

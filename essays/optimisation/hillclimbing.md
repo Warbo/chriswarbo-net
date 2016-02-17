@@ -10,11 +10,11 @@ Each (x, y) point in the square is a solution, and our goal is to find the best 
 <div id="hill_playfield" style="width: 500px; height: 500px;"></div>
 <form action="#" type="get">
 <div>
-  <span>Current fitness:</label>&nbsp;&nbsp;<a id="hill_fitness_display"></a>
+  <span>Current fitness:</label>&nbsp;&nbsp;<a href="#" id="hill_fitness_display"></a>
 </div>
 <div>
   <input type="range" name="_" id="hill_step" min="1" max="10" value="2" style="width: 500px;" />
-  <label for="hill_step">Step size:</label>&nbsp;&nbsp;<a id="hill_step_display"></a>
+  <label for="hill_step">Step size:</label>&nbsp;&nbsp;<a href="#" id="hill_step_display"></a>
 </div>
 </form>
 <script src="/js/jquery.js"></script>

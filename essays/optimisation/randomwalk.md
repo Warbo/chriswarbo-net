@@ -11,7 +11,7 @@ Each (x, y) point in the square is a solution, and our goal is to find the best 
 <form action="#" type="get">
 <div>
   <input type="range" name="_" id="walk_step" min="1" max="10" value="2" style="width: 500px;" />
-  <label for="walk_step">Step size:</label>&nbsp;&nbsp;<a id="walk_step_display"></a>
+  <label for="walk_step">Step size:</label>&nbsp;&nbsp;<a href="#" id="walk_step_display"></a>
 </div>
 </form>
 <script src="/js/jquery.js"></script>

@@ -30,16 +30,16 @@ Levin Search will always find a solution if one exists, since it will eventually
 <div id="levin_playfield" style="width: 512px; height: 512px;"></div>
 <form action="#" type="get">
 <div>
-  Best fitness so far: <a id="levin_fitness_display"></a>
+  Best fitness so far: <a href="#" id="levin_fitness_display"></a>
 </div>
 <div>
-  Fittest program: <a id="levin_winner"></a>
+  Fittest program: <a href="#" id="levin_winner"></a>
 </div>
 <div>
-  Current phase: <a id="levin_phase">0</a>
+  Current phase: <a href="#" id="levin_phase">0</a>
 </div>
 <div>
-  Current machine size: <a id="levin_m">1</a>
+  Current machine size: <a href="#" id="levin_m">1</a>
 </div>
 <script src="/js/jquery.js"></script>
 <script src="/js/jquery_svg.js"></script>
