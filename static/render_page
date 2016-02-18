@@ -6,22 +6,25 @@ OPTIONS=(--filter panpipe
          --template templates/default.html
          -s)
 
-# Look for a date
+# Look for a date in the filename
 if echo "$SOURCE" | grep -P "blog/\d{4}-\d{2}-\d{2}" > /dev/null
 then
     D=$(echo "$SOURCE" | grep -oP "blog/\d{4}-\d{2}-\d{2}" | grep -oP "\d{4}-\d{2}-\d{2}")
     OPTIONS+=(-M date="$D")
 fi
 
+# If we're writing to a file, tell pandoc
+if [[ -n "$DEST" ]]
+then
+    OPTIONS+=(-o "$DEST")
+fi
+
+# If we're reading from a file, use it as pandoc's input, and provide the path
+# as a variable. This should always go at the end; add extra options above.
 if [[ -n "$SOURCE" ]]
 then
     OPTIONS+=(-M path="$SOURCE")
-fi
-
-# These should always go at the end, so add extra options above here
-if [[ -n "$SOURCE" ]] && [[ -n "$DEST" ]]
-then
-    OPTIONS+=(-o "$DEST" "$SOURCE")
+    OPTIONS+=("$SOURCE")
 fi
 
 # Capture programmatic input using cat, i.e. don't prompt the user if there's
@@ -33,43 +36,69 @@ else
     INPUT=$(cat)
 fi
 
+# Run pandoc, capturing any output for post-processing
 OUTPUT=$(echo "$INPUT" | pandoc "${OPTIONS[@]}")
 
-# Get out input, either from stdin or $SOURCE
-if [[ -n "$SOURCE" ]]
+# If output was written to $DEST, read it back. This allows pandoc to determine
+# the output format from the filename.
+if [[ -n "$DEST" ]]
 then
-    CONTENT=$(cat "$SOURCE")
-else
-    CONTENT="$INPUT"
+    OUTPUT=$(cat "$DEST")
+    rm "$DEST"
 fi
 
-# Check if there is YAML (between two "---" lines) specifying a postprocessor
-PP=""
-YAML=$(echo "$CONTENT" | sed -n '/^---$/,/^---$/p')
-if [[ -n "$YAML" ]]
-then
-    if LINE=$(echo "$YAML" | grep "postprocessor[ ]*:")
+# Post-processing. This is slightly complicated, so we use more functions.
+
+function getInput {
+    # Get out input, either from stdin or $SOURCE
+    if [[ -n "$SOURCE" ]]
     then
-        PP=$(echo "$LINE"                       |
-             sed -e 's/.*postprocessor[ ]*://g' |
-             sed -e 's/^ *//g'                  |
-             sed -e 's/ *$//g')
+        cat "$SOURCE"
+    else
+        echo "$INPUT"
     fi
-fi
+}
 
-# Run any postprocessor we found
-if [[ -n "$PP" ]]
-then
+function writeOutput {
+    # Send stdin to its final destination, either stdout or $DEST
     if [[ -n "$DEST" ]]
     then
-        echo "Running postprocessor '$PP' on '$DEST' in-place"
-        TOPROCESS=$(cat "$DEST")
-        rm "$DEST"
-        echo "$TOPROCESS" | "$PP" > "$DEST"
+        cat > "$DEST"
     else
-        echo "Running postprocessor '$PP' on pandoc output"
-        echo "$OUTPUT" | "$PP"
+        cat
     fi
-else
-    echo "$OUTPUT"
-fi
+}
+
+function getPostprocessor {
+    # Check if YAML (between two "---" lines) specifies a postprocessor
+    PP=""
+    YAML=$(getInput | sed -n '/^---[-]*$/,/^---[-]*$/p')
+    if [[ -n "$YAML" ]]
+    then
+        if LINE=$(echo "$YAML" | grep "postprocessor[ ]*:")
+        then
+            PP=$(echo "$LINE"                       |
+                 sed -e 's/.*postprocessor[ ]*://g' |
+                 sed -e 's/^ *//g'                  |
+                 sed -e 's/ *$//g')
+        fi
+    fi
+    echo "$PP"
+}
+
+function postprocess {
+    # First, strip left-over <pre> and <code> elements
+    TOPROCESS=$(./static/stripEmptyPreCode)
+
+    # Next, perform any custom post-processing
+    PP=$(getInput | getPostprocessor)
+    if [[ -n "$PP" ]]
+    then
+        echo "$TOPROCESS" | "$PP"
+    else
+        echo "$TOPROCESS"
+    fi
+}
+
+# Perform post-processing before outputting the result
+echo "$OUTPUT" | postprocess | writeOutput

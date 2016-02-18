@@ -1,0 +1,23 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i python -p pythonPackages.python pythonPackages.beautifulsoup4
+
+from bs4 import BeautifulSoup
+import fileinput
+import sys
+
+stdin = reduce(lambda content, line: content + line, fileinput.input(), "")
+doc   = BeautifulSoup(stdin, 'html.parser')
+
+def remove_if_empty(tag):
+    def f(e):
+        if e.string is None:
+            sys.stderr.write('Removing empty <' + tag + '> element\n')
+            e.extract()
+    return f
+
+remove_empty = lambda tag: map(remove_if_empty(tag), doc.find_all(tag))
+
+# Remove code elements first, since their removal might make pre elements empty
+map(remove_empty, ['code', 'pre'])
+
+print(doc)
