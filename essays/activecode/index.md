@@ -208,7 +208,7 @@ Babel, Org mode and Emacs are all wonderful things, however there are a few reas
 
 [Pandoc][pandoc] is a great document conversion program by John MacFarlane. It can convert between various markup languages, including HTML, LaTeX and Markdown. We can also mix and match the formats, for example embedding a mixture of HTML and LaTeX in a Markdown document and rendering it to a PDF.
 
-In particular, most of the [source][git] of [my Web site](/) is written in [Markdown][markdown] and converted to HTML using Pandoc. I use [Hakyll][hakyll] to orchestrate the process, as a form of Make tool.
+In particular, most of the [source][git] of [my Web site](/) is written in [Markdown][markdown] and converted to HTML using Pandoc. I use [Make][make] to orchestrate the process.
 
 ### Embedded Code ###
 
@@ -323,7 +323,7 @@ Some non-toy examples of this system in action:
 
 ### Fibonacci Post ###
 
-I wrote PanPipe and PanHandle after trying and failing to integrate Babel into my site's build process. My [Fibonacci Sequence in PHP][fib] post was an experiment with Babel, so porting that post over to Pandoc was the motivating use-case for these scripts. Thankfully the port was a success, and that post is now managed by Hakyll like the rest of the site.
+I wrote PanPipe and PanHandle after trying and failing to integrate Babel into my site's build process. My [Fibonacci Sequence in PHP][fib] post was an experiment with Babel, so porting that post over to Pandoc was the motivating use-case for these scripts. Thankfully the port was a success, and that post is now managed by Make like the rest of the site.
 
 If you compare it to [the source][fibsource] you'll see a few of the required features which influenced my thinking:
 
@@ -339,8 +339,6 @@ If you compare it to [the source][fibsource] you'll see a few of the required fe
 These simple scripts let us call out to the UNIX shell from our documents. This lets us recreate many of the active code features of Babel, just by piping between programs and reading/writing files. Here are some common tasks you may want to solve:
 
 ### Hiding Output ###
-
-#### `/dev/null` ####
 
 You may want a code block to execute, but not show up in the output. The easiest way is to pipe the output to `/dev/null`, or an actual file if we plan to use it later:
 
@@ -373,15 +371,15 @@ echo 'ls /' | ./dash
 echo '{pipe="sh > /dev/null"}'
 ```
 
-Sometimes this has undesirable effects, where these empty blocks interact badly with some styling rule. If this is the case, you might try using inline snippets instead, eg. `cat inline_hidden`{pipe="sh"}.
+Sometimes these empty elements may have undesirable effects, e.g. interacting badly with some styling rule. If this is the case, you might try using inline snippets instead, eg. `cat inline_hidden`{pipe="sh"}, which gives `cat inline_hidden`{pipe="sh | pandoc --filter panpipe"}.
 
 #### Splicing Nothing ####
 
-To eliminate the code block takes a little more effort, but might be necessary in some cases. To remove a code block, we can use `panhandle` to splice an empty document in place of the code block.
+To eliminate the code block takes a little more effort, but might be necessary in some cases. To remove a code block, we can use `panhandle` to splice an empty document in its place.
 
 Remember that `panhandle` accepts JSON, which we can generate using `pandoc`:
 
-````{.unwrap pipe="cat | tee blanker | root/static/null"}
+````{pipe="cat > blanker"}
 ```{.unwrap pipe="sh | echo '' | pandoc -t json"}
 ls /
 ```
@@ -391,10 +389,28 @@ ls /
 cat blanker
 ```
 
-Here's the result when converting to HTML (the div exists to catch remaining attributes of the code block):
+Here's the result when converting to HTML:
 
 ```{pipe="sh"}
 pandoc --filter panpipe --filter panhandle -t html < blanker
+```
+
+Ta da! If our code block has any extra attributes, etc. then a `div` will be left behind to catch them, for example:
+
+````{pipe="cat > blank_attrs"}
+```{.unwrap pipe="sh | echo '' | pandoc -t json" myattr="myvalue"}
+ls /
+```
+````
+
+```{pipe="sh"}
+cat blank_attrs
+```
+
+This gives:
+
+```{pipe="sh"}
+pandoc --filter panpipe --filter panhandle -t html < blank_attrs
 ```
 
 #### Format-specific ####
@@ -618,9 +634,9 @@ If you want to carry on rendering in the presence of errors, you must implement 
 ```
 ````
 
-Anything printed to stderr by a shell command will appear in the stderr of PanPipe. Likewise, when used as a Pandoc filter, PanPipe's stderr will appear in Pandoc's stderr. Note that there may be some buffering which prevents content showing immediately (eg. progress bars and such).
+Anything printed to stderr by a shell command will appear in the stderr of PanPipe. Likewise, when used as a Pandoc filter, PanPipe's stderr will appear in Pandoc's stderr. Note that [Pandoc may buffer the stderr stream][pandocbuffer], which prevents content showing immediately (eg. progress bars and such). To prevent this, you can use `pandoc -t json | panpipe | panhandle | pandoc -f json` rather than `pandoc --filter panpipe --filter panhandle`.
 
-[hakyll]: http://jaspervdj.be/hakyll/
+[make]: https://www.gnu.org/software/make/
 [markdown]: http://commonmark.org/
 [pandoc]: http://johnmacfarlane.net/pandoc/
 [emacs]: http://www.gnu.org/software/emacs/
@@ -639,3 +655,4 @@ Anything printed to stderr by a shell command will appear in the stderr of PanPi
 [kate]: http://kate-editor.org/
 [fib]: /blog/2014-07-23-fib.html
 [fibsource]: /git/chriswarbo-net/branches/master/blog/2014-07-23-fib.md
+[pandocbuffer]: https://github.com/jgm/pandoc/issues/2729
