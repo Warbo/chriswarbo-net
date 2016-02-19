@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+function fail {
+    echo "FAIL: $1" >> /dev/stderr
+    exit 1
+}
+
+CLEANED=$(echo -e "<div class='summarise'><span class='summary'>sum</span><table></table></div>" | ./static/cleanup)
+
+echo "$CLEANED" | grep '<span' > /dev/null &&
+    fail "Didn't strip span: $CLEANED"
+
+echo "$CLEANED" | grep 'summary=.sum.' > /dev/null ||
+    fail "Didn't have summary: $CLEANED"
