@@ -305,7 +305,7 @@ echo '```'
 When we send our document through `pandoc --filter panhandle`{.bash}, the table will be spliced into the document, like this:
 
 <div class="summarise">
-  <span class="summary"></span>
+  <span class="summary">PanHandle example</span>
 
 ```{.unwrap pipe="sh | pandoc -t json"}
 cat bool2.md
