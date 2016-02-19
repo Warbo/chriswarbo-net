@@ -48,7 +48,7 @@ extradeps = $(wildcard $(shell ./static/getDeps $1))
 # $1 - Target HTML file
 # $2 - Dependencies
 define PAGE
-$1 : $2
+$1 : $2 static/render_page
 	mkdir -p $$(dir $$@)
 	$$(call render,$$@)
 endef
@@ -67,7 +67,7 @@ $(out_js) : $(call js_source,$@)
 	mkdir -p $(dir $@)
 	cp $(call js_source,$@) $@
 
-$(redirect) : redirect.html
+$(redirect) : redirect.html static/render_page
 	mkdir -p $(dir $@)
 	$(call render_to,redirect.html,$@)
 
