@@ -50,7 +50,13 @@ function check {
     fi
 }
 
+ERR=0
 while read -r FILE
 do
-    check < "$FILE" || fail "Tidy failed for '$FILE'"
+    check < "$FILE" || {
+        echo "$FILE" | grep "^rendered/unfinished/" > /dev/null || ERR=1
+        echo "Tidy failed for '$FILE'" >> /dev/stderr
+    }
 done < <(find rendered -type f -name "*.html")
+
+exit "$ERR"
