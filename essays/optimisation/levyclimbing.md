@@ -9,10 +9,11 @@ Each (x, y) point in the square is a solution, and our goal is to find the best 
 
 <div id="levyhill_playfield" style="width: 500px; height: 500px;"></div>
 <form action="#" method="get">
-<div>
-  <span>Current fitness:</label>&nbsp;&nbsp;<a href="#" id="levyhill_fitness_display"></a>
-</div>
+ <div>
+  <span>Current fitness:</span>&nbsp;&nbsp;<a href="#" id="levyhill_fitness_display"></a>
+ </div>
 </form>
+
 <script src="/js/jquery.js"></script>
 <script src="/js/jquery_svg.js"></script>
 <script src="/js/underscore.js"></script>
