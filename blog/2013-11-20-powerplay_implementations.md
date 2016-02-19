@@ -1,7 +1,5 @@
 ---
 title: PowerPlay implementations
-dependencies: static/summariseTables
-postprocessor: ./static/summariseTables
 ---
 I've begun writing some implementations of the PowerPlay spec I've talked about
 [elsewhere](/essays/powerplay).
