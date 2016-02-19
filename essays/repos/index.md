@@ -5,8 +5,9 @@ dependencies: static/git2md*
 
 I try to host Git repositories myself, as far as possible. These pages are auto-generated from those repos:
 
-```{pipe="sh > repos"}
-# Find all repos on chriswarbo.net
+```{pipe="bash > repos"}
+echo "Looking up repos from chriswarbo.net/git" >> /dev/stderr
+
 wget -O- 'http://chriswarbo.net/git' |
 grep -o '<a .*</a>'                  |
 grep -o 'href=".*\.git/"'            |
@@ -14,22 +15,26 @@ grep -o '".*"'                       |
 grep -o '[^"/]*'
 ```
 
-```{pipe="sh >> /dev/stderr"}
-# Render a page for each repo
+```{pipe="bash >> /dev/stderr"}
+echo "Rendering a page for each repo"
 REPOS=$(cat repos)
+
+# render_page assumes we're in the blog root
 cd root
-echo "$REPOS" | while read -r REPO
+
+while read -r REPO
 do
     NAME=$(basename "$REPO" .git)
     FILE="rendered/essays/repos/$NAME.html"
     echo "Generating $FILE"
     ./static/git2md_nojson.sh "$NAME"  |
     SOURCE= DEST= ./static/render_page > "$FILE"
-done
+done < <(echo "$REPOS")
 ```
 
-```{.unwrap pipe="sh | pandoc -f html -t json"}
-# Put links to each repo on this page
+```{.unwrap pipe="bash | pandoc -f html -t json"}
+echo "Adding links to repos on to rendered/essays/index.html" >> /dev/stderr
+
 echo '<ul>'
 while read REPO
 do
@@ -40,4 +45,47 @@ do
     #echo '<br />'
 done < repos
 echo '</ul>'
+```
+
+```{pipe="bash >> /dev/stderr"}
+# Turn all repos into filenames
+FILES=""
+while read -r REPO
+do
+    NAME=$(basename "$REPO" .git)
+    FILE="$NAME.html"
+    FILES=$(echo -e "$FILES\n$FILE")
+done < repos
+
+echo "Making sure all expected repos have pages"
+ERR=0
+cd root/rendered/essays/repos
+while read -r FILE
+do
+    # Skip empty entries
+    [[ -n "$FILE" ]] || continue
+
+    if ! [[ -e "$FILE" ]]
+    then
+        echo "Couldn't find 'rendered/essays/repos/$FILE'"
+        ERR=1
+    fi
+done < <(echo "$FILES")
+
+echo "Making sure all repo pages are expected"
+while read -r FILE
+do
+    REL=$(basename "$FILE")
+
+    # Skip index.html, which shouldn't correspond to a repo
+    [[ "x$REL" = "xindex.html" ]] && continue
+
+    if ! echo "$FILES" | grep -F "$REL" > /dev/null
+    then
+        echo "Didn't expect to find 'rendered/essays/repos/$REL'"
+        ERR=1
+    fi
+done < <(find . -name "*.html")
+
+exit "$ERR"
 ```
