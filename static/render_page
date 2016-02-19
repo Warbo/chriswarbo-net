@@ -1,30 +1,28 @@
 #!/usr/bin/env bash
 
 # Common options
-OPTIONS=(--filter panpipe
-         --filter panhandle
-         --template templates/default.html
-         -s)
+IN_OPTIONS=(-t json)
+OUT_OPTIONS=(-f json --template templates/default.html -s)
 
-# Look for a date in the filename
+# If the filename contains a date, provide it to the output template
 if echo "$SOURCE" | grep -P "blog/\d{4}-\d{2}-\d{2}" > /dev/null
 then
     D=$(echo "$SOURCE" | grep -oP "blog/\d{4}-\d{2}-\d{2}" | grep -oP "\d{4}-\d{2}-\d{2}")
-    OPTIONS+=(-M date="$D")
+    OUT_OPTIONS+=(-M date="$D")
 fi
 
-# If we're writing to a file, tell pandoc
+# If we're writing to a file, tell pandoc so it can guess the format
 if [[ -n "$DEST" ]]
 then
-    OPTIONS+=(-o "$DEST")
+    OUT_OPTIONS+=(-o "$DEST")
 fi
 
 # If we're reading from a file, use it as pandoc's input, and provide the path
-# as a variable. This should always go at the end; add extra options above.
+# as a variable for the output template.
 if [[ -n "$SOURCE" ]]
 then
-    OPTIONS+=(-M path="$SOURCE")
-    OPTIONS+=("$SOURCE")
+    OUT_OPTIONS+=(-M path="$SOURCE")
+    IN_OPTIONS+=("$SOURCE") # This should go at the end; add extra options above
 fi
 
 # Capture programmatic input using cat, i.e. don't prompt the user if there's
@@ -36,8 +34,15 @@ else
     INPUT=$(cat)
 fi
 
-# Run pandoc, capturing any output for post-processing
-OUTPUT=$(echo "$INPUT" | pandoc "${OPTIONS[@]}")
+echo "Running pandoc, capturing output for post-processing" >> /dev/stderr
+
+# We don't use pandoc's --filter option, as it buffers stderr which makes
+# debugging harder
+OUTPUT=$(echo "$INPUT"             |
+         pandoc "${IN_OPTIONS[@]}" |
+         panpipe                   |
+         panhandle                 |
+         pandoc "${OUT_OPTIONS[@]}")
 
 # If output was written to $DEST, read it back. This allows pandoc to determine
 # the output format from the filename.
@@ -63,8 +68,10 @@ function writeOutput {
     # Send stdin to its final destination, either stdout or $DEST
     if [[ -n "$DEST" ]]
     then
+        echo "Finished postprocessing, writing to '$DEST'" >> /dev/stderr
         cat > "$DEST"
     else
+        echo "Finished postprocessing, writing to stdout" >> /dev/stderr
         cat
     fi
 }
@@ -87,16 +94,24 @@ function getPostprocessor {
 }
 
 function postprocess {
-    # First, strip left-over <pre> and <code> elements
-    TOPROCESS=$(./static/stripEmptyPreCode)
+    TOPROCESS=$(cat)
 
-    # Next, perform any custom post-processing
+    if echo "$TOPROCESS" | grep "<code></code>"
+    then
+        echo "Stripping left-over <pre> and <code> elements" >> /dev/stderr
+        STRIPPED=$(echo "$TOPROCESS" | ./static/stripEmptyPreCode)
+    else
+        STRIPPED="$TOPROCESS"
+    fi
+
+    # Next, perform any custom postprocessing
     PP=$(getInput | getPostprocessor)
     if [[ -n "$PP" ]]
     then
-        echo "$TOPROCESS" | "$PP"
+        echo "Running postprocessor '$PP'" >> /dev/stderr
+        echo "$STRIPPED" | "$PP"
     else
-        echo "$TOPROCESS"
+        echo "$STRIPPED"
     fi
 }
 
