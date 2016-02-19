@@ -6,14 +6,14 @@ title: Cantor Tuples
 
 <!-- I haven't figured out how to escape backticks in inline code yet -->
 
-```{pipe="tee replaceTicks > /dev/null"}
+```{.unwrap pipe="tee replaceTicks | root/static/null"}
 #!/usr/bin/env bash
 sed 's/TICK/`/g'
 ```
 
 <!-- Shorthand for appending code to our main Haskell file -->
 
-```{pipe="cat > code"}
+```{.unwrap pipe="cat | tee code | root/static/null"}
 #!/usr/bin/env bash
 tee -a     code.hs
 echo "" >> code.hs
@@ -23,44 +23,44 @@ echo "" >> code.hs
      ExistentialQuantification lets allTests be heterogeneous
   -->
 
-```{pipe="cat > haskell"}
+```{.unwrap pipe="cat | tee haskell | root/static/null"}
 #!/usr/bin/env bash
 nix-shell -E 'with import <nixpkgs> {}; runCommand "dummy" { buildInputs = [ (haskellPackages.ghcWithPackages (p: [p.QuickCheck p.ghc])) ]; } ""' --run "runhaskell -XExistentialQuantification"
 ```
 
-```{pipe="cat > run"}
+```{.unwrap pipe="cat | tee run | root/static/null"}
 #!/usr/bin/env bash
 code=$(cat)
 (cat code.hs; echo ""; echo "$code") | ./haskell
 
 ```
 
-```{pipe="cat > runMono"}
+```{.unwrap pipe="cat | tee runMono | root/static/null"}
 #!/usr/bin/env bash
 code=$(cat)
 (cat code.hs; echo ""; echo "$code") | ./root/static/procedural/monoCode | ./haskell
 ```
 
-```{pipe="cat > runGrey"}
+```{.unwrap pipe="cat | tee runGrey | root/static/null"}
 #!/usr/bin/env bash
 code=$(cat)
 (cat code.hs; echo ""; echo "$code") | ./root/static/procedural/greyCode | ./haskell
 ```
 
-```{pipe="cat > runRgb"}
+```{.unwrap pipe="cat | tee runRgb | root/static/null"}
 #!/usr/bin/env bash
 code=$(cat)
 (cat code.hs; echo ""; echo "$code") | ./root/static/procedural/colourCode | ./haskell
 ```
 
-```{pipe="bash > /dev/null"}
+```{.unwrap pipe="bash | root/static/null"}
 chmod +x code replaceTicks runGrey run runMono runRgb haskell
 ln -s ./root/static/procedural/Pic.hs Pic.hs
 ```
 
 <!-- Preamble -->
 
-```{pipe="./code > /dev/null"}
+```{.unwrap pipe="./code | root/static/null"}
 import           Prelude hiding (pi)
 import           Pic
 import           Data.List
@@ -93,7 +93,7 @@ The idea is very simple: we trace a curve back and forth across the space until 
  - `data Shape = Shape {sDim :: Dimensions, sRange :: Range, sPred :: Point -> Bool}`{.haskell pipe="./code"}
     - We define a `Shape`{.haskell} using a *predicate*, deciding whether a `Point`{.haskell} is in the `Shape`{.haskell} or not
 
-```{pipe="./code > /dev/null"}
+```{.unwrap pipe="./code | root/static/null"}
 cPx = [[x, y] | n <- [0..10], x <- [0..n], y <- [0..n], x + y == n]
 
 instance Show Shape where
@@ -117,7 +117,7 @@ aaShape (Shape d r p) = filter p (aaCurve r d)
 
 If we use this to trace a black-to-white gradient across a square image, we get this:
 
-```{pipe="./code > /dev/null"}
+```{.unwrap pipe="./code | root/static/null"}
 img    = Shape 2 dim (const True)
 
 white  = dim
@@ -135,7 +135,7 @@ aaGrad x y = let this   = DM.lookup [x, y] boxPixels
               in maybe (error "Out of range") id this
 ```
 
-```{pipe="./runGrey > aagrad.ppm"}
+```{.unwrap pipe="./runGrey | tee aagrad.ppm | root/static/null"}
 f = aaGrad
 ```
 
@@ -167,7 +167,7 @@ drawCircle x y = let this = DM.lookup [x, y] circlePixels
 
 ```
 
-```{pipe="./runGrey > circ.ppm"}
+```{.unwrap pipe="./runGrey | tee circ.ppm | root/static/null"}
 f = drawCircle
 ```
 
@@ -226,7 +226,7 @@ Obviously we can't draw the whole pattern, but we can draw a small section:
 drawBoard x y = sPred checkerboard [x, y]
 ```
 
-```{pipe="./runMono > board.ppm"}
+```{.unwrap pipe="./runMono | tee board.ppm | root/static/null"}
 f = drawBoard
 ```
 
@@ -267,7 +267,7 @@ cantorShape :: Shape -> Curve
 cantorShape (Shape d r p) = filter p (cantorCurve r d)
 ```
 
-```{pipe="./code > /dev/null"}
+```{.unwrap pipe="./code | root/static/null"}
 -- Sanity checks
 cantorNextIncrements =
   ("cantorNext [0, 0, .., 0, n+1] => [0, 0, .., 1, n]",
@@ -304,7 +304,7 @@ cantorNextLength =
 
 To see how this works, we can trace a black-to-white gradient across a square, following the curve given by `cantorCurve`{.haskell}. Compare it to the axis-aligned version above:
 
-```{.haskell pipe="./code > /dev/null"}
+```{.unwrap .haskell pipe="./code | root/static/null"}
 -- This works for 2D; higher dimensions are more complicated
 
 cantor2DTotal :: Int
@@ -330,7 +330,7 @@ cantorIndex2D [x, y] = sum [1..x + y + 1] + y
 cantorGrad x y = cantor2DPosToGrey (cantorIndex2D [x, y])
 ```
 
-```{pipe="./runGrey > cantorgrad.ppm"}
+```{.unwrap pipe="./runGrey | tee cantorgrad.ppm | root/static/null"}
 f = cantorGrad
 ```
 
@@ -344,7 +344,7 @@ We start in the top left corner and draw a *diagonal* line from the top edge to 
 
 Let's revisit our `circle`{.haskell}. If we trace a gradient across it using Cantor's method, we get the following:
 
-```{pipe="./code > /dev/null"}
+```{.unwrap pipe="./code | root/static/null"}
 cantorPixels = pixelsOf cantorShape
 
 circleCantorPixels = cantorPixels circle
@@ -353,7 +353,7 @@ cantorCircle x y = let this = DM.lookup [x, y] circleCantorPixels
                     in maybe 255 id this
 ```
 
-```{pipe="./runGrey > cantorcircle.ppm"}
+```{.unwrap pipe="./runGrey | tee cantorcircle.ppm | root/static/null"}
 f = cantorCircle
 ```
 
@@ -365,14 +365,14 @@ f = cantorCircle
 
 If we apply this to the checkerboard pattern, we're now guaranteed to reach any finite coordinate in finite time:
 
-```{pipe="./code > /dev/null"}
+```{.unwrap pipe="./code | root/static/null"}
 checkerboardCantorPixels = cantorPixels (Shape (sDim checkerboard) (dim) (sPred checkerboard))
 
 cantorCheckerboard x y = let this = DM.lookup [x, y] checkerboardCantorPixels
                           in maybe 255 id this
 ```
 
-```{pipe="./runGrey > cantorcheckerboard.ppm"}
+```{.unwrap pipe="./runGrey | tee cantorcheckerboard.ppm | root/static/null"}
 f = cantorCheckerboard
 ```
 
@@ -384,7 +384,7 @@ f = cantorCheckerboard
 
 The checkerboard example is unbounded on the right and bottom, but *does* have a bound on the top and the left. Cantor's method can exploit this to zig-zag across the pattern, but it doesn't *rely* on there being any bounds. Instead of zig-zagging, we can follow a *spiral*, starting from any point, and be guaranteed to eventually reach all points. For example, if we treat the checkerboard as unbounded in *all* directions:
 
-```{pipe="./code > /dev/null"}
+```{.unwrap pipe="./code | root/static/null"}
 allCheckerboardPixels =
   let c    = dim `div` 2
       quad = cantorCurve c (sDim checkerboard)
@@ -398,7 +398,7 @@ allCheckerboard x y = let this = DM.lookup [x, y] allCheckerboardPixels
                        in maybe 255 id this
 ```
 
-```{pipe="./runGrey > allcheckerboard.ppm"}
+```{.unwrap pipe="./runGrey | tee allcheckerboard.ppm | root/static/null"}
 f = allCheckerboard
 ```
 
@@ -446,7 +446,7 @@ rgbEmbedding x y = let this = DM.lookup [x, y] rgbPixels
 ```
 
 ```
-{pipe="./root/static/procedural/runRgb > rgb.ppm"}
+{pip.unwrap e="./root/static/procedural/runRgb | tee rgb.ppm | root/static/null"}
 f = rgbEmbedding
 ```
 
@@ -459,7 +459,7 @@ f = rgbEmbedding
 
 <!-- Tests -->
 
-```{pipe="./code > /dev/null"}
+```{.unwrap pipe="./code | root/static/null"}
 -- allTests can contain different types of tests, if they're wrapped in a T
 allTests = [cantorNextIncrements, cantorNextBumpsUp, cantorNextList,
             cantorNextMonotonic, cantorNextLength {-, rgbIncreasing -}]
@@ -470,11 +470,11 @@ runTests ((name, test):xs) = putStrLn ("Testing " ++ name) >>
                              runTests xs
 ```
 
-```{pipe="./run > results"}
+```{.unwrap pipe="./run | tee results | root/static/null"}
 main = runTests allTests
 ```
 
-```{pipe="bash >> /dev/stderr"}
+```{.unwrap pipe="bash | tee -a /dev/stderr | root/static/null"}
 if grep "FAIL" < results
 then
   cat results >> /dev/stderr

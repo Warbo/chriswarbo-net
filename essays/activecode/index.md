@@ -246,9 +246,9 @@ This is the standard, off-the-shelf way to embed code snippets in a document. Ho
 
 [PanPipe][panpipe] is a Pandoc [filter][walk] which walks the document tree looking for code blocks annotated with a `pipe` attribute, like this:
 
-`sh`{pipe="tee pipe > /dev/null"}
+`sh`{.unwrap pipe="tee pipe | root/static/null"}
 
-`echo "Hello world!"`{pipe="tee body > /dev/null"}
+`echo "Hello world!"`{.unwrap pipe="tee body | root/static/null"}
 
 ````{.markdown pipe="sh | tee pp.md"}
 echo -n '```{pipe="'
@@ -277,7 +277,7 @@ pandoc -t json --filter panpipe pp.md
 
 We can turn any Pandoc-supported format into Pandoc JSON by piping it through `pandoc -t json`{.bash pipe="tee json.sh"}
 
-```{pipe="sh > /dev/null"}
+```{.unwrap pipe="sh | root/static/null"}
 chmod +x json.sh
 ```
 
@@ -304,9 +304,14 @@ echo '```'
 
 When we send our document through `pandoc --filter panhandle`{.bash}, the table will be spliced into the document, like this:
 
+<div class="summarise">
+  <span class="summary"></span>
+
 ```{.unwrap pipe="sh | pandoc -t json"}
 cat bool2.md
 ```
+
+</div>
 
 ## Examples ##
 
@@ -355,15 +360,15 @@ This works well for HTML, and results in:
 cat hide.md
 ````
 
-```{pipe="cat > dash"}
+```{.unwrap pipe="cat | tee dash | root/static/null"}
 echo -n '`'
 cat
 echo -n '`'
 ```
 
-`chmod +x dash`{pipe="sh > /dev/null"}
+`chmod +x dash`{.unwrap pipe="sh | root/static/null"}
 
-```{pipe="sh > inline_hidden"}
+```{.unwrap pipe="sh | tee inline_hidden | root/static/null"}
 echo 'ls /' | ./dash
 echo '{pipe="sh > /dev/null"}'
 ```
@@ -376,7 +381,7 @@ To eliminate the code block takes a little more effort, but might be necessary i
 
 Remember that `panhandle` accepts JSON, which we can generate using `pandoc`:
 
-````{pipe="cat > blanker"}
+````{.unwrap pipe="cat | tee blanker | root/static/null"}
 ```{.unwrap pipe="sh | echo '' | pandoc -t json"}
 ls /
 ```
@@ -398,7 +403,7 @@ If you're targetting a specific output format, you can use techniques specific t
 
 For example, if you're rendering to HTML, you can hide code blocks with CSS:
 
-````{pipe="cat > hideCss"}
+````{.unwrap pipe="cat | tee hideCss | root/static/null"}
 ```{pipe="sh" style="display: none;"}
 ls /
 ```

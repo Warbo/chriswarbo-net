@@ -3,7 +3,7 @@ title: Try Plumb
 ---
 [Plumb](/essays/plumb) has a Javascript implementation, so we can try it right in the browser (as long as it supports Javascript!)
 
-```{pipe="sh > /dev/null"}
+```{.unwrap pipe="sh | root/static/null"}
 # Check out JS Plumb to js/
 mkdir -p root/rendered/js
 cd root/rendered/js

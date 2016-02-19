@@ -11,7 +11,7 @@ NOTE: This page is [active code](/essays/activecode/), so check out the "view
 source" link at the bottom of the page if you want to follow along with the
 examples!
 
-```{pipe="cat > runWithPkgs.sh"}
+```{.unwrap pipe="tee runWithPkgs.sh | root/static/null"}
 #!/bin/sh
 
 # Separate all arguments with spaces

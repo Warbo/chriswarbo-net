@@ -7,6 +7,11 @@ title: Using Plumb
 
 Plumb exists to make function definition easy: just use [square brackets]. Functions will return their argument by default, so an empty pair of brackets is an [identity function](http://en.wikipedia.org/wiki/Identity_function): `[]`{.python}
 
+<div class="summarise">
+ <span class="summary">
+  Plumb function declarations embedded in various languages
+ </span>
+
 +-------------------------------------------------------+------------+
 | ```php                                                |            |
 | <?                                                    |            |
@@ -30,9 +35,16 @@ Plumb exists to make function definition easy: just use [square brackets]. Funct
 | ```                                                   |            |
 +-------------------------------------------------------+------------+
 
+</div>
+
 ## Returning Values ##
 
 To return a value explicitly, just write it inside the brackets. Plumb will try interpreting the expression according to the rules on this page; if it fails, the host language's semantics will be used. This makes it trivial to write [thunks](http://en.wikipedia.org/wiki/Thunk#Functional_programming):
+
+<div class="summarise">
+ <span class="summary">
+  Returning values from Plumb functions, embedded in various languages.
+ </span>
 
 +------------------------------------------------+----------------+
 | ```javascript                                  |                |
@@ -52,6 +64,8 @@ To return a value explicitly, just write it inside the brackets. Plumb will try 
 | ```                                            |                |
 +------------------------------------------------+----------------+
 
+</div>
+
 ## Function Arguments ##
 
 Every Plumb function takes a single argument. Multi-argument functions can be simulated using [currying](http://en.wikipedia.org/wiki/Currying).
@@ -68,6 +82,11 @@ This naming scheme is known as [de Bruijn indexing](http://en.wikipedia.org/wiki
 If there is no argument at a given position, for example `plumb([1])`{.python}, the resulting function will cause a (host-specific) error.
 
 Notice that `[0]`{.python} is an identity function, just like `[]`{.python}.
+
+<div class="summarise">
+ <span class="summary">
+  Accepting arguments to Plumb functions, embedded in multiple languages.
+ </span>
 
 +------------------------------+----------------+
 | ```php                       |                |
@@ -97,9 +116,16 @@ Notice that `[0]`{.python} is an identity function, just like `[]`{.python}.
 | ```                          |                |
 +------------------------------+----------------+
 
+</div>
+
 ## Calling Functions ##
 
 We can call a function using the infix "`,`{.python}" operator, with the function on the left and the argument on the right. This makes it easy to delay function calls, the second half of laziness:
+
+<div class="summarise">
+ <span class="summary">
+  Function calls in Plumb, embedded in multiple languages.
+ </span>
 
 +-------------------------------------+------------+
 | ```php                              |            |
@@ -131,6 +157,11 @@ Is equivalent to:
 ((0 , 1) , 2) , 3
 ```
 
+<div class="summarise">
+ <span class="summary">
+  Simulating multi-argument functions in Plumb, embedded in multiple languages.
+ </span>
+
 +----------------------------------------+------------+
 | ```php                                 |            |
 | <?                                     |            |
@@ -146,6 +177,8 @@ Is equivalent to:
 | ```                                    |            |
 +----------------------------------------+------------+
 
+</div>
+
 ## Grouping Syntax ##
 
 Chained commas cannot implement right-associative nesting patterns, like:
@@ -155,6 +188,11 @@ Chained commas cannot implement right-associative nesting patterns, like:
 ```
 
 To define these, Plumb provides *grouping syntax*, which is equivalent to writing the parentheses above. We use the name "grouping syntax" since some host languages don't allow us to use parentheses in this way. For example, the PHP implementation uses `<? __(`{.php} instead of an opening parenthesis.
+
+<div class="summarise">
+ <span class="summary">
+  Grouping/associativity, embedded in multiple languages.
+ </span>
 
 +----------------------------------------+------------+
 | ```php                                 |            |
@@ -174,6 +212,8 @@ To define these, Plumb provides *grouping syntax*, which is equivalent to writin
 | compose = plumb([[[2 , (1 , 0)]]])     |            |
 | ```                                    |            |
 +----------------------------------------+------------+
+
+</div>
 
 ## That's It! ##
 
