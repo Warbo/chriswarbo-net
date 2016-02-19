@@ -5,10 +5,29 @@ function fail {
     exit 1
 }
 
-CLEANED=$(echo -e "<div class='summarise'><span class='summary'>sum</span><table></table></div>" | ./static/cleanup)
+function inputs {
+    # One per line
+    cat <<'EOF'
+<div class='summarise'><span class='summary'>sum</span><table></table></div>
+<div class='summarise'><p><span class='summary'>sum</span></p><table></table></div>
+EOF
+}
 
-echo "$CLEANED" | grep '<span' > /dev/null &&
-    fail "Didn't strip span: $CLEANED"
+while read -r INPUT
+do
+    # Skip empty
+    [[ -n "$INPUT" ]] || continue
 
-echo "$CLEANED" | grep 'summary=.sum.' > /dev/null ||
-    fail "Didn't have summary: $CLEANED"
+    CLEANED=$(echo "$INPUT" | ./static/cleanup)
+
+    echo "$CLEANED" | grep '<span' > /dev/null &&
+        fail "Didn't strip span: $CLEANED"
+
+    echo "$CLEANED" | grep 'summary=.sum.' > /dev/null ||
+        fail "Didn't have summary: $CLEANED"
+
+    echo "$CLEANED" | grep '<p' > /dev/null &&
+        fail "Didn't remove parent <p>"
+done < <(inputs)
+
+echo "Success" >> /dev/stderr

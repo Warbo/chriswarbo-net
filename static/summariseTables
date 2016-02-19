@@ -12,12 +12,14 @@ for summarise in doc.find_all(class_='summarise'):
             lambda ttl, txt: ttl + txt,
             summary.strings,
             "").strip()
-        summary.extract()
-        remove = True
+        highest = summary
+        drop = True
         for parent in summary.parents:
-            if parent == summarise:
-                remove = False
-            if remove:
-                parent.extract()
+            if drop:
+                if parent == summarise:
+                    drop = False
+                else:
+                    highest = parent
+        highest.extract()
 
 print(doc)

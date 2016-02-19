@@ -94,24 +94,16 @@ function getPostprocessor {
 }
 
 function postprocess {
-    TOPROCESS=$(cat)
-
-    if echo "$TOPROCESS" | grep "<code></code>"
-    then
-        echo "Stripping left-over <pre> and <code> elements" >> /dev/stderr
-        STRIPPED=$(echo "$TOPROCESS" | ./static/stripEmptyPreCode)
-    else
-        STRIPPED="$TOPROCESS"
-    fi
+    CLEANED=$(./static/cleanup)
 
     # Next, perform any custom postprocessing
     PP=$(getInput | getPostprocessor)
     if [[ -n "$PP" ]]
     then
         echo "Running postprocessor '$PP'" >> /dev/stderr
-        echo "$STRIPPED" | "$PP"
+        echo "$CLEANED" | "$PP"
     else
-        echo "$STRIPPED"
+        echo "$CLEANED"
     fi
 }
 
