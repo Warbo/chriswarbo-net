@@ -10,7 +10,7 @@ In this example, like with a standard random walk, the fitness of a particular l
 Each (x, y) point in the square is a solution, and our goal is to find the best (lightest). We start in the centre and move a set distance at a random angle at each step. If we've been there before (actually, we round to the nearest pixel to avoid arbitrarily-close fractions) then we discard the move and choose a different random angle. Like the standard random walk, I've made the edges wrap around. Note that if you choose a step size of 1 then the trails won't be removed like they were for the random walk. This allows the visited areas to be seen (we couldn't do this for larger step sizes, as it's only the end points that are chosen, not the line in-between). Moving the slider down to remove a search, then up to add it again will reset it's list of visited locations to zero.
 
 <div id="avoid_playfield" style="width: 500px; height: 500px;"></div>
-<form action="#" type="get">
+<form action="#" method="get">
 <div>
   <input type="range" name="_" id="avoid_step" min="1" max="10" value="2" style="width: 500px;" />
   <label for="avoid_step">Step size:</label>&nbsp;&nbsp;<a href="#" id="avoid_step_display"></a>

@@ -8,9 +8,9 @@ In this example, like with the other random walks, the fitness of a particular l
 Each (x, y) point in the square is a solution, and our goal is to find the best (lightest). We start in the centre and move a set distance at a random angle at each step. Like the enumeration method, I've made the edges wrap around. There's no need for a trick like using irrational angles this time, since we're not imposing an order on the search space. This is an advantage of algorithms based on random walks, since they can be dumped on to any problem without any messing around like  craft an exhaustive enumeration.
 
 <div id="hill_playfield" style="width: 500px; height: 500px;"></div>
-<form action="#" type="get">
+<form action="#" method="get">
 <div>
-  <span>Current fitness:</label>&nbsp;&nbsp;<a href="#" id="hill_fitness_display"></a>
+  <span>Current fitness:</span>&nbsp;&nbsp;<a href="#" id="hill_fitness_display"></a>
 </div>
 <div>
   <input type="range" name="_" id="hill_step" min="1" max="10" value="2" style="width: 500px;" />

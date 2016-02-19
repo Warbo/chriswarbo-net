@@ -28,19 +28,21 @@ We read out the coordinates by taking the first 18 bits of memory, and assigning
 Levin Search will always find a solution if one exists, since it will eventually evaluate any solution for any number of steps. The first solution found will be the "simplest" according to Levin's complexity measure, which in our case is the length of the solution plus the logarithm of the number of steps it takes to reach the desired result. Note that this is simply the current 'phase' (outer loop).
 
 <div id="levin_playfield" style="width: 512px; height: 512px;"></div>
-<form action="#" type="get">
-<div>
+<form action="#" method="get">
+ <div>
   Best fitness so far: <a href="#" id="levin_fitness_display"></a>
-</div>
-<div>
+ </div>
+ <div>
   Fittest program: <a href="#" id="levin_winner"></a>
-</div>
-<div>
+ </div>
+ <div>
   Current phase: <a href="#" id="levin_phase">0</a>
-</div>
-<div>
+ </div>
+ <div>
   Current machine size: <a href="#" id="levin_m">1</a>
-</div>
+ </div>
+</form>
+
 <script src="/js/jquery.js"></script>
 <script src="/js/jquery_svg.js"></script>
 <script src="/js/underscore.js"></script>

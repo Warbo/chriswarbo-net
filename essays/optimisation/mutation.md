@@ -12,7 +12,7 @@ In a genetic algorithm, these ideas are implemented literally in the code: full 
 In the genetic algorithm on this page, I've only included random genetic mutation; this makes a crude model of asexual reproduction, where offspring are imperfect copies of a single parent. To start the simulation, click on the playfield (the box showing the greyscale fitness function).
 
 <div id="mutate_playfield" style="width: 500px; height: 500px;"></div>
-<form action="#" type="get">
+<form action="#" method="get">
  <div>
   <input type="range" min="1" max="100" value="20" id="mutate_population" style="width: 500px;" />
   <label for="mutate_population">Population:&nbsp;</label><a href="#" id="mutate_population_display"></a>

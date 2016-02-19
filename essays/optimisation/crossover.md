@@ -12,7 +12,7 @@ In a genetic algorithm, these ideas are implemented literally in the code: full 
 In the genetic algorithm on this page, I've only included "crossover", which is the random combination of 2 parents into a pair of children, making a crude model of sexual reproduction. To start the simulation, click on the playfield (the box showing the greyscale fitness function).
 
 <div id="crossover_playfield" style="width: 500px; height: 500px;"></div>
-<form action="#" type="get">
+<form action="#" method="get">
  <div>
   <input type="range" min="1" max="100" value="20" id="crossover_population" style="width: 500px;" />
   <label for="crossover_population">Population:&nbsp;</label><a href="#" id="crossover_population_display"></a>

@@ -8,7 +8,7 @@ In this example, like with the other random walks, the fitness of a particular l
 Each (x, y) point in the square is a solution, and our goal is to find the best (lightest). We start at a random location (otherwise multiple searches would be too similar to be interesting) and we move a random (Pareto-distributed) distance at a random angle at each step. If the new location has a lower fitness than our current location, we don't bother moving; otherwise we finish the move to the new location. Like the standard Levy flight example, the edges wrap around an arbitrary number of times.
 
 <div id="levyhill_playfield" style="width: 500px; height: 500px;"></div>
-<form action="#" type="get">
+<form action="#" method="get">
 <div>
   <span>Current fitness:</label>&nbsp;&nbsp;<a href="#" id="levyhill_fitness_display"></a>
 </div>
