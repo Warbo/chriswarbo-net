@@ -2,7 +2,7 @@
 title: Lazy Lambda Calculus
 ---
 
-```{pipe="tee -a 1.hs | root/static/null"}
+```{.unwrap pipe="tee -a 1.hs | root/static/null"}
 import Test.SmallCheck
 
 ```
@@ -72,8 +72,6 @@ eval = eval' []
 To see why this is incorrect, we can use [SmallCheck] [6]. Let's check the property that closed terms (ie. those with no free variables) remain closed after evaluation:
 
 [6]: http://hackage.haskell.org/package/smallcheck
-
-```{pipe="tee -a 1.hs | root/static/null"}```
 
 ```haskell
 -- Predicate to see if a Term has fewer than n free variables

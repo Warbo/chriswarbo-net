@@ -9,7 +9,7 @@ The definition of 'improve' used by PowerPlay is to keep a list of regression te
 
 Maybe a flow chart will explain better:
 
-```{pipe="cat > chart1.dit"}
+```{.unwrap pipe="tee chart1.dit | root/static/null"}
 +-----------------------------+
 | Set solver to Constant fail |
 | Set tests  to Empty         |
@@ -53,7 +53,7 @@ As I talked about in my previous post, this is a rather unsatisfactory notion of
 
 Instead, we can abandon the list and make one all-encompassing regression test: S2 is only an improvement over S1 if every problem solvable by S1 is also solvable by S2 (plus there's a problem solvable by S2 but not S1, as before). Here's the corresponding flow chart:
 
-```{pipe="cat > chart2.dit"}
+```{.unwrap pipe="tee chart2.dit | root/static/null"}
 +-----------------------------+
 | Set solver to Constant fail |
 +-----------------------------+
