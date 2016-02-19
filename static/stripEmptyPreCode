@@ -10,8 +10,8 @@ doc   = BeautifulSoup(stdin, 'html.parser')
 
 def remove_if_empty(tag):
     def f(e):
-        if e.string is None:
-            sys.stderr.write('Removing empty <' + tag + '> element\n')
+        if repr(e) == '<' + tag + '></' + tag + '>':
+            sys.stderr.write('Removing empty element "' + repr(e) + '"\n')
             e.extract()
     return f
 
