@@ -12,6 +12,7 @@ for summarise in doc.find_all(class_='summarise'):
             lambda ttl, txt: ttl + txt,
             summary.strings,
             "").strip()
+        summary.extract()
         remove = True
         for parent in summary.parents:
             if parent == summarise:
