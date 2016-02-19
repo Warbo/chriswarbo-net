@@ -50,7 +50,7 @@ function renderTime {
 }
 
 function renderLink {
-    BASE="http://chriswarbo.net"
+    BASE="" # "http://chriswarbo.net"
     TITLE=$(getTitle "$1")
     URL=$(getUrl "$1")
     printf '<a class="p-name u-url" href="%s/%s">%s</a>' "$BASE" "$URL" "$TITLE"
