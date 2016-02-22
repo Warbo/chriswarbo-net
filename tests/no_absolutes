@@ -4,7 +4,10 @@
 # use relative links, rather than absolute links to chriswarbo.net
 
 function get_urls() {
-    PRED="[not(contains(@class, 'author')) and not(contains(@rel, 'author'))]"
+    P1="not(contains(@class, 'author'))"
+    P2="not(contains(@rel,   'author'))"
+    P3="not(contains(@rel,   'me'))"
+    PRED="[$P1 and $P2 and $P3]"
     xidel - -q --extract "//*$PRED/@href" < "$1"
     xidel - -q --extract "//*$PRED/@src"  < "$1"
 }

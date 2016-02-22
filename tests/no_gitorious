@@ -1,8 +1,29 @@
 #! /usr/bin/env bash
 
+function findLinks {
+    FOUND=1
+    while read -r LINE
+    do
+        [[ -n "$LINE" ]] || continue
+        echo "Found link '$LINE'" >> /dev/stderr
+        FOUND=0
+    done < <(grep -r "$1" rendered/ | skip)
+    return "$FOUND"
+}
+
+function skip {
+    grep -v "essays/repos/"
+}
+
+function gitorious {
+    findLinks "gitorious.org/"
+}
+
+function freewebs {
+    findLinks "freewebs.com/chriswarbo"
+}
+
 ERR=0
-
-grep -r "gitorious.org/"          rendered/ && ERR=1
-grep -r "freewebs.com/chriswarbo" rendered/
-
+gitorious && ERR=1
+freewebs  && ERR=1
 exit "$ERR"

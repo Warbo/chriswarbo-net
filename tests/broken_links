@@ -3,5 +3,6 @@
 linkchecker --no-status                   \
             --ignore-url=.xml             \
             --ignore-url=/git             \
+            --ignore-url=/essays/repos    \
             --config=static/linkcheckerrc \
             rendered/index.html
