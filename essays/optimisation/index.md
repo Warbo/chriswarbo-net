@@ -10,7 +10,6 @@ Optimisation is the problem of finding the 'best' solution to a problem as quick
 - [Levy Flight](levy.html)
 - [Hill-climbing](hillclimbing.html)
 - [Hill-climbing Levy Flight](levyclimbing.html)
-- [Harmony Search](harmony.html)
 - [Levin Search](levin.html)
 - [Genetic Algorithm with Mutation](mutation.html)
 - [Genetic Algorithm with Crossover](crossover.html)
