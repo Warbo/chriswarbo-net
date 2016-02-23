@@ -224,7 +224,7 @@ format s x = concat ["Arity of '", s, "' is ", show (intArity x)]
 
 Now, at last, we can get the arity of values:
 
-```{.unwrap pipe="sh | root/static/null"}
+```{pipe="sh > /dev/null"}
 cp typefamily.hs typefamily2.hs
 cp typefamily.hs typefamily3.hs
 ```
@@ -273,7 +273,7 @@ main = mapM_ putStrLn [
 runhaskell -XTypeFamilies -XFlexibleContexts < typefamily3.hs
 ```
 
-```{.unwrap pipe="sh | root/static/null"}
+```{pipe="sh > /dev/null"}
 # Try compiling/type-checking every Haskell file
 for FILE in *.hs
 do

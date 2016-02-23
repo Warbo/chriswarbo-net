@@ -14,7 +14,7 @@ title: Z Curve
 }
 </style>
 
-```{.unwrap pipe="sh | root/static/null"}
+```{pipe="sh > /dev/null"}
 ln -s ./root/static/procedural/Pic.hs Pic.hs
 ```
 

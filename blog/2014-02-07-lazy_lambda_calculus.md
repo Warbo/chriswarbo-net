@@ -2,7 +2,7 @@
 title: Lazy Lambda Calculus
 ---
 
-```{.unwrap pipe="tee -a 1.hs | root/static/null"}
+```{pipe="cat >> 1.hs"}
 import Test.SmallCheck
 
 ```
