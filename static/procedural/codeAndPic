@@ -4,7 +4,8 @@ CODE=$(cat)
 DIR=$(dirname "$0")
 echo "$CODE" | "$DIR/$2Code" > "$1.hs"
 runhaskell -i"$DIR" "$1.hs" > "$1.ppm"
-echo "$CODE" | "$DIR/../wrapCode.sh" .haskell >> "$1.md"
-echo "" >> "$1.md"
-"$DIR/includePic" "$1" | "$DIR/../wrapCode.sh" .unwrap >> "$1.md"
+{ echo "$CODE" | "$DIR/../wrapCode.sh" .haskell
+  echo ""
+  "$DIR/includePic" "$1" | "$DIR/../wrapCode.sh" .unwrap
+} >> "$1.md"
 pandoc -t json < "$1.md"

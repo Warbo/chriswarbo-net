@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Takes a git repo as an argument, spits out some stats and a README
 

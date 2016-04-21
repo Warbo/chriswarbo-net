@@ -1,3 +1,6 @@
 #!/usr/bin/env bash
-cd rendered
+cd rendered || {
+    echo "Couldn't cd to rendered" >> /dev/stderr
+    exit 1
+}
 nix-shell -p python --run "python -m SimpleHTTPServer 8000"
