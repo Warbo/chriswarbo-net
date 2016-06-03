@@ -56,7 +56,7 @@ rec {
 }
 ```
 
-Hopefully the `if`/`then`/`else` syntax is intuitive enough (note that there's no `endif`/`fi`/`{}`/etc.), and `let`/`in` is straightforward (mutually recursive definitions are allowed, and each definition ends with `;`). The `list: foo` syntax denotes a function, taking a single argument called `list` and returning the expression `foo` (which may contain references to `list`). Juxtaposition, like `head list` and `drop 1 list`, applies a function to an argument; precedence is controlled using parentheses and all functions are curried. The `unique = foo;` syntax just binds this function to the name `unique`, as if it were in a `let` block (or, if you prefer, if it were defining a field of a JSON object `{"unique": ....}`).
+Hopefully the `if`/`then`/`else` syntax is intuitive enough (note that there's no `endif`/`fi`/`{}`/etc.), and `let`/`in` is straightforward (mutually recursive definitions are allowed, and each definition ends with `;`). `foo.bar` looks up the name `bar` in the set `foo`. The `list: foo` syntax denotes a function, taking a single argument called `list` and returning the expression `foo` (which may contain references to `list`). Juxtaposition, like `lib.head list` and `lib.drop 1 list`, applies functions to arguments; precedence is controlled using parentheses and all functions are curried. The `unique = foo;` syntax just binds this function to the name `unique`, as if it were in a `let` block (or, if you prefer, if it were defining a field of a JSON object `{"unique": ....}`).
 
 Hopefully the operator notation (`==`, `++`, etc.) and list notation (`[` and `]`) are familiar enough from other languages. Note that list elements are separated by spaces, as in Lisp; hence `[foo, bar]` is a syntax error, `[foo bar]` is a two-element list containing `foo` and `bar`, whilst `[(foo bar)]` is a one-element list containing the result of applying `foo` to `bar`.
 
@@ -64,7 +64,7 @@ Now that we've had a crash-course in Nix, we can dig into this function and disc
 
 ## The Problem
 
-The first reason why `unique` might appear on your radar is if you want to deduplicate a long list. For example, if we dedupe a list of list of numbers between `1` and `10000` we'd expect to get back the same list unchanged (I'm actually returning its length, to avoid spewing 9999 numbers into the page if it works!):
+The first reason why `unique` might appear on your radar is if you want to deduplicate a long list. For example, if we dedupe a list of list of numbers between `1` and `10000` we'd expect to get back the same list unchanged (I'm actually returning its length, to avoid spewing 10,000 numbers into the page if it works!):
 
 ```{pipe="tee big_list.nix"}
 with import <nixpkgs> {};
@@ -103,9 +103,9 @@ noneTailCall = c: 3 * (foo c);
 Concepts like "the last thing we do" are a little tricky in [lazily evaluated](https://en.wikipedia.org/wiki/Lazy_evaluation) languages like Nix, but it's clear that the recursive call in `unique` is not a tail-call, since we perform some extra steps on the result:
 
 ```
-let x  = head list;
-    xs = unique (drop 1 list);
- in [x] ++ remove x xs;
+let x  =         lib.head   list;
+    xs = unique (lib.drop 1 list);
+ in [x] ++ lib.remove x xs;
 ```
 
 The usual way to talk about tail-recursion involves [call stacks](https://en.wikipedia.org/wiki/Call_stack) (indeed, that explains why we got a stack overflow!), but I think it's clearer to demonstrate our problem by evaluating our code using [term rewriting](https://en.wikipedia.org/wiki/Rewriting) instead of stacks.
@@ -113,8 +113,8 @@ The usual way to talk about tail-recursion involves [call stacks](https://en.wik
 Since the variable `xs` only appears once in the above `let` expression, we can inline it to see more clearly that the call to `unique` is not in tail position:
 
 ```
-let x = head list;
- in [x] ++ remove x (unique (drop 1 list));
+let x = lib.head list;
+ in [x] ++ lib.remove x (unique (lib.drop 1 list));
 ```
 
 We can see the effect of this if we consider our original code example: the list `[ "x" "x" "y" "z" "y" ]`. To distinguish between the elements, I'll use the following variable names:
@@ -128,7 +128,7 @@ myList = let x1 = "x";
           in [ x1 x2 y1 z1 y2 ];
 ```
 
-Let's pass this to `unique` and using term rewriting to trace the execution. For clarity, I won't include the above `let` expression (these lines are long enough as it is!), and I'll assume our lists are [singly-linked](https://en.wikipedia.org/wiki/Linked_list#Singly_linked_lists) and hence that `head` and `drop 1` are O(1) operations which can be performed as part of the inlining.
+Let's pass this to `unique` and use term rewriting to trace the execution. For clarity, I won't include the above `let` expression (these lines are long enough as it is!), I'll drop the `lib.` prefix and I'll assume our lists are [singly-linked](https://en.wikipedia.org/wiki/Linked_list#Singly_linked_lists) and hence that `head` and `drop 1` are O(1) operations which can be performed as part of the inlining.
 
 Each line is a rewrite of the previous, with a '#' comment on the right-hand-side to explain what's been rewritten; I've tried to align common elements between the lines:
 
@@ -202,7 +202,7 @@ Still, whilst these transformations give us a bit more insight into the algorith
 
 ## Becoming Tail-Recursive
 
-The usual fix to make a recursive algorithm tail-recursive is to give it an extra argument (usually called an *accumulator*), and perform our extra processing steps to that instead of the return value. Here's a version of `unique` which uses a helper function `uniq`, which uses an accumulator; the `unique` function itself just provides the original, accumulator-less interface:
+The usual fix to make a recursive algorithm tail-recursive is to give it an extra argument (usually called an *accumulator*), and perform our extra processing steps to that instead of the return value. Here's a version of `unique` which uses an accumulator; we've put the real implementation in the `uniq` helper function, which is used by `unique` to provide the original interface:
 
 ```{pipe="tee unique_acc.nix"}
 with import <nixpkgs> {};
@@ -216,7 +216,48 @@ let uniq = acc: list:
  in rec { unique = uniq []; }
 ```
 
-Let's try this on our original list-length
+Let's compare the performance of this version with the original:
+
+```{pipe="cat > time.sh"}
+#!/usr/bin/env bash
+
+set -e
+
+function mkExpr {
+  echo "with import <nixpkgs> {}; builtins.length ($1 (lib.range 1 $2))"
+}
+
+function timeExpr {
+  time nix-instantiate --eval -E "$(mkExpr "$1" "$2")"
+}
+
+function timeOriginal {
+  timeExpr lib.unique "$1"
+}
+
+function timeAcc {
+  timeExpr "(import unique_acc.nix).unique" "$1"
+}
+
+I=1
+while [[ "$I" -lt 100 ]]
+do
+  echo "Timing original with $I" 1>&2
+  OUTPUT=$(timeOriginal "$I")
+  [[ "$OUTPUT" -eq "$I" ]] || {
+    echo "Should have got '$I', instead got '$OUTPUT'" 1>&2
+  }
+
+  OUTPUT=$(timeAcc "$I") 1>&2
+  [[ "$OUTPUT" -eq "$I" ]] || {
+    echo "Should have got '$I', instead got '$OUTPUT'" 1>&2
+  }
+
+  I=$(( I * 2 ))
+done
+```
+
+try this on our original list-length
 
 ```{pipe="tee acc_test.nix"}
 with import <nixpkgs> {};
@@ -233,4 +274,36 @@ then
 fi
 ```
 
-Oops! Looks like that's not done the job.
+Oops! Looks like that's not done the job. In this case, the culprit is probably lazy evaluation: we've managed to 'unstick' our computations, but they still won't be performed until the result is forced. We can work around this using `seq`: the expression `seq foo bar` will force `foo` and return the expression `bar`; we can use this to force the computations on our accumulator at each step:
+
+```{pipe="tee unique_seq.nix"}
+with import <nixpkgs> {};
+with builtins;
+
+let uniq = acc: list:
+      if list == []
+         then acc
+         else let x = lib.head list;
+               in uniq (seq acc ([x] ++ lib.remove x acc)) (lib.drop 1 list);
+
+ in rec { unique = uniq []; }
+```
+
+```{pipe="cat > seq_test.nix"}
+with import <nixpkgs> {};
+with builtins;
+
+length ((import ./unique_seq.nix).unique (lib.range 1 10000))
+```
+
+```{.odd pipe="sh"}
+if nix-instantiate --show-trace --eval seq_test.nix 2>&1
+then
+  true
+else
+  echo "seq_test should work!" 1>&2
+  exit 1
+fi
+```
+
+Success!
