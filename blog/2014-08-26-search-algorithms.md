@@ -1,7 +1,7 @@
 ---
 title: Search Algorithms (again!)
 ---
-I've been moving the content from my old ocPortal site over to Hakyll, starting with my blog posts. These are all transferred, so now I've moved on to the pages in my Wiki, the most interesting of which are the [Javascript search algorithms](/essays/optimisation).
+I've been moving the content from my old ocPortal site over to Hakyll, starting with my blog posts. These are all transferred, so now I've moved on to the pages in my Wiki, the most interesting of which are the [Javascript search algorithms](/essays/optimisation/index.html).
 
 These are now living in my ["essays"](/essays.html) section. In the process I've made some of them a bit easier to use:
 

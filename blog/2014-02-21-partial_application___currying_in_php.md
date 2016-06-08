@@ -9,7 +9,7 @@ It's been a while since I wrote about [currying] [1] in [Javascript] [2] and I'v
 [2]: /blog/2012-10-01-better_currying_in_javascript.html
 
 ```javascript
-var my_func = curry(function(x, y) { return $x + y; });
+var my_func = curry(function(x, y) { return x + y; });
 ```
 
 In PHP I would have to do this:
@@ -59,7 +59,7 @@ The problem with this approach is that we're clobbering the contents of `<? $val
 
 The root cause of our problems is that we're trying to calculate a value, ie. an *expression*, but we're using *statements* to do it. Statements are PHP's way of sequencing side-effects (eg. variable assignment), but we should be keeping side-effects to a minimum if we want our code to be easy to understand and reusable.
 
-We can easily turn a loop statement into an expression by asking what it is the loop is doing. In this case, we're using the loop to turn a collection of values (`<? $functions`{.php}) into a single value (the result of sending `<? $val`{.php} through them). This is known as a *fold* or a *reduction*, so we can use PHP's [array_reduce] [3] function:
+We can easily turn a loop statement into an expression by asking what it is the loop is doing. In this case, we're using the loop to turn a collection of values (`<? $functions`{.php}) into a single value (the result of sending `<? $val`{.php} through them). This is known as a *fold* or a *reduction*, so we can use PHP's [`array_reduce`] [3] function:
 
 [3]: http://uk1.php.net/array_reduce
 
@@ -125,9 +125,9 @@ $flip4 = function($f) {
 // etc.
 ```
 
-If turns out that our definition of `<? $flip1`{.php} coincides exactly with the way array_reduce handles its arguments, but the other `<? $flip`{.php}N functions don't. However, there's nothing *inherently* wrong with any of the `<? $flip`{.php}N functions, they may be perfectly appropriate in different circumstances.
+If turns out that our definition of `<? $flip1`{.php} coincides exactly with the way `array_reduce` handles its arguments, but the other `<? $flip`{.php}N functions don't. However, there's nothing *inherently* wrong with any of the `<? $flip`{.php}N functions, they may be perfectly appropriate in different circumstances.
 
-So, should we keep all of them just in case? Well if we do, we will need to consider *even more* cases: notice that in all of the definitions above we are getting our result by calling `<? $f($y, $x)`{.php}, but what if $f doesn't take both of its arguments at once? That may sound unlikely, but notice that it's exactly what some of our `<? $flip`{.php}N functions do! For example:
+So, should we keep all of them just in case? Well if we do, we will need to consider *even more* cases: notice that in all of the definitions above we are getting our result by calling `<? $f($y, $x)`{.php}, but what if `<? $f`{.php} doesn't take both of its arguments at once? That may sound unlikely, but notice that it's exactly what some of our `<? $flip`{.php}N functions do! For example:
 
 ```php
 <?
@@ -164,7 +164,7 @@ class Closure#9 (2) {
 }
 ```
 
-This is the inner function of `<? $flip4`{.php}. Since we passed *both* arguments to `<? $flip4('array_map')`{.php} at the same time, they were *both* given to the inner function `<? function($x) use ($f) { ... }`{.php}, ie. the first argument was kept but the second was ignored.
+This is the inner function of `<? $flip4`{.php}. Since we passed *both* arguments to `<? $flip4('array_map')`{.php} at the same time, they were *both* given to the inner function `<? function($x) use ($f) { ... }`{.php}, ie. the first argument was kept (and bound to `<? $x`{.php}) but the second was silently ignored.
 
 How can we handle such cases? Well, we need *even more* `<? $flip`{.php}N functions to handle all of these possible calling conventions:
 
@@ -574,6 +574,7 @@ $foo3 = function($x) {
 ```
 
 These all call the `<? foo`{.php} function, but they differ in how they take their arguments:
+
  - `<? $foo1`{.php} will accept any number of arguments and pass them all to `<? foo`{.php}
  - `<? $foo2`{.php} will accept any number of arguments and pass the first two to `<? foo`{.php}
  - `<? $foo3`{.php} will accept any number of arguments but keep only the first; it returns a function which likewise accepts any number of arguments and only keeps the first. The two arguments that were kept are passed to `<? foo`{.php}
