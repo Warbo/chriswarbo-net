@@ -18,6 +18,12 @@ then
     DATE=$(git log -n 1 --format=%ci)
     echo "Latest commit date for '$1.git' is '$DATE'" >> /dev/stderr
 
+    if [[ -n "$LATEST" ]] && [[ "x$LATEST" = "x$DATE" ]]
+    then
+        echo "Repo is unchanged, skipping" >> /dev/stderr
+        exit 100 # Magic code to indicate we're up-to-date
+    fi
+
     for f in $READMES
     do
         if FOUND=$(git show "master:$f")
@@ -35,6 +41,12 @@ else
     MASTER=$(wget -O- "http://chriswarbo.net/git/$1/branches/master/index.html")
     DATE=$(echo "$MASTER" | grep -o "<br>Date:[^<]*")
     echo "Latest commit date for '$1.git' is '$DATE'" >> /dev/stderr
+
+    if [[ -n "$LATEST" ]] && [[ "x$LATEST" = "x$DATE" ]]
+    then
+        echo "Repo is unchanged, skipping" >> /dev/stderr
+        exit 100 # Magic code to indicate we're up-to-date
+    fi
 
     for f in $READMES
     do

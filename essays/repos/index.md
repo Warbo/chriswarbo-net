@@ -26,9 +26,29 @@ while read -r REPO
 do
     NAME=$(basename "$REPO" .git)
     FILE="rendered/essays/repos/$NAME.html"
-    echo "Generating $FILE"
-    ./static/git2md_nojson.sh "$NAME"  |
-    SOURCE= DEST= ./static/render_page > "$FILE"
+
+    if [[ -f "$FILE" ]]
+    then
+        DATE=$(grep '<p><em>Last updated: ' < "$FILE" |
+                   sed -e 's@.*>Last updated: @@g'    |
+                   sed -e 's@</em></p>.*@@g')
+        echo "Found existing '$FILE', last modified '$DATE'"
+    else
+        echo "No existing '$FILE' found"
+        DATE=""
+    fi
+
+    echo "Looking up content for $FILE"
+    CONTENT=$(LATEST="$DATE" ./static/git2md_nojson.sh "$NAME")
+    CODE="$?"
+
+    if [[ "$CODE" -eq 100 ]]
+    then
+        echo "Skipping regeneration of '$FILE'"
+    else
+        echo "Got new content for '$FILE', generating"
+        echo "$CONTENT" | SOURCE= DEST= ./static/render_page > "$FILE"
+    fi
 done < <(echo "$REPOS")
 ```
 
