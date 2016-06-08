@@ -1,3 +1,6 @@
+# Used for running "unsafe" tasks
+THIS_FILE := $(lastword $(MAKEFILE_LIST))
+
 # Convert back and forth between source and destination filenames
 
 # rendered/a/b.html -> rendered/a/b -> a/b -> a/b.* -> a/b.md
@@ -30,6 +33,9 @@ tmp := templates/default.html
 # Extra bits of infrastructure
 
 redirect := rendered/index.php rendered/archive.html
+
+# Allows "unsafe" commands to skip tests
+
 
 # Entry point
 
@@ -81,11 +87,27 @@ rendered/posts : rendered/blog.html
 clean :
 	rm -rf rendered
 
+unsafe_push : unsafe_copy
+	ssh chriswarbo.net /home/chris/update.sh
+
+unsafe_copy : all
+	rsync -e ssh -r -p -z --info=progress2 --append rendered chriswarbo.net:~/
+
+# The "unsafe" targets above perform the actual work for 'push' and 'copy', and
+# are made available for exceptional circumstances. Most of the time, the
+# following "safe" versions should be used instead, which run the test suite
+# first.
+
+# Note that these "safe" versions call 'make' recursively, to guarantee that
+# the "unsafe" tasks will not begin until 'test' has succeeded. We couldn't do
+# this with regular dependencies, without sacrificing the ability to run the
+# "unsafe" tasks on their own.
+
 push : copy
-	ssh -t chriswarbo.net /home/chris/update.sh
+	$(MAKE) -f $(THIS_FILE) unsafe_push
 
 copy : test
-	rsync -e ssh -r -p -z --info=progress2 --append rendered chriswarbo.net:~/
+	$(MAKE) -f $(THIS_FILE) unsafe_copy
 
 # Tests
 
@@ -95,5 +117,7 @@ test : $(tests)
 
 $(tests) : all
 	$(basename $@)
+
+
 
 .PHONY : all clean test copy push
