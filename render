@@ -1,3 +1,12 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -i bash -p gnumake bash pandoc
+
+# Use flock to ensure that only one instance is running at a time. Blocks until
+# we get eXclusive access.
+(
+flock -x 200
+
 make -j2 -f Makefile "$@"
+
+) 200>/tmp/blog.lock
+
