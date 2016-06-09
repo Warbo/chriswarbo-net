@@ -1,0 +1,75 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p python wget
+set -e
+
+BASE="$PWD"
+
+# Work in a temporary directory, and delete it on exit
+DIR=$(mktemp --tmpdir -d "blog-reachability-XXXXX")
+trap 'rm -rf "$DIR"' EXIT
+
+pushd "$DIR"
+
+  # Make a copy of 'rendered/', make a list of its contents and temporarily
+  # serve it via HTTP
+
+  cp -ar "$BASE/rendered" .
+
+  pushd rendered
+
+    SOURCE_CONTENT=$(find . | sort | grep -v "./essays/repos/" |
+                                     grep -v "./posts")
+
+    touch git # To appease some hyperlinks
+
+    python -m SimpleHTTPServer 8666 &
+    SERVER_PID="$!"
+
+    # Delete the directory *and* kill the server when we exit
+    trap 'kill "$SERVER_PID"; rm -rf "$DIR"' EXIT
+
+    sleep 1
+
+  popd
+
+  # Crawl the temporary site. Unfinished pages are intentionally unreachable
+  # from index.html, but they should still be reachable from unfinished.html.
+  # Exclude /git since it's added in during deployment, and repos/ since the
+  # content may not be under our control.
+  wget --mirror --no-parent --exclude-directories="/git,/essays/repos" \
+       "http://localhost:8666" "http://localhost:8666/unfinished.html"
+
+  [[ -d "localhost:8666" ]] || {
+      echo "Didn't find 'localhost:8666' in downloaded content" 1>&2
+      exit 1
+  }
+
+  # Compare the content we've downloaded to that in rendered/
+
+  pushd "localhost:8666"
+
+    DEST_CONTENT=$(find . | sort)
+
+  popd
+
+popd
+
+# We could use diff, but meh
+ERR=0
+while read -r SOURCE_FILE
+do
+    echo "$DEST_CONTENT" | grep -Fx "$SOURCE_FILE" > /dev/null || {
+        echo "Rendered file '$SOURCE_FILE' wasn't reached" 1>&2
+        ERR=1
+    }
+done < <(echo "$SOURCE_CONTENT")
+
+while read -r DEST_FILE
+do
+    echo "$SOURCE_CONTENT" | grep -Fx "$DEST_FILE" > /dev/null || {
+        echo "Reached unexpected file '$DEST_FILE'" 1>&2
+        ERR=1
+    }
+done < <(echo "$SOURCE_CONTENT")
+
+exit "$ERR"
