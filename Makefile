@@ -13,12 +13,14 @@ rendered = $(addprefix rendered/, $(addsuffix .html, $(basename $1)))
 
 get_entries = $(call rendered,\
                      $(shell for ENTRY in $1; \
-                             do [[ ! -e $$ENTRY ]] || find $$ENTRY -type f;\
+                             do [[ ! -e $$ENTRY ]] || find $$ENTRY -type f -name "*.md";\
                              done))
     entries = $(call get_entries,$(basename $(call source,$1)))
 
 top_level  = $(call rendered,$(shell ls *.md))
 all_pages := $(top_level) $(call entries,$(top_level))
+
+indices = $(addprefix rendered/,$(shell ls */index.html | grep -v rendered))
 
 # Resources
 
@@ -33,12 +35,9 @@ tmp := templates/default.html
 
 redirect := rendered/index.php rendered/archive.html
 
-# Allows "unsafe" commands to skip tests
-
-
 # Entry point
 
-all : $(all_pages) $(resources) $(redirect) rendered/posts
+all : $(all_pages) $(resources) $(redirect) $(indices) rendered/posts
 
 render_to = SOURCE="$1" DEST="$2" ./static/render_page
 render    = $(call render_to,$(call source,$1),$1)
@@ -60,6 +59,9 @@ endef
 
 $(foreach p,$(all_pages),$(eval $(call PAGE,$p,$(call deps,$p))))
 
+$(indices) : */index.html
+	cp $(call js_source,$@) $@
+
 # Resources
 
 $(out_css) : css/$(notdir $@)
@@ -78,8 +80,7 @@ $(redirect) : redirect.html static/render_page
 
 # FIXME: An index.php-like redirect might be nicer?
 rendered/posts : rendered/blog.html
-	mkdir -p rendered/posts
-	cp rendered/blog/* rendered/posts/
+	pushd rendered; [[ -e posts ]] || ln -s blog posts; popd
 
 # Extra functionality
 

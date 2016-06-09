@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -e
+shopt -s nullglob
+
+pushd rendered > /dev/null
+
+ERR=0
+while read -r DIR
+do
+    FOUND=0
+    for F in "$DIR"/index.*
+    do
+        FOUND=1
+        break
+    done
+
+    [[ "$FOUND" -eq 1 ]] || {
+        echo "No index.* found in '$DIR'" 1>&2
+        ERR=1
+    }
+done < <(find . -type d | grep -v "/js" | grep -v "/css" | grep -v "/unfinished")
+
+exit "$ERR"
