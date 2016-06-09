@@ -15,6 +15,8 @@ postprocessor: ./static/stripTitle
 
 </div>
 
+I'm a Free Software advocate, Physicist, Computer Scientist and metal head.
+
 This is a place for me to collect thoughts and experiments, mostly around
 programming languages and artificial intelligence.
 

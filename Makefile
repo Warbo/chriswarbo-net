@@ -18,8 +18,7 @@ get_entries = $(call rendered,\
     entries = $(call get_entries,$(basename $(call source,$1)))
 
 top_level  = $(call rendered,$(shell ls *.md))
-all_pages := $(top_level) $(call entries,$(top_level)) \
-             $(call rendered,$(shell find archived -type f))
+all_pages := $(top_level) $(call entries,$(top_level))
 
 # Resources
 
