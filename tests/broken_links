@@ -1,8 +1,13 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -p linkchecker bash -i bash
-linkchecker --no-status                   \
-            --ignore-url=.xml             \
-            --ignore-url=/git             \
-            --ignore-url=/essays/repos    \
-            --config=static/linkcheckerrc \
-            rendered/index.html
+RESULT=$(linkchecker --no-status                   \
+                     --ignore-url=.xml             \
+                     --ignore-url=/git             \
+                     --ignore-url=/essays/repos    \
+                     --config=static/linkcheckerrc \
+                     rendered/index.html 2>&1)
+CODE="$?"
+
+[[ "$CODE" -eq 0 ]] || echo "$RESULT"
+
+exit "$CODE"

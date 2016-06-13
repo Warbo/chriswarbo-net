@@ -4,6 +4,8 @@
 ERR=0
 while read -r SOURCE
 do
+    [[ "x$SOURCE" = "xessays/index.html" ]] && continue
+
     NAME=$(echo "$SOURCE" | rev | cut -d '.' -f 2- | rev)
     DEST="/$NAME.html"
     if [[ ! -e "rendered$DEST" ]]

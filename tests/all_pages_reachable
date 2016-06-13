@@ -2,66 +2,104 @@
 #! nix-shell -i bash -p python wget
 set -e
 
+if PROCESS=$(ps auxww | grep 8666 | grep python)
+then
+    echo -e "Server already running, aborting\n$PROCESS" 1>&2
+    exit 1
+fi
+
+function ignoreInSource {
+    # Things we don't expect to be reachable; mostly redirects from old URLs
+    grep -v "./essays/repos"      |
+    grep -v "./essays/index.html" |
+    grep -v "./posts"             |
+    grep -v "./archive.html"      |
+    grep -v "./index.php"
+}
+
 BASE="$PWD"
 
 # Work in a temporary directory, and delete it on exit
 DIR=$(mktemp --tmpdir -d "blog-reachability-XXXXX")
 trap 'rm -rf "$DIR"' EXIT
 
-pushd "$DIR"
+pushd "$DIR" > /dev/null
 
   # Make a copy of 'rendered/', make a list of its contents and temporarily
   # serve it via HTTP
 
   cp -ar "$BASE/rendered" .
 
-  pushd rendered
+  pushd rendered > /dev/null
 
-    SOURCE_CONTENT=$(find . | sort | grep -v "./essays/repos/" |
-                                     grep -v "./posts")
+    SOURCE_CONTENT=$(find . | ignoreInSource | sort)
 
     touch git # To appease some hyperlinks
 
-    python -m SimpleHTTPServer 8666 &
+    # Use 'script' to fake a tty and get a "Serving HTTP..." message. Send all
+    # output to ../fifo, and wait until we see the "Serving HTTP..." message
+    # before continuing
+    script -q /dev/null -c "python -m SimpleHTTPServer 8666" < /dev/null 2>&1 > ../msgs &
     SERVER_PID="$!"
 
     # Delete the directory *and* kill the server when we exit
     trap 'kill "$SERVER_PID"; rm -rf "$DIR"' EXIT
 
-    sleep 1
+    printf "Waiting for server to start..." 1>&2
 
-  popd
+    while true
+    do
+        if grep "^Serving HTTP.*8666" < ../msgs > /dev/null
+        then
+            break
+        fi
+        printf '.' 1>&2
+        sleep 1
+    done
+
+    echo "" 1>&2
+    sleep 1
+  popd > /dev/null
 
   # Crawl the temporary site. Unfinished pages are intentionally unreachable
   # from index.html, but they should still be reachable from unfinished.html.
   # Exclude /git since it's added in during deployment, and repos/ since the
   # content may not be under our control.
-  wget --mirror --no-parent --exclude-directories="/git,/essays/repos" \
-       "http://localhost:8666" "http://localhost:8666/unfinished.html"
+  OUTPUT=$(wget --page-requisites --mirror --no-parent \
+                --exclude-directories="/git,/essays/repos" \
+                "http://localhost:8666" \
+                "http://localhost:8666/unfinished.html" 2>&1)
 
   [[ -d "localhost:8666" ]] || {
-      echo "Didn't find 'localhost:8666' in downloaded content" 1>&2
+      echo "Didn't find 'localhost:8666' in downloaded content\n\n$OUTPUT" 1>&2
       exit 1
   }
 
   # Compare the content we've downloaded to that in rendered/
 
-  pushd "localhost:8666"
+  pushd "localhost:8666" > /dev/null
 
     DEST_CONTENT=$(find . | sort)
 
-  popd
+  popd > /dev/null
 
-popd
+popd > /dev/null
 
 # We could use diff, but meh
 ERR=0
 while read -r SOURCE_FILE
 do
-    echo "$DEST_CONTENT" | grep -Fx "$SOURCE_FILE" > /dev/null || {
+    if ! echo "$DEST_CONTENT" | grep -Fx "$SOURCE_FILE" > /dev/null
+    then
+        if echo "$SOURCE_FILE" | grep "^./js/" > /dev/null
+        then
+            echo "Skipping unreachable Javascript file '$SOURCE_FILE'"
+            continue
+        fi
+
         echo "Rendered file '$SOURCE_FILE' wasn't reached" 1>&2
         ERR=1
-    }
+    fi
 done < <(echo "$SOURCE_CONTENT")
 
 while read -r DEST_FILE
@@ -71,5 +109,7 @@ do
         ERR=1
     }
 done < <(echo "$SOURCE_CONTENT")
+
+[[ "$ERR" -eq 0 ]] || echo -e "wget output:\n\n$OUTPUT\n\n" 1>&2
 
 exit "$ERR"

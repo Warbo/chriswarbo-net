@@ -14,6 +14,8 @@ function show {
 echo '<ul>'
 for ENTRY in root/rendered/essays/*
 do
+    [[ "x$(basename "$ENTRY")" = "xindex.html" ]] && continue
+
     if [[ -d "$ENTRY" ]]
     then
         show "$ENTRY"/index.*
