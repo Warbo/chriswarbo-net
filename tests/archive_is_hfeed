@@ -13,7 +13,7 @@ def run_checks_on(to_check, checks):
     map(lambda(b, m): b or fail(m + ': ' + repr(to_check)), checks)
 
 def check_feed(feed):
-    posts = os.listdir('rendered/blog/')
+    posts = filter(lambda f: f != 'index.html', os.listdir('rendered/blog/'))
 
     run_checks_on(feed, [
         (feed['type'] == ['h-feed'],          'Not a h-feed'),

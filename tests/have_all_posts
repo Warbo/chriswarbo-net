@@ -6,6 +6,8 @@ LINKS=$(xidel - -q --extract "//a/@href" < rendered/blog.html)
 ERR=0
 while read -r SOURCE
 do
+    [[ "x$SOURCE" = "xblog/index.html" ]] && continue
+
     NAME=$(basename "$SOURCE" | rev | cut -d '.' -f 2- | rev)
     DEST="/blog/$NAME.html"
     if [[ ! -e "rendered$DEST" ]]

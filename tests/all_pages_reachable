@@ -12,6 +12,7 @@ function ignoreInSource {
     # Things we don't expect to be reachable; mostly redirects from old URLs
     grep -v "./essays/repos"      |
     grep -v "./essays/index.html" |
+    grep -v "./blog/index.html"   |
     grep -v "./posts"             |
     grep -v "./archive.html"      |
     grep -v "./index.php"
@@ -49,7 +50,7 @@ pushd "$DIR" > /dev/null
 
     while true
     do
-        if grep "^Serving HTTP.*8666" < ../msgs > /dev/null
+        if [[ -e ../msgs ]] && grep "^Serving HTTP.*8666" < ../msgs > /dev/null
         then
             break
         fi
