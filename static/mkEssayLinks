@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+BASE=$(dirname "$(readlink -f "$0")")
+
+RENDERED="$PWD/rendered"
+
+echo "Cleaning up old essays/ content in '$RENDERED'" 1>&2
+rm -r "$RENDERED/essays"
+mkdir -p "$RENDERED/essays"
+
+echo "Creating new essays/ redirects" 1>&2
+find "$RENDERED/projects" -type f | while read -r PRJ_FILE
+do
+    ESSAY_FILE=$(echo "$PRJ_FILE" |
+                        sed -e 's@$rendered/projects/@rendered/essays/@g')
+
+      PRJ_URL=$(echo   "$PRJ_FILE" | sed -e 's@rendered/projects/@/projects/@g')
+
+    ESSAY_DIR=$(dirname "$ESSAY_FILE")
+    mkdir -p "$ESSAY_DIR"
+
+    "$BASE/mkRedirectTo" "$PRJ_URL" > "$ESSAY_FILE"
+done
+
+"$BASE/mkRedirectTo" "/projects.html" > "rendered/essays.html"
