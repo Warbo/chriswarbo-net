@@ -37,7 +37,7 @@ redirect := rendered/index.php rendered/archive.html
 
 # Entry point
 
-all : $(all_pages) $(resources) $(redirect) $(indices) rendered/posts
+all : $(all_pages) $(resources) $(redirect) $(indices) rendered/posts rendered/essays
 
 render_to = SOURCE="$1" DEST="$2" ./static/render_page
 render    = $(call render_to,$(call source,$1),$1)
@@ -77,6 +77,10 @@ $(out_js) : $(call js_source,$@)
 $(redirect) : redirect.html static/render_page
 	mkdir -p $(dir $@)
 	$(call render_to,redirect.html,$@)
+
+# Redirects
+rendered/essays: $(all_pages)
+	./static/mkEssayLinks
 
 # FIXME: An index.php-like redirect might be nicer?
 rendered/posts : rendered/blog.html
