@@ -12,9 +12,9 @@ echo "Creating new essays/ redirects" 1>&2
 find "$RENDERED/projects" -type f | while read -r PRJ_FILE
 do
     ESSAY_FILE=$(echo "$PRJ_FILE" |
-                        sed -e 's@$rendered/projects/@rendered/essays/@g')
+                        sed -e 's@rendered/projects/@rendered/essays/@g')
 
-      PRJ_URL=$(echo   "$PRJ_FILE" | sed -e 's@rendered/projects/@/projects/@g')
+      PRJ_URL=$(echo   "$PRJ_FILE" | sed -e 's@.*/rendered/projects/@/projects/@g')
 
     ESSAY_DIR=$(dirname "$ESSAY_FILE")
     mkdir -p "$ESSAY_DIR"

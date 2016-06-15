@@ -79,7 +79,8 @@ $(redirect) : redirect.html static/render_page
 	$(call render_to,redirect.html,$@)
 
 # Redirects
-rendered/essays: $(all_pages)
+rendered/essays: $(all_pages) static/mkEssayLinks static/mkRedirectTo \
+                 static/redirectTemplate.html
 	./static/mkEssayLinks
 
 # FIXME: An index.php-like redirect might be nicer?

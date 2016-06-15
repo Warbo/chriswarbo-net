@@ -1,2 +1,22 @@
 #!/usr/bin/env bash
-exit 0
+
+ERR=0
+
+while read -r PRJ_FILE
+do
+    ESSAY_FILE=$(echo "$PRJ_FILE" | sed -e 's@/projects/@/essays/@g')
+    [[ -e "$ESSAY_FILE" ]] || {
+        ERR=1
+        echo "Couldn't find expected redirect '$ESSAY_FILE'" 1>&2
+        continue
+    }
+
+    PRJ_URL=$(echo "$PRJ_FILE" | sed -e 's@rendered/projects/@/projects/@g')
+    grep "<link rel=\"canonical\" href=\"$PRJ_URL\"/>" < "$ESSAY_FILE" \
+                                                       > /dev/null || {
+        ERR=1
+        echo "'$ESSAY_FILE' doesn't redirect to '$PRJ_URL'" 1>&2
+    }
+done < <(find rendered/projects -type f)
+
+exit "$ERR"
