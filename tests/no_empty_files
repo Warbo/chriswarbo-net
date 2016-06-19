@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+ERR=0
+
+while read -r F
+do
+    grep "[^ \t\n]" < "$F" > /dev/null || {
+        ERR=1
+        echo "File '$F' looks empty" 1>&2
+    }
+done < <(find rendered -type f)
+
+while read -r D
+do
+    ERR=1
+    echo "Directory '$D' is empty" 1>&2
+done < <(find rendered -type d -empty)
+
+exit "$ERR"
