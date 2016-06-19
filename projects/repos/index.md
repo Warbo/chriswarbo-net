@@ -25,7 +25,7 @@ cd root
 while read -r REPO
 do
     NAME=$(basename "$REPO" .git)
-    FILE="rendered/essays/repos/$NAME.html"
+    FILE="rendered/projects/repos/$NAME.html"
 
     if [[ -f "$FILE" ]]
     then
@@ -53,7 +53,7 @@ done < <(echo "$REPOS")
 ```
 
 ```{.unwrap pipe="bash | pandoc -f html -t json"}
-echo "Adding links to repos on to rendered/essays/index.html" >> /dev/stderr
+echo "Adding links to repos on to rendered/projects/index.html" >> /dev/stderr
 
 echo '<ul>'
 while read REPO
@@ -79,7 +79,7 @@ done < repos
 
 echo "Making sure all expected repos have pages"
 ERR=0
-cd root/rendered/essays/repos
+cd root/rendered/projects/repos
 while read -r FILE
 do
     # Skip empty entries
@@ -87,7 +87,7 @@ do
 
     if ! [[ -e "$FILE" ]]
     then
-        echo "Couldn't find 'rendered/essays/repos/$FILE'"
+        echo "Couldn't find 'rendered/projects/repos/$FILE'"
         ERR=1
     fi
 done < <(echo "$FILES")
@@ -102,7 +102,7 @@ do
 
     if ! echo "$FILES" | grep -F "$REL" > /dev/null
     then
-        echo "Didn't expect to find 'rendered/essays/repos/$REL'"
+        echo "Didn't expect to find 'rendered/projects/repos/$REL'"
         ERR=1
     fi
 done < <(find . -name "*.html")

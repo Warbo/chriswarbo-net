@@ -50,7 +50,7 @@ Brainfuck is completely dependent on the particular sequence that its code is ex
 
 ## Implementation Overhead ##
 
-If we want the simplest language to *implement* (in a Worse is Better sort of way), then we shouldn't choose Brainfuck as its implementation is quite complicated. For example, when I wanted to embed a simple language in [a Javascript search algorithm](/essays/optimisation/levin.html) I chose BitBitJump.
+If we want the simplest language to *implement* (in a Worse is Better sort of way), then we shouldn't choose Brainfuck as its implementation is quite complicated. For example, when I wanted to embed a simple language in [a Javascript search algorithm](/projects/optimisation/levin.html) I chose BitBitJump.
 
 Most of [the code](/js/optimisation/levin_bbj.js) is dedicated to the search algorithm. The BitBitJump implementation is just these two lines, inside one of the loops:
 

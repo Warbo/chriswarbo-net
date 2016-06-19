@@ -35,7 +35,7 @@ find root/rendered/blog -type f |
   ./root/static/showPosts
 ```
 
-## [Essays](/essays.html)
+## [Projects](/projects.html)
 
 A collection of thought-out, carefully managed articles and demos.
 Infrequently updated, but hopefully accurate.

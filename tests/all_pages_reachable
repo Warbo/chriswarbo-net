@@ -10,11 +10,12 @@ fi
 
 function ignoreInSource {
     # Things we don't expect to be reachable; mostly redirects from old URLs
-    grep -v "./essays/repos"      |
-    grep -v "./essays/index.html" |
-    grep -v "./blog/index.html"   |
-    grep -v "./posts"             |
-    grep -v "./archive.html"      |
+    grep -v "./projects/repos"      |
+    grep -v "./projects/index.html" |
+    grep -v "./blog/index.html"     |
+    grep -v "./essays"              |
+    grep -v "./posts"               |
+    grep -v "./archive.html"        |
     grep -v "./index.php"
 }
 
@@ -67,7 +68,7 @@ pushd "$DIR" > /dev/null
   # Exclude /git since it's added in during deployment, and repos/ since the
   # content may not be under our control.
   OUTPUT=$(wget --page-requisites --mirror --no-parent \
-                --exclude-directories="/git,/essays/repos" \
+                --exclude-directories="/git,/projects/repos" \
                 "http://localhost:8666" \
                 "http://localhost:8666/unfinished.html" 2>&1)
 

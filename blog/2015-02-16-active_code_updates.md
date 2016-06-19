@@ -2,7 +2,7 @@
 title: Active Code Updates
 ---
 
-I've updated my [active code](/essays/activecode) setup to fix a problem which has caused me much chagrin: handling of stderr.
+I've updated my [active code](/projects/activecode) setup to fix a problem which has caused me much chagrin: handling of stderr.
 
 ## Active Code Overview ##
 

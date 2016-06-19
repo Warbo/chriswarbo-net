@@ -1,3 +1,11 @@
 #!/usr/bin/env bash
 
-! grep -r /essays/ rendered/
+if grep -r /essays/ rendered/ |
+   grep -v /repos/            |
+   grep -v /unfinished/       |
+   grep '^.'
+then
+    exit 1
+fi
+
+exit 0

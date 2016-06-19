@@ -204,7 +204,7 @@ Since, as I said at the beginning, this is very cobbled-together, I decided to s
 
 ### Solution 2
 
-It's actually wasteful to keep calling these scripts using `./`, since they're using [nix-shell shebangs](/essays/nixos/nix_shell_shebangs.html) to ensure their dependencies (i.e. Racket) are available. If we make sure Racket is available in the outer script (again, using a nix-shell shebang) then we can bypass the shebangs of the inner scripts by invoking them with `racket`.
+It's actually wasteful to keep calling these scripts using `./`, since they're using [nix-shell shebangs](/projects/nixos/nix_shell_shebangs.html) to ensure their dependencies (i.e. Racket) are available. If we make sure Racket is available in the outer script (again, using a nix-shell shebang) then we can bypass the shebangs of the inner scripts by invoking them with `racket`.
 
 That makes our code look like this:
 

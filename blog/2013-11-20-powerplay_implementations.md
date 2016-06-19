@@ -2,7 +2,7 @@
 title: PowerPlay implementations
 ---
 I've begun writing some implementations of the PowerPlay spec I've talked about
-[elsewhere](/essays/powerplay).
+[elsewhere](/projects/powerplay).
 
 ## Lookup Tables ##
 

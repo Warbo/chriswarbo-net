@@ -2,4 +2,4 @@
 title: Nix Packages
 ---
 
-This page has [moved](/essays/nixos/packages.html)
+This page has [moved](/projects/nixos/packages.html)

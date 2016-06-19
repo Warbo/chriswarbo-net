@@ -48,9 +48,22 @@ OUTPUT=$(echo "$INPUT"             |
 # the output format from the filename.
 if [[ -n "$DEST" ]]
 then
-    OUTPUT=$(cat "$DEST")
-    rm "$DEST"
+    if [[ -e "$DEST" ]]
+    then
+        OUTPUT=$(cat "$DEST")
+        rm "$DEST"
+    else
+        echo "File '$DEST' wasn't created, aborting" 1>&2
+        exit 1
+    fi
 fi
+
+# Abort if our OUTPUT is empty
+echo "$OUTPUT" | grep '[^ \n\t]' > /dev/null || {
+    [[ -e "$DEST" ]] && rm "$DEST"
+    echo "Output is empty, aborting" 1>&2
+    exit 1
+}
 
 # Post-processing. This is slightly complicated, so we use more functions.
 

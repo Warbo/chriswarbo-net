@@ -649,7 +649,7 @@ Anything printed to stderr by a shell command will appear in the stderr of PanPi
 [ast]: https://hackage.haskell.org/package/pandoc-types-1.8/docs/Text-Pandoc-Definition.html#t:Block
 [panpipe]: /git/panpipe/branches/master/README.md
 [panhandler]: /git/panhandle/branches/master/README.md
-[this]: /git/chriswarbo-net/branches/master/essays/activecode/index.md
+[this]: /git/chriswarbo-net/branches/master/projects/activecode/index.md
 [elpa]: http://orgmode.org/elpa.html
 [pandocmarkdown]: http://johnmacfarlane.net/pandoc/demo/example9/pandocs-markdown.html
 [kate]: http://kate-editor.org/

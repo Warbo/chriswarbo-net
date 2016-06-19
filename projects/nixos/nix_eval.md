@@ -7,7 +7,7 @@ a particular itch for me. It allows Haskell code to be evaluated at run-time, in
 a sub-process, using [Nix](http://nixos.org/nix) to get any dependencies it
 needs.
 
-NOTE: This page is [active code](/essays/activecode/), so check out the "view
+NOTE: This page is [active code](/projects/activecode/), so check out the "view
 source" link at the bottom of the page if you want to follow along with the
 examples!
 
@@ -156,7 +156,7 @@ in `nix-shell`, in order to satisfy the `nix-eval` dependency; and all of this
 is inside another `nix-shell` which is rendering my site.
 
 That's required a couple of tricks, eg. using
-[`nix-shell` shebangs](/essays/nixos/nix_shell_shebangs.html) rather than direct
+[`nix-shell` shebangs](/projects/nixos/nix_shell_shebangs.html) rather than direct
 invocations from the shell; and using `nix-shell` to *build* the required GHC +
 packages, but actually *invoking* it from outside the shell.
 

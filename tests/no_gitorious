@@ -12,7 +12,7 @@ function findLinks {
 }
 
 function skip {
-    grep -v "essays/repos/"
+    grep -v "projects/repos/"
 }
 
 function gitorious {

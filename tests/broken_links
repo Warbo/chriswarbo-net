@@ -3,7 +3,7 @@
 RESULT=$(linkchecker --no-status                   \
                      --ignore-url=.xml             \
                      --ignore-url=/git             \
-                     --ignore-url=/essays/repos    \
+                     --ignore-url=/projects/repos  \
                      --config=static/linkcheckerrc \
                      rendered/index.html 2>&1)
 CODE="$?"

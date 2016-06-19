@@ -15,7 +15,7 @@ function get_urls() {
 ERR=0
 while read -r FILE
 do
-    if echo "$FILE" | grep "essays/repos/" > /dev/null
+    if echo "$FILE" | grep "projects/repos/" > /dev/null
     then
         continue
     fi

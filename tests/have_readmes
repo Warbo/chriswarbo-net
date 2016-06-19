@@ -3,7 +3,7 @@
 # Make sure READMEs get included into repo pages
 
 ERR=0
-for REPO in rendered/essays/repos/*.html
+for REPO in rendered/projects/repos/*.html
 do
     NAME=$(basename "$REPO" .html)
     [[ "x$NAME" = "xindex" ]] && continue

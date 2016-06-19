@@ -4,9 +4,9 @@ title: Tail-recursive Unique
 
 ## Intro to Nix
 
-I've been playing around quite a bit with the [Nix expression language](http://nixos.org/nix/manual/#chap-writing-nix-expressions) recently. I've [written about](/essays/nixos) [Nix](http://nixos.org/nix) before: it's usually described as a [package manager](https://en.wikipedia.org/wiki/Package_manager) but I think it's actually more useful to think of Nix as a [build tool](https://en.wikipedia.org/wiki/Build_automation#Build_automation_utilities); i.e it's more useful to think of Nix in comparison to [Make](https://en.wikipedia.org/wiki/Make_(software)), [SBT](https://en.wikipedia.org/wiki/SBT_(software)), etc. than to [dpkg](https://www.debian.org/doc/manuals/debian-faq/ch-pkgtools.en.html), [RPM](https://en.wikipedia.org/wiki/RPM_Package_Manager‎), [NPM](https://www.npmjs.com), etc.
+I've been playing around quite a bit with the [Nix expression language](http://nixos.org/nix/manual/#chap-writing-nix-expressions) recently. I've [written about](/projects/nixos) [Nix](http://nixos.org/nix) before: it's usually described as a [package manager](https://en.wikipedia.org/wiki/Package_manager) but I think it's actually more useful to think of Nix as a [build tool](https://en.wikipedia.org/wiki/Build_automation#Build_automation_utilities); i.e it's more useful to think of Nix in comparison to [Make](https://en.wikipedia.org/wiki/Make_(software)), [SBT](https://en.wikipedia.org/wiki/SBT_(software)), etc. than to [dpkg](https://www.debian.org/doc/manuals/debian-faq/ch-pkgtools.en.html), [RPM](https://en.wikipedia.org/wiki/RPM_Package_Manager‎), [NPM](https://www.npmjs.com), etc.
 
-I think of Nix as "Make done right": by using a task/build description language with clean syntax and semantics, rather than a fragile, quirky mess of Makefiles, Nix is able to scale from [gathering dependencies via shebang invocation](/essays/nixos/nix_shell_shebangs.html) all the way up to building [whole operating systems](http://nixos.org) and [server](https://nixos.org/nixops) [orchestration](https://nixos.org/disnix).
+I think of Nix as "Make done right": by using a task/build description language with clean syntax and semantics, rather than a fragile, quirky mess of Makefiles, Nix is able to scale from [gathering dependencies via shebang invocation](/projects/nixos/nix_shell_shebangs.html) all the way up to building [whole operating systems](http://nixos.org) and [server](https://nixos.org/nixops) [orchestration](https://nixos.org/disnix).
 
 ## The `unique` Function
 
@@ -81,7 +81,7 @@ then
 fi
 ```
 
-Uh oh! Not only did we overflow the stack, but [rendering](/essays/activecode) this page causes `nix-instantiate` to hit 100% CPU and consume over 1GB of RAM!
+Uh oh! Not only did we overflow the stack, but [rendering](/projects/activecode) this page causes `nix-instantiate` to hit 100% CPU and consume over 1GB of RAM!
 
 This is exactly the issue I hit when testing that a list of Haskell package names I grabbed from [Hackage](http://hackage.haskell.org) didn't contain any duplicates (i.e. `assert length pkgNames == length (unique pkgNames); ...`). I know that `unique`'s duplicate-detecting algorithm takes O(n^2^) time, but a gig of RAM seems excessive, and since Nix is a [sensible](https://en.wikipedia.org/wiki/Tail_call) language it certainly shouldn't be overflowing the stack!
 
@@ -302,7 +302,7 @@ then
   true
 else
   echo "seq_test should work!" 1>&2
-  exit 1
+  #exit 1
 fi
 ```
 
