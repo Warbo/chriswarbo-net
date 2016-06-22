@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i bash -p gnumake bash pandoc
+#! nix-shell -i bash
 
 printf "Waiting for rendering lock..." 1>&2
 (

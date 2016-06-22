@@ -10,9 +10,11 @@ stdenv.mkDerivation {
     xidel
     php
     gnuplot
+    gnumake
     panpipe
     panhandle
     python
+    pythonPackages.pyyaml
     pandoc
   ];
 }
