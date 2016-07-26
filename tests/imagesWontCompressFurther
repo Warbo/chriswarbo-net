@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+echo "TODO: Check that images (including data URIs) can't be compressed using, e.g., PNG optimisers" 1>&2
+
+exit 0
