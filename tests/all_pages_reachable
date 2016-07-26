@@ -2,7 +2,7 @@
 #! nix-shell -i bash -p python wget
 set -e
 
-if PROCESS=$(ps auxww | grep 8666 | grep python)
+if PROCESS=$(pgrep ".*8666.*" | grep python)
 then
     echo -e "Server already running, aborting\n$PROCESS" 1>&2
     exit 1
@@ -73,7 +73,7 @@ pushd "$DIR" > /dev/null
                 "http://localhost:8666/unfinished.html" 2>&1)
 
   [[ -d "localhost:8666" ]] || {
-      echo "Didn't find 'localhost:8666' in downloaded content\n\n$OUTPUT" 1>&2
+      echo -e "Didn't find 'localhost:8666' in downloaded content\n\n$OUTPUT" 1>&2
       exit 1
   }
 
