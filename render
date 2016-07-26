@@ -1,6 +1,12 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -i bash
 
+if command -v ts && ts | grep queued | grep render
+then
+  echo "Another render is queued, deferring to that"
+  exit 0
+fi
+  
 printf "Waiting for rendering lock..." 1>&2
 (
 flock -x 200
