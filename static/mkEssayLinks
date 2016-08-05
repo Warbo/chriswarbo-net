@@ -26,5 +26,6 @@ done
 
 # Old links
 pushd rendered > /dev/null
+rm -f activecode
 ln -s projects/activecode activecode
 popd > /dev/null
