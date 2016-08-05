@@ -23,3 +23,8 @@ do
 done
 
 "$BASE/mkRedirectTo" "/projects.html" > "rendered/essays.html"
+
+# Old links
+pushd rendered > /dev/null
+ln -s projects/activecode activecode
+popd > /dev/null
