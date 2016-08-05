@@ -18,6 +18,7 @@ function ignoreInSource {
     grep -v "./archive.html"        |
     grep -v "./index.php"           |
     grep -v "./activecode"          |
+    grep -v "./arduino"             |
     grep -v "./maze"                |
     grep -v "./nixos"               |
     grep -v "./optimisation"        |
