@@ -13,11 +13,19 @@ function ignoreInSource {
     grep -v "./projects/repos"      |
     grep -v "./projects/index.html" |
     grep -v "./blog/index.html"     |
-    grep -v "./activecode"          |
     grep -v "./essays"              |
     grep -v "./posts"               |
     grep -v "./archive.html"        |
-    grep -v "./index.php"
+    grep -v "./index.php"           |
+    grep -v "./activecode"          |
+    grep -v "./maze"                |
+    grep -v "./nixos"               |
+    grep -v "./optimisation"        |
+    grep -v "./plumb"               |
+    grep -v "./powerplay"           |
+    grep -v "./procedural"          |
+    grep -v "./repos"               |
+    grep -v "./turtleview"          
 }
 
 BASE="$PWD"
