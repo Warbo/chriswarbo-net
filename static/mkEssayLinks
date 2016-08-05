@@ -25,7 +25,16 @@ done
 "$BASE/mkRedirectTo" "/projects.html" > "rendered/essays.html"
 
 # Old links
-pushd rendered > /dev/null
-rm -f activecode
-ln -s projects/activecode activecode
-popd > /dev/null
+for P in rendered/projects/*
+do
+    [[ -d "$P" ]] || continue
+    NAME=$(basename "$P")
+
+    if [[ -e "rendered/$NAME" ]]
+    then
+        continue
+    fi
+
+    mkdir -p "rendered/$NAME"
+    "$BASE/mkRedirectTo" "/projects/$NAME" > "rendered/$NAME/index.html"
+done
