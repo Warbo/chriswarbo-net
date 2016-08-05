@@ -36,5 +36,5 @@ do
     fi
 
     mkdir -p "rendered/$NAME"
-    "$BASE/mkRedirectTo" "/projects/$NAME" > "rendered/$NAME/index.html"
+    "$BASE/mkRedirectTo" "/projects/$NAME/index.html" > "rendered/$NAME/index.html"
 done
