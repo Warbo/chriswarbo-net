@@ -454,7 +454,7 @@ code block:
 
 ````{.markdown .fullphp pipe="tee both.php"}
 ```{.php pipe="tee script.php"}
-<?
+<?php
 echo 10 + 20;
 ```
 ````
@@ -539,7 +539,7 @@ use PanHandle to splice it into the document. For example:
 
 ````{.markdown .fullphp pipe="tee proc.md"}
 ```{.unwrap pipe="php | pandoc -t json"}
-<?
+<?php
 foreach (range(1, 10) as $x) {
   echo " - Element $x\n";
 }
@@ -574,7 +574,7 @@ PanHandle will splice these into the document:
 
 ````{.markdown .fullphp pipe="tee image_php.md"}
 ```{pipe="php > carpet.pbm"}
-<?
+<?php
 $scale = 5;
 $dim   = pow(3, $scale);
 $max   = ($dim * $dim) - 1;
