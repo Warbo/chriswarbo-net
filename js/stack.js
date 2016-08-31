@@ -1,11 +1,11 @@
 /*
  * Implements a minimal concatenative ("stack") language.
- * 
+ *
  * The language consists of the combinators known as "k"
  * and "cake", and quotations wrapped in "[" and "]".
- * 
+ *
  * This is enough to be Turing Complete.
- * 
+ *
  * Written by Chris Warburton. Released into the Public Domain.
  */
 
@@ -57,13 +57,13 @@ var s = (function() {
             'c': 'stack = cake(stack);'
         };
         var program = '(function(stack) {';
-        input = input.split('');
-        while (input.length > 0) {
-            program = program + symbols[input.shift()];
-        }
+          input = input.split('');
+          while (input.length > 0) {
+              program = program + symbols[input.shift()];
+          }
         program = program + symbols[']'];
         return eval(program);
     };
-    
+
     return read;
 })();

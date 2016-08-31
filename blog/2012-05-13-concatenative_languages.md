@@ -13,23 +13,23 @@ Whilst we can create these functions in languages like Cat and Joy, based on the
 
 Stack programs are strings of the symbols &quot;k&quot;, &quot;c&quot; (the functions), &quot;[&quot; and &quot;]&quot; (the quotes). These get compiled into a Javascript function, which takes an array of functions as its input and produces an array of functions as output. These arrays are accessed in a &quot;last in, first out&quot; (LIFO) manner, which is why I&#39;ve called it <a href="http://en.wikipedia.org/wiki/Stack_(abstract_data_type)">Stack</a>.
 
-Here&#39;s a Stack interpreter. Note that it&#39;s easy to get a stack underflow error, due to having too few functions on the stack. It&#39;s also possible to have too many levels of recursion, which causes Javascript to die. This second error is unfortunate, and may be worked around in future versions. Also note that there&#39;s no Currying, and thus the concatenative property doesn&#39;t hold in its entirety.
+Here&#39;s a Stack interpreter: type in a combination of 'c', 'k', '[' and ']' to define a Stack program, and hit "Run" to have it evaluated on an empty stack. The result will be shown below, in the form of Javascript source code. Note that it&#39;s easy to get a stack underflow error, due to having too few functions on the stack. It&#39;s also possible to have too many levels of recursion, which causes Javascript to die. This second error is unfortunate, and may be worked around in future versions. Also note that there&#39;s no Currying, and thus the concatenative property doesn&#39;t hold in its entirety.
 
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/stack.js"></script>
 
 <form action="" id="stackform" method="get">
-    <label for="text">Try typing some Stack here:</label>
-    <textarea cols="80" id="text" rows="30" type="text"></textarea>
-    <button id="run">Run!</button>
+  <label for="text">Try typing some Stack here:</label>
+  <textarea cols="80" id="text" rows="30"></textarea>
+  <button id="run">Run!</button>
 </form>
 <script type="text/javascript"> // <![CDATA[
-    $('#run').click(function() {
-        var formatted = s(
-            $('#text').val()
-        )([]).toString();
-        $('#output').text(formatted);
-        return false;
-    });
+ $('#run').click(function() {
+  var formatted = s(
+   $('#text').val()
+  )([]).toString();
+  $('#output').text(formatted);
+  return false;
+ });
 // ]]> </script>
 <a href="#" id="output" style="border: solid white 1px; display: block;">&nbsp;</a>
