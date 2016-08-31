@@ -123,6 +123,4 @@ test : $(tests)
 $(tests) : all
 	$(basename $@)
 
-
-
 .PHONY : all clean test copy push unsafe_copy unsafe_push
