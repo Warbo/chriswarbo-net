@@ -37,7 +37,7 @@ redirect := rendered/index.php rendered/archive.html
 
 # Entry point
 
-all : $(all_pages) $(resources) $(redirect) $(indices) rendered/posts rendered/essays
+all : $(all_pages) $(resources) $(indices) redirects
 
 render_to = SOURCE="$1" DEST="$2" ./static/render_page
 render    = $(call render_to,$(call source,$1),$1)
@@ -78,14 +78,13 @@ $(redirect) : redirect.html static/render_page
 	mkdir -p $(dir $@)
 	$(call render_to,redirect.html,$@)
 
-# Redirects
+redirects : $(redirect) rendered/essays
+	pushd rendered > /dev/null; [[ -h posts ]] || ln -s blog posts; popd > /dev/null
+	pushd rendered > /dev/null; [[ -h git ]] || ln -s /opt/git git; popd > /dev/null
+
 rendered/essays: $(all_pages) static/mkEssayLinks static/mkRedirectTo \
                  static/redirectTemplate.html
 	./static/mkEssayLinks
-
-# FIXME: An index.php-like redirect might be nicer?
-rendered/posts : rendered/blog.html
-	pushd rendered; [[ -e posts ]] || ln -s blog posts; popd
 
 # Extra functionality
 
@@ -96,7 +95,9 @@ unsafe_push : unsafe_copy
 	ssh chriswarbo.net /home/chris/update.sh
 
 unsafe_copy : all
-	rsync -e ssh -r -p -z --info=progress2 --append rendered chriswarbo.net:~/
+	ssh chriswarbo.net 'rm -rf /home/chris/rendered'
+	ssh chriswarbo.net 'cp -a /var/www/html /home/chris/rendered'
+	rsync -e ssh -r -t -p -z --info=progress2 --append rendered chriswarbo.net:~/
 
 # The "unsafe" targets above perform the actual work for 'push' and 'copy', and
 # are made available for exceptional circumstances. Most of the time, the
@@ -123,4 +124,4 @@ test : $(tests)
 $(tests) : all
 	$(basename $@)
 
-.PHONY : all clean test copy push unsafe_copy unsafe_push
+.PHONY : all redirects clean test copy push unsafe_copy unsafe_push
