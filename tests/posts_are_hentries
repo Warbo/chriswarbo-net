@@ -1,18 +1,53 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i python -p pythonPackages.python mf2py
+#! nix-shell -i runhaskell -p '(haskellPackages.ghcWithPackages (h: [ h.microformats2-parser h.directory h.bytestring ]))'
+{-# LANGUAGE OverloadedStrings #-}
 
-import mf2py
-import os
-import sys
+import           Control.Monad
+import           Data.Aeson
+import qualified Data.ByteString.Lazy      as BS
+import           Data.Default
+import qualified Data.HashMap.Strict       as HM
+import           Data.Microformats2.Parser
+import qualified Data.Vector               as V
+import           Network.URI
+import           System.Directory
 
-def fail(m):
-    print("FAIL: " + m)
-    sys.exit(1)
+parse = parseMf2 def . documentRoot . parseLBS
 
-dir='rendered/blog'
-for f_ in filter(lambda f: f != 'index.html', os.listdir(dir)):
-    f = os.path.join(dir, f_)
-    with open(f, 'r') as file:
-        entries = mf2py.Parser(doc=file, html_parser="html5lib").to_dict(filter_by_type="h-entry")
-        if len(entries) != 1:
-            fail("Found " + str(len(entries)) + " h-entries in " + f)
+isHentry :: Value -> Bool
+isHentry (Object o) = case HM.lookup "type" o of
+                        Just (Array types) -> V.elem (String "h-entry") types
+                        _                  -> False
+isHentry _          = False
+
+getHentries :: Value -> [Value]
+getHentries v = case v of
+    Object o -> if isHentry (Object o)
+                   then [Object o]
+                   else HM.foldl' acc [] o
+    Array  a -> V.foldl' acc [] a
+    _        -> []
+  where acc result val = result ++ getHentries val
+
+hasOneHentry :: Value -> Bool
+hasOneHentry = (== 1) . length . getHentries
+
+stringHasOneHentry = hasOneHentry . parse
+
+blogFiles :: IO [FilePath]
+blogFiles = fmap (filter (`notElem` [".", "..", "index.html"]))
+                 (getDirectoryContents blogDir)
+
+blogDir :: FilePath
+blogDir = "rendered/blog"
+
+blogsWithoutEntry :: IO [FilePath]
+blogsWithoutEntry = blogFiles >>= filterM missing
+  where missing f = keep <$> BS.readFile (blogDir ++ "/" ++ f)
+        keep      = not . hasOneHentry . parse
+
+main = do
+  without <- blogsWithoutEntry
+  if null without
+     then return ()
+     else error ("Expected one h-entry in " ++ show without)
