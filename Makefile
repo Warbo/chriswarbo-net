@@ -37,7 +37,9 @@ redirect := rendered/index.php rendered/archive.html
 
 # Entry point
 
-all : $(all_pages) $(resources) $(indices) redirects
+all : quick_tests pages
+
+pages : $(all_pages) $(resources) $(indices) redirects
 
 render_to = SOURCE="$1" DEST="$2" ./static/render_page
 render    = $(call render_to,$(call source,$1),$1)
@@ -94,10 +96,10 @@ clean :
 unsafe_push : unsafe_copy
 	ssh chriswarbo.net /home/chris/update.sh
 
-unsafe_copy : all
+unsafe_copy : pages
 	ssh chriswarbo.net 'rm -rf /home/chris/rendered'
 	ssh chriswarbo.net 'cp -a /var/www/html /home/chris/rendered'
-	rsync -e ssh -r -t -p -z --info=progress2 --append rendered chriswarbo.net:~/
+	rsync -e ssh -r -t -p -z -l --info=progress2 --inplace rendered chriswarbo.net:~/
 
 # The "unsafe" targets above perform the actual work for 'push' and 'copy', and
 # are made available for exceptional circumstances. Most of the time, the
@@ -112,16 +114,26 @@ unsafe_copy : all
 push : copy
 	$(MAKE) -f $(THIS_FILE) unsafe_push
 
-copy : test
+copy : quick_test
 	$(MAKE) -f $(THIS_FILE) unsafe_copy
 
 # Tests
 
 tests := $(addsuffix .pass, $(wildcard tests/*))
 
+# All tests, which are useful when content is changed
 test : $(tests)
 
-$(tests) : all
+$(tests) : pages
 	$(basename $@)
 
-.PHONY : all redirects clean test copy push unsafe_copy unsafe_push
+# Quick integrity checks, which are worth running on every push
+quick_test :
+	tests/dirs_have_indices
+	tests/essays_redirects_to_projects
+	tests/everything_suffixed
+	tests/have_all_repos
+	tests/have_readmes
+	tests/no_empty_files
+
+.PHONY : all pages redirects clean test quick_test copy push unsafe_copy unsafe_push

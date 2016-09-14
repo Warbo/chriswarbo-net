@@ -1,7 +1,7 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -i bash
 
-if command -v ts && ts | grep queued | grep render
+if command -v ts > /dev/null && ts | grep queued | grep render > /dev/null
 then
   echo "Another render is queued, deferring to that"
   exit 0
