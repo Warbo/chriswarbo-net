@@ -93,7 +93,7 @@ rendered/essays: $(all_pages) static/mkEssayLinks static/mkRedirectTo \
 clean :
 	rm -rf rendered
 
-unsafe_push : unsafe_copy
+unsafe_push :
 	ssh chriswarbo.net /home/chris/update.sh
 
 unsafe_copy : pages
