@@ -26,7 +26,7 @@ function ignoreInSource {
     grep -v "./powerplay"           |
     grep -v "./procedural"          |
     grep -v "./repos"               |
-    grep -v "./turtleview"          
+    grep -v "./turtleview"
 }
 
 BASE="$PWD"
@@ -44,9 +44,9 @@ pushd "$DIR" > /dev/null
 
   pushd rendered > /dev/null
 
+    rm -f ./git
+    touch ./git
     SOURCE_CONTENT=$(find . | ignoreInSource | sort)
-
-    touch git # To appease some hyperlinks
 
     # Use 'script' to fake a tty and get a "Serving HTTP..." message. Send all
     # output to ../fifo, and wait until we see the "Serving HTTP..." message
