@@ -76,9 +76,9 @@ $(out_js) : $(call js_source,$@)
 	mkdir -p $(dir $@)
 	cp $(call js_source,$@) $@
 
-$(redirect) : redirect.html static/render_page
+$(redirect) : redirect.md static/render_page
 	mkdir -p $(dir $@)
-	$(call render_to,redirect.html,$@)
+	$(call render_to,redirect.md,$@)
 
 redirects : $(redirect) rendered/essays
 	pushd rendered > /dev/null; [[ -h posts ]] || ln -s blog posts; popd > /dev/null
@@ -99,7 +99,7 @@ unsafe_push :
 unsafe_copy : pages
 	ssh chriswarbo.net 'rm -rf /home/chris/rendered'
 	ssh chriswarbo.net 'cp -a /var/www/html /home/chris/rendered'
-	rsync -e ssh -r -t -p -z -l --info=progress2 --inplace rendered chriswarbo.net:~/
+	rsync -e ssh --recursive --times --perms --links --compress --checksum --info=progress2 rendered chriswarbo.net:~/
 
 # The "unsafe" targets above perform the actual work for 'push' and 'copy', and
 # are made available for exceptional circumstances. Most of the time, the
