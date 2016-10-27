@@ -7,6 +7,14 @@ title: Blog moved
 
 This blog has moved. If you're not redirected, check the [archive](/blog.html).
 
+<!-- TODO:
+
+/index.php?page=cedi&type=misc&id=1%2F3%2F6%2F10 ->  /projects/arduino
+/index.php?page=cedi&type=misc&id=1%2F4%2F28%2F29 -> /projects/optimisation
+/index.php?page=cedi&type=misc&id=1%2F4%2F28%2F29%2F46 -> /projects/optimisation/levin.html
+
+-->
+
 ```{.unwrap pipe="bash | pandoc -f markdown -t json"}
 shopt -s nullglob
 echo '<script type="text/javascript">var posts = ['
