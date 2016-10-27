@@ -659,6 +659,7 @@ We can keep calling these acceptors as many times as we like, in any order, pass
 Whenever `<? $f`{.php} is called, *nothing about any of the acceptors changes*. We can carry on calling them in any order with any number of arguments, just like before.
 
 A couple of reasons why we might want to use `<? $curry_n`{.php} instead of `<? $curry`{.php} are:
+
  - We want to use some of `<? $f`{.php}'s default parameters, but `<? $curry`{.php} makes us provide a value for each one ourselves. In this case, we can use `<? $curry_n`{.php} with the number of parameters we actually want to supply.
  - `<? $f`{.php} uses `<? func_get_args`{.php} to look up a variable number of arguments, so it may not have any named parameters at all. Again, we can use `<? $curry_n`{.php} to tell it how many parameters we want to supply.
 
@@ -724,12 +725,14 @@ Since the `<? $space_maker`{.php} function is curried, we're free to call it how
 ## Partial Application vs Currying ##
 
 Currying is very similar to partial application shown above:
+
  - Both will delay the evaluation of a function
  - Both will work with regular, uncurried functions
  - Both are idempotent
  - If we don't specify any extra arguments when we curry or partially-apply a function, the resulting closure will behave the same as the original function (although reflection will show them to differ).
 
 However, currying is strictly more powerful:
+
  - A partially applied function lets us specify some arguments now and the rest later, whereas a curried function will keep accepting batches of arguments again and again until it reaches its threshold $n.
  - If we don't specify any extra arguments when we curry a function, we can *still* pass it batches of arguments.
  - The above makes it convenient to *curry all functions as they're defined*.
@@ -803,6 +806,7 @@ $foo5 = function() use ($foo4) {
 ```
 
 `<? $foo5`{.php} will accept all of the arguments it is given when called, then pass them on to `<? $foo4`{.php} which will either:
+
  - Accept them all then wait for more, since it's threshold hasn't been reached
  - Accept them all, call `<? foo`{.php} and return the result, if the number of arguments equals the threshold
  - Accept enough to call `<? $foo4`{.php}, then pass the rest to whatever return value it gets
@@ -823,6 +827,7 @@ $foo6 = function() use ($curry_n) {
 Besides trying to further simplify the currying implementation itself, there are still some issues with this.
 
 It's nice that curried functions 'take care of themselves', but this makes their stack usage a bit more difficult to predict, especially if we're currying all of our functions as we define them. As mentioned above, this is a problem since PHP doesn't do tail-call optimisation. Some ways our stack usage may increase unnecessarily are:
+
  - Calling a curried function without any arguments will give us back an equivalent function which uses one more stack frame.
  - Curried functions which return curried functions which return curried functions, etc. can be called all at once, as the **Returning Functions** section demonstrates, but each subsequent call will be further down the stack.
  - Currying a function multiple times, eg. to keep adjusting its argument number, will add to its stack usage.
@@ -875,6 +880,7 @@ function flip() {
 ```
 
 Of course, the idealist in me would avoid named functions altogether, since they're global and globals should always be avoided. However, the alternatives are:
+
  - Using static class properties, which require indirection to call (PHP assumes `<? Foo::bar()`{.php} is a method call), and classes are still global so we don't gain much
  - Lexically scoping everything, but PHP's `<? use`{.php} requirement gets old quickly and it would be nice if the ability to curry didn't force a particular application architecture on us
 
