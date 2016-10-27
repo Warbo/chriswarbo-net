@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+for F in rendered/blog/*.html
+do
+  NAME=$(basename "$F")
+  grep "$NAME" < rendered/index.php > /dev/null || {
+    echo "Couldn't find '$NAME' in rendered/index.php" 1>&2
+    exit 1
+  }
+done
