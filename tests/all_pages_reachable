@@ -10,6 +10,7 @@ fi
 
 function ignoreInSource {
     # Things we don't expect to be reachable; mostly redirects from old URLs
+    grep -v "./redirect.html"       |
     grep -v "./projects/repos"      |
     grep -v "./projects/index.html" |
     grep -v "./blog/index.html"     |

@@ -49,18 +49,28 @@ echo '"index.html" ];</script>'
     var union = function(x, y) {
       return unique(x.concat(y));
     };
-    var path = (window.location.search.indexOf('id=') === -1)
-      ? 'index.html'
-      : window.location
-              .search
-              .substr(1)
-              .split('id=')[1]
-              .split('&')[0]
-              .replace(/[^a-z]/g, '');
-    var scores = posts.map(function(name) {
-      return jaccard(name.substr(5).replace(/[^a-z]/g, ''), path);
-    });
-    var best = scores.reduce(function(x, y) { return Math.max(x, y); }, 0);
+    var blog = function(id) {
+      var scores = posts.map(function(name) {
+        return jaccard(name.substr(5).replace(/[^a-z]/g, ''), id);
+      });
+      var best = scores.reduce(function(x, y) { return Math.max(x, y); }, 0);
+      return best;
+    };
+
+    var haveParam = function(p) {
+      return window.location.search.indexOf(p) !== -1;
+    };
+    path = haveParam('page=cedi')
+      ?
+      : haveParam('id=')
+        ? window.location
+                .search
+                .substr(1)
+                .split('id=')[1]
+                .split('&')[0]
+                .replace(/[^a-z]/g, '')
+        : 'index.html';
+
     console.log(posts[scores.indexOf(best)]);
     window.location.href = posts[scores.indexOf(best)];
   })();
