@@ -20,9 +20,9 @@ This will do a few things:
 
 ## Value-Oriented Programming ##
 
-Most functional programming boils down to *defining values*; asking "what do I want this to be?". In contrast, imperative programming (eg. OO or procedural) is about *performing steps*; asking "which action should I perform next?".
+Most functional programming boils down to *defining values*; asking "what should this be?". In contrast, imperative programming (eg. OO or procedural) is about *performing steps*; asking "what should happen next?".
 
-This "value-oriented programming" crops up in a lot of places, some of which I've listed below. We can point out the difference using the following simple example:
+This "value-oriented programming" crops up in a lot of places, some of which are explained below. We can point out the difference using the following tongue-in-cheek example:
 
 ```javascript
 // An imperative mindset performs a series of actions
@@ -236,6 +236,7 @@ function functionalDefault($x, $y = null) {
 Of course, There's More Than One Way To Do It. In this case, Static Single Assignment works just as well:
 
 ```php
+<?
 function functionalDefault2($x, $y_arg = null) {
   $y = is_null($y_arg)? makeY($x) : $y_arg;
   return process($x + $y);
@@ -364,7 +365,7 @@ Ideas like dependency injection, mock objects, etc. disappear when we're just de
 
 For example:
 
-```python
+```{.python pipe="tee actions.py"}
 def imperative(x):
   if len(x) is 0:
     print "empty"      # Print a value
@@ -374,23 +375,60 @@ def imperative(x):
   print "recursing"    # Print a value
   return sum(map(imperative, x))  # Recurse
 
+```
+
+```python
 val1 = imperative(...) # Run the actions and calculation
+```
 
+```{.python pipe="tee -a actions.py"}
 def functional(x):
-  # Store values for printing
-  big   = [str(len(x))]  if len(x) > 10 else []
-  empty =  if len(x) is 0 else []
-  rec   = ["recursing"]
+  # Recurse, to get return values and printable strings
+  rec = map(functional, x)
 
-  # Recurse
-  (strs, val) = map(functional, x)
+  recstrs =     [s      for val in rec for s in val[0]]
+  recval  = sum([val[1] for val in rec])
 
-  # Return
-  return (["empty"],        1) if len(x) is 0
-    else (big + rec + strs, sum(val))`
+  # Combine any recursive results with our own
+  big  = [str(len(x))] if len(x) > 10 else []
+  strs = big + ["recursing"] + recstrs
 
+  # Return both the strings and the value
+  return (["empty"], 1) if len(x) is 0 else (strs, recval)
+
+```
+
+```python
 (strs, val2) = functional(...) # Run the calculation
 map(sys.stdout.write, strs)    # Optionally, run the actions
+```
+
+```{pipe="python"}
+# Tests
+from actions import imperative, functional
+
+def test(x, y):
+  if x == y:
+    return True
+  raise Exception("Not equal: " + repr(x) + " and " + repr(y))
+
+print "Imperative tests"
+
+test(imperative([]), 1)
+test(imperative(11 * [[]]), 11)
+test(imperative([20 * [[]], 5 * [[]]]), 25)
+
+print "Functional tests"
+
+test(functional([]), (["empty"], 1))
+test(functional(11 * [[]]), (["11", "recursing"] + 11 * ["empty"], 11))
+test(functional([20 * [[]], 5 * [[]]]),
+     (["recursing", "20", "recursing"] + 20 * ["empty"] +
+      ["recursing"] + 5 * ["empty"],
+      25))
+
+import sys
+sys.stderr.write("Action tests passed\n")
 ```
 
 ### Pass Functions Around ###
