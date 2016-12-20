@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 # Common options
 IN_OPTIONS=(-t json)
