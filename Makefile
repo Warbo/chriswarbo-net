@@ -37,7 +37,7 @@ redirect := rendered/index.php rendered/archive.html
 
 # Entry point
 
-all : quick_tests pages
+all : quick_test pages
 
 pages : $(all_pages) $(resources) $(indices) redirects
 
