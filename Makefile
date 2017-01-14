@@ -37,7 +37,7 @@ redirect := rendered/index.php rendered/archive.html
 
 # Entry point
 
-all : quick_test pages
+all : pages quick_test
 
 pages : $(all_pages) $(resources) $(indices) redirects
 
@@ -85,7 +85,7 @@ redirects : $(redirect) rendered/essays
 	pushd rendered > /dev/null; [[ -h git ]] || ln -s /opt/git git; popd > /dev/null
 
 rendered/essays: $(all_pages) static/mkEssayLinks static/mkRedirectTo \
-                 static/redirectTemplate.html
+                 static/redirectTemplate.html rendered/projects/*/*.html
 	./static/mkEssayLinks
 
 # Extra functionality
@@ -128,7 +128,7 @@ $(tests) : pages
 	$(basename $@)
 
 # Quick integrity checks, which are worth running on every push
-quick_test :
+quick_test : pages
 	tests/dirs_have_indices
 	tests/essays_redirects_to_projects
 	tests/everything_suffixed
