@@ -39,7 +39,7 @@ redirect := rendered/index.php rendered/archive.html
 
 all : pages quick_test
 
-pages : $(all_pages) $(resources) $(indices) redirects
+pages : $(all_pages) $(resources) $(indices) redirects feeds
 
 render_to = SOURCE="$1" DEST="$2" ./static/render_page
 render    = $(call render_to,$(call source,$1),$1)
@@ -87,6 +87,14 @@ redirects : $(redirect) rendered/essays
 rendered/essays: $(all_pages) static/mkEssayLinks static/mkRedirectTo \
                  static/redirectTemplate.html rendered/projects/*/*.html
 	./static/mkEssayLinks
+
+feeds : rendered/blog.atom rendered/blog.rss
+
+rendered/blog.atom : rendered/blog.html static/mkAtom
+	static/mkAtom < rendered/blog.html > rendered/blog.atom
+
+rendered/blog.rss : rendered/blog.atom static/mkRss
+	static/mkRss < rendered/blog.atom > rendered/blog.rss
 
 # Extra functionality
 

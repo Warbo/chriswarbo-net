@@ -1,0 +1,11 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i python -p hfeed2atom
+
+from bs4        import BeautifulSoup
+from hfeed2atom import hfeed2atom
+from sys        import stdin
+
+feeds = hfeed2atom(doc = BeautifulSoup(stdin.read(), 'html5lib'),
+                   url = 'http://chriswarbo.net/blog.html')
+
+print(feeds[0])
