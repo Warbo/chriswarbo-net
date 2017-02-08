@@ -2,6 +2,10 @@
 title: <a class="h-card" rel="me" href="http://chriswarbo.net">Chris Warburton</a>'s Homepage
 extra_head:
   <link href="mailto:chriswarbo@gmail.com" rel="me" />
+  <link rel="alternate" type="application/rss+xml" href="blog.rss"
+        title="ChrisWarbo.net RSS feed"/>
+  <link rel="alternate" type="application/atom+xml" href="blog.atom"
+        title="ChrisWarbo.net Atom feed"/>
 
 dependencies: rendered/blog.html static/showPost* static/stripTitle
 postprocessor: ./static/stripTitle

@@ -142,6 +142,7 @@ quick_test : pages
 	tests/everything_suffixed
 	tests/have_all_repos
 	tests/have_readmes
+	tests/have_feeds
 	tests/no_empty_files
 
 .PHONY : all pages redirects clean test quick_test copy push unsafe_copy unsafe_push
