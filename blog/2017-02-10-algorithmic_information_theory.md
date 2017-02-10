@@ -2,13 +2,14 @@
 title: Algorithmic Information Theory
 ---
 
-The field of [algorithmic information theory][] studies the computational
-complexity of algorithms, where the resource being considered is the *length of
-the program*. This is a good model of the scientific process: we want a theory
-to *explain* our observations, and hence we want a *program* which takes fewer
-bits to store than those observations, but which will produce them as output
-when executed. Gregory Chaitin claims that this compression *is* explanation:
-if a program is as long as its output, it doesn't explain anything.
+The field of [algorithmic information theory](https://en.wikipedia.org/wiki/Algorithmic_information_theory)
+studies the computational complexity of algorithms, where the resource being
+considered is the *length of the program*. This is a good model of the
+scientific process: we want a theory to *explain* our observations, and hence we
+want a *program* which takes fewer bits to store than those observations, but
+which will produce them as output when executed. Gregory Chaitin claims that
+this compression *is* explanation: if a program is as long as its output, it
+doesn't explain anything.
 
 When I came across that claim I immediately thought of the case where some long
 and tedious program is written to calculate a number, or even just a single bit
@@ -93,5 +94,3 @@ proof-object. For example, there may be some repetitive structure in the
 proof-object which the proof-object language does not allow us to optimise
 away. The proof-constructing language has no such restriction, allowing us to
 write a smaller program which iteratively builds up the proof-object.
-
-algorithmic information theory: https://en.wikipedia.org/wiki/Algorithmic_information_theory
