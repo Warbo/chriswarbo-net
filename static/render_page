@@ -3,7 +3,7 @@ set -e
 
 # Common options
 IN_OPTIONS=(-t json)
-OUT_OPTIONS=(-f json --template templates/default.html -s)
+OUT_OPTIONS=(-f json --template templates/default.html -s --mathml)
 
 # If the filename contains a date, provide it to the output template
 if echo "$SOURCE" | grep -P "blog/\d{4}-\d{2}-\d{2}" > /dev/null
