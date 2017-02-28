@@ -16,7 +16,7 @@ fi
 if echo "$INPUT" | grep "<code></code>" > /dev/null
 then
     echo "Stripping left-over <pre> and <code> elements" >> /dev/stderr
-    OUTPUT=$(echo "$INPUT" | ./static/stripEmptyPreCode)
+    OUTPUT=$(echo "$INPUT" | stripEmptyPreCode)
     INPUT="$OUTPUT"
 fi
 
