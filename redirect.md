@@ -1,6 +1,6 @@
 ---
 extra_head:
-  <meta http-equiv="refresh" content="1;url=/blog.html">
+  <meta http-equiv="refresh" content="1;url=/blog.html" />
 
 title: Blog moved
 ---

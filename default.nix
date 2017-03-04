@@ -1,26 +1,14 @@
 # Used by `nix-shell` to gather the dependencies for building this site
 with import <nixpkgs> {};
 with {
-  stripper = stdenv.mkDerivation {
-    name         = "stripper";
-    buildInputs  = [ makeWrapper ];
-    script       = ./static/stripEmptyPreCode;
-    env          = buildEnv {
-      name  = "stripper-env";
-      paths = [ pythonPackages.python pythonPackages.beautifulsoup4 ];
-    };
-    buildCommand = ''
-      mkdir -p "$out/bin"
-      makeWrapper "$script" "$out/bin/stripEmptyPreCode" \
-        --prefix PATH : "$env/bin"
-    '';
-  };
+  commands = callPackage ./commands.nix {};
 };
 stdenv.mkDerivation {
   name   = "chriswarbo.net";
   src    = ./.;
 
   buildInputs = [
+    commands
     graphviz
     xidel
     php
@@ -31,6 +19,5 @@ stdenv.mkDerivation {
     python
     pythonPackages.pyyaml
     pandoc
-    stripper
   ];
 }

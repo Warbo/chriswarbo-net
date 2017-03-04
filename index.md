@@ -7,8 +7,7 @@ extra_head:
   <link rel="alternate" type="application/atom+xml" href="blog.atom"
         title="ChrisWarbo.net Atom feed"/>
 
-dependencies: rendered/blog.html static/showPost* static/stripTitle
-postprocessor: ./static/stripTitle
+postprocessor: stripTitle
 ---
 
 <div style="float: right; margin: 0 10px 10px 10px;" >
@@ -36,7 +35,7 @@ find root/rendered/blog -type f |
   grep -v "index.html"          |
   sort -r                       |
   head                          |
-  ./root/static/showPosts
+  showPosts
 ```
 
 ## [Projects](/projects.html)

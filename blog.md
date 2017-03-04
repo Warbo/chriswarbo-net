@@ -16,5 +16,5 @@ in [Atom](/blog.atom) format and [RSS](/blog.rss) format.
 ```{.unwrap pipe="sh | pandoc -t json"}
 find root/rendered/blog -type f | grep -v "index.html" |
                                   sort -r              |
-                                  ./root/static/showPosts
+                                  TO_ROOT=. ./root/static/showPosts
 ```

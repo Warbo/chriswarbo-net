@@ -11,10 +11,18 @@ mkdir -p "$RENDERED/essays"
 echo "Creating new essays/ redirects" 1>&2
 find "$RENDERED/projects" -type f | while read -r PRJ_FILE
 do
-    ESSAY_FILE=$(echo "$PRJ_FILE" |
-                        sed -e 's@rendered/projects/@rendered/essays/@g')
+    # The relative path to the site's root from the file
+       TO_ROOT=$(dirname "$PRJ_FILE" | sed -e 's@.*/rendered/@@g' |
+                                       sed -e 's@[^/][^/]*@..@g')
 
-      PRJ_URL=$(echo   "$PRJ_FILE" | sed -e 's@.*/rendered/projects/@/projects/@g')
+
+    ESSAY_FILE=$(echo "$PRJ_FILE" |
+                      sed -e 's@rendered/projects/@rendered/essays/@g')
+
+
+
+       PRJ_URL=$(echo "$PRJ_FILE" |
+                      sed -e "s@.*/rendered/projects/@$TO_ROOT/projects/@g")
 
     ESSAY_DIR=$(dirname "$ESSAY_FILE")
     mkdir -p "$ESSAY_DIR"
@@ -22,7 +30,7 @@ do
     "$BASE/mkRedirectTo" "$PRJ_URL" > "$ESSAY_FILE"
 done
 
-"$BASE/mkRedirectTo" "/projects.html" > "rendered/essays.html"
+"$BASE/mkRedirectTo" "projects.html" > "rendered/essays.html"
 
 # Old links
 for P in rendered/projects/*
@@ -36,5 +44,5 @@ do
     fi
 
     mkdir -p "rendered/$NAME"
-    "$BASE/mkRedirectTo" "/projects/$NAME/index.html" > "rendered/$NAME/index.html"
+    "$BASE/mkRedirectTo" "../projects/$NAME/index.html" > "rendered/$NAME/index.html"
 done

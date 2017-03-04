@@ -32,25 +32,30 @@ https://en.wikipedia.org/wiki/Chaitin%27s_constant)) 'interesting' numbers,
 are computable.
 
 It turns out we can list computable numbers very easily, by reading the output
-of every computer program. Here's one specific way we can do this:
+of every computer program. There are many equivalent ways we can do this, here's
+a simple one.
 
- - Choose some specific binary, monotone, [universal Turing machine](
-   https://en.wikipedia.org/wiki/Turing_machine#Universal_Turing_machines),
-   without a halt state. Call this machine $M$. A [monotone](
-   http://people.idsia.ch/~juergen/toesv2/node6.html) Turing machine has an
-   extra tape which can only move in one direction; once something is written to
-   this extra tape, it cannot be overwritten; hence this will be our "output".
- - For the $n$th number in the list (starting from the 0th), we write out $n$ in
-   binary on the work tape of $M$, starting with the least-significant bit.
-   (What would happen if we write the most-significant bits first?)
- - Run $M$; it will keep going forever, since there's no "halt" state.
- - Read the contents of the output tape as a binary fraction. One way to do this
-   is to start with a [radix point](https://en.wikipedia.org/wiki/Radix_point)
-   "." and put each bit on alternate sides, so for output bits $b_1$, $b_2$,
-   etc. we would get a number like $\dots b_5 b_3 b_1 . b_2 b_4 b_6 \dots$.
+ - Choose some [universal Turing machine](
+   https://en.wikipedia.org/wiki/Turing_machine#Universal_Turing_machines). To
+   make things easy we'll pick one without a halt state, and we'll make it
+   [monotone](http://people.idsia.ch/~juergen/toesv2/node6.html): this means we
+   give it an extra tape, which only moves in one direction. This will be our
+   "output".
+ - For the $n$th number in the list (starting from the 0th), write $n$ on to the
+   machine's work tape. Use the number of symbols as the base, e.g. if the
+   machine uses binary, write the number in binary. Start with the
+   least-significant digit and end with the most-significant (what would happen
+   if we wrote it with the most-significant digit first?)
+ - Run the machine; it will keep going forever, since there's no "halt" state.
+ - Read the contents of the output tape as a number. One simple way is to read
+   two sequences of digits: the first comes from every other cell on the tape
+   (1st, 3rd, 5th, etc.); the second come from the cells in between (2nd, 4th,
+   6th, etc.). We turn these into a number by writing a [radix point](
+   https://en.wikipedia.org/wiki/Radix_point) and having the first sequence go
+   off to the left, and the second go off to the right.
 
-For example, if the output begins [0,0,1,1,1,1,0,1,…], we would get a number
-like …0110.0111…
+For example, if the output begins [0,1,2,3,4,5,6,7,…], we would get a number
+like …6420.1357…
 
 Some programs will never output any bits; some will output a finite number of
 bits then switch to not outputting anything; others will keep outputting bits

@@ -69,7 +69,8 @@ t  l0
 I've made a quick implementation of this in Haskell; here's the beginning of the
 list:
 
-```{pipe="nix-shell -p '(haskellPackages.ghcWithPackages (h: [ h.control-monad-omega ])' --run runhaskell"}
+```
+{pipe="nix-shell -p '(haskellPackages.ghcWithPackages (h: [ h.control-monad-omega ]))' --run runhaskell"}
 {-# LANGUAGE MonadComprehensions #-}
 module X where
 
@@ -107,18 +108,18 @@ step _ = error "Can't step"
 whnf _ S                       = Just S
 whnf _ K                       = Just K
 whnf _ (V v)                   = Just (V v)
-whnf 0 (App x y) | reducible x = Nothing
-whnf n (App x y) | reducible x = do x' <- reduce n x
-                                    if redex (App x' y)
-                                       then whnf (n-1) (step (App x' y))
-                                       else Just (App x' y)
-whnf n (App x y) | otherwise   = Just (App x y)
+whnf 0 (Node x y) | reducible x = Nothing
+whnf n (Node x y) | reducible x = do x' <- reduce n x
+                                     if redex (Node x' y)
+                                        then whnf (n-1) (step (Node x' y))
+                                        else Just (Node x' y)
+whnf n (Node x y) | otherwise   = Just (Node x y)
 
 spine n S = []
 spine n K = []
-spine n (App x y) = x : case whnf n y of
-                             Nothing -> []
-                             Just y' -> spine (n-1) y'
+spine n (Node x y) = x : case whnf n y of
+                              Nothing -> []
+                              Just y' -> spine (n-1) y'
 
 readNum n (left, right) []        = (left, right)
 readNum n (left, right) (V L0:xs) = readNum (n-1) (0:left, right) xs

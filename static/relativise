@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+# Update a HTML file to use relative links, e.g. '../css/foo.css' rather than
+# '//chriswarbo.net/css/foo.css' or '/css/foo.css'
+
+# This file should not be run standalone; it should be wrapped in an appropriate
+# environment by default.nix
+
+set -e
+
+FILE="$1"
+
+if [[ -z "$TO_ROOT" ]]
+then
+    # Determine the path to the Web root, e.g. '../..'
+    P=$(dirname "$FILE" | sed -e 's@.*rendered/@@g' |
+                          sed -e 's@.*rendered@@g'  |
+                          sed -e 's@[^/][^/]*@..@g')
+    if [[ -n "$P" ]]
+    then
+        TO_ROOT="$P"
+    else
+        TO_ROOT="."
+    fi
+fi
+
+# Modify HTML
+xsltproc --stringparam to_root "$TO_ROOT" "$XSL" - < "$FILE" > "$FILE.rel"
+
+# Overwrite original file
+mv -v "$FILE.rel" "$FILE"

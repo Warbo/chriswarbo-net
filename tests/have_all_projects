@@ -7,8 +7,8 @@ do
     [[ "x$SOURCE" = "xprojects/index.html" ]] && continue
 
     NAME=$(echo "$SOURCE" | rev | cut -d '.' -f 2- | rev)
-    DEST="/$NAME.html"
-    if [[ ! -e "rendered$DEST" ]]
+    DEST="./$NAME.html"
+    if [[ ! -e "rendered/$DEST" ]]
     then
         echo "Can't find rendered$DEST" >> /dev/stderr
         ERR=1

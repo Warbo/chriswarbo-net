@@ -1,14 +1,10 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash -p bash xidel
-
-# Bring in xidel since it's used by showPost
-DIR=$(dirname "$0")
+#!/usr/bin/env bash
 
 echo '<ul>'
 
 while read -r POST
 do
-    "$DIR/showPost" "$POST"
+    showPost "$POST"
 done
 
 echo '</ul>'

@@ -1,6 +1,6 @@
 ---
 title: mv/((1-(v/c)^2)^(1/2)) or, in non-relativistic terms, momentum
-postprocessor: ./static/stripTitle
+postprocessor: stripTitle
 ---
 I know this will probably start a flame war if widely read (which it probably won't be, since this is just a braindump page) but I want to say it anyway: I think the Gnome desktop is in a bit of a pickle, and the problem I think it is facing is that which many people have to deal with when programming, and that is stopping too early.
 

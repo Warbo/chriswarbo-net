@@ -3,19 +3,29 @@ set -e
 
 # Common options
 IN_OPTIONS=(-t json)
-OUT_OPTIONS=(-f json --template templates/default.html -s --mathml)
+OUT_OPTIONS=(-f json -s --mathml --template "$defaultTemplate")
 
 # If the filename contains a date, provide it to the output template
 if echo "$SOURCE" | grep -P "blog/\d{4}-\d{2}-\d{2}" > /dev/null
 then
-    D=$(echo "$SOURCE" | grep -oP "blog/\d{4}-\d{2}-\d{2}" | grep -oP "\d{4}-\d{2}-\d{2}")
+    D=$(echo "$SOURCE" | grep -oP "blog/\d{4}-\d{2}-\d{2}" |
+                         grep -oP "\d{4}-\d{2}-\d{2}"      )
     OUT_OPTIONS+=(-M date="$D")
 fi
 
-# If we're writing to a file, tell pandoc so it can guess the format
+# If we're writing to a file, tell pandoc so it can guess the format. Also add
+# the path from the output to the root as a variable so we can use relative
+# links.
 if [[ -n "$DEST" ]]
 then
     OUT_OPTIONS+=(-o "$DEST")
+
+    if echo "$DEST" | grep '^rendered/' > /dev/null
+    then
+        TO_ROOT=$(dirname "$DEST" | sed -e 's@rendered/@@g' |
+                                    sed -e 's@[^/][^/]*@..@g')
+        OUT_OPTIONS+=(-M to_root="$TO_ROOT")
+    fi
 fi
 
 # If we're reading from a file, use it as pandoc's input, and provide the path
@@ -35,7 +45,7 @@ else
     INPUT=$(cat)
 fi
 
-echo "Running pandoc, capturing output for post-processing" >> /dev/stderr
+echo "Running pandoc, capturing output for post-processing" 1>&2
 
 # We don't use pandoc's --filter option, as it buffers stderr which makes
 # debugging harder
@@ -82,10 +92,10 @@ function writeOutput {
     # Send stdin to its final destination, either stdout or $DEST
     if [[ -n "$DEST" ]]
     then
-        echo "Finished postprocessing, writing to '$DEST'" >> /dev/stderr
+        echo "Finished postprocessing, writing to '$DEST'" 1>&2
         cat > "$DEST"
     else
-        echo "Finished postprocessing, writing to stdout" >> /dev/stderr
+        echo "Finished postprocessing, writing to stdout" 1>&2
         cat
     fi
 }
@@ -108,13 +118,13 @@ function getPostprocessor {
 }
 
 function postprocess {
-    CLEANED=$(./static/cleanup)
+    CLEANED=$(cleanup)
 
     # Next, perform any custom postprocessing
     PP=$(getInput | getPostprocessor)
     if [[ -n "$PP" ]]
     then
-        echo "Running postprocessor '$PP'" >> /dev/stderr
+        echo "Running postprocessor '$PP'" 1>&2
         echo "$CLEANED" | "$PP"
     else
         echo "$CLEANED"

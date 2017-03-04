@@ -40,6 +40,7 @@ redirect := rendered/index.php rendered/archive.html
 all : pages quick_test
 
 pages : $(all_pages) $(resources) $(indices) redirects feeds
+	./static/mkEssayLinks
 
 render_to = SOURCE="$1" DEST="$2" ./static/render_page
 render    = $(call render_to,$(call source,$1),$1)
@@ -54,7 +55,7 @@ extradeps = $(wildcard $(shell ./static/getDeps $1))
 # $1 - Target HTML file
 # $2 - Dependencies
 define PAGE
-$1 : $2 static/render_page
+$1 : $2 static/render_page static/relativise static/rel.xsl
 	mkdir -p $$(dir $$@)
 	$$(call render,$$@)
 endef
@@ -109,6 +110,10 @@ unsafe_copy : pages
 	ssh chriswarbo.net 'cp -a /var/www/html /home/chris/rendered'
 	rsync -e ssh --recursive --times --perms --links --compress --checksum --info=progress2 rendered chriswarbo.net:~/
 
+unsafe_add : pages
+	echo "Adding to IPFS"
+	ipfs add -r rendered
+
 # The "unsafe" targets above perform the actual work for 'push' and 'copy', and
 # are made available for exceptional circumstances. Most of the time, the
 # following "safe" versions should be used instead, which run the test suite
@@ -124,6 +129,9 @@ push : copy
 
 copy : quick_test
 	$(MAKE) -f $(THIS_FILE) unsafe_copy
+
+add : quick_test
+	$(MAKE) -f $(THIS_FILE) unsafe_add
 
 # Tests
 

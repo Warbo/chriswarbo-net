@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+while read -r FILE
+do
+  echo "Found cruft $FILE" 1>&2
+  exit 1
+done < <(find rendered -name "*.rel")
