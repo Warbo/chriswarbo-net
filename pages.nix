@@ -48,7 +48,7 @@ with rec { pages = rec {
         json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)
       '';
 
-      read = file: runCommand "metadata.json"
+      read = file: runCommand "metadata-${baseNameOf file}.json"
                {
                  inherit file yaml2json;
                  buildInputs = [ pythonPackages.python pythonPackages.pyyaml ];
@@ -57,8 +57,12 @@ with rec { pages = rec {
                  # Look for a YAML section between "---" lines
 
                  # Get line numbers matching "---"
-                 NUMS=$(grep -n "^---[-]*$" < "$file" | cut -d ':' -f 1 |
-                                                        head -n2)
+                 LINES=$(grep -n "^---[-]*$" < "$file") || {
+                   echo "{}" > "$out"
+                   exit 0
+                 }
+
+                 NUMS=$(echo "$LINES" | cut -d ':' -f 1 | head -n2)
                  START=$(echo "$NUMS" | head -n1)
                    END=$(echo "$NUMS" | tail -n1)
 
@@ -144,20 +148,16 @@ with rec { pages = rec {
 
   mdToHtml = name: (removeSuffix ".html" (removeSuffix ".md" name)) + ".html";
 
-  blog = with rec {
+  blogPosts = with rec {
     # Read filenames from ./blog and append to the path './blog', so that each
     # is a standalone path. This way each post only depends on its own source,
     # and won't get rebuilt if e.g. a new post is added to ./blog.
     postNames = attrNames (readDir ./blog);
     posts = listToAttrs (map (p: { name  = mdToHtml p;
                                    value = ./blog + "/${p}"; }) postNames);
+  }; mapAttrs (n: v: render { file = v; name = "blog-${n}"; }) posts;
 
-    rendered = mapAttrs (n: v: render {
-                                 file = v;
-                                 name = "blog-${n}";
-                               })
-                        posts;
-  }; attrsToDirs rendered;
+  blog = attrsToDirs rendered;
 
   renderAll = mapAttrs (n: v: if isAttrs v
                                  then renderAll v
@@ -168,7 +168,7 @@ with rec { pages = rec {
   projects = attrsToDirs (renderAll (dirsToAttrs ./projects));
 
   site = rel (attrsToDirs {
-    inherit blog;
+    inherit blog projects;
     "index.html" = index;
   });
 }; }; pages

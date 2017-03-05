@@ -1,5 +1,11 @@
 ---
 title: How To Design Things
+dependencies: [ 'static/images/itunescovers.png'   ,
+                'static/images/iphoneadvert.png'   ,
+                'static/images/compizswitcher.png' ,
+                'static/images/compizcube.png'     ,
+                'static/images/awm.png'            ,
+                'static/images/compizlogo.png'     ]
 ---
 Forget everything you thought you knew. Forget UI. Forget KISS. Forget intuitiveness. There is only ONE thing that is needed to make something new, cool, trendy, easy and hip. It is........ wait for it......... PARTIAL REFLECTIONS OF SOMETHING ON AN INVISIBLE GROUND! That's it, it's all you need.
 

@@ -7,15 +7,15 @@ INPUT=$(cat)
 # Tables should be given summaries, specified by a sibling with class "summary"
 if echo "$INPUT" | grep "<table" > /dev/null
 then
-    echo "Summarising tables" >> /dev/stderr
-    OUTPUT=$(echo "$INPUT" | ./static/summariseTables)
+    echo "Summarising tables" 1>&2
+    OUTPUT=$(echo "$INPUT" | summariseTables)
     INPUT="$OUTPUT"
 fi
 
 # Any empty <code> elements left from PanPipe should be stripped
 if echo "$INPUT" | grep "<code></code>" > /dev/null
 then
-    echo "Stripping left-over <pre> and <code> elements" >> /dev/stderr
+    echo "Stripping left-over <pre> and <code> elements" 1>&2
     OUTPUT=$(echo "$INPUT" | stripEmptyPreCode)
     INPUT="$OUTPUT"
 fi
