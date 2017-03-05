@@ -1,37 +1,55 @@
-{ buildEnv, libxslt, makeWrapper, pythonPackages, runCommand, xidel }:
+{ buildEnv, lib, libxslt, makeWrapper, pandoc, panhandle, panpipe,
+  pythonPackages, runCommand, xidel }:
 
-runCommand "rendering-commands"
-  {
-    buildInputs       = [ makeWrapper ];
-  }
-  ''
-    mkdir -p "$out/bin"
+with lib;
+with {
+  wrap = deps: vars: file: runCommand "wrapped"
+    {
+      inherit file;
+      buildInputs = [ makeWrapper ];
+      command     = baseNameOf file;
+      env         = buildEnv {
+                      name  = "stripemptyprecode-env";
+                      paths = deps;
+                    };
+      vars        = concatStringsSep " "
+                      (fold (n: r: let v = vars."${n}";
+                                    in [''--set "${n}" "${v}"''] ++ r)
+                            []
+                            (attrNames vars));
+    }
+    ''
+      mkdir -p "$out/bin"
+      makeWrapper "$file" "$out/bin/$command" $vars --prefix PATH : "$env/bin"
+  '';
+};
+rec {
+  cleanup =
+    wrap [ stripEmptyPreCode summariseTables ] {} ./static/cleanup;
 
-    makeWrapper "${./static/stripEmptyPreCode}" "$out/bin/stripEmptyPreCode" \
-      --prefix PATH : "${buildEnv {
-          name  = "stripemptyprecode-env";
-          paths = [ pythonPackages.python pythonPackages.beautifulsoup4 ];
-        }}/bin"
+  relativise =
+    wrap [ libxslt ] { XSL = ./static/rel.xsl; } ./static/relativise;
 
-    makeWrapper "${./static/relativise}" "$out/bin/relativise" \
-      --prefix PATH : "${buildEnv {
-          name  = "relativise-env";
-          paths = [ libxslt ];
-        }}/bin" \
-      --set XSL "${./static/rel.xsl}"
+  render_page =
+    wrap [ cleanup pandoc panhandle panpipe ]
+         { defaultTemplate = ./templates/default.html; }
+         ./static/render_page;
 
-    makeWrapper "${./static/showPost}" "$out/bin/showPost" \
-      --prefix PATH : "${buildEnv {
-          name  = "showpost-env";
-          paths = [ xidel ];
-        }}/bin"
+  showPost =
+    wrap [ xidel ] {} ./static/showPost;
 
+  showPosts =
+    wrap [ showPost ] {} ./static/showPosts;
 
-    makeWrapper "${./static/showPosts}" "$out/bin/showPosts"
+  stripEmptyPreCode =
+    wrap [ pythonPackages.python pythonPackages.beautifulsoup4 ] {}
+         ./static/stripEmptyPreCode;
 
-    makeWrapper "${./static/stripTitle}" "$out/bin/stripTitle" \
-      --prefix PATH : "${buildEnv {
-          name  = "striptitle-env";
-          paths = [ pythonPackages.python pythonPackages.beautifulsoup4 ];
-        }}/bin"
-  ''
+  stripTitle =
+    wrap [ pythonPackages.python pythonPackages.beautifulsoup4 ] {}
+         ./static/stripTitle;
+
+  summariseTables =
+    wrap [ pythonPackages.python pythonPackages.beautifulsoup4 ] {}
+         ./static/summariseTables;
+}

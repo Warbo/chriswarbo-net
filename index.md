@@ -8,6 +8,8 @@ extra_head:
         title="ChrisWarbo.net Atom feed"/>
 
 postprocessor: stripTitle
+packages: [ 'showPosts', 'stripTitle' ]
+dependencies: [ 'static/code.png', 'static/file2img.sh' ]
 ---
 
 <div style="float: right; margin: 0 10px 10px 10px;" >
