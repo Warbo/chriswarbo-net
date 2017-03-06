@@ -1,5 +1,7 @@
 ---
 title: PowerPlay Improvement continued
+dependencies: [ 'static/file2img.sh' ]
+packages: [ 'ditaa' ]
 ---
 ## Defining Improvement ##
 
@@ -45,7 +47,7 @@ Maybe a flow chart will explain better:
 ```
 
 ```{.unwrap pipe="sh | pandoc -t json"}
-nix-shell -p ditaa --run "ditaa chart1.dit" > /dev/null
+ditaa chart1.dit > /dev/null
 ./root/static/file2img.sh "Chart 1" < chart1.png
 ```
 
@@ -88,7 +90,7 @@ Instead, we can abandon the list and make one all-encompassing regression test: 
 ```
 
 ```{.unwrap pipe="sh | pandoc -t json"}
-nix-shell -p ditaa --run "ditaa chart2.dit" > /dev/null
+ditaa chart2.dit > /dev/null
 ./root/static/file2img.sh "Chart 2" < chart2.png
 ```
 

@@ -1,5 +1,7 @@
 ---
 title: HoTT for Dummies
+dependencies: [ 'static/file2img.sh' ]
+packages: [ 'ditaa' ]
 ---
 
 Based on [a Hacker News thread](https://news.ycombinator.com/item?id=10184324), about [a talk][slides] by [Thorsten Altenkirch](http://www.cs.nott.ac.uk/~txa/), I ended up writing a rather long explanation of some Type Theory and Homotopy Type Theory, which I thought I might as well reproduce here:
@@ -155,7 +157,7 @@ One question we might ask is whether all equality values are the same; ie. are t
 ```
 
 ```{.unwrap pipe="sh | pandoc -t json"}
-nix-shell -p ditaa --run "ditaa hole.dit hole.png" >> /dev/stderr
+ditaa hole.dit hole.png 1>&2
 ./root/static/file2img.sh "Type containing a hole" < hole.png
 ```
 

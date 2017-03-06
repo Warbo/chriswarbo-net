@@ -1,5 +1,6 @@
 ---
 title: Calculating Arity
+packages: [ 'ghc' ]
 ---
 
 The *arity* of a value is the number of arguments it can accept. We can define arity by pattern-matching on types (a feature known as *typecase*):
@@ -278,6 +279,6 @@ runhaskell -XTypeFamilies -XFlexibleContexts < typefamily3.hs
 for FILE in *.hs
 do
   echo -e "\nmain = return ()" > "$FILE"
-  nix-shell -p haskellPackages.ghc --run "ghc --make '$FILE'" 1>&2
+  ghc --make "$FILE" 1>&2
 done
 ```

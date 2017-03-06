@@ -1,5 +1,6 @@
 ---
 title: How's This For a Mention?
+dependencies: [ 'static/file2img.sh', 'static/images/ILoveJo.png' ]
 ---
 To Jo
 

@@ -1,5 +1,6 @@
 ---
 title: Projects
+packages: [ 'nixEnv' ]
 ---
 
 A curated collection of (hopefully) well-maintained ramblings:

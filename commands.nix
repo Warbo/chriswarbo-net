@@ -1,6 +1,7 @@
-{ buildEnv, lib, libxslt, makeWrapper, pandoc, panhandle, panpipe,
+{ buildEnv, lib, libxslt, makeWrapper, nix, pandoc, panhandle, panpipe,
   pythonPackages, runCommand, xidel }:
 
+with builtins;
 with lib;
 with {
   wrap = deps: vars: file: runCommand "wrapped"
@@ -26,6 +27,10 @@ with {
 rec {
   cleanup =
     wrap [ stripEmptyPreCode summariseTables ] {} ./static/cleanup;
+
+  nixShell =
+    wrap [ nix ] { NIX_PATH   = getEnv "NIX_PATH";
+                   NIX_REMOTE = getEnv "NIX_REMOTE"; } "${nix}/bin/nix-shell";
 
   relativise =
     wrap [ libxslt ] { XSL = ./static/rel.xsl; } ./static/relativise;

@@ -1,5 +1,7 @@
 ---
 title: Nix Packages
+dependencies: [ 'static/file2img.sh' ]
+packages: [ 'graphviz' ]
 ---
 
 ```{pipe="tee graph.sh > /dev/null"}

@@ -1,5 +1,6 @@
 ---
 title: Active Code
+packages: [ 'imagemagick', 'ghc', 'php' ]
 ---
 "Active code" is the term used by the [Babel][babel] system, part of [Emacs's][emacs] [Org-mode][org]. It refers to authoring systems which can execute code embedded in the documents they're rendering. This page documents the active code system I use to write articles, whether they're published as HTML on [my Web site](/) or PDFs in a journal.
 

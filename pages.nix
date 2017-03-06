@@ -83,34 +83,35 @@ with rec { pages = rec {
   #   dirContaining /foo/bar [ /foo/bar/baz /foo/bar/quux/foobar ]
   #
   # Will produce a directory containing 'baz' and 'quux/foobar'.
-  dirContaining = base: files: runCommand "dir"
-    {
-      base  = toString base;
-      files = map (f: toString base + "/${f}") files;
-    }
-    ''
-      mkdir -p "$out"
-      for F in $files
-      do
-        REL=$(echo "$F" | sed -e "s@$base/@@g")
-        DIR=$(dirname "$REL")
-        mkdir -p "$out/$DIR"
-        cp "$F" "$out/$REL"
-      done
-    '';
+  dirContaining = base: files:
+    mergeDirs (map (f: runCommand "dir"
+                         {
+                           base = toString base;
+                           file = toString base + "/${f}";
+                         }
+                         ''
+                           REL=$(echo "$file" | sed -e "s@$base/@@g")
+                           DIR=$(dirname "$REL")
+                           mkdir -p "$out/$DIR"
+                           cp "$file" "$out/$REL"
+                         '') files);
 
   # Copy the contents of a bunch of directories into one
-  mergeDirs = dirs: runCommand "merged" { inherit dirs; } ''
-    shopt nullglob
-    mkdir -p "$out"
-    for D in $dirs
-    do
-      for F in "$D"/*
-      do
-        cp -r "$F" "$out/"
-      done
-    done
-  '';
+  mergeDirs = dirs:
+    if dirs == []
+       then empty
+       else runCommand "merged" { a = head dirs; b = mergeDirs (tail dirs); } ''
+         shopt nullglob
+         mkdir -p "$out"
+         for D in "$a" "$b"
+         do
+           for F in "$D"/*
+           do
+             cp -r "$F" "$out/"
+             chmod +w -R "$out"
+           done
+         done
+       '';
 
   render = { cwd ? empty, file, inputs ? [], name ? "page.html", vars ? {} }:
     with rec {
@@ -119,14 +120,16 @@ with rec { pages = rec {
                       (md.packages or []);
       dir       = mergeDirs [ cwd (dirContaining ./. (md.dependencies or [])) ];
     };
-    runCommand name (vars // {
-        buildInputs = [ commands.render_page ] ++ inputs ++ extraPkgs;
-        inherit dir file;
-      })
-      ''
-        cd "$dir"
-        SOURCE="$file" DEST="$out" render_page < "$file" > "$out"
-      '';
+    if hasSuffix ".html" file
+       then writeScript name (readFile file)
+       else runCommand name (vars // {
+              buildInputs = [ commands.render_page ] ++ inputs ++ extraPkgs;
+              inherit dir file;
+            })
+            ''
+              cd "$dir"
+              SOURCE="$file" DEST="$out" render_page < "$file" > "$out"
+            '';
 
   rel = dir: runCommand "relative" { buildInputs = [ commands.relativise ]; } ''
     cp -r "${dir}" "$out"
@@ -141,7 +144,7 @@ with rec { pages = rec {
   '';
 
   index = render {
-    cwd  = attrsToDirs { static = ./static; rendered = { inherit blog; }; };
+    cwd  = attrsToDirs { rendered = { inherit blog; }; };
     file = ./index.md;
     name = "index.html";
   };
@@ -157,13 +160,12 @@ with rec { pages = rec {
                                    value = ./blog + "/${p}"; }) postNames);
   }; mapAttrs (n: v: render { file = v; name = "blog-${n}"; }) posts;
 
-  blog = attrsToDirs rendered;
+  blog = attrsToDirs blogPosts;
 
   renderAll = mapAttrs (n: v: if isAttrs v
                                  then renderAll v
                                  else render { file = v;
-                                               name = mdToHtml n;
-                                               cwd  = { static = ./static; }; });
+                                               name = mdToHtml n; });
 
   projects = attrsToDirs (renderAll (dirsToAttrs ./projects));
 

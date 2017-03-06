@@ -1,5 +1,6 @@
 ---
 title: Cantor Tuples
+packages: [ 'nixEnv' ]
 ---
 
 <!-- Preamble -->

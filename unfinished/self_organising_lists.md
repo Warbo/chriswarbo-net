@@ -1,5 +1,6 @@
 ---
 title: Self-Organising Lists
+packages: [ 'ghc' ]
 ---
 
 <!-- Helper scripts -->
@@ -12,7 +13,7 @@ echo "" >> code.hs
 ```{pipe="cat > ghci"}
 CODE=$(cat)
 PREFIX=":load code.hs"
-printf "${PREFIX}\n${CODE}" | nix-shell -p haskellPackages.ghc --run "ghci -v0"
+printf "${PREFIX}\n${CODE}" | ghci -v0
 ```
 
 `chmod +x hs ghci`{pipe="sh > /dev/null"}
@@ -238,5 +239,5 @@ than a regular list!
 
 ```{pipe="sh > /dev/null"}
 echo 'main = print "DONE"' | ./hs
-nix-shell -p haskellPackages.ghc --run "ghc code.hs"
+ghc code.hs
 ```

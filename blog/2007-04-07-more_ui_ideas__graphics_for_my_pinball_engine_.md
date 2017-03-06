@@ -1,5 +1,6 @@
 ---
 title: More UI ideas. Graphics for my pinball engine!
+dependencies: [ 'static/file2img.sh', 'static/images/UpgradeIssuesMockup.png' ]
 ---
 I've got my pinball physics thing somewhat working now, and have even given it some graphical output (which meant learning AWT :( ), which is nice. I have also got another couple of user interface ideas.
 

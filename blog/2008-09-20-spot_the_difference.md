@@ -1,5 +1,7 @@
 ---
 title: Spot The Difference
+dependencies: [ 'static/images/tronguy.jpg', 'static/images/tabposition.png',
+                'static/file2img.sh' ]
 ---
 Here's Google Chrome on Fedora:
 

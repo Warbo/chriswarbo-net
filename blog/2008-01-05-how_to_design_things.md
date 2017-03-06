@@ -1,6 +1,7 @@
 ---
 title: How To Design Things
-dependencies: [ 'static/images/itunescovers.png'   ,
+dependencies: [ 'static/file2img.sh'               ,
+                'static/images/itunescovers.png'   ,
                 'static/images/iphoneadvert.png'   ,
                 'static/images/compizswitcher.png' ,
                 'static/images/compizcube.png'     ,

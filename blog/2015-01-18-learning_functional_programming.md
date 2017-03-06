@@ -1,5 +1,6 @@
 ---
 title: Learning Functional Programming
+packages: [ 'python' ]
 ---
 
 I've seen a [few][] [questions][] about where to begin learning functional
