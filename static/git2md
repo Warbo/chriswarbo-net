@@ -12,15 +12,15 @@ README=""
 # Prefer looking in local repos, as it's faster
 if [ -d "/home/chris/Programming/repos/$1.git" ]
 then
-    echo "Found local copy of '$1.git'" >> /dev/stderr
+    echo "Found local copy of '$1.git'" 1>&2
     pushd "/home/chris/Programming/repos/$1.git" > /dev/null
 
     DATE=$(git log -n 1 --format=%ci)
-    echo "Latest commit date for '$1.git' is '$DATE'" >> /dev/stderr
+    echo "Latest commit date for '$1.git' is '$DATE'" 1>&2
 
     if [[ -n "$LATEST" ]] && [[ "x$LATEST" = "x$DATE" ]]
     then
-        echo "Repo is unchanged, skipping" >> /dev/stderr
+        echo "Repo is unchanged, skipping" 1>&2
         exit 100 # Magic code to indicate we're up-to-date
     fi
 
@@ -28,7 +28,7 @@ then
     do
         if FOUND=$(git show "master:$f")
         then
-            echo "Found '$f' for '$1.git'" >> /dev/stderr
+            echo "Found '$f' for '$1.git'" 1>&2
             README="$FOUND"
             README_MSG=$(echo -e "Contents of $f follows\n\n---\n\n")
             break
@@ -36,15 +36,15 @@ then
     done
     popd > /dev/null
 else
-    echo "Looking up '$1.git' remotely" >> /dev/stderr
+    echo "Looking up '$1.git' remotely" 1>&2
 
     MASTER=$(wget -O- "http://chriswarbo.net/git/$1/branches/master/index.html")
     DATE=$(echo "$MASTER" | grep -o "<br>Date:[^<]*")
-    echo "Latest commit date for '$1.git' is '$DATE'" >> /dev/stderr
+    echo "Latest commit date for '$1.git' is '$DATE'" 1>&2
 
     if [[ -n "$LATEST" ]] && [[ "x$LATEST" = "x$DATE" ]]
     then
-        echo "Repo is unchanged, skipping" >> /dev/stderr
+        echo "Repo is unchanged, skipping" 1>&2
         exit 100 # Magic code to indicate we're up-to-date
     fi
 
@@ -52,7 +52,7 @@ else
     do
         if FOUND=$(wget -O- "http://chriswarbo.net/git/$1/branches/master/$f")
         then
-            echo "Found '$f' for '$1.git'" >> /dev/stderr
+            echo "Found '$f' for '$1.git'" 1>&2
             README="$FOUND"
             README_MSG=$(echo -e "Contents of $f follows\n\n---\n\n")
             break

@@ -1,12 +1,11 @@
 ---
 title: Nix Packages
-dependencies: [ 'static/file2img.sh' ]
-packages: [ 'graphviz' ]
+packages: [ 'file2img', 'graphviz' ]
 ---
 
 ```{pipe="tee graph.sh > /dev/null"}
 #!/bin/sh
-dot -Tpng | ./root/static/file2img.sh | pandoc -t json
+dot -Tpng | file2img | pandoc -t json
 ```
 
 ```{pipe="sh > /dev/null"}

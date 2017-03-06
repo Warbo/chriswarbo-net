@@ -1,5 +1,6 @@
 ---
 title: Nix Shell Shebangs
+packages: [ 'python' ]
 ---
 
 # Shebangs #

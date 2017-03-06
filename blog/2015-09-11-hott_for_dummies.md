@@ -1,7 +1,6 @@
 ---
 title: HoTT for Dummies
-dependencies: [ 'static/file2img.sh' ]
-packages: [ 'ditaa' ]
+packages: [ 'ditaa', 'file2img' ]
 ---
 
 Based on [a Hacker News thread](https://news.ycombinator.com/item?id=10184324), about [a talk][slides] by [Thorsten Altenkirch](http://www.cs.nott.ac.uk/~txa/), I ended up writing a rather long explanation of some Type Theory and Homotopy Type Theory, which I thought I might as well reproduce here:
@@ -158,7 +157,7 @@ One question we might ask is whether all equality values are the same; ie. are t
 
 ```{.unwrap pipe="sh | pandoc -t json"}
 ditaa hole.dit hole.png 1>&2
-./root/static/file2img.sh "Type containing a hole" < hole.png
+file2img "Type containing a hole" < hole.png
 ```
 
 The topological perspective also gives us some intuition about the "levels" of types: `Type 0`{.haskell} contains spaces with distinct points, eg. `Boolean`{.haskell} containing `True`{.haskell} and `False`{.haskell}. These are essentially sets, from Set Theory. Although HoTT doesn't assume UIP for all types, those which *do* just-so-happen to "collapse" down to one value (ie. there are equalities between every point) actually occupy a level *below* sets; ie. they end up at `Type -1`{.haskell} (there's no significance to the negative number; it's just a historical accident caused by definitions like `Boolean : Type 0`{.haskell}). Likewise, those which add more structure occupy higher levels.

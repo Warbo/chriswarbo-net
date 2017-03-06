@@ -1,6 +1,6 @@
 ---
 title: Bitwise Equality
-dependencies: static/procedural/*
+dependencies: [ 'static/procedural' ]
 ---
 
 We get the inverse of this image if we use `/=`{.haskell}, AKA XOR.

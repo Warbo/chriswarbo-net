@@ -1,49 +1,49 @@
 ---
 title: How To Design Things
-dependencies: [ 'static/file2img.sh'               ,
-                'static/images/itunescovers.png'   ,
+dependencies: [ 'static/images/itunescovers.png'   ,
                 'static/images/iphoneadvert.png'   ,
                 'static/images/compizswitcher.png' ,
                 'static/images/compizcube.png'     ,
                 'static/images/awm.png'            ,
                 'static/images/compizlogo.png'     ]
+packages: [ 'file2img' ]
 ---
 Forget everything you thought you knew. Forget UI. Forget KISS. Forget intuitiveness. There is only ONE thing that is needed to make something new, cool, trendy, easy and hip. It is........ wait for it......... PARTIAL REFLECTIONS OF SOMETHING ON AN INVISIBLE GROUND! That's it, it's all you need.
 
 I mean, it worked for Apple
 
 ```{.unwrap pipe="sh | pandoc -t json"}
-./root/static/file2img.sh "" < ./root/static/images/itunescovers.png
+file2img "" < ./root/static/images/itunescovers.png
 ```
 
 And they are praised for their innovation
 
 ```{.unwrap pipe="sh | pandoc -t json"}
-./root/static/file2img.sh "" < ./root/static/images/iphoneadvert.png
+file2img "" < ./root/static/images/iphoneadvert.png
 ```
 
 And of course, in the Free Software world we're full of new ideas
 
 ```{.unwrap pipe="sh | pandoc -t json"}
-./root/static/file2img.sh "" < ./root/static/images/compizswitcher.png
+file2img "" < ./root/static/images/compizswitcher.png
 ```
 
 We created a new wave in the partial-reflection paradigm shift, not constrained by the "lining things up and selecting one of them whilst partially reflecting it off an invisible ground" solution pioneered by Apple we broke new ground with our proactive adoption of partially reflecting something off an invisible ground and applied it everywhere from workspace switching
 
 ```{.unwrap pipe="sh | pandoc -t json"}
-./root/static/file2img.sh "" < ./root/static/images/compizcube.png
+file2img "" < ./root/static/images/compizcube.png
 ```
 
 To taskbars
 
 ```{.unwrap pipe="sh | pandoc -t json"}
-./root/static/file2img.sh "" < ./root/static/images/awm.png
+file2img "" < ./root/static/images/awm.png
 ```
 
 And we embraced it so completely that our flashy desktop effects needed to show what they were capable of, so yes we adopted it for our desktop effects logo
 
 ```{.unwrap pipe="sh | pandoc -t json"}
-./root/static/file2img.sh "" < ./root/static/images/compizlogo.png
+file2img "" < ./root/static/images/compizlogo.png
 ```
 
 Can you see how AWESOME that looks?! It is so AMAZING that it feels like I am in the future. It works for EVERYTHING too!

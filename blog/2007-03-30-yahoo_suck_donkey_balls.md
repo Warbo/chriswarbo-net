@@ -1,6 +1,7 @@
 ---
 title: Yahoo suck donkey balls
-dependencies: [ 'static/file2img.sh', 'static/images/crapoo.png' ]
+dependencies: [ 'static/images/crapoo.png' ]
+packages: [ 'file2img' ]
 ---
 I've had it with Yahoo. They really do suck donkey balls. Why? Firstly they turned POP mail access into a "premium service", so people who want to access Yahoo's mail service have to use their proprietary, shitty (more on this later) web-browser-based interface, rather than a proper email program. This has forced me to use [FetchYahoo](http://fetchyahoo.sf.net) for the past few years, but this tool is a really kludgy hack to get around Yahoo's obfuscation of users' mail, and thus works with varying degrees of success. FetchYahoo is also only useful to dump my Yahoo mail into a local spool, so I can't send emails from within an email program unless I use my Gmail account via SMTP.
 
@@ -9,7 +10,7 @@ Therefore I am often forced to use said shitty interface. I use 2 Yahoo accounts
 Also Yahoo's web design sucks really badly. Take a look at this:
 
 ```{.unwrap pipe="sh | pandoc -t json"}
-./root/static/file2img.sh "Crapoo!" < ./root/static/images/crapoo.png
+file2img "Crapoo!" < ./root/static/images/crapoo.png
 ```
 
 I don't know about you, but I can't tell the difference between `#ffffff` and `#ffffff` very easily, so I think it's a bad idea to put white text on a white background.

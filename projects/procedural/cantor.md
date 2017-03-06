@@ -1,6 +1,11 @@
 ---
 title: Cantor Tuples
-packages: [ 'nixEnv' ]
+packages: [ 'imagemagick', 'nixShell', 'wrapCode', 'file2img' ]
+dependencies: [ 'static/procedural/includePic' ,
+                'static/procedural/monoCode'   ,
+                'static/procedural/greyCode'   ,
+                'static/procedural/colourCode' ,
+                'static/procedural/Pic.hs'     ]
 ---
 
 <!-- Preamble -->
@@ -141,7 +146,7 @@ f = aaGrad
 ```
 
 ```{.unwrap pipe="bash"}
-./root/static/procedural/includePic aagrad | ./root/static/wrapCode.sh .unwrap | pandoc -t json
+./root/static/procedural/includePic aagrad | wrapCode .unwrap | pandoc -t json
 ```
 
 ### A Finite Example ###
@@ -336,7 +341,7 @@ f = cantorGrad
 ```
 
 ```{.unwrap pipe="bash"}
-./root/static/procedural/includePic cantorgrad | ./root/static/wrapCode.sh .unwrap | pandoc -t json
+./root/static/procedural/includePic cantorgrad | wrapCode .unwrap | pandoc -t json
 ```
 
 We start in the top left corner and draw a *diagonal* line from the top edge to the left edge, then draw another next to it, and another next to it, and so on. Note that Cantor's method naturally draws a *triangle*; to make it trace a square, we've had to filter out those points which extend too far to the right or the bottom.
@@ -359,7 +364,7 @@ f = cantorCircle
 ```
 
 ```{.unwrap pipe="bash"}
-./root/static/procedural/includePic cantorcircle | ./root/static/wrapCode.sh .unwrap | pandoc -t json
+./root/static/procedural/includePic cantorcircle | wrapCode .unwrap | pandoc -t json
 ```
 
 ### Unbounded Example ###
@@ -378,7 +383,7 @@ f = cantorCheckerboard
 ```
 
 ```{.unwrap pipe="bash"}
-./root/static/procedural/includePic cantorcheckerboard | ./root/static/wrapCode.sh .unwrap | pandoc -t json
+./root/static/procedural/includePic cantorcheckerboard | wrapCode .unwrap | pandoc -t json
 ```
 
 ### Removing All Bounds ###
@@ -404,7 +409,7 @@ f = allCheckerboard
 ```
 
 ```{.unwrap pipe="bash"}
-./root/static/procedural/includePic allcheckerboard | ./root/static/wrapCode.sh .unwrap | pandoc -t json
+./root/static/procedural/includePic allcheckerboard | wrapCode .unwrap | pandoc -t json
 ```
 
 <!--
@@ -452,7 +457,7 @@ f = rgbEmbedding
 
 ```
 {.unwrap pipe="bash"}
-./root/static/procedural/includePic rgb | ./root/static/wrapCode.sh .unwrap | pandoc -t json
+./root/static/procedural/includePic rgb | wrapCode .unwrap | pandoc -t json
 ```
 
 -->
@@ -474,10 +479,10 @@ runTests ((name, test):xs) = putStrLn ("Testing " ++ name) >>
 main = runTests allTests
 ```
 
-```{pipe="bash >> /dev/stderr"}
+```{pipe="bash 1>&2"}
 if grep "FAIL" < results
 then
-  cat results >> /dev/stderr
+  cat results 1>&2
   exit 1
 fi
 ```

@@ -1,5 +1,6 @@
 ---
 title: Z Curve
+packages: [ 'ghc', 'imagemagick', 'wrapCode' ]
 ---
 
 <style type="text/css">
@@ -63,7 +64,7 @@ This results in the following image:
 
 ```{.unwrap pipe="sh"}
 ./root/static/procedural/greyCode < bw.hs | runhaskell > bw.ppm
-./root/static/procedural/includePic bw | ./root/static/wrapCode.sh .unwrap | pandoc -t json
+./root/static/procedural/includePic bw | wrapCode .unwrap | pandoc -t json
 ```
 
 Notice that the gradient is quite smooth: large discontinuities are rare, common discontinuities are small. That's because the curve has good locality.
@@ -100,7 +101,7 @@ This gives us the following 2D embedding of the RGB colour cube:
 
 ```{.unwrap pipe="sh"}
 ./root/static/procedural/colourCode < rgb.hs | runhaskell > rgb.ppm
-./root/static/procedural/includePic rgb | ./root/static/wrapCode.sh .unwrap | pandoc -t json
+./root/static/procedural/includePic rgb | wrapCode .unwrap | pandoc -t json
 ```
 
 This isn't as smooth as the greyscale, since the problem is harder: we don't have the luxury of an *extra* dimension, like the greyscale example. Instead, we have to *remove* a dimension from the RGB cube. Many discontinuities follow the same pattern as the greyscale example, eg. the image being split into quadrants. The tartan-like banding is due to the cube's neighbours having to rearrange themselves in the constrained 2D space.

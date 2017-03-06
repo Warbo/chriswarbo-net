@@ -1,5 +1,6 @@
 ---
 title: nix-eval for Haskell
+packages: [ 'nixShell' ]
 ---
 
 The [`nix-eval` package](https://hackage.haskell.org/package/nix-eval) scratches
@@ -15,7 +16,6 @@ examples!
 #!/bin/sh
 
 # Separate all arguments with spaces
-# FIXME: When nix-eval is in nixpkgs, apply h. prefix here
 PKGS=""
 for PKG in "$@"
 do
@@ -25,7 +25,7 @@ done
 CMD=$(nix-shell -p which \
   -p "with import <nixpkgs> {}; haskellPackages.ghcWithPackages (h: [$PKGS])" \
   --run 'which runhaskell')
-echo "Running '$CMD'" >> /dev/stderr
+echo "Running '$CMD'" 1>&2
 $CMD -XOverloadedStrings
 ```
 
@@ -108,8 +108,7 @@ main = do result <- eval (asString "hello world")
 ```
 
 ```{.haskell pipe="sh"}
-# FIXME: When nix-eval is in nixpkgs, give it a h. prefix
-./runWithPkgs.sh "nix-eval" < nixs.hs
+./runWithPkgs.sh "h.nix-eval" < nixs.hs
 ```
 
 As you can see, it's a bit more verbose. In particular, the output type of
@@ -132,8 +131,7 @@ main = do result <- eval (dt "unpack" $$ (dt "pack" $$ asString "hello world"))
 ```
 
 ```{.haskell pipe="sh"}
-# FIXME: When nix-eval is in nixpkgs, give it a h. prefix
-./runWithPkgs.sh "nix-eval" < nixt.hs
+./runWithPkgs.sh "h.nix-eval" < nixt.hs
 ```
 
 `nix-eval` has a few simple combinators, including `$$` which applies one `Expr`

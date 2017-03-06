@@ -1,6 +1,6 @@
 ---
 title: Blog
-dependencies: static/showPost*
+packages: [ 'showPosts' ]
 content_classes: h-feed
 extra_head:
   <link rel="alternate" type="application/rss+xml" href="blog.rss"
@@ -16,5 +16,5 @@ in [Atom](/blog.atom) format and [RSS](/blog.rss) format.
 ```{.unwrap pipe="sh | pandoc -t json"}
 find root/rendered/blog -type f | grep -v "index.html" |
                                   sort -r              |
-                                  TO_ROOT=. ./root/static/showPosts
+                                  TO_ROOT=. showPosts
 ```

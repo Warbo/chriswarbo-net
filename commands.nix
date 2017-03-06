@@ -1,5 +1,5 @@
-{ buildEnv, lib, libxslt, makeWrapper, nix, pandoc, panhandle, panpipe,
-  pythonPackages, runCommand, xidel }:
+{ buildEnv, git, lib, libxslt, makeWrapper, nix, pandoc, panhandle, panpipe,
+  pythonPackages, runCommand, wget, xidel }:
 
 with builtins;
 with lib;
@@ -27,6 +27,12 @@ with {
 rec {
   cleanup =
     wrap [ stripEmptyPreCode summariseTables ] {} ./static/cleanup;
+
+  file2img =
+    wrap [] {} ./static/file2img;
+
+  git2md =
+    wrap [ git wget ] {} ./static/git2md;
 
   nixShell =
     wrap [ nix ] { NIX_PATH   = getEnv "NIX_PATH";
@@ -57,4 +63,7 @@ rec {
   summariseTables =
     wrap [ pythonPackages.python pythonPackages.beautifulsoup4 ] {}
          ./static/summariseTables;
+
+  wrapCode =
+    wrap [] {} ./static/wrapCode;
 }

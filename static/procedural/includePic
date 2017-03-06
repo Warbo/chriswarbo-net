@@ -3,7 +3,7 @@ TEMP=$(pwd)
 convert "$1.ppm" "$1.png"
 DIR=$(dirname "$0")
 cd "$DIR" || {
-    echo "Couldn't cd to '$DIR'" >> /dev/stderr
+    echo "Couldn't cd to '$DIR'" 1>&2
     exit 1
 }
-"../file2img.sh" "$TEMP/$1" < "$TEMP/$1.png" | pandoc -t json
+file2img "$TEMP/$1" < "$TEMP/$1.png" | pandoc -t json

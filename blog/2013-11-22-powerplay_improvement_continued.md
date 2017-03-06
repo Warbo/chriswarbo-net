@@ -1,7 +1,6 @@
 ---
 title: PowerPlay Improvement continued
-dependencies: [ 'static/file2img.sh' ]
-packages: [ 'ditaa' ]
+packages: [ 'ditaa', 'file2img' ]
 ---
 ## Defining Improvement ##
 
@@ -48,7 +47,7 @@ Maybe a flow chart will explain better:
 
 ```{.unwrap pipe="sh | pandoc -t json"}
 ditaa chart1.dit > /dev/null
-./root/static/file2img.sh "Chart 1" < chart1.png
+file2img "Chart 1" < chart1.png
 ```
 
 As I talked about in my previous post, this is a rather unsatisfactory notion of improvement. Firstly, it only tracks performance against the small, finite number of problems in our list of regression tests. Secondly, we must explicitly keep this list in memory, adding a memory cost linear in the number of improvements.
@@ -91,7 +90,7 @@ Instead, we can abandon the list and make one all-encompassing regression test: 
 
 ```{.unwrap pipe="sh | pandoc -t json"}
 ditaa chart2.dit > /dev/null
-./root/static/file2img.sh "Chart 2" < chart2.png
+file2img "Chart 2" < chart2.png
 ```
 
 I spent some time trying to support both of these notions of improvement, as pluggable modules, but the code got pretty hairy pretty quickly. I've now abandoned the list-based criterion entirely in favour of the universally-quantified one. This has resulted in a much simpler specification, available in the Simple.v file of the [git repository](/git/powerplay).

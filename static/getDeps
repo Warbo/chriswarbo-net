@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 [[ -n "$1" ]] || exit 0
 [[ -f "$1" ]] || {
-    echo "Can't get dependencies of '$1'" >> /dev/stderr
+    echo "Can't get dependencies of '$1'" 1>&2
     exit 1
 }
 

@@ -1,11 +1,11 @@
 ---
 title: Projects
-packages: [ 'nixEnv' ]
+packages: [ 'xidel' ]
 ---
 
 A curated collection of (hopefully) well-maintained ramblings:
 
-```{.unwrap pipe="nix-shell -p xidel --run sh | pandoc -t json"}
+```{.unwrap pipe="sh | pandoc -t json"}
 function show {
     URL=$(echo "$1" | sed -e 's@.*/projects/@/projects/@g')
     TITLE=$(xidel - -q --extract '/html/head/title/text()' < "$1")

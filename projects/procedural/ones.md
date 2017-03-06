@@ -1,6 +1,6 @@
 ---
 title: Counting Ones
-dependencies: static/procedural/*
+dependencies: [ 'static/procedural' ]
 ---
 
 ```{.unwrap pipe="./root/static/procedural/codeAndPic count grey"}

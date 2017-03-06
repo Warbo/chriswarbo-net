@@ -1,6 +1,6 @@
 ---
 title: Procedural Pictures
-dependencies: projects/procedural/*
+dependencies: [ 'projects/procedural' ]
 ---
 
 I've been playing with procedurally-generated images recently; here are some interesting ones. All functions `f`{.haskell} are mapped over the pixels, taking in the x and y coordinates as bytes and returning a byte for the colour (a byte is a list of 8 `Bool`{.haskell}s).

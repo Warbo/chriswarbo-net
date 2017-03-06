@@ -1,5 +1,5 @@
-{ callPackage, jq, lib, makeWrapper, pandoc, panhandle, panpipe, pkgs,
-  pythonPackages, runCommand, stdenv, writeScript }:
+{ callPackage, jq, latestGit, lib, makeWrapper, pandoc, panhandle, panpipe,
+  pkgs, pythonPackages, runCommand, stdenv, wget, writeScript }:
 
 with builtins;
 with lib;
@@ -93,7 +93,7 @@ with rec { pages = rec {
                            REL=$(echo "$file" | sed -e "s@$base/@@g")
                            DIR=$(dirname "$REL")
                            mkdir -p "$out/$DIR"
-                           cp "$file" "$out/$REL"
+                           cp -r "$file" "$out/$REL"
                          '') files);
 
   # Copy the contents of a bunch of directories into one
@@ -167,7 +167,59 @@ with rec { pages = rec {
                                  else render { file = v;
                                                name = mdToHtml n; });
 
-  projects = attrsToDirs (renderAll (dirsToAttrs ./projects));
+  repoUrls = import (runCommand "repos.nix" { buildInputs = [ wget ]; } ''
+    echo "Looking up repos from chriswarbo.net/git" 1>&2
+
+    echo "[" >> "$out"
+
+    wget -O- 'http://chriswarbo.net/git'       |
+    grep -o '<a .*</a>'                        |
+    grep -o 'href=".*\.git/"'                  |
+    grep -o '".*"'                             |
+    grep -o '[^"/]*'                           |
+    sed  -e 's@^@http://chriswarbo.net/git/@g' >> "$out"
+
+    echo "]" >> "$out"
+  '');
+
+  repoPageOf = url: runCommand "${removeSuffix ".git" (baseNameOf url)}.html"
+    {
+      inherit url;
+      buildInputs = [ commands.git2md commands.render_page ];
+      repo        = latestGit { inherit url; };
+    }
+    ''
+      NAME=$(basename "$url" .git)
+
+      DATE=""
+
+      CONTENT=$(LATEST="$DATE" git2md "$NAME")
+      CODE="$?"
+
+      if [[ "$CODE" -eq 100 ]]
+      then
+          echo "Skipping regeneration of '$FILE'"
+      else
+          echo "Got new content for '$FILE', generating"
+          echo "$CONTENT" | SOURCE= DEST= render_page > "$out"
+      fi
+    '';
+
+  repoPages = listToAttrs (map (url: { name  = removeSuffix ".git"
+                                                 (baseNameOf url) + ".html";
+                                       value = repoPageOf url; })
+                               repoUrls);
+
+  repos = repoPages // {
+    "index.html" = render {
+      file = ./repos.md;
+      name = "index.html";
+      cwd  = attrsToDirs { repos = repoPages; };
+    };
+  };
+
+  projects = attrsToDirs (renderAll (dirsToAttrs ./projects //
+                                       { inherit repos; }));
 
   site = rel (attrsToDirs {
     inherit blog projects;

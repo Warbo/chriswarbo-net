@@ -1,9 +1,10 @@
 ---
 title: How's This For a Mention?
-dependencies: [ 'static/file2img.sh', 'static/images/ILoveJo.png' ]
+dependencies: [ 'static/images/ILoveJo.png' ]
+packages: [ 'file2img' ]
 ---
 To Jo
 
 ```{.unwrap pipe="sh | pandoc -t json"}
-./root/static/file2img.sh "" < ./root/static/images/ILoveJo.png
+file2img "" < ./root/static/images/ILoveJo.png
 ```

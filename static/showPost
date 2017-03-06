@@ -3,7 +3,7 @@
 # Check calling convention
 if [[ -z "$1" ]]
 then
-    echo "showPost requires an argument" >> /dev/stderr
+    echo "showPost requires an argument" 1>&2
     exit 1
 fi
 
@@ -17,20 +17,20 @@ function getTitle {
 
     TTL=$(xidel - -q --extract "//h1/text()" < "$1")
     [[ -n "$TTL" ]] && {
-        echo "No <title /> element for '$1', falling back to <h1 />" >> /dev/stderr
+        echo "No <title /> element for '$1', falling back to <h1 />" 1>&2
         echo "$TTL"
         return
     }
 
     TTL=$(basename "$1" .html)
     [[ -n "$TTL" ]] && {
-        echo "No <title /> element for '$1', falling back to filename" >> /dev/stderr
+        echo "No <title /> element for '$1', falling back to filename" 1>&2
         echo "$TTL"
         return
     }
 
     TTL="Untitled"
-    echo "No <title /> element for '$1', falling back to '$TTL'" >> /dev/stderr
+    echo "No <title /> element for '$1', falling back to '$TTL'" 1>&2
     echo "$TTL"
 }
 

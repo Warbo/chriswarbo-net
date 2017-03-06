@@ -1,6 +1,7 @@
 ---
 title: More UI ideas. Graphics for my pinball engine!
-dependencies: [ 'static/file2img.sh', 'static/images/UpgradeIssuesMockup.png' ]
+dependencies: [ 'static/images/UpgradeIssuesMockup.png' ]
+packages: [ 'file2img' ]
 ---
 I've got my pinball physics thing somewhat working now, and have even given it some graphical output (which meant learning AWT :( ), which is nice. I have also got another couple of user interface ideas.
 
@@ -9,7 +10,7 @@ I've got my pinball physics thing somewhat working now, and have even given it s
 Based on this [Ubuntu Wiki spec](https://wiki.ubuntu.com/PainlessUpgrade) I came up with this as a quick mock up design:
 
 ```{.unwrap pipe="sh | pandoc -t json"}
-./root/static/file2img.sh "" < ./root/static/images/UpgradeIssuesMockup.png
+file2img "" < ./root/static/images/UpgradeIssuesMockup.png
 ```
 
 I don't know whether I will try and implement this myself or whether it will inspire someone else to. Of course if someone has a more elegant idea then I am happy for mine to be superceded.

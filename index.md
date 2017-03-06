@@ -8,14 +8,14 @@ extra_head:
         title="ChrisWarbo.net Atom feed"/>
 
 postprocessor: stripTitle
-packages: [ 'showPosts', 'stripTitle' ]
-dependencies: [ 'static/code.png', 'static/file2img.sh' ]
+packages: [ 'file2img', 'showPosts', 'stripTitle' ]
+dependencies: [ 'static/code.png' ]
 ---
 
 <div style="float: right; margin: 0 10px 10px 10px;" >
 
 ```{.unwrap pipe="sh | pandoc -t json"}
-./root/static/file2img.sh "Code" < root/static/code.png
+file2img "Code" < root/static/code.png
 ```
 
 </div>
