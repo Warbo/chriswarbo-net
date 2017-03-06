@@ -1,5 +1,5 @@
-{ buildEnv, git, lib, libxslt, makeWrapper, nix, pandoc, panhandle, panpipe,
-  pythonPackages, runCommand, wget, xidel }:
+{ buildEnv, git, glibcLocales, lib, libxslt, makeWrapper, nix, pandoc,
+  panhandle, panpipe, pythonPackages, runCommand, wget, xidel }:
 
 with builtins;
 with lib;
@@ -34,16 +34,24 @@ rec {
   git2md =
     wrap [ git wget ] {} ./static/git2md;
 
+  nixInstantiate =
+    wrap [ nix ] { NIX_PATH   = getEnv "NIX_PATH";
+                   NIX_REMOTE = getEnv "NIX_REMOTE"; }
+         "${nix}/bin/nix-instantiate";
+
   nixShell =
     wrap [ nix ] { NIX_PATH   = getEnv "NIX_PATH";
                    NIX_REMOTE = getEnv "NIX_REMOTE"; } "${nix}/bin/nix-shell";
+
 
   relativise =
     wrap [ libxslt ] { XSL = ./static/rel.xsl; } ./static/relativise;
 
   render_page =
     wrap [ cleanup pandoc panhandle panpipe ]
-         { defaultTemplate = ./templates/default.html; }
+         { defaultTemplate = ./templates/default.html;
+           LANG = "en_US.UTF-8";
+           LOCALE_ARCHIVE = "${glibcLocales}/lib/locale/locale-archive"; }
          ./static/render_page;
 
   showPost =

@@ -143,13 +143,39 @@ with rec { pages = rec {
     done < <(find . -name "*.html")
   '';
 
-  index = render {
-    cwd  = attrsToDirs { rendered = { inherit blog; }; };
-    file = ./index.md;
-    name = "index.html";
-  };
+  relTo = base: file: runCommand
+    "relative-${baseNameOf (unsafeDiscardStringContext file)}"
+    {
+      inherit base file;
+      buildInputs = [ commands.relativise ];
+    }
+    ''
+      cp -r "$file" "$out"
+      chmod +w -R "$out"
+
+      DIR=$(echo "$base" | sed -e 's@/[^/][^/]*@/..@g')
+      TO_ROOT="$DIR" relativise "$out"
+    '';
+
+  mkRel =
+    with rec {
+      go = base: name: val: if hasSuffix ".html" name
+                               then relTo base val
+                               else if isAttrs val
+                                       then mapAttrs (go (base + "/${name}"))
+                                                     val
+                                       else val;
+    };
+    mapAttrs (go ".");
 
   mdToHtml = name: (removeSuffix ".html" (removeSuffix ".md" name)) + ".html";
+  mdToHtmlRec = x: if isAttrs x
+                      then mapAttrs' (n: v: { name  = if hasSuffix ".md" n
+                                                         then mdToHtml n
+                                                         else n;
+                                              value = mdToHtmlRec v; })
+                                     x
+                      else x;
 
   blogPosts = with rec {
     # Read filenames from ./blog and append to the path './blog', so that each
@@ -162,10 +188,12 @@ with rec { pages = rec {
 
   blog = attrsToDirs blogPosts;
 
-  renderAll = mapAttrs (n: v: if isAttrs v
-                                 then renderAll v
-                                 else render { file = v;
-                                               name = mdToHtml n; });
+  renderAll = x: mdToHtmlRec
+                   (mapAttrs (n: v: if isAttrs v
+                                       then renderAll v
+                                       else render { file = v;
+                                                     name = mdToHtml n; })
+                             x);
 
   repoUrls = import (runCommand "repos.nix" { buildInputs = [ wget ]; } ''
     echo "Looking up repos from chriswarbo.net/git" 1>&2
@@ -219,10 +247,33 @@ with rec { pages = rec {
   };
 
   projects = attrsToDirs (renderAll (dirsToAttrs ./projects //
-                                       { inherit repos; }));
+                                      { inherit repos; }));
 
-  site = rel (attrsToDirs {
-    inherit blog projects;
-    "index.html" = index;
-  });
+  unfinished = attrsToDirs (renderAll (dirsToAttrs ./unfinished));
+
+  topLevel = {
+    "index.html"      = render {
+      cwd  = attrsToDirs { rendered = { inherit blog; }; };
+      file = ./index.md;
+    };
+    "blog.html"       = render {
+      cwd  = attrsToDirs { rendered = { inherit blog; }; };
+      file = ./blog.md;
+    };
+    "contact.html"    = render {
+      file = ./contact.md;
+    };
+    "projects.html"   = render {
+      cwd  = attrsToDirs { rendered = { inherit projects; }; };
+      file = ./projects.md;
+    };
+    "unfinished.html" = render {
+      cwd  = attrsToDirs { rendered = { inherit unfinished; }; };
+      file = ./unfinished.md;
+    };
+  };
+
+  allPages = attrsToDirs (topLevel // { inherit blog projects; });
+
+  site = mkRel allPages;
 }; }; pages
