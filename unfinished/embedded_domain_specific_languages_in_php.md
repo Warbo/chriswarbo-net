@@ -457,6 +457,7 @@ function join_function($x) {
 So, what does `join` mean in the context of our EDSLs? It turns out that join is our interpreter: we can join commands by executing them in sequence. Executing a command gives us a result, which we can then pass to another command. Here are some interpreters for our EDSLs:
 
 ```{.php pipe="./append"}
+/*
 map f m ≡ m >>= (\x -> return (f x))
 join n ≡ n >>= id
 
@@ -465,6 +466,7 @@ m >>= g ≡ join (map g m)
 (SQL  q)    >>= f = f (db_send_query q)    = join (map f (SQL  q))
 (SQLS q xs) >>= f = f (db_send_query q xs) = join (map f (SQLS q xs))
 (SQLN q ns) >>= f = f (db_send_query q ns) = join (map f (SQLN q ns))
+*/
 
 function join_db($x) {
   switch ($x[0]) {
@@ -537,13 +539,13 @@ $plus ($array($data)) == 909.9
 $times($array($data)) == -15944175
 $max  ($array($data)) == 897
 $array($array($data)) == [50, -45, 7.9, 897]
-[/code]
+```
 
 These binary functions are known as *monoids* and `$array` is known as a *free monoid*. specifically We aren't going to implement for example the maybe monad projoins its contents after scan collapse its argument in arbitrary ways, a sequencing
 
 #### Free Monads ####
 
-However, if we use functors to represent know that functors let us allow us to can see that functors allowwe can use [i]map[/i] to   have two more functions letting us map functions over their contents, also let us combine those function calls in useful ways. Such function combination is very powerful: we can use it to implement programming languages. However, as I mentioned above, we don't want to use just one implementation; we want the option of several, so we can run, test, inspect, etc.
+However, if we use functors to represent know that functors let us allow us to can see that functors allowwe can use `map` to   have two more functions letting us map functions over their contents, also let us combine those function calls in useful ways. Such function combination is very powerful: we can use it to implement programming languages. However, as I mentioned above, we don't want to use just one implementation; we want the option of several, so we can run, test, inspect, etc.
 
 As an analogy, think about how we might combine two numbers. We might add them, subtract them, multiply them, etc. How might we combine them in a way that lets us pick an choose the operation [i]after[/i] we've combined them? The answer is that we put them in an array! We can then apply any operation we like to the elements.
 
@@ -637,19 +639,19 @@ similarity  at least, that a funct If our we're going to treat functors as use f
 
 <div>
 <script type="text/javascript">//<![CDATA[
-  (function() {
-    var buttons = document.getElementsByClassName("hide");
-    for (var i = 0; i < buttons.length; i++) {
-      buttons[i].onclick = (function(vis) {
-        var box = document.getElementById(buttons[i].id + "_box");
-        box.style["display"] = "none";
-        box.style["cursor"]  = "pointer";
-        return function() {
-          box.style["display"] = ["block", "none"][vis+0];
-          vis = !vis;
-        };
-      }(false));
-    }
-  }());
+(function() {
+ var buttons = document.getElementsByClassName("hide");
+ for (var i = 0; i < buttons.length; i++) {
+  buttons[i].onclick = (function(vis) {
+   var box = document.getElementById(buttons[i].id + "_box");
+   box.style["display"] = "none";
+   box.style["cursor"]  = "pointer";
+   return function() {
+   box.style["display"] = ["block", "none"][vis+0];
+   vis = !vis;
+   };
+  }(false));
+ }
+}());
 //]]></script>
 </div>

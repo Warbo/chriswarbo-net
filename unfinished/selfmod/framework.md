@@ -1,5 +1,6 @@
 ---
 title: A Framework for Self-Improving Code
+packages: [ 'nixShell' ]
 ---
 
 Since Haskell functions are opaque (we can't pattern-match them), we'll define a simple Lambda Calculus to represent our functions instead (this was explained in [a previous post](/blog/2014-02-07-lazy_lambda_calculus.html)):
@@ -108,7 +109,7 @@ testId :: Eq a => Int -> Term a -> Bool
 testId n t = not (normalIn n t) || evalFor (n * n) (App (Lam (Var Z)) t) == evalFor n t
 ```
 
-```{pipe="ghci -v0"}
+```{pipe="nix-shell -p 'haskellPackages.ghcWithPackages (h: [ h.QuickCheck ])' --run 'ghci -v0'"}
 :load code.hs
 quickCheck testId
 ```

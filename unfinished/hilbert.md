@@ -1,5 +1,6 @@
 ---
 title: Hilbert Curve
+packages: [ 'ghc' ]
 ---
 
 The [Hilbert curve](https://en.wikipedia.org/wiki/Hilbert_curve) is similar to the [Z curve](/projects/procedural/z.html), but has better locality: on average, points which are close together in space will appear closer together on a Hilbert curve through that space than on a Z curve.

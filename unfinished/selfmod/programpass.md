@@ -1,5 +1,6 @@
 ---
 title: Self-Improving Code 1, Program-Passing Style
+packages: [ 'ghc' ]
 ---
 
 <!-- Some useful scripts -->
@@ -21,13 +22,13 @@ echo "" >> SelfMod.hs
 
 ```{pipe="tee ghci > /dev/null"}
 #!/bin/sh
-{ echo ":load SelfMod"; cat; } | ghci -v0 2>> /tmp/stderr
+{ echo ":load SelfMod"; cat; } | ghci -v0 1>&2
 ```
 
 <!-- Make our scripts executable -->
 
 ```{pipe="sh > /dev/null"}
-echo "" > /tmp/stderr
+echo "" 1>&2
 chmod +x run append ghci
 ```
 
