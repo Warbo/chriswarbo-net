@@ -1,6 +1,10 @@
 ---
 title: Z Curve
-packages: [ 'ghc', 'imagemagick', 'wrapCode' ]
+packages: [ 'file2img', 'ghc', 'imagemagick', 'wrapCode' ]
+dependencies: [ 'static/procedural/Pic.hs'     ,
+                'static/procedural/greyCode'   ,
+                'static/procedural/includePic' ,
+                'static/procedural/colourCode' ]
 ---
 
 <style type="text/css">
