@@ -1,6 +1,10 @@
 ---
 title: Counting Ones
-dependencies: [ 'static/procedural' ]
+dependencies: [ 'static/procedural/codeAndPic' ,
+                'static/procedural/includePic' ,
+                'static/procedural/greyCode'   ,
+                'static/procedural/Pic.hs'     ]
+packages: [ 'file2img', 'ghc', 'imagemagick', 'wrapCode' ]
 ---
 
 ```{.unwrap pipe="./root/static/procedural/codeAndPic count grey"}
