@@ -4,23 +4,19 @@
 with builtins;
 with lib;
 with rec { pages = rec {
+  inDir = d: content: runCommand "in-dir-${d}" { inherit d content; } ''
+    mkdir -p "$out"
+    cp -r "$content" "$out/$d"
+  '';
+
   attrsToDirs = attrs:
-    with rec {
-      names     = attrNames attrs;
-      dataOf    = name: attrsToDirs attrs."${name}";
-      nameToCmd = name: ''
-        cp -r "${dataOf name}" "$out/${name}"
-      '';
-    };
-    if typeOf attrs == "path" || attrs ? builder
-       then attrs
-       else stdenv.mkDerivation {
-              name = "collated-data";
-              buildCommand = ''
-                mkdir -p "$out"
-                ${concatStringsSep "\n" (map nameToCmd names)}
-              '';
-            };
+    mergeDirs (map (name: let val = attrs."${name}";
+                           in inDir name (if isAttrs val
+                                             then if val ? builder
+                                                     then val
+                                                     else attrsToDirs val
+                                             else val))
+                   (attrNames attrs));
 
   dirsToAttrs = dir: mapAttrs (n: v: if v == "regular"
                                         then dir + "/${n}"
@@ -39,7 +35,7 @@ with rec { pages = rec {
 
   commands = callPackage ./commands.nix {};
 
-  empty  = attrsToDirs {};
+  empty = runCommand "empty" {} ''mkdir -p "$out"'';
 
   metadata =
     with rec {
@@ -94,24 +90,37 @@ with rec { pages = rec {
                            DIR=$(dirname "$REL")
                            mkdir -p "$out/$DIR"
                            cp -r "$file" "$out/$REL"
-                         '') files);
+                         '')
+                   files);
+
+  mergeTwo = a: b: runCommand "merged" { inherit a b; } ''
+    shopt -s nullglob
+    mkdir -p "$out"
+    for F in "$a"/*
+    do
+      cp -r "$F" "$out"/
+    done
+    chmod +w -R "$out"
+    for F in "$b"/*
+    do
+      cp -r "$F" "$out"/
+    done
+  '';
 
   # Copy the contents of a bunch of directories into one
-  mergeDirs = dirs:
-    if dirs == []
-       then empty
-       else runCommand "merged" { a = head dirs; b = mergeDirs (tail dirs); } ''
-         shopt nullglob
-         mkdir -p "$out"
-         for D in "$a" "$b"
-         do
-           for F in "$D"/*
-           do
-             cp -r "$F" "$out/"
-             chmod +w -R "$out"
-           done
-         done
-       '';
+  mergeDirs = dirs: runCommand "merged-dirs" { dirs = map toString dirs; } ''
+    shopt -s nullglob
+    mkdir -p "$out"
+
+    for D in $dirs
+    do
+      for F in "$D"/*
+      do
+        cp -r "$F" "$out"/
+      done
+      chmod +w -R "$out"
+    done
+  '';
 
   render = { cwd ? empty, file, inputs ? [], name ? "page.html", vars ? {} }:
     with rec {
@@ -162,8 +171,7 @@ with rec { pages = rec {
       go = base: name: val: if hasSuffix ".html" name
                                then relTo base val
                                else if isAttrs val
-                                       then mapAttrs (go (base + "/${name}"))
-                                                     val
+                                       then mapAttrs (go "${base}/${name}") val
                                        else val;
     };
     mapAttrs (go ".");
@@ -226,9 +234,9 @@ with rec { pages = rec {
 
       if [[ "$CODE" -eq 100 ]]
       then
-          echo "Skipping regeneration of '$FILE'"
+          echo "Skipping regeneration of '$NAME'" 1>&2
       else
-          echo "Got new content for '$FILE', generating"
+          echo "Got new content for '$NAME', generating" 1>&2
           echo "$CONTENT" | SOURCE= DEST= render_page > "$out"
       fi
     '';
@@ -273,7 +281,11 @@ with rec { pages = rec {
     };
   };
 
-  allPages = attrsToDirs (topLevel // { inherit blog projects; });
+  resources = { css = ./css; js = ./js; };
+
+  allPages = attrsToDirs (topLevel // resources // {
+               inherit blog projects unfinished;
+             });
 
   site = mkRel allPages;
 }; }; pages
