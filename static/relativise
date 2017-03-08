@@ -25,7 +25,13 @@ then
 fi
 
 # Modify HTML
-xsltproc --stringparam to_root "$TO_ROOT" "$XSL" - < "$FILE" > "$FILE.rel"
 
-# Overwrite original file
+# Prefix anchor hyperlinks
+xmlstarlet ed -u "//a[starts-with(@href, '/')]/@href" \
+              -x "concat('$TO_ROOT', .)" < "$FILE" > "$FILE.rel"
+mv -v "$FILE.rel" "$FILE"
+
+# Prefix links
+xmlstarlet ed -u "//link[starts-with(@href, '/')]/@href" \
+              -x "concat('$TO_ROOT', .)" < "$FILE" > "$FILE.rel"
 mv -v "$FILE.rel" "$FILE"

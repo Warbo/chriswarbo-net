@@ -30,4 +30,10 @@
       <xsl:value-of select="concat($to_root,.)"/>
     </xsl:attribute>
   </xsl:template>
+
+  <xsl:template match='html:link/@href[starts-with(.,"/")]'>
+    <xsl:attribute name="href">
+      <xsl:value-of select="concat($to_root,.)"/>
+    </xsl:attribute>
+  </xsl:template>
 </xsl:stylesheet>

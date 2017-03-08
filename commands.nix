@@ -1,5 +1,5 @@
-{ buildEnv, git, glibcLocales, lib, libxslt, makeWrapper, nix, pandoc,
-  panhandle, panpipe, pythonPackages, runCommand, wget, xidel }:
+{ buildEnv, git, glibcLocales, lib, makeWrapper, nix, pandoc, panhandle,
+  panpipe, pythonPackages, runCommand, wget, xidel, xmlstarlet }:
 
 with builtins;
 with lib;
@@ -45,7 +45,7 @@ rec {
 
 
   relativise =
-    wrap [ libxslt ] { XSL = ./static/rel.xsl; } ./static/relativise;
+    wrap [ xmlstarlet ] {} ./static/relativise;
 
   render_page =
     wrap [ cleanup pandoc panhandle panpipe ]
