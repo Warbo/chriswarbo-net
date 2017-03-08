@@ -283,9 +283,11 @@ with rec { pages = rec {
 
   resources = { css = ./css; js = ./js; };
 
-  allPages = attrsToDirs (topLevel // resources // {
+  allPages = topLevel // resources // {
                inherit blog projects unfinished;
-             });
+             };
 
-  site = mkRel allPages;
+  tests = callPackage ./tests.nix { inherit pages; };
+
+  site = attrsToDirs (mkRel allPages);
 }; }; pages
