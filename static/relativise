@@ -3,35 +3,43 @@
 # Update a HTML file to use relative links, e.g. '../css/foo.css' rather than
 # '//chriswarbo.net/css/foo.css' or '/css/foo.css'
 
-# This file should not be run standalone; it should be wrapped in an appropriate
-# environment by default.nix
-
 set -e
-
-FILE="$1"
 
 if [[ -z "$TO_ROOT" ]]
 then
-    # Determine the path to the Web root, e.g. '../..'
-    P=$(dirname "$FILE" | sed -e 's@.*rendered/@@g' |
-                          sed -e 's@.*rendered@@g'  |
-                          sed -e 's@[^/][^/]*@..@g')
-    if [[ -n "$P" ]]
-    then
-        TO_ROOT="$P"
-    else
-        TO_ROOT="."
-    fi
+    echo "No TO_ROOT given, aborting" 1>&2
+    exit 1
 fi
 
-# Modify HTML
+INPUT=$(cat)
 
-# Prefix anchor hyperlinks
-xmlstarlet ed -u "//a[starts-with(@href, '/')]/@href" \
-              -x "concat('$TO_ROOT', .)" < "$FILE" > "$FILE.rel"
-mv -v "$FILE.rel" "$FILE"
+# If the document specifies a default namespace, we must prefix all of our
+# queries with it
+NAMESPACE=""
+if echo "$INPUT" | grep -o 'xmlns="[^"]*"' > /dev/null
+then
+    NAMESPACE=$(echo "$INPUT" | grep -o 'xmlns="[^"]*"' |
+                                grep -o '".*'           |
+                                grep -o '[^"]*')
 
-# Prefix links
-xmlstarlet ed -u "//link[starts-with(@href, '/')]/@href" \
-              -x "concat('$TO_ROOT', .)" < "$FILE" > "$FILE.rel"
-mv -v "$FILE.rel" "$FILE"
+    # These arguments should be spliced into any xmlstarlet commandline we run
+    NAMESPACEARGS=( -N "ns=$NAMESPACE" )
+
+    # This prefix should be spliced before any identifier in our queries
+    NS="ns:"
+fi
+
+function prefix() {
+    # $1 is an element name (which we prefix with a namespace if needed)
+    # $2 is an attribute name
+    # We prefix any matching attributes of matching elements given on stdin,
+    # with the value of $TO_BASE
+    xmlstarlet ed ${NAMESPACEARGS[@]} \
+               -u "//${NS}${1}[starts-with(@${2}, '/')]/@${2}" \
+               -x "concat('$TO_ROOT', .)"
+}
+
+echo "$INPUT" | prefix a      href |
+                prefix link   href |
+                prefix script src  |
+                prefix img    src

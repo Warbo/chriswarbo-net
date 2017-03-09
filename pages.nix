@@ -140,30 +140,15 @@ with rec { pages = rec {
               SOURCE="$file" DEST="$out" render_page < "$file" > "$out"
             '';
 
-  rel = dir: runCommand "relative" { buildInputs = [ commands.relativise ]; } ''
-    cp -r "${dir}" "$out"
-    chmod +w -R "$out"
-    cd "$out"
-
-    while read -r F
-    do
-      DIR=$(dirname "$F" | sed -e 's@/[^/][^/]*@/..@g')
-      TO_ROOT="$DIR" relativise "$F"
-    done < <(find . -name "*.html")
-  '';
-
-  relTo = base: file: runCommand
+  relTo = TO_ROOT: file: runCommand
     "relative-${baseNameOf (unsafeDiscardStringContext file)}"
     {
-      inherit base file;
+      inherit file TO_ROOT;
       buildInputs = [ commands.relativise ];
     }
     ''
-      cp -r "$file" "$out"
-      chmod +w -R "$out"
-
-      DIR=$(echo "$base" | sed -e 's@/[^/][^/]*@/..@g')
-      TO_ROOT="$DIR" relativise "$out"
+      echo "Relativising $file to $TO_ROOT" 1>&2
+      relativise < "$file" > "$out"
     '';
 
   mkRel =
@@ -171,7 +156,7 @@ with rec { pages = rec {
       go = base: name: val: if hasSuffix ".html" name
                                then relTo base val
                                else if isAttrs val
-                                       then mapAttrs (go "${base}/${name}") val
+                                       then mapAttrs (go "${base}/..") val
                                        else val;
     };
     mapAttrs (go ".");
@@ -259,23 +244,26 @@ with rec { pages = rec {
 
   unfinished = attrsToDirs (renderAll (dirsToAttrs ./unfinished));
 
-  topLevel = {
-    "index.html"      = render {
+  topLevel = mapAttrs' (name: val: {
+                         inherit name;
+                         value = render (val // { inherit name; });
+                       }) {
+    "index.html"      = {
       cwd  = attrsToDirs { rendered = { inherit blog; }; };
       file = ./index.md;
     };
-    "blog.html"       = render {
+    "blog.html"       = {
       cwd  = attrsToDirs { rendered = { inherit blog; }; };
       file = ./blog.md;
     };
-    "contact.html"    = render {
+    "contact.html"    = {
       file = ./contact.md;
     };
-    "projects.html"   = render {
+    "projects.html"   = {
       cwd  = attrsToDirs { rendered = { inherit projects; }; };
       file = ./projects.md;
     };
-    "unfinished.html" = render {
+    "unfinished.html" = {
       cwd  = attrsToDirs { rendered = { inherit unfinished; }; };
       file = ./unfinished.md;
     };
@@ -283,11 +271,11 @@ with rec { pages = rec {
 
   resources = { css = ./css; js = ./js; };
 
-  allPages = topLevel // resources // {
+  allPages = mkRel (topLevel // resources // {
                inherit blog projects unfinished;
-             };
+             });
 
   tests = callPackage ./tests.nix { inherit pages; };
 
-  site = attrsToDirs (mkRel allPages);
+  site = attrsToDirs allPages;
 }; }; pages

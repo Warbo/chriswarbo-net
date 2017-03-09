@@ -1,11 +1,11 @@
 ---
 extra_head:
-  <meta http-equiv="refresh" content="1;url=/blog.html" />
+  <meta http-equiv="refresh" content="1;url=./blog.html" />
 
 title: Blog moved
 ---
 
-This blog has moved. If you're not redirected, check the [archive](/blog.html).
+This blog has moved. If you're not redirected, check the [archive](./blog.html).
 
 <!-- TODO:
 
@@ -21,7 +21,7 @@ echo '<script type="text/javascript">var posts = ['
 for F in root/rendered/blog/*.html
 do
     NAME=$(basename "$F")
-    echo "\"/blog/$NAME\","
+    echo "\"./blog/$NAME\","
 done
 echo '"index.html" ];</script>'
 ```
