@@ -170,7 +170,7 @@ with rec { pages = rec {
                                      x
                       else x;
 
-  blogPosts = with rec {
+  blog = with rec {
     # Read filenames from ./blog and append to the path './blog', so that each
     # is a standalone path. This way each post only depends on its own source,
     # and won't get rebuilt if e.g. a new post is added to ./blog.
@@ -178,8 +178,6 @@ with rec { pages = rec {
     posts = listToAttrs (map (p: { name  = mdToHtml p;
                                    value = ./blog + "/${p}"; }) postNames);
   }; mapAttrs (n: v: render { file = v; name = "blog-${n}"; }) posts;
-
-  blog = attrsToDirs blogPosts;
 
   renderAll = x: mdToHtmlRec
                    (mapAttrs (n: v: if isAttrs v
@@ -239,10 +237,9 @@ with rec { pages = rec {
     };
   };
 
-  projects = attrsToDirs (renderAll (dirsToAttrs ./projects //
-                                      { inherit repos; }));
+  projects = renderAll (dirsToAttrs ./projects // { inherit repos; });
 
-  unfinished = attrsToDirs (renderAll (dirsToAttrs ./unfinished));
+  unfinished = renderAll (dirsToAttrs ./unfinished);
 
   topLevel = mapAttrs' (name: val: {
                          inherit name;
