@@ -19,6 +19,7 @@ NAMESPACE=""
 if echo "$INPUT" | grep -o 'xmlns="[^"]*"' > /dev/null
 then
     NAMESPACE=$(echo "$INPUT" | grep -o 'xmlns="[^"]*"' |
+                                head -n1                |
                                 grep -o '".*'           |
                                 grep -o '[^"]*')
 
