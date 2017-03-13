@@ -78,5 +78,5 @@ the same way that combinators can splice together strings, or plumb together
 parsers, we could make combinators for fusing together executables.
 
 This is pretty much an extension of [my earlier thoughts on annotating values as
-pure](/blog/2017-02-13-what_i_would_like_in_nix.md) to allow more aggressive
+pure](/blog/2017-02-13-what_i_would_like_in_nix.html) to allow more aggressive
 optimisation.

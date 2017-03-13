@@ -3,7 +3,8 @@ title: Crayola Doodle Penguin; or Why I Hate Consumerist Computing
 ---
 I was in Toys 'R' Us today, buying some Lego, when I happened upon a "Crayola Doodle Penguin", which looks something like this:
 
-<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAxQAAAMXCAMAAACUyeMNAAADAFBMVEX///9mZmYfreftFFsAt/HT
+```{pipe="cat > img.b64"}
+iVBORw0KGgoAAAANSUhEUgAAAxQAAAMXCAMAAACUyeMNAAADAFBMVEX///9mZmYfreftFFsAt/HT
 19rl8PT+/v/9/fv7+vv39/enBD7v7e+2B0f///3z8/ImGhB8Aim6CkqiAzoZEQz6y7P4xq2cAzeW
 AjTp6OlxAiUGBQWxBUOFAi2OAjGZkpBkAiA5Kx3HxMUvIhZkZGStBUG1sa+wqqne3d5ZAxz7+PLj
 5OKhmZjns5GelZOpoZ+ppaWVjYzut5X80rlAKRD+/faNhYP2wKWknZzNy81EMRxPOiG6t7f5//+S
@@ -1550,8 +1551,14 @@ iwf9RKdskHUd/dxu+1PGyObVJpWVb2M7DvqhhWiEEZva9t3Gpp8Smw2yriObJS96IUjnfd2oO8b8
 NtT7g0IOiqe3JPvuKfp2ISi4p1iQLIxIyUnHj9LAi5gY66v+sZ0NlHUd+elTTjrhjTCafXODWubd
 T0HB0yc4+BRfP3dC+O0kE9fhDBAUKCoAAAAAAAAAAN5EnQTF64IByNgAsE1K4UQR4+fYsgFP6mEV
 yuuTHRRMiYOVqSlISpRwdwGLIakPit9w+QQLoadnCu68YTGUM9xxTwEL86u9OyYBAABAANa/tadg
-A2Hr4COIPaXYQcW2T3IBAAAAAAAAAAAAAAAAtwLQDdNFh6GxkQAAAABJRU5ErkJggg=="
-  alt="Doodle Penguin" />
+A2Hr4COIPaXYQcW2T3IBAAAAAAAAAAAAAAAAtwLQDdNFh6GxkQAAAABJRU5ErkJggg==
+```
+
+```{.unwrap pipe="sh | pandoc -f html -t json"}
+printf '<img src="data:image/png;base64,'
+tr -d '\n' < img.b64
+printf '" alt="Doodle Penguin" />'
+```
 
 Now, the first thing that came to my mind was "Oh cool, Crayola are making their own [Turtles] [1]!". For those of you who haven't had the joyous experience of using [Logo] [2] in school, a "Turtle" is [a simple robot with wheels and a pen] [3], which is plugged into a computer via a long cable. Commands can be sent to a turtle, typically written in Logo, and it will follow instructions like "forward 100", "right 90", "pendown", etc. which, when it's roaming around on a large piece of paper, will produce pretty shapes. Logo also has loops, recursion and a whole host of other features, making it a fully fledged [functional programming language] [4]; in fact, it is a dialect of [LISP] [5]!
 

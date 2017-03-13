@@ -18,7 +18,7 @@ Here&#39;s a Stack interpreter: type in a combination of 'c', 'k', '[' and ']' t
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/stack.js"></script>
 
-<form action="" id="stackform" method="get">
+<form action="." id="stackform" method="get">
   <label for="text">Try typing some Stack here:</label>
   <textarea cols="80" id="text" rows="30"></textarea>
   <button id="run">Run!</button>

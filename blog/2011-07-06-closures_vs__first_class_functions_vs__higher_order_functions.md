@@ -92,49 +92,31 @@ $('#list-container span').each(function() {
 ```
 
 <ul id="list-container">
-<li>
-<span>Foos...</span>
+<li><span>Foos...</span>
 <ul>
-<li>
-<span>Foo 1</span>
+<li><span>Foo 1</span></li>
+<li><span>Foo 2</span></li>
+</ul>
 </li>
-<li>
-<span>Foo 2</span>
+<li><span>Bars...</span>
+<ul>
+<li><span>Bar 1</span></li>
+<li><span>Bar 2...</span>
+<ul>
+<li><span>Sub-Bar 1</span></li>
+</ul>
 </li>
 </ul>
 </li>
-<li>
-<span>Bars...</span>
+<li><span>Bazi...</span>
 <ul>
-<li>
-<span>Bar 1</span>
-</li>
-<li>
-<span>Bar 2...</span>
+<li><span>Baz 1...</span>
 <ul>
-<li>
-<span>Sub-Bar 1</span>
-</li>
-</ul>
+<li><span>Sub-Baz 1</span></li>
+<li><span>Sub-Baz 2</span></li>
 </ul>
 </li>
-<li>
-<span>Bazi...</span>
-<ul>
-<li>
-<span>Baz 1...</span>
-<ul>
-<li>
-<span>Sub-Baz 1</span>
-</li>
-<li>
-<span>Sub-Baz 2</span>
-</li>
-</ul>
-</li>
-<li>
-<span>Baz 2</span>
-</li>
+<li><span>Baz 2</span></li>
 </ul>
 </li>
 </ul>

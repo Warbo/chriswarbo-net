@@ -1,7 +1,9 @@
 ---
 title: GNOME Blog Works!
 ---
-<img alt='' src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARwAAAGQCAIAAADz5EgUAAAAA3NCSVQICAjb4U/gAABn6ElE
+
+```{pipe="cat > img.b64"}
+iVBORw0KGgoAAAANSUhEUgAAARwAAAGQCAIAAADz5EgUAAAAA3NCSVQICAjb4U/gAABn6ElE
 QVR42u2dB1jU2N7GR0V6HWYYhqEXxYZdUcTeK4piFysivQqoKArYFQHFDogVu4giKvaCgOi6
 fV172eLatty7u3fvd783c5xsmMZQVHTP+/CEJHOSnJzz/+Wck5nk5Tk6Ovbt27dXVdSzMvV4
 O+pedXWTqdIEmqtr1eWpQl3UykOqzjJ1qkzuKtRRY3VQUPvK1E6F2mqgNjK1bt26DUetZWql
@@ -494,7 +496,14 @@ zTwnTpxIplwDTywq9fBU6uQp5+HJatSoUYo2nmSqysZT0dNRqY0na+g4pKJUXWiU2njKXWWU
 XlOUejr2UpCqy4TmNp6qyFdq5agUcqVujqoAVkps64pSBacaIJWyBxG0uNQpvlFMKVqKULE/
 QFM0dHTQQBKJxMjIiId/ndw7dexQwfNUTtwiU2qDqUk5qrrmVXqpU1/ElV7wlF7z5K58al7v
 pskFT8NrntIrn6L9pmIVan5DX5VLp5yUfqOlVFYykU6OYs+HdPDknJ2USq4vrabDLzf0MOeI
-LxV3HjKTip2BVPkjyvkvqvF9lLOW1NzSUkdH5/8BAJYv8ASsfCQAAAAASUVORK5CYII=' />
+LxV3HjKTip2BVPkjyvkvqvF9lLOW1NzSUkdH5/8BAJYv8ASsfCQAAAAASUVORK5CYII=
+```
+
+```{.unwrap pipe="sh | pandoc -f html -t json"}
+printf '<img alt="Recursive blogs" src="data:image/png;base64,'
+tr -d '\n' < img.b64
+printf '" />'
+```
 
 Yes, I know. I am a genius. Anyway, just tried Ubuntu Feisty's package of <a href="http://www.gnome.org/%7Eseth/gnome-blog/">gnome-blog</a> and found that it can use Blogger's new API (it changed when Google bought them, thus making the older versions not work for accounts using the new API, like mine). This is a welcome relief since I no longer have to deal with the nightmare of writing blind (white-on-white == bad usability), and if a dodgy website (or browser) loses the Blogger page then I'd lost it all (as happened to me just :( ). Anyway, now that we have established that GNOME Blog works onto the main issues of the day:
 
