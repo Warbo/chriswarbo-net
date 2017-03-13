@@ -6,7 +6,8 @@ packages: [ 'imagemagick', 'ghc', 'php' ]
 
 <!-- Why not zoidberg? -->
 
-<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAlgAAAHLBAMAAADmUvufAAAAHlBMVEUiGRdcVCLzVU8Yo+f0q8L+
+```{pipe="tr -d '\n' > img.b64"}
+iVBORw0KGgoAAAANSUhEUgAAAlgAAAHLBAMAAADmUvufAAAAHlBMVEUiGRdcVCLzVU8Yo+f0q8L+
 yweH3sSy5xfv8Or4+8QvCvIMAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wINEAcJja0C
 9AAAAEhpVFh0Q29tbWVudAAAAAAAQ1JFQVRPUjogZ2QtanBlZyB2MS4wICh1c2luZyBJSkcgSlBF
 RyB2NjIpLCBkZWZhdWx0IHF1YWxpdHkK2tvQlgAAKWVJREFUeNrtnUtv20qyx6sVISPvmkaQyDtZ
@@ -195,9 +196,14 @@ EqXrzLQ/2bAxEw0rjstdhS3L6u/s89zNGs6jFEAULAsiQbhMhUAEyzBVF56iSkfSbItfepdlBiu9
 nwzrPy6wgqXxdMhoGKxcNeMotf3gtuPofViHCy8/5CwsTSeKCssqApPauipYSsuqBsoNVt/Hs6y5
 2EdcmbUT/S5Qft174i6ssAOLm2AlFSwg6JQ6zLLK4GF9eZ4dTd+B1VdUL1hHmHcsK4e0KGCl6p/D
 ym9O/1UCVsL6Tx2CUTQsHghrBaA49T2NIIRQnB7tJVpRD9YSDethSwpL32fMHRwrN5WXEX4vjRt7
-df7jgX+cdbqw1nARtN5Y9/XFPv3ZYvALSv8f6os+Yusx/GQAAAAASUVORK5CYII="
-  alt="Why not Babel?"
-  style="width: 300px;" />
+df7jgX+cdbqw1nARtN5Y9/XFPv3ZYvALSv8f6os+Yusx/GQAAAAASUVORK5CYII=
+```
+
+```{.unwrap pipe="sh | pandoc -f html -t json"}
+printf '<img src="data:image/png;base64,'
+cat img.b64
+printf '" alt="Why not Babel?" style="width: 300px;" />'
+```
 
 Babel, Org mode and Emacs are all wonderful things, however there are a few reasons why we may want to avoid them, which can be summarised by saying "they're not UNIX":
 

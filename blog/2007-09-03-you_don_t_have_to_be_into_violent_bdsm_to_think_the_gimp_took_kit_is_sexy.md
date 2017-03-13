@@ -5,7 +5,8 @@ I came across the <a href="http://www.gnome-look.org/content/show.php/Aurora+Gtk
 
 Here's a piccy for you:
 
-<img alt='' src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAD6CAIAAAAAxYYTAAAAA3NCSVQICAjb4U/gAAGh8ElE
+```{pipe="cat > img.b64"}
+iVBORw0KGgoAAAANSUhEUgAAAZAAAAD6CAIAAAAAxYYTAAAAA3NCSVQICAjb4U/gAAGh8ElE
 QVR42uy9B3wbx5U/jt//k+Ryl2JalWJD74XoIAoJEATA3sDee+8EUQiCvfdOURLVe5fVbdmy
 ZLnbsVzjGrfk0i/l0i6XXPR/u0NCMFVMyXJL9D5LcHd2+sz7znuzM28ILA9iMFnrqcz/INHK
 +eJCbiCFxWTdmmg0GpN5Ew83dbwVMRiMO/J/d+ROAm4oJCLFbx0lwIdCJlPIpKVfdEOmUMiY
@@ -1987,6 +1988,14 @@ C0sfSB74TnzHN+I7XotveUlY+RGle9B/+GA7/ZiDOreErQT9Jx96BUTJuwIDAjX9gQH+GOY+
 5nCpxyER0Y0o4RO+C2do3uW4aH2yd/3vHVQY+z8zhgS4jZvo/5R3jaeNFQFBC5YGrgi45Uzd
 Ftr4zx5DL204lLjCf8WiwIWLAoTtH3MjO8HHLbabTQNR/d09fYOD+/r6h/g3MDA0MLiPzwMH
 Di/zDZgxc/6s2Qtv+m/O3EW3+kn/ZuvXOQtvfcGChYv+N/DKUb1P95kREODv43j4z+areQ/P
-fXjuHP3Tybx5Dy9atPB/ABC6noloEt3+AAAAAElFTkSuQmCC' />
+fXjuHP3Tybx5Dy9atPB/ABC6noloEt3+AAAAAElFTkSuQmCC
+```
+
+```{.unwrap pipe="sh | pandoc -f html -t json"}
+printf '<img alt=" " src="data:image/png;base64,'
+tr -d '\n' < img.b64
+printf '" />'
+```
+
 
 Also, some <a href="http://www.semanticmetadata.net/stuff/">image slicing</a> <a href="http://gabeiscoding.com/">GUIs</a> have been made, which is cool.

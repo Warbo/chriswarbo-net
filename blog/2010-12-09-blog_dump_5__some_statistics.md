@@ -44,7 +44,8 @@ play(1000) # Play 1000 rounds
 
 The scenario is that we start with £1 and pay a fixed sum (here £2) to play a lottery, in which a coin if tossed. If it's tails then we take the winnings, which start at £1, but if it's heads then the winnings go up by twice the last increase, so they become £1 + £2. If we get a tails next, we get the winnings, but if we get heads it goes up by double the last increase again, so the winnings become £1 + £2 + £4. This keeps going on until we get a tails, when we get the winnings so far. The remarkable thing about this game is that the amount you can expect to win is infinite (0.5*£1 + 0.25*£2 + 0.125*£4+... = 0.5 + 0.5 + 0.5 + ...), so that you should be willing to pay any finite amount to enter. In this case the entrance fee for the lottery is £2, but it could be £2,000,000 and it wouldn't make a difference. We can see this from the graph below, where we run 1000 lotteries in a row, with 25 of these simulations running simultaneously (ie. 25,000 lotteries). The number of lotteries entered goes along the bottom, whilst the winnings goes up the side. The 25 runs of the simulation have been superimposed on each other to better approximate what's going on (I can't be arsed working out the error bars for a blog post). At any point on the graph, the darkness is a rough estimation of the probability of owning this amount of money after this many rounds (we use the area under the curve since, if we have £50 then we also have every amount below £50).
 
-<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABUEAAANSCAMAAAB81P+dAAAAWlBMVEX////g4ODFxcUKCgqtra2Y
+```{pipe="tr -d '\n' > img.b64"}
+iVBORw0KGgoAAAANSUhEUgAABUEAAANSCAMAAAB81P+dAAAAWlBMVEX////g4ODFxcUKCgqtra2Y
 mJgAAACGhoZ2dnZoaGgkJCRGRkYUFBRQUFBbW1scHBwrKys2NjY9PT0PDw8NDQ329va6urrq6urO
 zs7Y2Nhvb2+Pj4+jo6N+fn6IEsxxAABWmElEQVR42uyd2XLiMBBFZRs3eAcHeQHy/7852pzGi8xU
 wtQQc89DkFoLjao45UU4ggAAAHwPQQIAAMB3gEEBAAAGBQCAB8CgAADwMsCgAAAAgwIAwANgUAAA
@@ -435,7 +436,13 @@ OgAHEl5pigJXe9oOcJk/WtJZvKigsknPaJkGVwnTPDM8+uiZvLfly3PQ+debuV86TL8HbeeCWpMl
 htFzyxr3vU1jRmfcF/e4ydlkecEEi4kqqKigsinPaFUcALj5nSQMMeuoWxV0eoPoMC0dS8M02y3P
 4vN68U6SuxRMo26fGh/ZgDzBC0tDe3CYJ+okSVRQ+c/FxJ90xkJEBRX5m4KGPEBEBRX5ekFdFzOA
 iAoq8vWCFmQOEaigIr/kOvxebo8OIiqoiMiHUEFFRFRQEZE3VFARkY+hgoqIqKAiIm+ooCIiH0MF
-FRFRQUVE3lBBRUQ+BkEREfk7PwBnGBDH0iBKzQAAAABJRU5ErkJggg=="
-  alt="25 games of the St Petersburg Lottery, each with 1000 rounds" />
+FRFRQUVE3lBBRUQ+BkEREfk7PwBnGBDH0iBKzQAAAABJRU5ErkJggg==
+```
+
+```{.unwrap pipe="sh | pandoc -f html -t json"}
+printf '<img src="data:image/png;base64,'
+cat img.b64
+printf '" alt="25 games of the St Petersburg Lottery, each with 1000 rounds" />'
+```
 
 I've also made some simulations of the Monty Hall problem, random walks (intersecting and non-intersecting) and a few other statistical phenomena. I might post them if I get time. They can be the source of pretty patterns :)
