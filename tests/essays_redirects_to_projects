@@ -11,12 +11,13 @@ do
         continue
     }
 
-    PRJ_URL=$(echo "$PRJ_FILE" | sed -e 's@rendered/projects/@/projects/@g')
+    PRJ_URL=$(relTo "$PWD/rendered" "$PRJ_FILE")
     grep "<link rel=\"canonical\" href=\"$PRJ_URL\"/>" < "$ESSAY_FILE" \
                                                        > /dev/null || {
         ERR=1
         echo "'$ESSAY_FILE' doesn't redirect to '$PRJ_URL'" 1>&2
+        grep '<link rel="canonical"' < "$ESSAY_FILE"
     }
-done < <(find rendered/projects -type f)
+done < <(find "$PWD/rendered/projects" -type f)
 
 exit "$ERR"

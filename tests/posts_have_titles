@@ -1,11 +1,10 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash -p bash xidel
+#!/usr/bin/env bash
 xidel - -q --extract "//div[@id='content']//ul/li/a" < rendered/blog.html |
     while read -r TITLE
     do
         if [[ -z "$TITLE" ]]
         then
-            echo "Missing title!" >> /dev/stderr
+            echo "Missing title!" 1>&2
             exit 1
         fi
     done

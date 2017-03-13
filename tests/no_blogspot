@@ -1,6 +1,4 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -p xidel bash -i bash
-
+#!/usr/bin/env bash
 function get_imgs() {
     xidel - -q --extract "//img/@src" < "$1"
 }
@@ -10,7 +8,7 @@ while read -r FILE
 do
     if get_imgs "$FILE" | grep "blogspot.com"
     then
-        echo "Found references to blogspot.com in '$FILE'" >> /dev/stderr
+        echo "Found references to blogspot.com in '$FILE'" 1>&2
         ERR=1
     fi
 done < <(find rendered -name "*.html")

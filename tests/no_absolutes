@@ -1,5 +1,4 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -p xidel bash -i bash
+#!/usr/bin/env bash
 
 # use relative links, rather than absolute links to chriswarbo.net
 
@@ -22,12 +21,12 @@ do
     fi
     if get_urls "$FILE" | grep "chriswarbo\.net"
     then
-        echo "Found absolute links to chriswarbo.net in '$FILE'" >> /dev/stderr
+        echo "Found absolute links to chriswarbo.net in '$FILE'" 1>&2
         ERR=1
     fi
     if get_urls "$FILE" | grep "^/"
     then
-        echo "Found link to root (/) in '$FILE'" >> /dev/stderr
+        echo "Found link to root (/) in '$FILE'" 1>&2
         ERR=1
     fi
 done < <(find rendered -name "*.html")

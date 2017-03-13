@@ -1,5 +1,4 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i python -p pythonPackages.python mf2py
+#!/usr/bin/env python
 
 import mf2py
 import os

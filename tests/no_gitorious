@@ -5,7 +5,7 @@ function findLinks {
     while read -r LINE
     do
         [[ -n "$LINE" ]] || continue
-        echo "Found link '$LINE'" >> /dev/stderr
+        echo "Found link '$LINE'" 1>&2
         FOUND=0
     done < <(grep -r "$1" rendered/ | skip)
     return "$FOUND"

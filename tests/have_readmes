@@ -17,7 +17,7 @@ do
             if [[ -n "$READMES" ]]
             then
                 ERR=1
-                echo "'$NAME' has no README, but found '$DIR/$READMES'" >> /dev/stderr
+                echo "'$NAME' has no README, but found '$DIR/$READMES'" 1>&2
             fi
             popd > /dev/null
         done

@@ -1,24 +1,23 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash -p xidel bash
+#!/usr/bin/env bash
 
 ERR=0
-while read -r SOURCE
+while read -r NAME
 do
-    [[ "x$SOURCE" = "xprojects/index.html" ]] && continue
+    [[ "x$NAME" = "xrendered/projects/index.html" ]] && continue
 
-    NAME=$(echo "$SOURCE" | rev | cut -d '.' -f 2- | rev)
-    DEST="./$NAME.html"
+    NOREND=$(echo "$NAME" | sed -e 's@^rendered/@@g')
+    DEST="./$NOREND"
     if [[ ! -e "rendered/$DEST" ]]
     then
-        echo "Can't find rendered$DEST" >> /dev/stderr
+        echo "Can't find rendered/$DEST" 1>&2
         ERR=1
     fi
     LINK=$(xidel - -q --extract "//a[@href='$DEST']/@href" < rendered/projects.html)
     if ! echo "$LINK" | grep "$NAME" > /dev/null
     then
-        echo "$NAME.html doesn't appear in projects.html" >> /dev/stderr
+        echo "$NAME doesn't appear in projects.html" 1>&2
         ERR=1
     fi
-done < <(find projects -type f -name "index.*")
+done < <(find rendered/projects -type f -name "index.*")
 
 exit "$ERR"

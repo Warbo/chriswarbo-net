@@ -7,7 +7,7 @@ do
     if [[ ! -e "rendered/projects/repos/$NAME.html" ]]
     then
         ERR=1
-        echo "No repo page for $NAME" >> /dev/stderr
+        echo "No repo page for $NAME" 1>&2
     fi
 done
 

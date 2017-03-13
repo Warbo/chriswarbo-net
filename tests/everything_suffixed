@@ -10,7 +10,7 @@ do
         do
             if ! echo "$ENTRY" | grep "[^/][^/]*\.[^/][^/]*" > /dev/null
             then
-                echo "File '$ENTRY' has no extension" >> /dev/stderr
+                echo "File '$ENTRY' has no extension" 1>&2
                 ERR=1
             fi
         done < <(find "$DIR" -type f)

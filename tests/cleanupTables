@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function fail {
-    echo "FAIL: $1" >> /dev/stderr
+    echo "FAIL: $1" 1>&2
     exit 1
 }
 
@@ -18,7 +18,7 @@ do
     # Skip empty
     [[ -n "$INPUT" ]] || continue
 
-    CLEANED=$(echo "$INPUT" | ./static/cleanup)
+    CLEANED=$(echo "$INPUT" | cleanup)
 
     echo "$CLEANED" | grep '<span' > /dev/null &&
         fail "Didn't strip span: $CLEANED"
@@ -30,4 +30,4 @@ do
         fail "Didn't remove parent <p>"
 done < <(inputs)
 
-echo "Success" >> /dev/stderr
+echo "Success" 1>&2

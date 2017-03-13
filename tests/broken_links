@@ -1,5 +1,4 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -p linkchecker bash -i bash
+#!/usr/bin/env bash
 RESULT=$(linkchecker --no-status                   \
                      --ignore-url=.xml             \
                      --ignore-url=/git             \

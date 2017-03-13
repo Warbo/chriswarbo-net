@@ -1,4 +1,2 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash -p libxslt
-BASE=$(dirname "$(readlink -f "$0")")
-xsltproc "$BASE/atom2rss.xsl" -
+#!/usr/bin/env bash
+xsltproc "$XSL" -

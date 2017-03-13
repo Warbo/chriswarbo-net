@@ -1,5 +1,3 @@
 #!/usr/bin/env bash
 
-BASE=$(dirname "$(readlink -f "$0")")
-
-sed -e "s@REPLACEME@$1@g" < "$BASE/redirectTemplate.html"
+sed -e "s@REPLACEME@$1@g" < "$TEMPLATE"

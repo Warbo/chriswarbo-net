@@ -1,5 +1,4 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash -p python wget
+#!/usr/bin/env bash
 set -e
 
 if PROCESS=$(pgrep ".*8666.*" | grep python)
@@ -32,18 +31,7 @@ function ignoreInSource {
 
 BASE="$PWD"
 
-# Work in a temporary directory, and delete it on exit
-DIR=$(mktemp --tmpdir -d "blog-reachability-XXXXX")
-trap 'rm -rf "$DIR"' EXIT
-
-pushd "$DIR" > /dev/null
-
-  # Make a copy of 'rendered/', make a list of its contents and temporarily
-  # serve it via HTTP
-
-  cp -ar "$BASE/rendered" .
-
-  pushd rendered > /dev/null
+pushd rendered > /dev/null
 
     rm -f ./git
     touch ./git
@@ -56,7 +44,7 @@ pushd "$DIR" > /dev/null
     SERVER_PID="$!"
 
     # Delete the directory *and* kill the server when we exit
-    trap 'kill "$SERVER_PID"; rm -rf "$DIR"' EXIT
+    trap 'kill "$SERVER_PID"' EXIT
 
     printf "Waiting for server to start..." 1>&2
 
@@ -72,29 +60,28 @@ pushd "$DIR" > /dev/null
 
     echo "" 1>&2
     sleep 1
-  popd > /dev/null
 
-  # Crawl the temporary site. Unfinished pages are intentionally unreachable
-  # from index.html, but they should still be reachable from unfinished.html.
-  # Exclude /git since it's added in during deployment, and repos/ since the
-  # content may not be under our control.
-  OUTPUT=$(wget --page-requisites --mirror --no-parent \
-                --exclude-directories="/git,/projects/repos" \
-                "http://localhost:8666" \
-                "http://localhost:8666/unfinished.html" 2>&1)
+popd > /dev/null
 
-  [[ -d "localhost:8666" ]] || {
-      echo -e "Didn't find 'localhost:8666' in downloaded content\n\n$OUTPUT" 1>&2
-      exit 1
-  }
+# Crawl the temporary site. Unfinished pages are intentionally unreachable
+# from index.html, but they should still be reachable from unfinished.html.
+# Exclude /git since it's added in during deployment, and repos/ since the
+# content may not be under our control.
+OUTPUT=$(wget --page-requisites --mirror --no-parent \
+              --exclude-directories="/git,/projects/repos" \
+              "http://localhost:8666" \
+              "http://localhost:8666/unfinished.html" 2>&1)
 
-  # Compare the content we've downloaded to that in rendered/
+[[ -d "localhost:8666" ]] || {
+    echo -e "Didn't find 'localhost:8666' in downloaded content\n\n$OUTPUT" 1>&2
+    exit 1
+}
 
-  pushd "localhost:8666" > /dev/null
+# Compare the content we've downloaded to that in rendered/
+
+pushd "localhost:8666" > /dev/null
 
     DEST_CONTENT=$(find . | sort)
-
-  popd > /dev/null
 
 popd > /dev/null
 

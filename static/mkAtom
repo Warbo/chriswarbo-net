@@ -1,5 +1,4 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i python -p hfeed2atom
+#!/usr/bin/env python
 
 from bs4        import BeautifulSoup
 from hfeed2atom import hfeed2atom

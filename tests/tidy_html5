@@ -1,8 +1,7 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash -p bash tidy-html5
+#!/usr/bin/env bash
 
 function fail {
-    echo "FAIL: $1" >> /dev/stderr
+    echo "FAIL: $1" 1>&2
     exit 1
 }
 
@@ -22,12 +21,12 @@ function check {
     # Ignore things we don't care too much about (e.g. READMEs)
     if lax "$1"
     then
-        echo "Ignored tidy errors for '$1'" >> /dev/stderr
+        echo "Ignored tidy errors for '$1'" 1>&2
         return
     fi
 
     # Otherwise, abort
-    echo -e "Tidy failed for '$1':\n\n$STDERR\n\n---\nEnd report for '$1'\n\n" >> /dev/stderr
+    echo -e "Tidy failed for '$1':\n\n$STDERR\n\n---\nEnd report for '$1'\n\n" 1>&2
     return 1
 }
 

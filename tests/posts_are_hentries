@@ -1,5 +1,4 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i runhaskell -p '(haskellPackages.ghcWithPackages (h: [ h.microformats2-parser h.directory h.bytestring ]))'
+#!/usr/bin/env runhaskell
 {-# LANGUAGE OverloadedStrings #-}
 
 import           Control.Monad

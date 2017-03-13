@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 function fail {
-    echo "FAIL: $1" >> /dev/stderr
+    echo "FAIL: $1" 1>&2
     exit 1
 }
 
-OUTPUT=$(echo '<pre><code></code></pre>' | ./static/render_page)
+OUTPUT=$(echo '<pre><code></code></pre>' | render_page)
 
 echo "$OUTPUT" | grep '<code>' > /dev/null && fail "Didn't strip <code>"
 echo "$OUTPUT" | grep '<pre>'  > /dev/null && fail "Didn't strip <pre>"
 
-echo "Success" >> /dev/stderr
+echo "Success" 1>&2
