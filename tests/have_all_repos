@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
+shopt -s nullglob
 
 ERR=0
-for REPO in ~/Programming/repos/*.git
+for REPO in /home/chris/Programming/repos/*.git
 do
     NAME=$(basename "$REPO" .git)
     if [[ ! -e "rendered/projects/repos/$NAME.html" ]]
@@ -10,5 +11,11 @@ do
         echo "No repo page for $NAME" 1>&2
     fi
 done
+
+if [[ "$ERR" -gt 0 ]]
+then
+    echo "Found repos:"           1>&2
+    find rendered/projects/repos  1>&2
+fi
 
 exit "$ERR"

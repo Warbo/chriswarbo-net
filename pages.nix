@@ -328,7 +328,7 @@ with rec { pages = rec {
       repoPages = listToAttrs (map (url: { name  = removeSuffix ".git"
                                                      (baseNameOf url) + ".html";
                                            value = repoPageOf url; })
-                                   (take 1 repoUrls));
+                                   repoUrls);
     };
     repoPages // {
       "index.html" = render {

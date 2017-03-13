@@ -57,7 +57,6 @@ rec {
     wrap [ nix ] { NIX_PATH   = getEnv "NIX_PATH";
                    NIX_REMOTE = getEnv "NIX_REMOTE"; } "${nix}/bin/nix-shell";
 
-
   relativise =
     wrap [ xmlstarlet ] {} ./static/relativise;
 
