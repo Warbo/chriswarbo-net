@@ -17,6 +17,6 @@ do
     echo "$NAME"
     echo '</a></li>'
     #echo '<br />'
-done < <(find ./root/repos -type f)
+done < <(find ./root/repos -type f | sort)
 echo '</ul>'
 ```

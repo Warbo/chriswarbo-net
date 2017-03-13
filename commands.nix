@@ -1,19 +1,22 @@
-{ buildEnv, git, glibcLocales, lib, makeWrapper, nix, pandoc, panhandle,
-  panpipe, pythonPackages, runCommand, wget, xidel, xmlstarlet }:
+{ buildEnv, haskellPackages, hfeed2atom, git, glibcLocales, lib, libxslt,
+  makeWrapper, nix, pandoc, panhandle, panpipe, pythonPackages, runCommand,
+  wget, xidel, xmlstarlet }:
 
 with builtins;
 with lib;
 with {
   wrap = deps: vars: file: runCommand "wrapped"
-    {
+    rec {
       inherit file;
       buildInputs = [ makeWrapper ];
       command     = baseNameOf file;
       env         = buildEnv {
-                      name  = "stripemptyprecode-env";
-                      paths = deps;
+                      name  = unsafeDiscardStringContext command + "-env";
+                      paths = deps ++ map (d: d.propagatedBuildInputs ++
+                                              d.propagatedNativeBuildInputs)
+                                          deps;
                     };
-      vars        = concatStringsSep " "
+      varargs     = concatStringsSep " "
                       (fold (n: r: let v = vars."${n}";
                                     in [''--set "${n}" "${v}"''] ++ r)
                             []
@@ -21,8 +24,9 @@ with {
     }
     ''
       mkdir -p "$out/bin"
-      makeWrapper "$file" "$out/bin/$command" $vars --prefix PATH : "$env/bin"
-  '';
+      makeWrapper "$file" "$out/bin/$command" $varargs \
+                  --prefix PATH : "$env/bin"
+    '';
 };
 rec {
   cleanup =
@@ -33,6 +37,16 @@ rec {
 
   git2md =
     wrap [ git wget ] {} ./static/git2md;
+
+  mkEssayLinks =
+    wrap [ mkRedirectTo ] {} ./static/mkEssayLinks;
+
+  mkRedirectTo =
+    wrap [] { TEMPLATE = ./static/redirectTemplate.html; }
+         ./static/mkRedirectTo;
+
+  mkRss =
+    wrap [ libxslt ] { XSL = ./static/atom2rss.xsl; } ./static/mkRss;
 
   nixInstantiate =
     wrap [ nix ] { NIX_PATH   = getEnv "NIX_PATH";
@@ -47,12 +61,18 @@ rec {
   relativise =
     wrap [ xmlstarlet ] {} ./static/relativise;
 
+  relTo =
+    wrap [ haskellPackages.ghc ] {} ./static/relTo;
+
   render_page =
     wrap [ cleanup pandoc panhandle panpipe ]
          { defaultTemplate = ./templates/default.html;
            LANG = "en_US.UTF-8";
            LOCALE_ARCHIVE = "${glibcLocales}/lib/locale/locale-archive"; }
          ./static/render_page;
+
+  renderHcard =
+    wrap [] {} ./static/renderHcard;
 
   showPost =
     wrap [ xidel ] {} ./static/showPost;

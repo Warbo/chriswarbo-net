@@ -1,2 +1,3 @@
-with import <nixpkgs> {};
-(callPackage ./pages.nix {}).site
+with import ./defs.nix;
+with configuredPkgs;
+(callPackage ./pages.nix { inherit latestConfig; }).site
