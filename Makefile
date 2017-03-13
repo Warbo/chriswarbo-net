@@ -37,7 +37,7 @@ redirect := rendered/index.php rendered/archive.html
 
 # Entry point
 
-all : pages quick_test
+all : pages
 
 pages : $(all_pages) $(resources) $(indices) redirects feeds
 	./static/mkEssayLinks
@@ -89,14 +89,6 @@ rendered/essays: $(all_pages) static/mkEssayLinks static/mkRedirectTo \
                  static/redirectTemplate.html rendered/projects/*/*.html
 	./static/mkEssayLinks
 
-feeds : rendered/blog.atom rendered/blog.rss
-
-rendered/blog.atom : rendered/blog.html static/mkAtom
-	static/mkAtom < rendered/blog.html > rendered/blog.atom
-
-rendered/blog.rss : rendered/blog.atom static/mkRss
-	static/mkRss < rendered/blog.atom > rendered/blog.rss
-
 # Extra functionality
 
 clean :
@@ -127,30 +119,10 @@ unsafe_add : pages
 push : copy
 	$(MAKE) -f $(THIS_FILE) unsafe_push
 
-copy : quick_test
+copy :
 	$(MAKE) -f $(THIS_FILE) unsafe_copy
 
-add : quick_test
+add :
 	$(MAKE) -f $(THIS_FILE) unsafe_add
 
-# Tests
-
-tests := $(addsuffix .pass, $(wildcard tests/*))
-
-# All tests, which are useful when content is changed
-test : $(tests)
-
-$(tests) : pages
-	$(basename $@)
-
-# Quick integrity checks, which are worth running on every push
-quick_test : pages
-	tests/dirs_have_indices
-	tests/essays_redirects_to_projects
-	tests/everything_suffixed
-	tests/have_all_repos
-	tests/have_readmes
-	tests/have_feeds
-	tests/no_empty_files
-
-.PHONY : all pages redirects clean test quick_test copy push unsafe_copy unsafe_push
+.PHONY : all pages redirects clean copy push unsafe_copy unsafe_push
