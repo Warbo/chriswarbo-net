@@ -1,5 +1,6 @@
 #!/usr/bin/env runhaskell
 
+import Data.List
 import System.Environment
 
 type Path = [FilePath]
@@ -7,7 +8,7 @@ type Path = [FilePath]
 -- Remove common prefix of two paths, go up from the second and down the first
 pathTo :: Path -> Path -> Path
 pathTo (x:p1) (y:p2) | x == y = pathTo p1 p2
-pathTo    p1     p2           = map (const ".." p2) ++ p1
+pathTo    p1     p2           = map (const "..") p2 ++ p1
 
 -- Split at '/'
 splitPath :: FilePath -> Path
