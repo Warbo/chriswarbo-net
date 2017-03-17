@@ -1,18 +1,11 @@
 # Look up available git repos and generate a page for each, including the
 # contents of any READMEs we find.
-{ attrsToDirs, commands, latestConfig, lib, nix, render, reverse, runCommand,
-  wget, withNix, writeScript }:
+{ attrsToDirs, commands, latestConfig, lib, nix, render, repoUrls, reverse,
+  runCommand, wget, withNix, writeScript }:
 
 with builtins;
 with lib;
 with rec {
-  repoSource = getEnv "GIT_REPO_DIR";
-
-  repoUrls =
-    assert repoSource != "";
-    map (n: "${repoSource}/${n}")
-        (attrNames (filterAttrs (n: v: v == "directory" && hasSuffix ".git" n)
-                                (readDir repoSource)));
 
   cleanUp = writeScript "cleanUp" ''
     #!/usr/bin/env bash

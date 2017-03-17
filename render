@@ -1,18 +1,33 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash
+#!/usr/bin/env bash
+set -e
 
 if command -v ts > /dev/null && ts | grep queued | grep render > /dev/null
 then
   echo "Another render is queued, deferring to that"
   exit 0
 fi
-  
+
+function build() {
+    BASE=$(dirname "$(readlink -f "$0")")
+    GIT_REPO_DIR=/home/chris/Programming/repos nix-build \
+                --show-trace -A "$1" "$BASE"
+}
+
 printf "Waiting for rendering lock..." 1>&2
 (
-flock -x 200
-printf "lock aquired.\n" 1>&2
+  flock -x 200
+  printf "lock aquired.\n" 1>&2
 
-make -j2 -f Makefile "$@"
+  if [[ "x$1" = "xpush" ]]
+  then
+      echo "Building and hashing site" 1>&2
+      HASHFILE=$(build ipfsHash)
+      IPFSHASH=$(cat "$HASHFILE" | tr -d '\n')
 
+      echo "Hash is $IPFSHASH, publishing to IPNS" 1>&2
+      IPFS_PATH=/var/lib/ipfs/.ipfs ipfs name publish "$IPFSHASH"
+  else
+      echo "Building site" 1>&2
+      build site
+  fi
 ) 200>/tmp/blog.lock
-

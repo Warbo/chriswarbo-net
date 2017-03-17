@@ -50,11 +50,9 @@ function renderTime {
 }
 
 function renderLink {
-    BASE=""
-    [[ -z "$TO_ROOT" ]] || BASE="$TO_ROOT"
     TITLE=$(getTitle "$1")
     URL=$(getUrl "$1")
-    printf '<a class="p-name u-url" href="%s/%s">%s</a>' "$BASE" "$URL" "$TITLE"
+    printf '<a class="p-name u-url" href="/%s">%s</a>' "$URL" "$TITLE"
 }
 
 function renderEntry {

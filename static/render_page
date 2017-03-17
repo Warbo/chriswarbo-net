@@ -18,13 +18,6 @@ fi
 if [[ -n "$DEST" ]]
 then
     OUT_OPTIONS+=(-o "$DEST")
-
-    if echo "$DEST" | grep '^rendered/' > /dev/null
-    then
-        TO_ROOT=$(dirname "$DEST" | sed -e 's@rendered/@@g' |
-                                    sed -e 's@[^/][^/]*@..@g')
-        OUT_OPTIONS+=(-M to_root="$TO_ROOT")
-    fi
 fi
 
 # If we're reading from a file, use it as pandoc's input, and provide the path

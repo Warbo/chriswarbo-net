@@ -8,12 +8,12 @@ do
         ERR=1
         echo "File '$F' looks empty" 1>&2
     }
-done < <(find rendered -type f)
+done < <(find rendered -type f | grep -v "/git")
 
 while read -r D
 do
     ERR=1
     echo "Directory '$D' is empty" 1>&2
-done < <(find rendered -type d -empty)
+done < <(find rendered -type d -empty | grep -v "/git")
 
 exit "$ERR"

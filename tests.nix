@@ -26,6 +26,8 @@ with rec {
     ''
       cp -r "$untested" rendered
       chmod +w -R rendered
+      rm -r rendered/git
+      touch rendered/git
       "$script" && touch "$out"
     '';
 };
@@ -46,6 +48,9 @@ mapAttrs (n: testScript) {
     buildInputs = [ commands.cleanup ];
     script = ./tests/cleanupTables;
   };
+  code_not_indented               = {
+    script = ./tests/code_not_indented;
+  };
   dirs_have_indices             = {
     script = ./tests/dirs_have_indices;
   };
@@ -61,7 +66,7 @@ mapAttrs (n: testScript) {
     script = ./tests/everything_suffixed;
   };
   have_all_posts                = {
-    buildInputs = [ xidel ];
+    buildInputs = [ utillinux xidel ];
     script      = ./tests/have_all_posts;
   };
   have_all_projects             = {

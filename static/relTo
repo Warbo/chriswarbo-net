@@ -1,25 +1,3 @@
-#!/usr/bin/env runhaskell
-
-import Data.List
-import System.Environment
-
-type Path = [FilePath]
-
--- Remove common prefix of two paths, go up from the second and down the first
-pathTo :: Path -> Path -> Path
-pathTo (x:p1) (y:p2) | x == y = pathTo p1 p2
-pathTo    p1     p2           = map (const "..") p2 ++ p1
-
--- Split at '/'
-splitPath :: FilePath -> Path
-splitPath []      = []
-splitPath ('/':s) = splitPath s
-splitPath s       = component : splitPath rest
-  where (component, rest) = span (/= '/') s
-
-renderPath :: Path -> FilePath
-renderPath = intercalate "/"
-
-main = do
-  [path1, path2] <- getArgs
-  putStr (renderPath (pathTo (splitPath path1) (splitPath path2)))
+#!/usr/bin/env python
+import os, sys
+print(os.path.relpath(*sys.argv[1:]))

@@ -35,7 +35,7 @@ function prefix() {
     # $2 is an attribute name
     # We prefix any matching attributes of matching elements given on stdin,
     # with the value of $TO_BASE
-    xmlstarlet ed ${NAMESPACEARGS[@]} \
+    xmlstarlet ed -P ${NAMESPACEARGS[@]} \
                -u "//${NS}${1}[starts-with(@${2}, '/')]/@${2}" \
                -x "concat('$TO_ROOT', .)"
 }

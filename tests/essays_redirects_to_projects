@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 ERR=0
 
@@ -11,13 +12,25 @@ do
         continue
     }
 
-    PRJ_URL=$(relTo "$PWD/rendered" "$PRJ_FILE")
-    grep "<link rel=\"canonical\" href=\"$PRJ_URL\"/>" < "$ESSAY_FILE" \
-                                                       > /dev/null || {
+    PRJ_URL=$(relTo "$PRJ_FILE" $(dirname "$ESSAY_FILE") |
+                  sed -e 's@^./@@g')
+
+    FOUND=0
+    while read -r URL
+    do
+        if [[ "x$URL" = "x$PRJ_URL" ]]
+        then
+            FOUND=1
+        fi
+    done < <(grep -o '<link rel="canonical" href="[^"]*' < "$ESSAY_FILE" |
+             grep -o 'href=".*' | grep -o '".*' | tr -d '"' | sed -e 's@^./@@g')
+
+    if [[ "$FOUND" -eq 0 ]]
+    then
         ERR=1
         echo "'$ESSAY_FILE' doesn't redirect to '$PRJ_URL'" 1>&2
         grep '<link rel="canonical"' < "$ESSAY_FILE"
-    }
+    fi
 done < <(find "$PWD/rendered/projects" -type f)
 
 exit "$ERR"

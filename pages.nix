@@ -1,34 +1,11 @@
-{ callPackage, hfeed2atom, jq, latestConfig, latestGit, lib, makeWrapper, nix,
-  pandoc, panhandle, panpipe, pkgs, pythonPackages, runCommand, stdenv,
-  tidy-html5, wget, writeScript }:
+{ attrsToDirs, callPackage, dirsToAttrs, git, hfeed2atom, ipfs, jq,
+  latestConfig, latestGit, lib, makeWrapper, nix, pandoc, panhandle, panpipe,
+  pkgs, pythonPackages, runCommand, stdenv, tidy-html5, wget, withNix,
+  writeScript }:
 
 with builtins;
 with lib;
 with rec { pages = rec {
-
-  # Builds a directory whose entries/content correspond to the names/values of
-  # the given attrset. When a value is an attrset, the corresponding entry is a
-  # directory, whose contents is generated with attrsToDirs on that value.
-  attrsToDirs =
-    with {
-      inDir = d: content: runCommand "in-dir-${d}" { inherit d content; } ''
-        mkdir -p "$out"
-        cp -r "$content" "$out/$d"
-      '';
-    };
-    attrs: mergeDirs (map (name: let val = attrs."${name}";
-                                  in inDir name (if isAttrs val
-                                                    then if val ? builder
-                                                            then val
-                                                            else attrsToDirs val
-                                                    else val))
-                          (attrNames attrs));
-
-  dirsToAttrs = dir: mapAttrs (n: v: if v == "regular"
-                                        then dir + "/${n}"
-                                        else dirsToAttrs (dir + "/${n}"))
-                              (readDir dir);
-
   cleanup = runCommand "cleanup"
     {
       cleanup = ./static/cleanup;
@@ -42,17 +19,6 @@ with rec { pages = rec {
   commands = callPackage ./commands.nix {};
 
   empty = runCommand "empty" {} ''mkdir -p "$out"'';
-
-  reverse = lst: if lst == []
-                    then []
-                    else reverse (tail lst) ++ [(head lst)];
-
-  withNix = attrs:
-    attrs // {
-      buildInputs = (attrs.buildInputs or []) ++ [ nix ];
-      NIX_PATH    = getEnv "NIX_PATH";
-      NIX_REMOTE  = getEnv "NIX_REMOTE";
-    };
 
   metadata =
     with rec {
@@ -190,153 +156,9 @@ with rec { pages = rec {
                                                      name = mdToHtml n; })
                              x);
 
-  # Look up available git repos and generate a page for each, including the
-  # contents of any READMEs we find.
-  repos =
-    with rec {
-      repoUrls = import (runCommand "repos.nix" { buildInputs = [ wget ]; } ''
-        echo "Looking up repos from chriswarbo.net/git" 1>&2
-
-        echo "[" >> "$out"
-
-        wget -O- 'http://chriswarbo.net/git'         |
-          grep -o '<a .*</a>'                        |
-          grep -o 'href=".*\.git/"'                  |
-          grep -o '".*"'                             |
-          grep -o '[^"/]*'                           |
-          sed  -e 's@^@http://chriswarbo.net/git/@g' >> "$out"
-
-        echo "]" >> "$out"
-      '');
-
-      cleanUp = writeScript "cleanUp" ''
-        #!/usr/bin/env bash
-        # READMEs might contain nonsense that's out of our control; send it
-        # through tidy to fix it up and prevent downstream tools bailing out.
-        TIDY_INPUT=$(cat)
-
-        # Ignore errors, as they're probably not ours
-        if echo "$TIDY_INPUT" | tidy -q
-        then
-          true
-        else
-          CODE="$?"
-
-          # Ignore warnings but abort on errors
-          if [[ "$CODE" -eq 1 ]]
-          then
-            true
-          else
-            echo -e "Content:\n$TIDY_INPUT" 1>&2
-            exit 1
-          fi
-        fi
-      '';
-
-      repoPageNix = writeScript "repo-page.nix" ''
-        with import <nixpkgs> { config = import ${latestConfig}; };
-        with builtins;
-        with lib;
-
-        { url }: runCommand
-          ((removeSuffix ".git" (baseNameOf url)) + ".html")
-          {
-            inherit url;
-            buildInputs = [ tidy-html5 ];
-            repo        = latestGit { inherit url; };
-          }
-          (readFile ${writeScript "git2md" ''
-            set -o pipefail
-
-            echo "Rendering page for $url" 1>&2
-            NAME=$(basename "$url" .git)
-            ${commands.git2md}/bin/git2md "$NAME"                   |
-              sed -e 's/</\&lt;/g'                                  |
-              sed -e 's/>/\&gt;/g'                                  |
-              SOURCE= DEST= ${commands.render_page}/bin/render_page |
-              "${cleanUp}"                                          > "$out"
-          ''})
-      '';
-
-      repoPageOf = url:
-        with rec {
-          name  = removeSuffix ".git" (baseNameOf url);
-
-          # The maximum time that a repo page will be cached for, in seconds
-          maxCache = 60 * 60 * 24 * 30;  # 30 days
-
-          # Derive a number between 0 and 99 from the digits of this URL's hash
-          hashN     = concatStrings (take 2 (reverse (filter digit hashChars)));
-          hashChars = stringToCharacters ("0" + hashString "sha256" url);
-          digit     = c: elem c (stringToCharacters "0123456789");
-
-          # Scale hashN from [0,99] to [0,maxCache]
-          extra = toInt hashN * (maxCache / 100);
-
-          # Avoid stampedes by staggering timestamps using 'extra'
-          time  = concatStrings [
-            "cached-"
-            (toString maxCache)
-            "-"
-            (toString ((currentTime + extra) / maxCache))
-          ];
-
-          # To force a page's generation, set UPDATE_REPOS to a JSON array
-          # containing the repo's name, e.g. UPDATE_REPOS='["warbo-utilities"]'
-          regen = if getEnv "UPDATE_REPOS" == ""
-                     then false
-                     else elem name (fromJSON (getEnv "UPDATE_REPOS"));
-
-          mkDrv = ''DRV=$(nix-instantiate --argstr url "$url" ${repoPageNix})'';
-
-          # If regen is true, we clear out any cached versions of this page
-          clear = runCommand "clear" (withNix { inherit currentTime url; }) ''
-            if ${if regen then "true" else "false"}
-            then
-              echo "Deleting cache ${time} of build of ${name}" 1>&2
-
-              # Get the derivation for this page
-              ${mkDrv}
-
-              nix-store --delete "$DRV"
-              printf '"%s"' $(date '+%s') > "$out"
-            else
-              echo '"cached"' > "$out"
-            fi
-          '';
-        };
-
-        runCommand "repo-page-${name}.html"
-          (withNix {
-            inherit url;
-            cache = "cached-${time}";
-            clear = import clear;
-          })
-          ''
-            echo "No ${time} build found for ${name}, generating" 1>&2
-
-            # Get the derivation for this page
-            ${mkDrv}
-
-            # Build the derivation (or use cached version)
-            F=$(nix-store --realise "$DRV") || exit 1
-
-            # Use as our output
-            cp "$F" "$out"
-          '';
-
-      repoPages = listToAttrs (map (url: { name  = removeSuffix ".git"
-                                                     (baseNameOf url) + ".html";
-                                           value = repoPageOf url; })
-                                   repoUrls);
-    };
-    repoPages // {
-      "index.html" = render {
-        file = ./repos.md;
-        name = "index.html";
-        cwd  = attrsToDirs { repos = repoPages; };
-      };
-    };
+  repos = strip (callPackage ./repos.nix {
+    inherit commands latestConfig render repoUrls;
+  });
 
   projects = renderAll (dirsToAttrs ./projects // { inherit repos; });
 
@@ -367,6 +189,51 @@ with rec { pages = rec {
     };
   };
 
+  gitRepos =
+    with rec {
+      unpack = repo: runCommand "unpack"
+        {
+          inherit repo;
+          buildInputs = [ git ];
+        }
+        ''
+          set -e
+          shopt -s nullglob
+
+          cp -r "$repo" "$out"
+          chmod +w -R "$out"
+          cd "$out"
+
+          git repack -A -d
+          git update-server-info
+
+          # Unpack git's internal files, so they dedupe better on IPFS. We need
+          # to copy them out of .git first, otherwise git ignores them as it
+          # already knows about them
+          MATCHES=$(find objects/pack -maxdepth 1 -name '*.pack' -print -quit)
+          if [[ -n "$MATCHES" ]]
+          then
+            cp objects/pack/*.pack .
+            git unpack-objects < ./*.pack
+            rm ./*.pack
+          fi
+        '';
+
+      addRepo = path: { name = baseNameOf path; value = unpack path; };
+    };
+    listToAttrs (map addRepo repoUrls);
+
+  gitPages = trace "TODO: Repo pages" {};
+
+  repoUrls =
+    let repoSource = getEnv "GIT_REPO_DIR";
+     in assert repoSource != "";
+        map (n: "${repoSource}/${n}")
+            (attrNames (filterAttrs (n: v: v == "directory" &&
+                                           hasSuffix ".git" n)
+                                    (readDir repoSource)));
+
+
   resources = with rec {
     atom = runCommand "blog.atom"
       {
@@ -390,30 +257,23 @@ with rec { pages = rec {
     "blog.atom" = atom;
     "blog.rss"  = rss;
     css         = ./css;
+    git         = gitPages // gitRepos;
     js          = ./js;
   };
 
-  addRedirects = site: dirsToAttrs (runCommand "with-redirects"
-    {
-      buildInputs = [ commands.mkEssayLinks ];
-      site        = attrsToDirs site;
-      index2      = render {
-        cwd  = attrsToDirs { rendered = { inherit blog; }; };
-        file = ./redirect.md;
-        name = "index.php";
-      };
-    }
-    ''
-      cp -r "$site" "$out"
-      chmod +w -R "$out"
-      cp "$index2" "$out/index.php"
-      cd "$out"
-      mkEssayLinks
-    '');
+  redirects = dirsToAttrs (runCommand "with-redirects" {
+    buildInputs = [ commands.mkEssayLinks ];
+    projects    = attrsToDirs projects;
+  } "mkEssayLinks");
 
-  allPages = mkRel (addRedirects (topLevel // resources // {
-               inherit blog projects unfinished;
-             }));
+  allPages = mkRel (redirects // topLevel // resources // {
+    inherit blog projects unfinished;
+    "index.php" = render {
+      cwd  = attrsToDirs { rendered = { inherit blog; }; };
+      file = ./redirect.md;
+      name = "index.php";
+    };
+  });
 
   strip = filterAttrs (n: v: !(elem n [ "override" "overrideDerivation" ]));
 
@@ -427,4 +287,31 @@ with rec { pages = rec {
              tests = attrsToDirs tests;
            }
            ''cp -r "$untested" "$out"'';
+
+  ipfsHash = runCommand "site-hash"
+    {
+      inherit site;
+      buildInputs = [ ipfs ];
+      IPFS_PATH   = "/var/lib/ipfs/.ipfs";
+    }
+    ''
+      set -e
+      set -o pipefail
+
+      NAME=$(basename "$site")
+
+      echo "Adding $site to IPFS" 1>&2
+      LINE=$(ipfs add -r "$site" | tail -n1)
+
+      echo "Checking the whole site was added" 1>&2
+      echo "$LINE" | grep "^added [^ ]* $NAME\$" > /dev/null || {
+        echo "Last line wasn't for site name '$NAME' (did insertion fail?):" >&2
+        echo "$LINE" 1>&2
+        exit 1
+      }
+
+      echo "Getting site hash" 1>&2
+      IPFS_HASH=$(echo "$LINE" | sed -e 's/^added //g; s/ [^ ]*$//g')
+      echo "$IPFS_HASH" > "$out"
+    '';
 }; }; pages

@@ -13,7 +13,7 @@ GHC API aren't enough to parse Haskell code. The only thing which will always
 work is parsing whatever's given to GHC, after being generated, preprocessed,
 etc.
 
-That's why [AstPlugin](http://chriswarbo.net/projects/repos/ast-plugin.html) is
+That's why [AstPlugin](/projects/repos/ast-plugin.html) is
 written as a GHC plugin, after my efforts to parse the contents of Hackage with
 the GHC API and `haskell-src-exts` failed.
 

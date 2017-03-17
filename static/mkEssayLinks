@@ -1,20 +1,15 @@
 #!/usr/bin/env bash
 
-echo "Cleaning up old essays/ content in '$PWD'" 1>&2
-mkdir -p "./essays"
+mkdir -p "$out/essays"
 
 echo "Creating new essays/ redirects" 1>&2
-find "./projects" -type f | while read -r PRJ_FILE
+find "$projects" -type f | while read -r PRJ_FILE
 do
-    # The relative path to the site's root from the file
-       TO_ROOT=$(dirname "$PRJ_FILE" | sed -e 's@^\./@@g' |
-                                       sed -e 's@[^/][^/]*@..@g')
-
     ESSAY_FILE=$(echo "$PRJ_FILE" |
-                      sed -e 's@./projects/@./essays/@g')
+                      sed -e "s@$projects/@$out/essays/@g")
 
        PRJ_URL=$(echo "$PRJ_FILE" |
-                      sed -e "s@./projects/@$TO_ROOT/projects/@g")
+                      sed -e "s@$projects/@/projects/@g")
 
     ESSAY_DIR=$(dirname "$ESSAY_FILE")
     mkdir -p "$ESSAY_DIR"
@@ -22,19 +17,14 @@ do
     mkRedirectTo "$PRJ_URL" > "$ESSAY_FILE"
 done
 
-mkRedirectTo "projects.html" > "essays.html"
+mkRedirectTo "projects.html" > "$out/essays.html"
 
 # Old links
-for P in ./projects/*
+for P in "$projects"/*
 do
     [[ -d "$P" ]] || continue
     NAME=$(basename "$P")
 
-    if [[ -e "./$NAME" ]]
-    then
-        continue
-    fi
-
-    mkdir -p "./$NAME"
-    mkRedirectTo "./projects/$NAME/index.html" > "./$NAME/index.html"
+    mkdir -p "$out/$NAME"
+    mkRedirectTo "/projects/$NAME/index.html" > "$out/$NAME/index.html"
 done

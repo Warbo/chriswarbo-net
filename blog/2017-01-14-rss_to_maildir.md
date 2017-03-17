@@ -136,7 +136,7 @@ that functionality:
 Since these are all
 [Free Software](https://www.gnu.org/philosophy/free-sw.en.html), I decided to
 pick one which was closest to doing what I wanted, and [fork the project into my
-own tool](http://chriswarbo.net/projects/repos/feed2maildir.html).
+own tool](/projects/repos/feed2maildir.html).
 
 I chose [feed2maildir](https://github.com/sulami/feed2maildir), since that
 seemed to be more robust at handling arbitrary input than imm (presumably thanks
@@ -243,5 +243,5 @@ messages without those fields.
 
 This is working for me in place of the complicated imm-based setup I used to
 use, and as always I've
-[released all code](http://chriswarbo.net/projects/repos/feed2maildir.html) as
+[released all code](/projects/repos/feed2maildir.html) as
 Free Software, in case it's useful to anyone.

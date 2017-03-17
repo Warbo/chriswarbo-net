@@ -61,7 +61,7 @@ rec {
     wrap [ xmlstarlet ] {} ./static/relativise;
 
   relTo =
-    wrap [ haskellPackages.ghc ] {} ./static/relTo;
+    wrap [ pythonPackages.python ] {} ./static/relTo;
 
   render_page =
     wrap [ cleanup pandoc panhandle panpipe ]

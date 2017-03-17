@@ -13,9 +13,9 @@ do
         ERR=1
     fi
     LINK=$(xidel - -q --extract "//a[@href='$DEST']/@href" < rendered/projects.html)
-    if ! echo "$LINK" | grep "$NAME" > /dev/null
+    if ! echo "$LINK" | grep "$DEST" > /dev/null
     then
-        echo "$NAME doesn't appear in projects.html" 1>&2
+        echo "$NAME ($DEST) doesn't appear in projects.html" 1>&2
         ERR=1
     fi
 done < <(find rendered/projects -type f -name "index.*")
