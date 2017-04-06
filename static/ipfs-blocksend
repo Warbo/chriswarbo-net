@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -e
+
+# Send the blocks of an IPFS path to a remote system via SSH
+
+OBJECT="$1"
+REMOTE="$2"
+
+function objectRefs() {
+    RESOLVED=$(ipfs resolve "$OBJECT")
+    while [[ "x$RESOLVED" != "x$(ipfs resolve "$RESOLVED")" ]]
+    do
+        RESOLVED=$(ipfs resolve "$RESOLVED")
+    done
+
+    # In case there's a /ipfs/... we only keep what's after the last / (if any)
+    echo "$RESOLVED" | grep -o '[^/][^/]*$'
+
+    ipfs refs -r "$OBJECT"
+}
+
+echo "Diffing required/existing references" 1>&2
+BLOCKS=$(diff --new-line-format="" --unchanged-line-format="" \
+              <(objectRefs | grep '^.' | sort -u) \
+              <(ssh "$REMOTE" ipfs refs local | grep '^.' | sort -u)) || true
+
+TOTAL=$(echo "$BLOCKS" | wc -l)
+
+function dumpBlocks() {
+    while read -r REF
+    do
+        [[ -n "$REF" ]] || continue
+        ipfs block get "$REF" | base64 -w 0
+        echo ""
+    done < <(echo "$BLOCKS")
+}
+
+dumpBlocks | ssh -C "$REMOTE" \
+  "TOTAL=$TOTAL"'
+   while read -r L
+   do
+     echo "$TOTAL" 1>&2
+     TOTAL=$(( TOTAL - 1 ))
+
+     [[ -n "$L" ]] || continue
+     echo "$L" | base64 -d | ipfs block put > /dev/null
+   done'
