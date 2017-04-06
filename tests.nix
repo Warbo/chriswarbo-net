@@ -26,7 +26,6 @@ with rec {
     ''
       cp -r "$untested" rendered
       chmod +w -R rendered
-      rm -r rendered/git
       touch rendered/git
       "$script" && touch "$out"
     '';

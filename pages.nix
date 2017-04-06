@@ -1,11 +1,29 @@
-{ attrsToDirs, callPackage, dirsToAttrs, git, hfeed2atom, ipfs, jq,
-  latestConfig, latestGit, lib, makeWrapper, nix, pandoc, panhandle, panpipe,
-  pkgs, pythonPackages, runCommand, stdenv, tidy-html5, wget, withNix,
-  writeScript }:
+{ attrsToDirs, callPackage, dirsToAttrs, git, git2html, hfeed2atom, ipfs,
+  latestConfig, lib, makeWrapper, pkgs, pythonPackages, repoSource, runCommand,
+  stdenv, writeScript }:
 
 with builtins;
 with lib;
 with rec { pages = rec {
+  matchingIpfs =
+    with rec {
+      path = /run/current-system/sw/bin/ipfs;
+      sys  = pathExists path;
+
+    };
+    trace (if sys
+              then "Using system's IPFS binary, for compatibility"
+              else "No system-wide IPFS; beware incompatibility")
+          runCommand "matching-ipfs"
+    {
+      binary = if sys then toString path else "${ipfs}/bin/ipfs";
+      buildInputs = [ makeWrapper ];
+    }
+    ''
+      mkdir -p "$out/bin"
+      makeWrapper "$binary" "$out/bin/ipfs"
+  '';
+
   cleanup = runCommand "cleanup"
     {
       cleanup = ./static/cleanup;
@@ -156,11 +174,14 @@ with rec { pages = rec {
                                                      name = mdToHtml n; })
                              x);
 
-  repos = strip (callPackage ./repos.nix {
-    inherit commands latestConfig render repoUrls;
-  });
+  inherit (callPackage ./repos.nix {
+            inherit attrsToIpfs commands latestConfig render repoUrls;
+          })
+    gitRepos gitPages projectRepos;
 
-  projects = renderAll (dirsToAttrs ./projects // { inherit repos; });
+  projects = renderAll (dirsToAttrs ./projects // {
+                         repos = projectRepos;
+                       });
 
   unfinished = renderAll (dirsToAttrs ./unfinished);
 
@@ -189,51 +210,6 @@ with rec { pages = rec {
     };
   };
 
-  gitRepos =
-    with rec {
-      unpack = repo: runCommand "unpack"
-        {
-          inherit repo;
-          buildInputs = [ git ];
-        }
-        ''
-          set -e
-          shopt -s nullglob
-
-          cp -r "$repo" "$out"
-          chmod +w -R "$out"
-          cd "$out"
-
-          git repack -A -d
-          git update-server-info
-
-          # Unpack git's internal files, so they dedupe better on IPFS. We need
-          # to copy them out of .git first, otherwise git ignores them as it
-          # already knows about them
-          MATCHES=$(find objects/pack -maxdepth 1 -name '*.pack' -print -quit)
-          if [[ -n "$MATCHES" ]]
-          then
-            cp objects/pack/*.pack .
-            git unpack-objects < ./*.pack
-            rm ./*.pack
-          fi
-        '';
-
-      addRepo = path: { name = baseNameOf path; value = unpack path; };
-    };
-    listToAttrs (map addRepo repoUrls);
-
-  gitPages = trace "TODO: Repo pages" {};
-
-  repoUrls =
-    let repoSource = getEnv "GIT_REPO_DIR";
-     in assert repoSource != "";
-        map (n: "${repoSource}/${n}")
-            (attrNames (filterAttrs (n: v: v == "directory" &&
-                                           hasSuffix ".git" n)
-                                    (readDir repoSource)));
-
-
   resources = with rec {
     atom = runCommand "blog.atom"
       {
@@ -257,7 +233,6 @@ with rec { pages = rec {
     "blog.atom" = atom;
     "blog.rss"  = rss;
     css         = ./css;
-    git         = gitPages // gitRepos;
     js          = ./js;
   };
 
@@ -281,37 +256,78 @@ with rec { pages = rec {
 
   untested = attrsToDirs allPages;
 
-  site = runCommand "site"
+  tested = runCommand "site"
            {
              inherit untested;
              tests = attrsToDirs tests;
            }
            ''cp -r "$untested" "$out"'';
 
-  ipfsHash = runCommand "site-hash"
-    {
-      inherit site;
-      buildInputs = [ ipfs ];
-      IPFS_PATH   = "/var/lib/ipfs/.ipfs";
-    }
-    ''
-      set -e
-      set -o pipefail
+  ipfsHash = attrsToIpfs ({ git = hashedGitDir; } // allPageHashes);
 
-      NAME=$(basename "$site")
+  hashedGitDir = attrsToIpfs (repoHashes // gitPageHashes);
 
-      echo "Adding $site to IPFS" 1>&2
-      LINE=$(ipfs add -r "$site" | tail -n1)
+  gitPageHashes = mapAttrs ipfsHashOf gitPages;
 
-      echo "Checking the whole site was added" 1>&2
-      echo "$LINE" | grep "^added [^ ]* $NAME\$" > /dev/null || {
-        echo "Last line wasn't for site name '$NAME' (did insertion fail?):" >&2
-        echo "$LINE" 1>&2
-        exit 1
-      }
+  # Our git repos can become very large. Rather than passing them around as
+  # files, we add them to IPFS straight away and pass the hashes around, to
+  # avoid performing a huge merge at the end; most of which would be unchanged.
+  repoHashes = mapAttrs ipfsHashOf gitRepos;
 
-      echo "Getting site hash" 1>&2
-      IPFS_HASH=$(echo "$LINE" | sed -e 's/^added //g; s/ [^ ]*$//g')
-      echo "$IPFS_HASH" > "$out"
+  # Takes a set of { name1 = ipfsHash1; name2 = ipfsHash2; ... } values and
+  # returns (the hash of) an IPFS object representing a directory, where each
+  # `name` is an entry in the directory and each `ipfsHash` is the content
+  # (file/directory) stored at that name.
+  attrsToIpfs = attrs:
+    with rec {
+      addCmd = name: hash: ''
+        if [[ -f "${hash}" ]]
+        then
+          THISHASH=$(cat "${hash}")
+        else
+          THISHASH="${hash}"
+        fi
+        RESULT=$(ipfs object patch "$RESULT" add-link "${name}" "$THISHASH")
+        unset THISHASH
+      '';
+
+      addCmds = concatStringsSep "\n" (mapAttrsToList addCmd attrs);
+    };
+    runCommand "hashed-git-dir" (withIpfs {}) ''
+      RESULT=$(ipfs object new unixfs-dir)
+      ${addCmds}
+      echo "$RESULT" > "$out"
     '';
+
+  allPageHashes = mapAttrs ipfsHashOf allPages;
+
+  isPath = x: typeOf x == "path";
+
+  ipfsHashOf = name: content: runCommand "ipfs-hash-${name}"
+    (withIpfs {
+      content = if isPath content || isDerivation content
+                   then content
+                   else if isAttrs content
+                           then attrsToDirs content
+                           else abort "Not path or attrs";
+    })
+    ''
+      echo "Adding ${name} to IPFS" 1>&2
+      ipfs add -q -r "$content" | tail -n1 > "$out"
+      echo "Finished adding ${name} to IPFS" 1>&2
+    '';
+
+  withIpfs = env: env // {
+    buildInputs = (env.buildCommands or []) ++ [ matchingIpfs ];
+    IPFS_PATH   = "/var/lib/ipfs/.ipfs";
+  };
+
+  wholeSite = attrsToDirs (allPages // {
+    git = gitRepos // gitPages;
+  });
+
+  repoUrls =
+    map (n: "${repoSource}/${n}")
+        (attrNames (filterAttrs (n: v: v == "directory" && hasSuffix ".git" n)
+                                (readDir repoSource)));
 }; }; pages

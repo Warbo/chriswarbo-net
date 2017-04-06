@@ -1,16 +1,66 @@
 #!/usr/bin/env bash
-set -e
+set   -e
+set   -o pipefail
+shopt -s nullglob
 
-if command -v ts > /dev/null && ts | grep queued | grep render > /dev/null
-then
-  echo "Another render is queued, deferring to that"
-  exit 0
-fi
+# Set default parameter, if none supplied
+[[ -n "$IPFS_PATH"    ]] || export IPFS_PATH=/var/lib/ipfs/.ipfs
+[[ -n "$GIT_REPO_DIR" ]] || export GIT_REPO_DIR=/home/chris/Programming/repos
+
+function gitVersions() {
+    echo "{"
+    for D in "$GIT_REPO_DIR"/*.git
+    do
+        NAME=$(basename "$D" .git)
+        REV=$(git ls-remote "$D" HEAD | cut -f1)
+        printf '"%s":"%s" ' "$NAME" "$REV"
+    done | sed -e 's/ *$//g' -e 's/ /, /g'
+    echo "}"
+}
+
+REPO_REFS=$(gitVersions)
+export REPO_REFS
 
 function build() {
     BASE=$(dirname "$(readlink -f "$0")")
-    GIT_REPO_DIR=/home/chris/Programming/repos nix-build \
-                --show-trace -A "$1" "$BASE"
+    nix-build --show-trace -A "$1" "$BASE"
+}
+
+function doBuild() {
+    build wholeSite
+}
+
+function addToIpfs() {
+    build ipfsHash | tr -d '\n'
+}
+
+function pushToIpns() {
+    echo "Checking for chriswarbo.net key" 1>&2
+    ipfs key list | grep chriswarbonet > /dev/null || {
+        echo "Couldn't find key for chriswarbo.net, can't push" 1>&2
+        exit 1
+    }
+
+    HASHFILE=$(build ipfsHash)
+    IPFSHASH=$(cat "$HASHFILE" | tr -d '\n')
+    ipfs name publish -k chriswarbonet "$IPFSHASH"
+}
+
+function pushToWeb() {
+    # Update IPNS key
+    pushToIpns
+
+    ssh chriswarbo.net -tt sudo /etc/init.d/ipfs start
+
+    echo "Pushing new blocks to chriswarbo.net (this may take a while)" 1>&2
+    BASE=$(dirname "$(readlink -f "$0")")
+    "$BASE/static/ipfs-blocksend" /ipns/chriswarbo.net chriswarbo.net
+
+    echo "Pinning new version on chriswarbo.net" 1>&2
+    ssh chriswarbo.net ipfs pin add /ipns/chriswarbo.net
+
+    echo "Updating www root" 1>&2
+    ssh -tt chriswarbo.net sudo /usr/local/bin/dupe-from-ipfs
 }
 
 printf "Waiting for rendering lock..." 1>&2
@@ -18,16 +68,26 @@ printf "Waiting for rendering lock..." 1>&2
   flock -x 200
   printf "lock aquired.\n" 1>&2
 
-  if [[ "x$1" = "xpush" ]]
-  then
-      echo "Building and hashing site" 1>&2
-      HASHFILE=$(build ipfsHash)
-      IPFSHASH=$(cat "$HASHFILE" | tr -d '\n')
+  case "$1" in
+      build)
+          doBuild
+          ;;
 
-      echo "Hash is $IPFSHASH, publishing to IPNS" 1>&2
-      IPFS_PATH=/var/lib/ipfs/.ipfs ipfs name publish "$IPFSHASH"
-  else
-      echo "Building site" 1>&2
-      build site
-  fi
+      add)
+          addToIpfs
+          ;;
+
+      publish)
+          pushToIpns
+          ;;
+
+      push)
+          pushToWeb
+          ;;
+
+      *)
+          echo "Usage: $0 <build|add|publish|push>" 1>&2
+          exit 1
+          ;;
+  esac
 ) 200>/tmp/blog.lock

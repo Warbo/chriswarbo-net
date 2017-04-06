@@ -1,8 +1,28 @@
-At the moment, [the PowerPlay variant I've been working on](/projects/powerplay) is completely pure, ie. its output depends only on its input. No useful problem-solver (or anything else for that matter!) can be pure, since we wouldn't be able to give it any problems to solve unless we restart it, which would throw away any improvements it's made!
+At the
+moment, [the PowerPlay variant I've been working on](/projects/powerplay/) is
+completely pure, ie. its output depends only on its input. No useful
+problem-solver (or anything else for that matter!) can be pure, since we
+wouldn't be able to give it any problems to solve unless we restart it, which
+would throw away any improvements it's made!
 
-Of course, like any purely functional program, there are various solutions to this such as [applicative functors](https://wiki.haskell.org/Applicative_functor), [monads](http://www.haskell.org/haskellwiki/Monad_tutorials_timeline), [arrows](https://www.haskell.org/arrows/) and [algebraic effect systems](http://lambda-the-ultimate.org/node/4481). These are all pretty heavyweight, so as an illustrative example I thought I'd go old school and demonstrate how to solve problems using stream-based IO (similar to that found in [Haskell 1.0](http://www.haskell.org/haskellwiki/Language_and_library_specification)).
+Of course, like any purely functional program, there are various solutions to
+this such
+as
+[applicative functors](https://wiki.haskell.org/Applicative_functor),
+[monads](http://www.haskell.org/haskellwiki/Monad_tutorials_timeline),
+[arrows](https://www.haskell.org/arrows/)
+and [algebraic effect systems](http://lambda-the-ultimate.org/node/4481). These
+are all pretty heavyweight, so as an illustrative example I thought I'd go old
+school and demonstrate how to solve problems using stream-based IO (similar to
+that found
+in
+[Haskell 1.0](http://www.haskell.org/haskellwiki/Language_and_library_specification)).
 
-Since this is just a demonstration, we'll use an incredibly naive implementation which works on one `Problem`{.ocaml} at a time until it's solved. First we need to define the streams; we currently have a `NoWorseStream`{.ocaml} which contains `Solvers`{.ocaml} which turn a `p : Problem`{.ocaml} into a `Solution p`{.ocaml}
+Since this is just a demonstration, we'll use an incredibly naive implementation
+which works on one `Problem`{.ocaml} at a time until it's solved. First we need
+to define the streams; we currently have a `NoWorseStream`{.ocaml} which
+contains `Solvers`{.ocaml} which turn a `p : Problem`{.ocaml} into a `Solution
+p`{.ocaml}
 
 ```ocaml
 (* An infinite stream containing 'Some Problem' and/or 'None' *)
