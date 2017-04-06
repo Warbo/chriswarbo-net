@@ -46,21 +46,23 @@ function pushToIpns() {
     ipfs name publish -k chriswarbonet "$IPFSHASH"
 }
 
+# Trick commands into thinking they're run interactively; fixes sudo over ssh
+# From http://stackoverflow.com/a/20401674/884682
+function faketty() {
+    script -qfc "$(printf "%q " "$@")";
+}
+
 function pushToWeb() {
     # Update IPNS key
     pushToIpns
 
-    ssh chriswarbo.net -tt sudo /etc/init.d/ipfs start
+    # Get raw files
+    DIR=$(doBuild)
 
-    echo "Pushing new blocks to chriswarbo.net (this may take a while)" 1>&2
-    BASE=$(dirname "$(readlink -f "$0")")
-    "$BASE/static/ipfs-blocksend" /ipns/chriswarbo.net chriswarbo.net
-
-    echo "Pinning new version on chriswarbo.net" 1>&2
-    ssh chriswarbo.net ipfs pin add /ipns/chriswarbo.net
-
-    echo "Updating www root" 1>&2
-    ssh -tt chriswarbo.net sudo /usr/local/bin/dupe-from-ipfs
+    echo "Pushing '$DIR' to Web root" 1>&2
+    rsync --update --delete -az --progress -e "ssh -t" \
+          --rsync-path="sudo rsync" \
+          "$DIR/" chriswarbo.net:/var/www/html
 }
 
 printf "Waiting for rendering lock..." 1>&2
@@ -86,7 +88,21 @@ printf "Waiting for rendering lock..." 1>&2
           ;;
 
       *)
-          echo "Usage: $0 <build|add|publish|push>" 1>&2
+          echo "
+Usage: $0 <build|add|publish|push>
+
+build: Builds the HTML, git repos, etc. of the site. Outputs a directory
+       containing the result (note, this may take a lot of space!).
+
+add: Adds the site to IPFS, outputting the resulting hash. This may take less
+     space than performing a build, since we can re-use existing hashes without
+     having to make a copy of the files they refer to.
+
+publish: Performs an add, then attempts to publish the result to IPNS.
+
+push: Performs a publish (and hence an add), then attempts to copy the results
+      to the chriswarbo.net server over SSH.
+          " 1>&2
           exit 1
           ;;
   esac

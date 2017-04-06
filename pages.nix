@@ -1,6 +1,6 @@
 { attrsToDirs, callPackage, dirsToAttrs, git, git2html, hfeed2atom, ipfs,
-  latestConfig, lib, makeWrapper, pkgs, pythonPackages, repoSource, runCommand,
-  stdenv, writeScript }:
+  latestConfig, lib, makeWrapper, pkgs, pythonPackages, repoRefs, repoSource,
+  runCommand, stdenv, writeScript }:
 
 with builtins;
 with lib;
@@ -175,7 +175,7 @@ with rec { pages = rec {
                              x);
 
   inherit (callPackage ./repos.nix {
-            inherit attrsToIpfs commands latestConfig render repoUrls;
+            inherit attrsToIpfs commands latestConfig render repoRefs repoUrls;
           })
     gitRepos gitPages projectRepos;
 

@@ -1,8 +1,8 @@
 # Look up available git repos and generate a page for each, including the
 # contents of any READMEs we find.
-{ attrsToDirs, attrsToIpfs, commands, fetchgit, git, git2html, latestConfig,
-  latestGit, lib, nix, render, repoUrls, reverse, runCommand, stdenv,
-  tidy-html5, wget, withNix, writeScript }:
+{ attrsToDirs, attrsToIpfs, commands, fetchgit, fetchGitHashless, git, git2html,
+  latestConfig, latestGit, lib, nix, render, repoRefs, repoUrls, reverse,
+  runCommand, stdenv, tidy-html5, wget, withNix, writeScript }:
 
 with builtins;
 with lib;
@@ -35,17 +35,13 @@ with rec {
   gitOrGiven = url:
     with rec {
       name  = repoName url;
-      refs  = getEnv "REPO_REFS";
-      given = if refs == ""
-                 then {}
-                 else fromJSON refs;
     };
-    if given ? "${name}"
+    if repoRefs ? "${name}"
        then fetchGitHashless {
          inherit url;
          leaveDotGit = true;
          deepClone   = true;
-         rev         = given."${name}";
+         rev         = repoRefs."${name}";
        }
        else latestGit {
          inherit url;
