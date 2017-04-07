@@ -60,7 +60,7 @@ function pushToWeb() {
     DIR=$(doBuild)
 
     echo "Pushing '$DIR' to Web root" 1>&2
-    rsync --update --delete -az --progress -e "ssh -t" \
+    rsync --checksum --delete --ignore-times -caz --progress -e "ssh -t" \
           --rsync-path="sudo rsync" \
           "$DIR/" chriswarbo.net:/var/www/html
 }
