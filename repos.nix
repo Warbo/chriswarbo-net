@@ -128,7 +128,7 @@ with rec {
     listToAttrs (map addRepo repoUrls);
 };
 {
-  inherit gitRepos gitPages;
+  inherit gitRepos gitPages repoPages;
 
   projectRepos = repoPages // {
     "index.html" = render {

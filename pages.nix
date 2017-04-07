@@ -1,6 +1,6 @@
 { attrsToDirs, callPackage, dirsToAttrs, git, git2html, hfeed2atom, ipfs,
-  latestConfig, lib, makeWrapper, pkgs, pythonPackages, repoRefs, repoSource,
-  runCommand, stdenv, writeScript }:
+  isPath, latestConfig, lib, makeWrapper, pkgs, pythonPackages, repoRefs,
+  repoSource, runCommand, sanitiseName, stdenv, writeScript }:
 
 with builtins;
 with lib;
@@ -168,10 +168,14 @@ with rec { pages = rec {
   }; mapAttrs (n: v: render { file = v; name = "blog-${n}"; }) posts;
 
   renderAll = x: mdToHtmlRec
-                   (mapAttrs (n: v: if isAttrs v
-                                       then renderAll v
-                                       else render { file = v;
-                                                     name = mdToHtml n; })
+                   (mapAttrs (n: v: if isDerivation v || isPath v
+                                       then render { file = v;
+                                                     name = mdToHtml n; }
+                                       else if isAttrs v
+                                               then renderAll v
+                                               else abort "Can't render ${
+                                                      toJSON { inherit n v; }
+                                                    }")
                              x);
 
   inherit (callPackage ./repos.nix {
@@ -236,12 +240,51 @@ with rec { pages = rec {
     js          = ./js;
   };
 
-  redirects = dirsToAttrs (runCommand "with-redirects" {
-    buildInputs = [ commands.mkEssayLinks ];
-    projects    = attrsToDirs projects;
-  } "mkEssayLinks");
+  redirects =
+    with rec {
+      go = path: entry: content:
+        if isPath content || isDerivation content
+           then runCommand "${sanitiseName entry}"
+                  {
+                    inherit path entry;
+                    buildInputs = [ commands.mkRedirectTo ];
+                  }
+                  ''
+                    PRJ_URL="$path/$entry"
+                    mkRedirectTo "$PRJ_URL" > "$out"
+                  ''
+           else mapAttrs (go (path + "/" + entry)) content;
 
-  allPages = mkRel (redirects // topLevel // resources // {
+      projectDirs = filter (name: let val = projects."${name}";
+                                   in isAttrs val && (!(isDerivation val)))
+                           (attrNames projects);
+
+      redirectDir = entry: {
+        "index.html" = runCommand "redirect-${sanitiseName entry}"
+          {
+            inherit entry;
+            buildInputs = [ commands.mkRedirectTo ];
+          }
+          ''
+            mkRedirectTo "/projects/$entry/index.html" > "$out"
+          '';
+        };
+
+      oldLinks = listToAttrs (map (name: { inherit name;
+                                           value = redirectDir name; })
+                                  projectDirs);
+    };
+    oldLinks // {
+      essays = mapAttrs (go "/projects") projects;
+
+      "essays.html" = runCommand "mk-essays.html"
+        { buildInputs = [ commands.mkRedirectTo ];}
+        ''
+          mkRedirectTo "projects.html" > "$out"
+        '';
+    };
+
+  allPagesUntested = mkRel (redirects // topLevel // resources // {
     inherit blog projects unfinished;
     "index.php" = render {
       cwd  = attrsToDirs { rendered = { inherit blog; }; };
@@ -250,18 +293,20 @@ with rec { pages = rec {
     };
   });
 
+  allPages = assert testsPass; allPagesUntested;
+
   strip = filterAttrs (n: v: !(elem n [ "override" "overrideDerivation" ]));
+
+  untested = attrsToDirs allPagesUntested;
 
   tests = strip (callPackage ./tests.nix { inherit pages; });
 
-  untested = attrsToDirs allPages;
-
-  tested = runCommand "site"
-           {
-             inherit untested;
-             tests = attrsToDirs tests;
-           }
-           ''cp -r "$untested" "$out"'';
+  testsPass = import (runCommand "site"
+                       {
+                         # A failing test will fail to build
+                         tests = attrsToDirs tests;
+                       }
+                       ''echo "true" > "$out"'');
 
   ipfsHash = attrsToIpfs ({ git = hashedGitDir; } // allPageHashes);
 
@@ -300,8 +345,6 @@ with rec { pages = rec {
     '';
 
   allPageHashes = mapAttrs ipfsHashOf allPages;
-
-  isPath = x: typeOf x == "path";
 
   ipfsHashOf = name: content: runCommand "ipfs-hash-${name}"
     (withIpfs {

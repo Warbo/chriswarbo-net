@@ -38,9 +38,6 @@ rec {
   git2md =
     wrap [ git wget ] {} ./static/git2md;
 
-  mkEssayLinks =
-    wrap [ mkRedirectTo ] {} ./static/mkEssayLinks;
-
   mkRedirectTo =
     wrap [] { TEMPLATE = ./static/redirectTemplate.html; }
          ./static/mkRedirectTo;
