@@ -27,7 +27,7 @@ with rec {
       cp -r "$untested" rendered
       chmod +w -R rendered
       touch rendered/git
-      "$script" && touch "$out"
+      "$script" && echo "true" > "$out"
     '';
 };
 mapAttrs (n: testScript) {
