@@ -35,17 +35,19 @@ with rec {
   gitOrGiven = url:
     with rec {
       name  = repoName url;
+      fetchGitArgs = {
+        branchName  = "master";  # Avoid default "fetchgit"
+        leaveDotGit = true;
+        deepClone   = true;
+      };
     };
     if repoRefs ? "${name}"
-       then fetchGitHashless {
+       then fetchGitHashless (fetchGitArgs // {
          inherit url;
-         leaveDotGit = true;
-         deepClone   = true;
-         rev         = repoRefs."${name}";
-       }
+         rev = repoRefs."${name}";
+       })
        else latestGit {
-         inherit url;
-         fetchgitArgs = { leaveDotGit = true; deepClone = true; };
+         inherit fetchGitArgs url;
        };
 
   repoPageOf = url: runCommand "${repoName url}.html"
@@ -132,9 +134,10 @@ with rec {
 
   projectRepos = repoPages // {
     "index.html" = render {
-      file = ./repos.md;
-      name = "index.html";
-      cwd  = attrsToDirs { repos = repoPages; };
+      file        = ./repos.md;
+      name        = "index.html";
+      cwd         = attrsToDirs { repos = repoPages; };
+      SOURCE_PATH = "repos.md";
     };
   };
 }

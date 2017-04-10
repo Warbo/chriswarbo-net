@@ -1,6 +1,6 @@
 { attrsToDirs, callPackage, dirsToAttrs, git, git2html, hfeed2atom, ipfs,
   isPath, latestConfig, lib, makeWrapper, pkgs, pythonPackages, repoRefs,
-  repoSource, runCommand, sanitiseName, stdenv, writeScript }:
+  repoSource, runCommand, rsync, sanitiseName, stdenv, writeScript }:
 
 with builtins;
 with lib;
@@ -74,8 +74,8 @@ with rec { pages = rec {
                '';
     }; file: fromJSON (readFile "${read file}");
 
-  # Create a directory containing 'files'; the directory structure will be
-  # relative to 'base', for example:
+  # Create a directory containing (links to) 'files'; the directory structure
+  # will be relative to 'base', for example:
   #
   #   dirContaining /foo/bar [ /foo/bar/baz /foo/bar/quux/foobar ]
   #
@@ -90,11 +90,11 @@ with rec { pages = rec {
                            REL=$(echo "$file" | sed -e "s@$base/@@g")
                            DIR=$(dirname "$REL")
                            mkdir -p "$out/$DIR"
-                           cp -r "$file" "$out/$REL"
+                           ln -s "$file" "$out/$REL"
                          '')
                    files);
 
-  # Copy the contents of a bunch of directories into one
+  # Link the contents of a bunch of directories into one
   mergeDirs = dirs: runCommand "merged-dirs" { dirs = map toString dirs; } ''
     shopt -s nullglob
     mkdir -p "$out"
@@ -103,13 +103,14 @@ with rec { pages = rec {
     do
       for F in "$D"/*
       do
-        cp -r "$F" "$out"/
+        cp -as "$F" "$out"/
       done
       chmod +w -R "$out"
     done
   '';
 
-  render = { cwd ? empty, file, inputs ? [], name ? "page.html", vars ? {} }:
+  render = { cwd ? empty, file, inputs ? [], name ? "page.html", vars ? {},
+             SOURCE_PATH ? "" }:
     with rec {
       md        = metadata file;
       extraPkgs = map (n: (pkgs // commands // pages)."${n}")
@@ -120,7 +121,7 @@ with rec { pages = rec {
        then writeScript name (readFile file)
        else runCommand name (vars // {
               buildInputs = [ commands.render_page ] ++ inputs ++ extraPkgs;
-              inherit dir file;
+              inherit dir file SOURCE_PATH;
             })
             ''
               cd "$dir"
@@ -158,6 +159,9 @@ with rec { pages = rec {
                                      x
                       else x;
 
+  # Turn ".html" into ".md"
+  htmlToMd = name: (removeSuffix ".html" (removeSuffix ".html" name)) + ".md";
+
   blog = with rec {
     # Read filenames from ./blog and append to the path './blog', so that each
     # is a standalone path. This way each post only depends on its own source,
@@ -165,52 +169,64 @@ with rec { pages = rec {
     postNames = attrNames (readDir ./blog);
     posts     = listToAttrs (map (p: { name  = mdToHtml p;
                                        value = ./blog + "/${p}"; }) postNames);
-  }; mapAttrs (n: v: render { file = v; name = "blog-${n}"; }) posts;
+  };
+  mapAttrs (n: v: render {
+             file        = v;
+             name        = "blog-${n}";
+             SOURCE_PATH = "blog/${htmlToMd (baseNameOf n)}";
+           })
+           posts;
 
-  renderAll = x: mdToHtmlRec
-                   (mapAttrs (n: v: if isDerivation v || isPath v
-                                       then render { file = v;
-                                                     name = mdToHtml n; }
-                                       else if isAttrs v
-                                               then renderAll v
-                                               else abort "Can't render ${
-                                                      toJSON { inherit n v; }
-                                                    }")
-                             x);
+  renderAll = prefix: x: mdToHtmlRec (mapAttrs
+    (n: v: if isDerivation v || isPath v
+              then render {
+                     file        = v;
+                     name        = mdToHtml n;
+                     SOURCE_PATH = "${prefix}/${n}";
+                   }
+              else if isAttrs v
+                      then renderAll "${prefix}/${n}" v
+                      else abort "Can't render ${toJSON { inherit n v; }}")
+    x);
 
   inherit (callPackage ./repos.nix {
             inherit attrsToIpfs commands latestConfig render repoRefs repoUrls;
           })
     gitRepos gitPages projectRepos;
 
-  projects = renderAll (dirsToAttrs ./projects // {
-                         repos = projectRepos;
-                       });
+  projects = renderAll "projects" (dirsToAttrs ./projects // {
+                                    repos = projectRepos;
+                                  });
 
-  unfinished = renderAll (dirsToAttrs ./unfinished);
+  unfinished = renderAll "unfinished" (dirsToAttrs ./unfinished);
 
   topLevel = mapAttrs' (name: val: {
                          inherit name;
                          value = render (val // { inherit name; });
                        }) {
     "index.html"      = {
-      cwd  = attrsToDirs { rendered = { inherit blog; }; };
-      file = ./index.md;
+      cwd         = attrsToDirs { rendered = { inherit blog; }; };
+      file        = ./index.md;
+      SOURCE_PATH = "index.md";
     };
     "blog.html"       = {
-      cwd  = attrsToDirs { rendered = { inherit blog; }; };
-      file = ./blog.md;
+      cwd         = attrsToDirs { rendered = { inherit blog; }; };
+      file        = ./blog.md;
+      SOURCE_PATH = "blog.md";
     };
     "contact.html"    = {
-      file = ./contact.md;
+      file        = ./contact.md;
+      SOURCE_PATH = "contact.md";
     };
     "projects.html"   = {
-      cwd  = attrsToDirs { rendered = { inherit projects; }; };
-      file = ./projects.md;
+      cwd         = attrsToDirs { rendered = { inherit projects; }; };
+      file        = ./projects.md;
+      SOURCE_PATH = "projects.md";
     };
     "unfinished.html" = {
-      cwd  = attrsToDirs { rendered = { inherit unfinished; }; };
-      file = ./unfinished.md;
+      cwd         = attrsToDirs { rendered = { inherit unfinished; }; };
+      file        = ./unfinished.md;
+      SOURCE_PATH = "unfinished.md";
     };
   };
 
@@ -221,7 +237,15 @@ with rec { pages = rec {
         buildInputs = [ hfeed2atom ];
       }
       ''
-        "${./static/mkAtom}" < "$blog" > "$out"
+        ATOM=$("${./static/mkAtom}" < "$blog")
+
+        if [[ "x$ATOM" = "xNone" ]]
+        then
+          echo "Failed to produce blog.atom. Output: $ATOM" 1>&2
+          exit 1
+        fi
+
+        echo "$ATOM" > "$out"
       '';
 
     rss  = runCommand "blog.rss"
@@ -348,6 +372,7 @@ with rec { pages = rec {
 
   ipfsHashOf = name: content: runCommand "ipfs-hash-${name}"
     (withIpfs {
+      buildInputs = [ rsync ];
       content = if isPath content || isDerivation content
                    then content
                    else if isAttrs content
@@ -356,12 +381,24 @@ with rec { pages = rec {
     })
     ''
       echo "Adding ${name} to IPFS" 1>&2
-      ipfs add -q -r "$content" | tail -n1 > "$out"
+
+      F=$(basename "$content")
+
+      # Dereference symlinks
+      if [[ -f "$(readlink -f "$content")" ]]
+      then
+        SRC="$content"
+      else
+        SRC="$content"/
+      fi
+      rsync -a --copy-links "$SRC" "$F"
+
+      ipfs add -q -r "$F" | tail -n1 > "$out"
       echo "Finished adding ${name} to IPFS" 1>&2
     '';
 
   withIpfs = env: env // {
-    buildInputs = (env.buildCommands or []) ++ [ matchingIpfs ];
+    buildInputs = (env.buildInputs or []) ++ [ matchingIpfs ];
     IPFS_PATH   = "/var/lib/ipfs/.ipfs";
   };
 

@@ -20,11 +20,20 @@ then
     OUT_OPTIONS+=(-o "$DEST")
 fi
 
+# See if we have a path to the source, for giving to pandoc
+if [[ -n "$SOURCE_PATH" ]]
+then
+    OUT_OPTIONS+=(-M path="$SOURCE_PATH")
+fi
+
 # If we're reading from a file, use it as pandoc's input, and provide the path
 # as a variable for the output template.
 if [[ -n "$SOURCE" ]]
 then
-    OUT_OPTIONS+=(-M path="$SOURCE")
+    if [[ -z "$SOURCE_PATH" ]]
+    then
+        OUT_OPTIONS+=(-M path="$SOURCE")
+    fi
     IN_OPTIONS+=("$SOURCE") # This should go at the end; add extra options above
 fi
 

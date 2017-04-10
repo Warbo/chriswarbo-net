@@ -31,6 +31,6 @@ do
         echo "'$ESSAY_FILE' doesn't redirect to '$PRJ_URL'" 1>&2
         grep '<link rel="canonical"' < "$ESSAY_FILE"
     fi
-done < <(find "$PWD/rendered/projects" -type f)
+done < <(find "$PWD/rendered/projects" -type f -o -type l)
 
 exit "$ERR"

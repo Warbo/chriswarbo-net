@@ -18,6 +18,6 @@ do
         echo "blog/$NAME.html doesn't appear in blog.html" 1>&2
         exit 1
     fi
-done < <(find rendered/blog -type f)
+done < <(find rendered/blog -type f -o -type l)
 
 exit 0

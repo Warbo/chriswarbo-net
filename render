@@ -3,6 +3,12 @@ set   -e
 set   -o pipefail
 shopt -s nullglob
 
+if command -v ts > /dev/null && ts | grep queued | grep render > /dev/null
+then
+    echo "Another render is queued, deferring to that"
+    exit 0
+fi
+
 # Set default parameter, if none supplied
 [[ -n "$IPFS_PATH"    ]] || export IPFS_PATH=/var/lib/ipfs/.ipfs
 [[ -n "$GIT_REPO_DIR" ]] || export GIT_REPO_DIR=/home/chris/Programming/repos
@@ -46,12 +52,6 @@ function pushToIpns() {
     ipfs name publish -k chriswarbonet "$IPFSHASH"
 }
 
-# Trick commands into thinking they're run interactively; fixes sudo over ssh
-# From http://stackoverflow.com/a/20401674/884682
-function faketty() {
-    script -qfc "$(printf "%q " "$@")";
-}
-
 function pushToWeb() {
     # Update IPNS key
     pushToIpns
@@ -60,8 +60,24 @@ function pushToWeb() {
     DIR=$(doBuild)
 
     echo "Pushing '$DIR' to Web root" 1>&2
-    rsync --checksum --delete --ignore-times -caz --progress -e "ssh -t" \
-          --rsync-path="sudo rsync" \
+
+    # Some explanation of these options:
+    #   --ignore-times because Nix sets them all to 1970
+    #   --checksum uses file content to determine what's changed, in lieu of the
+    #     timestamp
+    #   --delete removes any files on the destination which aren't in the source
+    #   --progress tells us what it's up to
+    #   --copy-unsafe-links causes absolute symlinks (or relative ones pointing
+    #     outside the source tree) to be dereferenced and copied as files/dirs
+    #   --archive causes directories and (safe) symlinks to be copied, and
+    #     permissions, etc. to be preserved
+    #   -e forces SSH to use a TTY, so sudo will work
+    #   --rsync-path tells us what to run on the remote end, in this case we use
+    #     sudo so we've got permission to write to /var/www. NOTE: If you use an
+    #     SSH passphrase, this might cause it to be sent in the clear! We use
+    #     keys so it's not an issue.
+    rsync --checksum --delete --ignore-times --progress --copy-unsafe-links \
+          --archive --compress -e "ssh -t" --rsync-path="sudo rsync" \
           "$DIR/" chriswarbo.net:/var/www/html
 }
 

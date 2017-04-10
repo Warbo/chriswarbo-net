@@ -33,10 +33,10 @@ A [FINO](http://en.wikipedia.org/wiki/FINO) stack of rants, hacks,
 opinions, etc. Updated frequently but rarely revised.
 
 ```{.unwrap pipe="bash | pandoc -t json"}
-find root/rendered/blog -type f |
-  grep -v "index.html"          |
-  sort -r                       |
-  head                          |
+find root/rendered/blog -type f -o -type l |
+  grep -v "index.html"                     |
+  sort -r                                  |
+  head                                     |
   showPosts
 ```
 

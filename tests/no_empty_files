@@ -4,11 +4,14 @@ ERR=0
 
 while read -r F
 do
-    grep "[^ \t\n]" < "$F" > /dev/null || {
+    ABS=$(readlink -f "$F")
+    [[ -f "$ABS" ]] || continue
+
+    grep "[^ \t\n]" < "$ABS" > /dev/null || {
         ERR=1
         echo "File '$F' looks empty" 1>&2
     }
-done < <(find rendered -type f | grep -v "/git")
+done < <(find rendered | grep -v "/git")
 
 while read -r D
 do

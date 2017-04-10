@@ -82,6 +82,6 @@ ERR=0
 while read -r FILE
 do
     check "$FILE" || ERR=1
-done < <(find rendered -type f -name "*.html")
+done < <(find rendered -name "*.html")
 
 exit "$ERR"
