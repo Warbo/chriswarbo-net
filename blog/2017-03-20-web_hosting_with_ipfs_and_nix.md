@@ -255,6 +255,13 @@ version control; they shouldn't be published to IPFS; etc. Treat them like your
 passwords, or password manager database: make sure you have backups, but only in
 safe, secret locations.
 
+Note that IPNS names expire periodically (every 24 hours), so you should have a
+cron job or script which periodically reinserts the latest version, e.g.
+
+```
+ipfs name publish "$(ipfs resolve -r /ipns/my.domain)"
+```
+
 ### Git Repos ###
 
 As mentioned in the introduction, I host git repositories on my site at
@@ -295,29 +302,45 @@ It's all well and good to host a *copy* of a site on IPFS, and if it's a new
 site then you may be happy to give out the IPFS/IPNS URL. On the other hand, if
 your site has previously been hosted via HTTP then there are probably links
 floating around which you'll want to redirect to the IPFS version. There are two
-ways to do this, which both involve updating your DNS record.
+ways to do this, which both involve
+[updating your DNS record](https://ipfs.io/ipfs/QmNZiPk974vDsPmQii3YbrMKfi12KTSNM7XMiYyiea4VYZ/example#/ipfs/QmRFTtbyEp3UaT67ByYW299Suw7HKKnWK6NJMdNFzDjYdX/websites/README.md).
+
+The first change is to add a `dnslink` attribute to a `_dnslink` subdomain. That
+contains the path to your site, which might be `/ipfs/something` if it's never
+going to be updated, or more likely a `/ipns/something` path so it won't need
+changing as updated versions are pushed. With this in place, you should be able
+to use a path like `/ipns/your.domain` and IPFS will resolve it by checking your
+DNS record. For example, `ipfs get /ipns/chriswarbo.net` will download a copy of
+this site over IPFS. These `dnslink` entries will also be picked up by browser
+extensions; although the [Firefox version](https://addons.mozilla.org/en-GB/firefox/addon/ipfs-gateway-redirect/)
+won't redirect to the `dnslink` unless an "experimental" option is ticked
+(presumably because it's easy to serve content that's completely different to
+where the `dnslink` points).
+
+Now that the IPFS network can query our domain, we need to ensure that clients
+accessing the domain via HTTP, without an addon, are given the right content.
 
 One way is to use a "gateway" to translate between HTTP and IPFS. Gateways serve
-a similar role to the dumb disk<->socket server I currently use, but they
+a similar role to the dumb disk-to-socket server I currently use, but they
 decouple Web servers from Web sites: clients can choose to access an IPFS site
 via any gateway (unless the operator has imposed restrictions), and gateway
 servers can choose to host any IPFS site (see "pinning" below).
 
 To send existing DNS/HTTP clients to an IPFS site, we unfortunately have to
-choose one particular gateway to send them through; this introduces a single
-point of failure, if that gateway server goes down or the operators change its
-functionality. The most popular gateway at the moment is ipfs.io, which we can
-[add to our DNS record](https://ipfs.io/ipfs/QmNZiPk974vDsPmQii3YbrMKfi12KTSNM7XMiYyiea4VYZ/example#/ipfs/QmRFTtbyEp3UaT67ByYW299Suw7HKKnWK6NJMdNFzDjYdX/websites/README.md)
-to enable our site to be fetched automatically. The way it works is, the DNS
-record sends clients to the gateway, and the gateway figures out which IPFS/IPNS
-name to serve based on a "dnslink" attribute stored in the DNS record.
+choose *one* particular gateway to send them through; this introduces a single
+point of failure: if that gateway server goes down or the operators change its
+functionality. The most popular gateway at the moment is
+[`ipfs.io`](https://ipfs.io), which we could redirect clients to [using our DNS
+record](https://ipfs.io/ipfs/QmNZiPk974vDsPmQii3YbrMKfi12KTSNM7XMiYyiea4VYZ/example#/ipfs/QmRFTtbyEp3UaT67ByYW299Suw7HKKnWK6NJMdNFzDjYdX/websites/README.md).
+The gateway will see which the client has come from, look up its `dnslink` and
+serve the relevant content.
 
 ### Mirroring an IPFS Site on HTTP ###
 
 Rather than sending clients to a gateway, I'm still serving HTTP requests to
 `chriswarbo.net` with a static file server (of course, everyone's free to browse
-my site an IPFS gateway if they like; I'm just not directing people to one by
-default). I could avoid relying on SaaS by running my own gateway, but:
+my site via an IPFS gateway if they like; I'm just not directing people to one
+by default). I could avoid relying on SaaS by running my own gateway, but:
 
  - That's dynamic code, which I want to avoid on my server for reasons talked
    about above.
@@ -327,15 +350,19 @@ default). I could avoid relying on SaaS by running my own gateway, but:
    offering the files I want, rather than attempting to lock-down a
    general-purpose gateway (e.g. with a URL-filtering reverse proxy).
 
-It would still be nice to use IPFS on the server, for fetching updates, storing
-and seeding the content.
+My current setup will push to both IPFS and my HTTP server, and update the IPNS
+name. This ensures the content's always in sync, and hence I can treat HTTP as
+a legacy fallback for those not browsing via IPFS.
 
-One approach I tried was to use the FUSE filesystem offered by IPFS, running my
-server straight out of the relevant IPNS directory. Whilst that works, it's
-unfortunately not very stable, presumably due to the resource requirements of
-the IPFS daemon compared to what my puny server can offer.
+### Sync Troubles ###
 
-Rather than relying on that IPFS daemon being up 24/7, it's instead much easier
+One approach I tried was to use the FUSE filesystem offered by `go-ipfs`,
+running my HTTP server straight out of the relevant `/ipns` directory. Whilst
+that works for a time, it's unfortunately not very stable, presumably due to the
+resource requirements of the IPFS daemon compared to what my puny server can
+offer.
+
+Rather than relying on the IPFS daemon being up 24/7, it's instead much easier
 to run `ipfs get /ipns/chriswarbo.net` to grab a copy of the latest site, then
 move it into place. The downside to this is having multiple copies of the site
 on disk (since it's in the site's IPFS datastore too). For small sites this
@@ -351,7 +378,7 @@ sets all timestamps to 1970-01-01.
 
 One annoyance with IPFS is, like pretty much all peer-to-peer software, it can
 be tricky to connect two machines directly if they're both behind a firewall
-and/or NAT. This can make it tricky to send data directly between, e.g. my
+and/or NAT. This can make it frustrating to send data directly between, e.g. my
 laptop and Web server.
 
 The standard workaround would be to use SSH tunnels, but this doesn't seem to
@@ -363,7 +390,7 @@ particular ports, and simple experiments with trying to add/get data across the
 two nodes shows that they're clearly not connecting directly.
 
 As a workaround, I've written
-[a script which will transfer IPFS blocks over SSH](/git/chriswarbo-net/branches/fetchgit/static/ipfs-blocksend.raw.html).
+[a script which will transfer IPFS blocks over SSH](/git/chriswarbo-net/branches/master/static/ipfs-blocksend.raw.html).
 Note that some IPFS commands don't preserve data through a round trip, e.g.
 `ipfs object get <foo> | ipfs object put`, since we can get double-encoding
 issues ([probably a bug](https://github.com/ipfs/go-ipfs/issues/1724), but in
@@ -379,12 +406,16 @@ is already storing. We can remove these from the output of
 only the blocks which need to be transferred. We then loop over these with
 `ipfs block get`/`ipfs block put` to do the transfer.
 
+With these blocks transferred, we can "pin" the new version of the site; this
+ensures that those blocks will be kept on the server (unpinned blocks may be
+garbage collected to free up space) and hence it will act as a seed for the
+site.
+
 ## Conclusion ##
 
 Overall I'm quite impressed with the stability, documentation, community, etc.
-around IPFS. I've encountered a few difficulties, but those have mostly been due
-to either legacy issues with my existing site. For example, most of my
-performance hacks would be unnecessary if I kept each git repo at a separate
-IPNS URL, separate to my Web site. However, that would break existing URLs, and
-without the ability to trigger HTTP redirects from IPFS (e.g. via a symlink),
-the added complexity stems mostly from my own stubborn refusal to break links :)
+around IPFS. I've encountered a few difficulties, but those have been easy
+enough to work around with scripts, and often caused by the legacy issues of
+keeping my old URLs working :)
+
+For more information, check out [this site's source code](/git/chriswarbo-net).
