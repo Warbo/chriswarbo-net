@@ -1,7 +1,9 @@
 ---
 title: Optimisation Algorithms in Javascript
 ---
-Optimisation is the problem of finding the 'best' solution to a problem as quickly as possible. These pages demonstrate a few optimisation algorithms using Javascript:
+Optimisation is the problem of finding the 'best' solution to a problem as
+quickly as possible. These pages demonstrate a few optimisation algorithms
+using Javascript:
 
 - [Enumeration](enumeration.html)
 - [Random Walk](randomwalk.html)

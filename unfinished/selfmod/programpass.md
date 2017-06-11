@@ -59,6 +59,10 @@ merge l1 l2 = dropWhile (== ' ') (l1 ++ " " ++ l2)
 instance Functor LogPair where
   fmap f (LAP l y) = LAP l (f y)
 
+instance Applicative LogPair where
+  pure = LAP ""
+  (LAP l1 f) <*> (LAP l2 x) = LAP (merge l1 l2) (f x)
+
 instance Monad LogPair where
   return = LAP ""
   (LAP l1 x) >>= f = let (LAP           l2  y) = f x
