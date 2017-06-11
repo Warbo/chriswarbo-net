@@ -1,5 +1,5 @@
-{ git, haskellPackages, lib, linkchecker, mf2py, pages, procps, pythonPackages,
-  runCommand, tidy-html5, utillinux, wget, writeScript, xidel }:
+{ attrsToDirs, git, haskellPackages, lib, linkchecker, mf2py, pages, procps,
+  pythonPackages, runCommand, tidy-html5, utillinux, wget, writeScript, xidel }:
 
 with builtins;
 with lib;
@@ -22,11 +22,24 @@ with rec {
   })."test.html";
 
   testScript = { buildInputs ? [], script }: runCommand "test-script"
-    { inherit buildInputs script untested; }
+    {
+      inherit buildInputs script untested;
+
+      # Files which tests might need
+      static = attrsToDirs { linkcheckerrc = ./static/linkcheckerrc; };
+    }
     ''
-      cp -r "$untested" rendered
+      # Put config files in place
+      cp -rs "$static" ./static
+
+      # Tests look in 'rendered' for the site's HTML, etc.
+      cp -rs "$untested" rendered
+
+      # Make an empty "git", to prevent the broken link checker flagging it
       chmod +w -R rendered
       touch rendered/git
+
+      # Run the test
       "$script" && echo "true" > "$out"
     '';
 };

@@ -1,10 +1,10 @@
 { attrsToDirs, callPackage, dirsToAttrs, git, git2html, hfeed2atom, ipfs,
-  isPath, latestConfig, lib, makeWrapper, pkgs, pythonPackages, repoRefs,
+  isPath, latestConfig, lib, makeWrapper, pages, pkgs, pythonPackages, repoRefs,
   repoSource, runCommand, rsync, sanitiseName, stdenv, writeScript }:
 
 with builtins;
 with lib;
-with rec { pages = rec {
+rec {
   matchingIpfs =
     with rec {
       path = /run/current-system/sw/bin/ipfs;
@@ -22,7 +22,7 @@ with rec { pages = rec {
     ''
       mkdir -p "$out/bin"
       makeWrapper "$binary" "$out/bin/ipfs"
-  '';
+    '';
 
   cleanup = runCommand "cleanup"
     {
@@ -189,14 +189,7 @@ with rec { pages = rec {
                       else abort "Can't render ${toJSON { inherit n v; }}")
     x);
 
-  inherit (callPackage ./repos.nix {
-            inherit attrsToIpfs commands latestConfig render repoRefs repoUrls;
-          })
-    gitRepos gitPages projectRepos;
-
-  projects = renderAll "projects" (dirsToAttrs ./projects // {
-                                    repos = projectRepos;
-                                  });
+  projects = renderAll "projects" (dirsToAttrs ./projects);
 
   unfinished = renderAll "unfinished" (dirsToAttrs ./unfinished);
 
@@ -332,16 +325,7 @@ with rec { pages = rec {
                        }
                        ''echo "true" > "$out"'');
 
-  ipfsHash = attrsToIpfs ({ git = hashedGitDir; } // allPageHashes);
-
-  hashedGitDir = attrsToIpfs (repoHashes // gitPageHashes);
-
-  gitPageHashes = mapAttrs ipfsHashOf gitPages;
-
-  # Our git repos can become very large. Rather than passing them around as
-  # files, we add them to IPFS straight away and pass the hashes around, to
-  # avoid performing a huge merge at the end; most of which would be unchanged.
-  repoHashes = mapAttrs ipfsHashOf gitRepos;
+  ipfsHash = attrsToIpfs allPageHashes;
 
   # Takes a set of { name1 = ipfsHash1; name2 = ipfsHash2; ... } values and
   # returns (the hash of) an IPFS object representing a directory, where each
@@ -402,12 +386,10 @@ with rec { pages = rec {
     IPFS_PATH   = "/var/lib/ipfs/.ipfs";
   };
 
-  wholeSite = attrsToDirs (allPages // {
-    git = gitRepos // gitPages;
-  });
+  wholeSite = attrsToDirs allPages;
 
   repoUrls =
     map (n: "${repoSource}/${n}")
         (attrNames (filterAttrs (n: v: v == "directory" && hasSuffix ".git" n)
                                 (readDir repoSource)));
-}; }; pages
+}

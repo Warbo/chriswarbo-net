@@ -1,3 +1,8 @@
 with import ./defs.nix;
 with configuredPkgs;
-callPackage ./pages.nix { inherit latestConfig repoRefs repoSource; }
+with rec {
+  pages = callPackage ./pages.nix {
+    inherit latestConfig pages repoRefs repoSource;
+  };
+};
+pages
