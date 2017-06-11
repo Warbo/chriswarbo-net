@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
-RESULT=$(linkchecker --no-status                   \
-                     --ignore-url=.xml             \
-                     --ignore-url=/git             \
-                     --ignore-url=/projects/repos  \
-                     --config=static/linkcheckerrc \
+
+function mkConfig {
+  echo '[filtering]'
+  echo "localwebroot=file://$PWD/rendered/"
+  echo 'ignorewarnings=file-missing-slash'
+}
+
+export HOME="$PWD/home"
+mkdir -p "$HOME/.linkchecker"
+
+mkConfig > "$HOME/.linkchecker/linkcheckerrc"
+
+RESULT=$(linkchecker --no-status                  \
+                     --ignore-url=.xml            \
+                     --ignore-url=/git            \
+                     --ignore-url=/projects/repos \
                      rendered/index.html 2>&1)
 CODE="$?"
 

@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 shopt -s nullglob
 
+echo "FIXME: have_all_repos is disabled" 1>&2
+exit
+
 ERR=0
 for REPO in /home/chris/Programming/repos/*.git
 do
