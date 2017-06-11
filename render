@@ -62,9 +62,6 @@ function pushToIpns() {
 }
 
 function pushToWeb() {
-    # Update IPNS key
-    pushToIpns
-
     # Get raw files
     DIR=$(doBuild)
 
@@ -78,6 +75,7 @@ function pushToWeb() {
     #   --progress tells us what it's up to
     #   --copy-unsafe-links causes absolute symlinks (or relative ones pointing
     #     outside the source tree) to be dereferenced and copied as files/dirs
+    #   --exclude tells rsync to ignore a path, so it won't copy or delete it
     #   --archive causes directories and (safe) symlinks to be copied, and
     #     permissions, etc. to be preserved
     #   -e forces SSH to use a TTY, so sudo will work
@@ -86,8 +84,32 @@ function pushToWeb() {
     #     SSH passphrase, this might cause it to be sent in the clear! We use
     #     keys so it's not an issue.
     rsync --checksum --delete --ignore-times --progress --copy-unsafe-links \
-          --archive --compress -e "ssh -t" --rsync-path="sudo rsync" \
+          --exclude /git --exclude /projects/repos --exclude /essays        \
+          --exclude /repos --archive --compress                             \
+          -e "ssh -t" --rsync-path="sudo rsync"                             \
           "$DIR/" chriswarbo.net:/var/www/html
+
+    # Ensure symlinks are in place
+    for PAIR in '/opt/repos	/var/www/html/git'            \
+                '/opt/repopages	/var/www/html/projects/repos' \
+                '/var/www/html/projects	/var/www/html/essays' \
+                '/var/www/html/projects/repos	/var/www/html/repos'
+    do
+        SRC=$(echo "$PAIR" | cut -f1)
+        DST=$(echo "$PAIR" | cut -f2)
+        if ssh chriswarbo.net "test -h '$DST'"
+        then
+            FOUND=$(ssh chriswarbo.net "readlink '$DST'")
+            if [[ "x$FOUND" = "x$SRC" ]]
+            then
+                true
+            else
+                echo "WARNING: '$DST' points to '$FOUND', not '$SRC'" 1>&2
+            fi
+        else
+            echo "WARNING: '$DST' is not a symlink to '$SRC'" 1>&2
+        fi
+    done
 }
 
 printf "Waiting for rendering lock..." 1>&2
@@ -116,8 +138,8 @@ printf "Waiting for rendering lock..." 1>&2
           echo "
 Usage: $0 <build|add|publish|push>
 
-build: Builds the HTML, git repos, etc. of the site. Outputs a directory
-       containing the result (note, this may take a lot of space!).
+build: Builds the HTML, CSS, etc. of the site. Outputs a directory containing
+       the result.
 
 add: Adds the site to IPFS, outputting the resulting hash. This may take less
      space than performing a build, since we can re-use existing hashes without
@@ -125,8 +147,7 @@ add: Adds the site to IPFS, outputting the resulting hash. This may take less
 
 publish: Performs an add, then attempts to publish the result to IPNS.
 
-push: Performs a publish (and hence an add), then attempts to copy the results
-      to the chriswarbo.net server over SSH.
+push: Builds the site and pushes pages to chriswarbo.net over SSH.
           " 1>&2
           exit 1
           ;;
