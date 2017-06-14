@@ -28,13 +28,12 @@ REPO_REFS=$(gitVersions)
 export REPO_REFS
 
 # Speeds up latestGit
-for D in "$GIT_REPO_DIR"/*.git
+while read -r VAR
 do
-    REV=$(git ls-remote "$D" HEAD | cut -f1)
-    URLHASH=$(echo -n "$D"   | sha256sum | cut -d ' ' -f1)
-    REFHASH=$(echo -n "HEAD" | sha256sum | cut -d ' ' -f1)
-    export "nix_git_rev_${URLHASH}_${REFHASH}"="$REV"
-done
+    N=$(echo "$VAR" | cut -f1)
+    V=$(echo "$VAR" | cut -f2)
+    export "$N"="$V"
+done < <(gitRevEnvVars)
 
 function build() {
     BASE=$(dirname "$(readlink -f "$0")")
