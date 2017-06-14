@@ -1,0 +1,20 @@
+From: Chris Warburton
+Date: Tue, 13 Jun 2017 17:48:49 +0100
+State: resolved
+Subject: Move git version env var setting to a warbo-utilities script
+Message-Id: <d1778dc55a9a36e1-0-artemis@nixos>
+resolution: fixed
+
+We use latestGit a lot in Nix derivations, to check what the current
+HEAD of a git repo is. This can take a couple of seconds during
+evaluation time, which can add up if we're checking 50+ repos.
+
+There's a mechanism built in which will check for an env var, matching
+the hash of the repo's name; if found, that env var's value will be used
+instead.
+
+We use this in ./render to great effect, but it would be nice to use it
+elsewhere too, e.g. in general tests.
+
+Pull the code out of ./render and move it to a script in
+warbo-utilities.

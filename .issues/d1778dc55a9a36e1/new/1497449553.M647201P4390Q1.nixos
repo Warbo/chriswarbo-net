@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Wed, 14 Jun 2017 15:12:13 +0100
+Subject: Re: Move git version env var setting to a warbo-utilities script
+Message-Id: <d1778dc55a9a36e1-c775dbda6805f04e-artemis@nixos>
+References: <d1778dc55a9a36e1-0-artemis@nixos>
+In-Reply-To: <d1778dc55a9a36e1-0-artemis@nixos>
+
+Moved to gitRevEnvVars
