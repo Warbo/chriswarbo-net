@@ -272,8 +272,18 @@ rec {
                   ''
            else mapAttrs (go (path + "/" + entry)) content;
 
+      # These pages now live in projects/ but there are links in the wild
+      # without that prefix. We single them out here to avoid proliferating new
+      # redirects for new pages which don't have this compatibility issue.
+      toplevelRedirects = [
+        "activecode" "arduino" "maze" "nixos" "optimisation" "plumb" "powerplay"
+        "procedural" "turtleview"
+      ];
+
       projectDirs = filter (name: let val = projects."${name}";
-                                   in isAttrs val && (!(isDerivation val)))
+                                   in isAttrs val &&
+                                      (!(isDerivation val)) &&
+                                      elem name toplevelRedirects)
                            (attrNames projects);
 
       redirectDir = entry: {
