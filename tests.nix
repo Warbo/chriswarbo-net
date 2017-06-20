@@ -21,29 +21,30 @@ with rec {
     '';
   })."test.html";
 
-  testScript = { buildInputs ? [], script }: runCommand "test-script"
-    {
-      inherit buildInputs script untested;
+  testScript = name: { buildInputs ? [], script }:
+    runCommand "test-script-${name}"
+      {
+        inherit buildInputs script untested;
 
-      # Files which tests might need
-      static = attrsToDirs { linkcheckerrc = ./static/linkcheckerrc; };
-    }
-    ''
-      # Put config files in place
-      cp -rs "$static" ./static
+        # Files which tests might need
+        static = attrsToDirs { linkcheckerrc = ./static/linkcheckerrc; };
+      }
+      ''
+        # Put config files in place
+        cp -rs "$static" ./static
 
-      # Tests look in 'rendered' for the site's HTML, etc.
-      cp -rs "$untested" rendered
+        # Tests look in 'rendered' for the site's HTML, etc.
+        cp -rs "$untested" rendered
 
-      # Make an empty "git", to prevent the broken link checker flagging it
-      chmod +w -R rendered
-      touch rendered/git
+        # Make an empty "git", to prevent the broken link checker flagging it
+        chmod +w -R rendered
+        touch rendered/git
 
-      # Run the test
-      "$script" && echo "true" > "$out"
-    '';
+        # Run the test
+        "$script" && echo "true" > "$out"
+      '';
 };
-mapAttrs (n: testScript) {
+mapAttrs testScript {
   all_pages_reachable           = {
     buildInputs = [ procps pythonPackages.python utillinux wget ];
     script      = ./tests/all_pages_reachable;
