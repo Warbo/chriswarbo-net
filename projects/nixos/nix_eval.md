@@ -1,6 +1,6 @@
 ---
 title: nix-eval for Haskell
-packages: [ 'nixShell' ]
+packages: [ 'nix-shell' ]
 ---
 
 The [`nix-eval` package](https://hackage.haskell.org/package/nix-eval) scratches

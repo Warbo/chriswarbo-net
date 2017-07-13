@@ -1,6 +1,6 @@
 ---
 title: A Framework for Self-Improving Code
-packages: [ 'nixShell' ]
+packages: [ 'nix-shell' ]
 ---
 
 Since Haskell functions are opaque (we can't pattern-match them), we'll define a simple Lambda Calculus to represent our functions instead (this was explained in [a previous post](/blog/2014-02-07-lazy_lambda_calculus.html)):

@@ -1,6 +1,6 @@
 ---
 title: Cantor Tuples
-packages: [ 'imagemagick', 'nixShell', 'wrapCode', 'file2img' ]
+packages: [ 'imagemagick', 'nix-shell', 'wrapCode', 'file2img' ]
 dependencies: [ 'static/procedural/includePic' ,
                 'static/procedural/monoCode'   ,
                 'static/procedural/greyCode'   ,

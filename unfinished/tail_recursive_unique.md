@@ -1,6 +1,6 @@
 ---
 title: Tail-recursive Unique
-packages: [ 'nixInstantiate' ]
+packages: [ 'nix-instantiate' ]
 ---
 
 ## Intro to Nix
