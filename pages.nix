@@ -1,38 +1,25 @@
 { attrsToDirs, callPackage, dirsToAttrs, git, git2html, hfeed2atom, ipfs,
-  isPath, latestConfig, lib, makeWrapper, pages, pkgs, pythonPackages, repoRefs,
-  repoSource, runCommand, rsync, sanitiseName, stdenv, writeScript }:
+  isPath, latestConfig, lib, pages, pkgs, pythonPackages, repoRefs, repoSource,
+  runCommand, rsync, sanitiseName, stdenv, wrap, writeScript }:
 
 with builtins;
 with lib;
 rec {
+  bins = bin: attrsToDirs { inherit bin; };
+
   matchingIpfs =
     with rec {
       path = /run/current-system/sw/bin/ipfs;
       sys  = pathExists path;
-
+      file = if sys
+                then trace "Using system's IPFS binary, for compatibility"
+                           toString path
+                else trace "No system-wide IPFS; beware incompatibility"
+                           "${ipfs}/bin/ipfs";
     };
-    trace (if sys
-              then "Using system's IPFS binary, for compatibility"
-              else "No system-wide IPFS; beware incompatibility")
-          runCommand "matching-ipfs"
-    {
-      binary = if sys then toString path else "${ipfs}/bin/ipfs";
-      buildInputs = [ makeWrapper ];
-    }
-    ''
-      mkdir -p "$out/bin"
-      makeWrapper "$binary" "$out/bin/ipfs"
-    '';
+    bins { ipfs = wrap { inherit file; }; };
 
-  cleanup = runCommand "cleanup"
-    {
-      cleanup = ./static/cleanup;
-      buildInputs = [ makeWrapper ];
-    }
-    ''
-      mkdir -p "$out/bin"
-      makeWrapper "$cleanup" "$out/bin/cleanup"
-    '';
+  cleanup = bins { cleanup = ./static/cleanup; };
 
   commands = callPackage ./commands.nix {};
 
