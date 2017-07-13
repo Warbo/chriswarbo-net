@@ -1,0 +1,10 @@
+From: Chris Warburton
+Date: Mon, 26 Jun 2017 01:49:48 +0100
+Subject: Re: One IPNS key per git repo
+Message-Id: <9786f8cd07fb1ac2-c64f768c78a8d7ab-artemis@nixos>
+References: <9786f8cd07fb1ac2-0-artemis@nixos>
+In-Reply-To: <9786f8cd07fb1ac2-0-artemis@nixos>
+
+The command to generate a key is `ipfs key add`. This requires
+specifying a type and a size for the key. The default, as used by `ipfs
+init` for the `self` key, is 2048 bit rsa.
