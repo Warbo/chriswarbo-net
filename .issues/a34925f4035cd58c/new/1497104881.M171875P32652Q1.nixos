@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Sat, 10 Jun 2017 15:27:27 +0100
-State: new
+State: resolved
 Subject: Fix build
 Message-Id: <a34925f4035cd58c-0-artemis@nixos>
+resolution: fixed
 
 Make sure site can be built and pushed. Pushing new blog posts is the only real
 priority for now.

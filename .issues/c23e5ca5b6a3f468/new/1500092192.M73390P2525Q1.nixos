@@ -1,0 +1,19 @@
+From: Chris Warburton
+Date: Sat, 15 Jul 2017 04:13:15 +0100
+State: new
+Subject: Fix git repo rendering
+Message-Id: <c23e5ca5b6a3f468-0-artemis@nixos>
+
+We should render an index page, git2html, artemis and asv for each repo.
+The projects/repos index should link to projects/repos/repo-name.html,
+which should be a redirect to the repo's index page.
+
+What we do with these depends on whether we're going for Web or IPFS:
+
+Web should put everything in /git/repo-name, with the repo as
+/git/repo-name.git, and projects/repos/repo-name.html redirecting to
+/git/repo-name
+
+IPFS should put everything in their own IPFS entry (INCLUDING the repo,
+which should be *inside* the repo dir, next to asv, artemis, etc.),
+publish to IPNS, and make redirects point to IPNS.
