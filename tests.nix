@@ -1,5 +1,6 @@
 { attrsToDirs, git, haskellPackages, lib, linkchecker, mf2py, pages, procps,
-  pythonPackages, runCommand, tidy-html5, utillinux, wget, writeScript, xidel }:
+  pythonPackages, repoPages, runCommand, tidy-html5, utillinux, wget,
+  writeScript, xidel }:
 
 with builtins;
 with lib;
@@ -167,5 +168,28 @@ mapAttrs testScript {
       grep 'var url = "/' < "$page" && fail "script vars"
 
       touch "$out"
+    '';
+
+  reposRedirect = runCommand "reposRedirect"
+    {
+      pages = attrsToDirs repoPages;
+    }
+    ''
+      FOUND=0
+      for page in "$pages"/*
+      do
+        FOUND=1
+        grep '/git/[^"]' < "$page" > /dev/null || {
+          echo "No redirect found in '$page'" 1>&2
+          exit 1
+        }
+      done
+
+      [[ "$FOUND" -gt 0 ]] || {
+        echo "No repo pages found" 1>&2
+        exit 1
+      }
+
+      echo "pass" > "$out"
     '';
 }
