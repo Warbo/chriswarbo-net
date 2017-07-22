@@ -82,14 +82,11 @@ function pushToWeb() {
     #     sudo so we've got permission to write to /var/www. NOTE: If you use an
     #     SSH passphrase, this might cause it to be sent in the clear! We use
     #     keys so it's not an issue.
-    rsync --checksum --delete --ignore-times --progress --copy-unsafe-links \
-          --exclude /git --exclude /projects/repos --exclude /essays        \
-          --exclude /repos --archive --compress                             \
-          -e "ssh -t" --rsync-path="sudo rsync"                             \
-          "$DIR/" chriswarbo.net:/var/www/html
+    copyToWeb --exclude /git --exclude /essays --exclude /repos \
+              "$DIR/" chriswarbo.net:/var/www/html
 
     # Ensure symlinks are in place
-    for PAIR in '/opt/repos	/var/www/html/git'            \
+    for PAIR in '/opt/git	/var/www/html/git'            \
                 '/opt/repopages	/var/www/html/projects/repos' \
                 '/var/www/html/projects	/var/www/html/essays' \
                 '/var/www/html/projects/repos	/var/www/html/repos'
@@ -125,17 +122,22 @@ printf "Waiting for rendering lock..." 1>&2
           addToIpfs
           ;;
 
-      publish)
+      ipfs)
           pushToIpns
+          ;;
+
+      web)
+          pushToWeb
           ;;
 
       push)
           pushToWeb
+          pushToIpns
           ;;
 
       *)
           echo "
-Usage: $0 <build|add|publish|push>
+Usage: $0 <build|add|ipfs|web|push>
 
 build: Builds the HTML, CSS, etc. of the site. Outputs a directory containing
        the result.
@@ -144,9 +146,11 @@ add: Adds the site to IPFS, outputting the resulting hash. This may take less
      space than performing a build, since we can re-use existing hashes without
      having to make a copy of the files they refer to.
 
-publish: Performs an add, then attempts to publish the result to IPNS.
+ipfs: Performs an add, then attempts to publish the result to IPNS.
 
-push: Builds the site and pushes pages to chriswarbo.net over SSH.
+web: Builds the site and pushes pages to chriswarbo.net over SSH.
+
+push: Push to ipfs and web.
           " 1>&2
           exit 1
           ;;

@@ -1,0 +1,9 @@
+From: Chris Warburton
+Date: Sat, 22 Jul 2017 15:53:02 +0100
+Subject: Re: Fix git repo rendering
+Message-Id: <c23e5ca5b6a3f468-fd75a86cbd62cd71-artemis@nixos>
+References: <c23e5ca5b6a3f468-0-artemis@nixos>
+In-Reply-To: <c23e5ca5b6a3f468-0-artemis@nixos>
+
+Git repos now redirect, and commands in warbo-utilities do the
+generation and pushing (to Web and IPFS/IPNS) on push.

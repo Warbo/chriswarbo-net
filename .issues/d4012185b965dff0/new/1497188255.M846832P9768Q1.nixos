@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Sun, 11 Jun 2017 13:34:17 +0100
-State: new
+State: resolved
 Subject: Atomic renderers
 Message-Id: <d4012185b965dff0-0-artemis@nixos>
+resolution: fixed
 
 If a build gets interrupted, e.g. by a power failure, we can be left with empty
 outputs, since the builder has done e.g. 'foo > "$out"', which has created the

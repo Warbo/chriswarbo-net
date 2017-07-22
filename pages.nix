@@ -1,7 +1,7 @@
 { attrsToDirs, callPackage, dirsToAttrs, git, git2html, hfeed2atom, ipfs,
   isPath, jq, latestConfig, lib, pages, pkgs, pythonPackages, repoRefs,
-  repoSource, runCommand, rsync, sanitiseName, stdenv, wget, wrap, writeScript,
-  xidel }:
+  repoSource, reverse, runCommand, sanitiseName, stdenv, wget, wrap,
+  writeScript, xidel }:
 
 with builtins;
 with lib;
@@ -21,7 +21,19 @@ rec {
         json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)
       '';
 
-      read = file: runCommand "metadata-${baseNameOf file}.json"
+      # Choose a nice name, and avoid 'cannot refer to store path' errors
+      prettyName = file:
+        with rec {
+          base       = baseNameOf file;
+          bits       = splitString "redirect-to-" base;
+          isRedirect = length bits != 1;
+          name       = unsafeDiscardStringContext (head (reverse bits));
+        };
+        if isRedirect
+           then name
+           else base;
+
+      read = file: runCommand "metadata-${prettyName file}.json"
                {
                  inherit file yaml2json;
                  buildInputs = [ pythonPackages.python pythonPackages.pyyaml ];
@@ -100,8 +112,17 @@ rec {
               inherit dir file SOURCE_PATH;
             })
             ''
+              export DEST="$PWD/out.html"
+
               cd "$dir"
-              SOURCE="$file" DEST="$out" render_page < "$file" > "$out"
+              SOURCE="$file" render_page < "$file"
+              if grep '^.' < "$DEST" > /dev/null
+              then
+                mv "$DEST" "$out"
+              else
+                echo "No output when rendering, aborting" 1>&2
+                exit 1
+              fi
             '';
 
   relTo = TO_ROOT: file: runCommand
@@ -143,8 +164,8 @@ rec {
     # is a standalone path. This way each post only depends on its own source,
     # and won't get rebuilt if e.g. a new post is added to ./blog.
     postNames = attrNames (readDir ./blog);
-    posts     = {}/*listToAttrs (map (p: { name  = mdToHtml p;
-                                       value = ./blog + "/${p}"; }) postNames)*/;
+    posts     = listToAttrs (map (p: { name  = mdToHtml p;
+                                       value = ./blog + "/${p}"; }) postNames);
   };
   mapAttrs (n: v: render {
              file        = v;
@@ -165,11 +186,12 @@ rec {
                       else abort "Can't render ${toJSON { inherit n v; }}")
     x);
 
-  projects = renderAll "projects" {}/*(dirsToAttrs ./projects)*/;
+  projects     = renderAll "projects" (dirsToAttrs ./projects) //
+                 { repos = projectRepos; };
 
-  unfinished = renderAll "unfinished" (dirsToAttrs ./unfinished);
+  unfinished   = renderAll "unfinished" (dirsToAttrs ./unfinished);
 
-  topLevel = mapAttrs' (name: val: {
+  topLevel     = mapAttrs' (name: val: {
                          inherit name;
                          value = render (val // { inherit name; });
                        }) {
@@ -244,7 +266,8 @@ rec {
                   }
                   ''
                     PRJ_URL="$path/$entry"
-                    mkRedirectTo "$PRJ_URL" > "$out"
+                    RESULT=$(mkRedirectTo "$PRJ_URL")
+                    echo "$RESULT" > "$out"
                   ''
            else mapAttrs (go (path + "/" + entry)) content;
 
@@ -269,7 +292,8 @@ rec {
             buildInputs = [ commands.mkRedirectTo ];
           }
           ''
-            mkRedirectTo "/projects/$entry/index.html" > "$out"
+            RESULT=$(mkRedirectTo "/projects/$entry/index.html")
+            echo "$RESULT" > "$out"
           '';
         };
 
@@ -283,7 +307,8 @@ rec {
       "essays.html" = runCommand "mk-essays.html"
         { buildInputs = [ commands.mkRedirectTo ];}
         ''
-          mkRedirectTo "projects.html" > "$out"
+          RESULT=$(mkRedirectTo "projects.html")
+          echo "$RESULT" > "$out"
         '';
     };
 
@@ -338,7 +363,12 @@ rec {
                               '');
 
   inherit (callPackage ./repos.nix {
-            inherit commands render repoRefs repoUrls;
+            inherit commands ipfsKeys render repoRefs repoUrls;
           })
-    projectRepos repoPages;
+    projectRepos repoName repoPages;
+
+  inherit (callPackage ./ipfs.nix {
+            inherit allPages attrsToDirs bins commands repoName repoUrls;
+          })
+    ipfsHash ipfsKeys;
 }

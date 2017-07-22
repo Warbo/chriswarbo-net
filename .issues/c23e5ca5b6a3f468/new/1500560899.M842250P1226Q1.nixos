@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Thu, 20 Jul 2017 15:26:31 +0100
+Subject: Re: Fix git repo rendering
+Message-Id: <c23e5ca5b6a3f468-f7713d72ba3d2d2b-artemis@nixos>
+References: <c23e5ca5b6a3f468-0-artemis@nixos>
+In-Reply-To: <c23e5ca5b6a3f468-0-artemis@nixos>
+
+Added redirects from projects/repos/foo.html to /git/foo

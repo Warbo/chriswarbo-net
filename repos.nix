@@ -1,28 +1,10 @@
 # Give each git repo a page which redirects to the repo's own site
-{ attrsToDirs, commands, fetchGitHashless, latestGit, lib, render, repoRefs,
-  repoUrls, runCommand }:
+{ attrsToDirs, commands, fetchGitHashless, ipfsKeys, latestGit, lib, render,
+  repoRefs, repoUrls, runCommand, writeScript }:
 
 with builtins;
 with lib;
 with rec {
-  gitOrGiven = url:
-    with rec {
-      name  = repoName url;
-      fetchGitArgs = {
-        branchName  = "master";  # Avoid default "fetchgit"
-        leaveDotGit = true;
-        deepClone   = true;
-      };
-    };
-    if repoRefs ? "${name}"
-       then fetchGitHashless (fetchGitArgs // {
-         inherit url;
-         rev = repoRefs."${name}";
-       })
-       else latestGit {
-         inherit fetchGitArgs url;
-       };
-
   repoName = url: removeSuffix ".git" (baseNameOf url);
 
   repoPageOf = repo: runCommand "redirect-to-${repo}"
@@ -31,7 +13,8 @@ with rec {
       buildInputs = [ commands.mkRedirectTo ];
     }
     ''
-      mkRedirectTo "/git/$repo" > "$out"
+      RESULT=$(mkRedirectTo "../../git/$repo")
+      echo "$RESULT" > "$out"
     '';
 
   repoPages = listToAttrs (map (url: { name  = repoName url + ".html";
@@ -39,13 +22,17 @@ with rec {
                                repoUrls);
 };
 {
-  inherit repoPages;
+  inherit repoName repoPages;
 
   projectRepos = repoPages // {
     "index.html" = render {
       file        = ./repos.md;
       name        = "index.html";
-      cwd         = attrsToDirs { repos = repoPages; };
+      cwd         = attrsToDirs {
+        repos = repoPages;
+        keys  = mapAttrs (n: v: writeScript "ipfs-key-${n}" v) ipfsKeys;
+      };
+
       SOURCE_PATH = "repos.md";
     };
   };
