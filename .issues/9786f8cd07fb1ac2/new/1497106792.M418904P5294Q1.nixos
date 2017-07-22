@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Sat, 10 Jun 2017 15:32:32 +0100
-State: new
+State: resolved
 Subject: One IPNS key per git repo
 Message-Id: <9786f8cd07fb1ac2-0-artemis@nixos>
+resolution: fixed
 
 Set up an IPNS key for each repo contained in /git. This should include:
 
