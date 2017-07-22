@@ -1,0 +1,11 @@
+From: Chris Warburton
+Date: Sat, 22 Jul 2017 17:37:25 +0100
+State: new
+Subject: "View Source" for IPFS
+Message-Id: <a586bb67b42df6cd-0-artemis@nixos>
+
+The "view source" links are relative to the site URL, which means they
+don't work on the IPFS version.
+
+We should override all "View Source" links to point to IPNS/... rather
+than "/git/..."
