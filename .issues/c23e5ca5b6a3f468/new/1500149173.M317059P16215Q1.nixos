@@ -1,0 +1,21 @@
+From: Chris Warburton
+Date: Sat, 15 Jul 2017 19:59:47 +0100
+Subject: Re: Fix git repo rendering
+Message-Id: <c23e5ca5b6a3f468-c3beff87cc8f56a7-artemis@nixos>
+References: <c23e5ca5b6a3f468-0-artemis@nixos>
+In-Reply-To: <c23e5ca5b6a3f468-0-artemis@nixos>
+
+Scratch that; we can avoid rendering anything from the git repos. They
+can take care of that themselves.
+
+Instead, all we need to care about is having a redirect in place for
+each repo. We'll do the following:
+
+ - Generate a projects/repos index page with links to each repo page.
+ - These links should include one to the relative path (/git/repo) and
+   one to the IPFS version; for now, we can just use ipfs.io.
+ - For the IPFS site, include a /git repo with redirects to
+   /projects/repos/foo.html: one from /git/foo and one from /git/foo.git
+
+There's no need to worry about breaking URLs on the IPFS site; there are
+no links in the wild pointing to them.

@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Sat, 15 Jul 2017 04:13:15 +0100
-State: new
+State: resolved
 Subject: Fix git repo rendering
 Message-Id: <c23e5ca5b6a3f468-0-artemis@nixos>
+resolution: fixed
 
 We should render an index page, git2html, artemis and asv for each repo.
 The projects/repos index should link to projects/repos/repo-name.html,

@@ -1,0 +1,14 @@
+From: Chris Warburton
+Date: Thu, 20 Jul 2017 15:11:15 +0100
+Subject: Re: Atomic renderers
+Message-Id: <d4012185b965dff0-e0345bdc1982faac-artemis@nixos>
+References: <d4012185b965dff0-0-artemis@nixos>
+In-Reply-To: <d4012185b965dff0-0-artemis@nixos>
+
+We only use `render_page` in one place, with a `DEST` argument which is
+the output filename. That gets written to, read back, etc. in a highly
+non-atomic way.
+
+I've now changed that so we give a temp filename as `DEST`, then we
+check if it's empty (error if so), and finally we move it (presumably)
+atomically into the place of `$out`.

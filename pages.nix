@@ -1,23 +1,12 @@
 { attrsToDirs, callPackage, dirsToAttrs, git, git2html, hfeed2atom, ipfs,
-  isPath, latestConfig, lib, pages, pkgs, pythonPackages, repoRefs, repoSource,
-  runCommand, rsync, sanitiseName, stdenv, wrap, writeScript }:
+  isPath, jq, latestConfig, lib, pages, pkgs, pythonPackages, repoRefs,
+  repoSource, reverse, runCommand, sanitiseName, stdenv, wget, wrap,
+  writeScript, xidel }:
 
 with builtins;
 with lib;
 rec {
   bins = bin: attrsToDirs { inherit bin; };
-
-  matchingIpfs =
-    with rec {
-      path = /run/current-system/sw/bin/ipfs;
-      sys  = pathExists path;
-      file = if sys
-                then trace "Using system's IPFS binary, for compatibility"
-                           toString path
-                else trace "No system-wide IPFS; beware incompatibility"
-                           "${ipfs}/bin/ipfs";
-    };
-    bins { ipfs = wrap { inherit file; }; };
 
   cleanup = bins { cleanup = ./static/cleanup; };
 
@@ -32,7 +21,19 @@ rec {
         json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)
       '';
 
-      read = file: runCommand "metadata-${baseNameOf file}.json"
+      # Choose a nice name, and avoid 'cannot refer to store path' errors
+      prettyName = file:
+        with rec {
+          base       = baseNameOf file;
+          bits       = splitString "redirect-to-" base;
+          isRedirect = length bits != 1;
+          name       = unsafeDiscardStringContext (head (reverse bits));
+        };
+        if isRedirect
+           then name
+           else base;
+
+      read = file: runCommand "metadata-${prettyName file}.json"
                {
                  inherit file yaml2json;
                  buildInputs = [ pythonPackages.python pythonPackages.pyyaml ];
@@ -111,8 +112,17 @@ rec {
               inherit dir file SOURCE_PATH;
             })
             ''
+              export DEST="$PWD/out.html"
+
               cd "$dir"
-              SOURCE="$file" DEST="$out" render_page < "$file" > "$out"
+              SOURCE="$file" render_page < "$file"
+              if grep '^.' < "$DEST" > /dev/null
+              then
+                mv "$DEST" "$out"
+              else
+                echo "No output when rendering, aborting" 1>&2
+                exit 1
+              fi
             '';
 
   relTo = TO_ROOT: file: runCommand
@@ -176,11 +186,12 @@ rec {
                       else abort "Can't render ${toJSON { inherit n v; }}")
     x);
 
-  projects = renderAll "projects" (dirsToAttrs ./projects);
+  projects     = renderAll "projects" (dirsToAttrs ./projects) //
+                 { repos = projectRepos; };
 
-  unfinished = renderAll "unfinished" (dirsToAttrs ./unfinished);
+  unfinished   = renderAll "unfinished" (dirsToAttrs ./unfinished);
 
-  topLevel = mapAttrs' (name: val: {
+  topLevel     = mapAttrs' (name: val: {
                          inherit name;
                          value = render (val // { inherit name; });
                        }) {
@@ -255,7 +266,8 @@ rec {
                   }
                   ''
                     PRJ_URL="$path/$entry"
-                    mkRedirectTo "$PRJ_URL" > "$out"
+                    RESULT=$(mkRedirectTo "$PRJ_URL")
+                    echo "$RESULT" > "$out"
                   ''
            else mapAttrs (go (path + "/" + entry)) content;
 
@@ -280,7 +292,8 @@ rec {
             buildInputs = [ commands.mkRedirectTo ];
           }
           ''
-            mkRedirectTo "/projects/$entry/index.html" > "$out"
+            RESULT=$(mkRedirectTo "/projects/$entry/index.html")
+            echo "$RESULT" > "$out"
           '';
         };
 
@@ -294,7 +307,8 @@ rec {
       "essays.html" = runCommand "mk-essays.html"
         { buildInputs = [ commands.mkRedirectTo ];}
         ''
-          mkRedirectTo "projects.html" > "$out"
+          RESULT=$(mkRedirectTo "projects.html")
+          echo "$RESULT" > "$out"
         '';
     };
 
@@ -313,7 +327,7 @@ rec {
 
   untested = attrsToDirs allPagesUntested;
 
-  tests = strip (callPackage ./tests.nix { inherit pages; });
+  tests = strip (callPackage ./tests.nix { inherit pages repoPages; });
 
   testsPass = import (runCommand "site"
                        {
@@ -322,71 +336,39 @@ rec {
                        }
                        ''echo "true" > "$out"'');
 
-  ipfsHash = attrsToIpfs allPageHashes;
-
-  # Takes a set of { name1 = ipfsHash1; name2 = ipfsHash2; ... } values and
-  # returns (the hash of) an IPFS object representing a directory, where each
-  # `name` is an entry in the directory and each `ipfsHash` is the content
-  # (file/directory) stored at that name.
-  attrsToIpfs = attrs:
-    with rec {
-      addCmd = name: hash: ''
-        if [[ -f "${hash}" ]]
-        then
-          THISHASH=$(cat "${hash}")
-        else
-          THISHASH="${hash}"
-        fi
-        RESULT=$(ipfs object patch "$RESULT" add-link "${name}" "$THISHASH")
-        unset THISHASH
-      '';
-
-      addCmds = concatStringsSep "\n" (mapAttrsToList addCmd attrs);
-    };
-    runCommand "hashed-git-dir" (withIpfs {}) ''
-      RESULT=$(ipfs object new unixfs-dir)
-      ${addCmds}
-      echo "$RESULT" > "$out"
-    '';
-
-  allPageHashes = mapAttrs ipfsHashOf allPages;
-
-  ipfsHashOf = name: content: runCommand "ipfs-hash-${name}"
-    (withIpfs {
-      buildInputs = [ rsync ];
-      content = if isPath content || isDerivation content
-                   then content
-                   else if isAttrs content
-                           then attrsToDirs content
-                           else abort "Not path or attrs";
-    })
-    ''
-      echo "Adding ${name} to IPFS" 1>&2
-
-      F=$(basename "$content")
-
-      # Dereference symlinks
-      if [[ -f "$(readlink -f "$content")" ]]
-      then
-        SRC="$content"
-      else
-        SRC="$content"/
-      fi
-      rsync -a --copy-links "$SRC" "$F"
-
-      ipfs add -q -r "$F" | tail -n1 > "$out"
-      echo "Finished adding ${name} to IPFS" 1>&2
-    '';
-
-  withIpfs = env: env // {
-    buildInputs = (env.buildInputs or []) ++ [ matchingIpfs ];
-    IPFS_PATH   = "/var/lib/ipfs/.ipfs";
-  };
-
   wholeSite = attrsToDirs allPages;
 
-  repoUrls =
-    map (n: "${repoSource}/${n}")
-        (attrNames (filterAttrs (n: v: v == "directory" && hasSuffix ".git" n)
-                                (readDir repoSource)));
+  repoUrls = if isPath repoSource    ||
+                (isString repoSource &&
+                 repoSource != ""    &&
+                 substring 0 1 repoSource == "/")
+                then map (n: "${repoSource}/${n}")
+                         (attrNames (filterAttrs (n: v: v == "directory" &&
+                                                        hasSuffix ".git" n)
+                                                 (readDir repoSource)))
+                else import (runCommand "repoUrls.nix"
+                              {
+                                inherit repoSource;
+                                buildInputs = [ jq wget xidel ];
+                              }
+                              ''
+                                {
+                                  echo "["
+                                  wget -O- "$repoSource"   |
+                                    xidel - -e '//a/@href' |
+                                    grep '\.git'           |
+                                    jq -R '.'
+                                  echo "]"
+                                } > "$out"
+                              '');
+
+  inherit (callPackage ./repos.nix {
+            inherit commands ipfsKeys render repoRefs repoUrls;
+          })
+    projectRepos repoName repoPages;
+
+  inherit (callPackage ./ipfs.nix {
+            inherit allPages attrsToDirs bins commands repoName repoUrls;
+          })
+    ipfsHash ipfsKeys;
 }
