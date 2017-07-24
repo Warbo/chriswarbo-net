@@ -67,10 +67,10 @@ popd > /dev/null
 # from index.html, but they should still be reachable from unfinished.html.
 # Exclude /git since it's added in during deployment, and repos/ since the
 # content may not be under our control.
-OUTPUT=$(wget --page-requisites --mirror --no-parent \
+OUTPUT=$(wget --page-requisites --mirror --no-parent       \
               --exclude-directories="/git,/projects/repos" \
-              "http://localhost:8666" \
-              "http://localhost:8666/unfinished.html" 2>&1)
+              "http://localhost:8666"                      \
+              "http://localhost:8666/unfinished.html" 2>&1 | tee >(cat >&2))
 
 [[ -d "localhost:8666" ]] || {
     echo -e "Didn't find 'localhost:8666' in downloaded content\n\n$OUTPUT" 1>&2
