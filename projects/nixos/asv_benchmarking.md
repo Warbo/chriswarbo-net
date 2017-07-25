@@ -42,7 +42,7 @@ Internally, asv runs benchmarks in an 'environment'; typically constructed using
 of the box.
 
 Since I was after a robust benchmarking tool, but I don't use Python, I've
-written [asv-nix](/git/asv-nix.git). This is a plugin for asv which uses Nix
+written [asv-nix](/git/asv-nix). This is a plugin for asv which uses Nix
 instead of `virtualenv` or `conda`. Since Nix is a general purpose package
 manager, we can set up environments for any sort of package rather than just
 Python.
