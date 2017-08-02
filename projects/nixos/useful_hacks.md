@@ -11,13 +11,19 @@ Nix provides the `readDir` primitive to get the contents of a directory. We can
 use this to import all files ending in `.nix`, for example:
 
 ```
+nixFilesIn ./modules
+```
+
+We can implement this as follows:
+
+```
 with builtins;
 with import <nixpkgs> {};
 with lib;
 
-mapAttrs (name: _: import (./myDir + "/${name}"))
-         (filterAttrs (name: _: hasSuffix ".nix" name)
-                      (readDir ./myDir))
+dir: mapAttrs (name: _: import (dir + "/${name}"))
+              (filterAttrs (name: _: hasSuffix ".nix" name)
+                           (readDir dir))
 ```
 
 This can be useful for making modular configurations, without needing to specify
@@ -35,13 +41,23 @@ stringAsChars (c: if elem c (lowerChars ++ upperChars)
                      else "")
 ```
 
+Now we can do, for example: `name = "package-${sanitiseName version}"`.
+
 ### Hashless Git Fetching ###
 
 Nix's fixed output derivations are really useful, for ensuring that inputs are
 as expected and for more extensive caching. Unfortunately they're not as useful
 in "dynamic" situations, e.g. where we fetch or calculate which git revision to
-use. In these situations, we can override the hashing mechanism to avoid being
-fixed output:
+use. In these situations, we'd like to just say:
+
+```
+fetchGitHashless {
+  url = "http://example.com/foo.git";
+  rev = import ./version,nix;
+}
+```
+
+We can do this by overriding the hashing mechanism to avoid being fixed output:
 
 ```
 with builtins;
@@ -65,7 +81,14 @@ args: stdenv.lib.overrideDerivation
 Sometimes we want to use the latest version of a git repo, rather than keeping a
 hard-coded revision/checksum pair in our source. I don't recommend this for
 third-party libraries, but it can be useful for integration testing and for
-projects which have components spread across several repos:
+projects which have components spread across several repos, where we can just
+say:
+
+```
+src = latestGit { url = "http://example.com/bar.git"; }
+```
+
+To do this we need to build a derivation which fetches the repo's HEAD:
 
 ```
 with builtins;
@@ -167,15 +190,22 @@ attrs: attrs // {
 }
 ```
 
-Note that it's advisable to avoid nesting Nix commands inside each other too
-much, as it can be difficult to control and/or override things as they get
-wrapped up.
+With this, we can say e.g. `stdenv.mkDerivation (withNix { ... })` and be able
+to use Nix commands in our builder. Note that it's advisable to avoid nesting
+Nix commands inside each other too much, as it can be difficult to control
+and/or override things as they get wrapped up.
 
 ### Converting Between Attrsets and Directories ###
 
 If we may have a derivation which builds a bunch a directory full of stuff, we
 may find ourselves wanting to read in that content to reuse or augment it in
-some way. We can do that as follows:
+some way, e.g:
+
+```
+with (dirsToAttrs myDir); myFile
+```
+
+We can do that as follows:
 
 ```
 with builtins;
@@ -191,7 +221,13 @@ dirsToAttrs
 
 Likewise, we might have a bunch of files neatly arranged in Nix attribute sets
 which we'd like to reproduce as files on disk, without wanting to write a bunch
-of boilerplate. We can do this as follows:
+of boilerplate, e.g.
+
+```
+attrsToDirs { dir1 = { file1 = someDrv; }; file2 = /some/path; }
+```
+
+We can do this as follows:
 
 ```
 with builtins;
@@ -222,7 +258,20 @@ attrs: runCommand "merged" {} (toCmds attrs);
 
 `nixpkgs` provides a useful script called `makeWrapper` which allows a program
 or script to be "wrapped" such that it's run in a particular environment; for
-example, using a `PATH` which contains its dependencies.
+example, using a `PATH` which contains its dependencies:
+
+```
+wrap {
+  paths   = [ echo ];
+  vars    = {
+    PLACE = "world";
+  };
+  script  = ''
+    #!/usr/bin/env bash
+    echo "hello $PLACE"
+  '';
+}
+```
 
 Since it's a Bash script, it's a little horrible to use. We can make a nicer
 interface inside Nix and, since I often use `makeWrapper` in conjunction with
@@ -298,6 +347,9 @@ runCommand "pipeToNix"
   ''
 ```
 
+With this in `PATH`, we can do `echo "foo" | pipeToNix myFilename` and get back
+a Nix store path for this content.
+
 ### Inheriting Function Arguments ###
 
 Nix functions have two sorts of arguments: variables, like `x: ...`; and named
@@ -311,7 +363,8 @@ somehow, for example via composition: `f: g: x: f (g x)`. If we apply this to a
 `g` function with named arguments, the result will still accept those same
 arguments, but Nix will only see it as taking some variable `x`. We can work
 around this by generating Nix code which wraps a function in one with named
-arguments:
+arguments, i.e. `withArgs [ "x" "y" ] func` to get the equivalent of
+`{x, y}: func { inherit x y; }`:
 
 ```
 with builtins;
@@ -336,7 +389,7 @@ args: f:
 ```
 
 This lets us give one function some specific named arguments. To give one
-function the same named arguments as another, we can use:
+function the same named arguments as another, e.g. `withArgsOf f g`, we can use:
 
 ```
 f: with { fArgs = functionArgs f; };
