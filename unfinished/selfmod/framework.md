@@ -3,7 +3,9 @@ title: A Framework for Self-Improving Code
 packages: [ 'nix-shell' ]
 ---
 
-Since Haskell functions are opaque (we can't pattern-match them), we'll define a simple Lambda Calculus to represent our functions instead (this was explained in [a previous post](/blog/2014-02-07-lazy_lambda_calculus.html)):
+Since Haskell functions are opaque (we can't pattern-match them), we'll define a
+simple Lambda Calculus to represent our functions instead (this was explained
+in [a previous post](/blog/2014-02-07-lazy_lambda_calculus.html)):
 
 ```
 {.haskell pipe="sh"}
@@ -63,7 +65,8 @@ eval' (App f x) env = do F f' <- eval' f env
 
 eval x = eval' x []
 
--- Turn the general recursion of Lambda Calculus into co-recursion, to avoid killing Haskell
+-- Turn the general recursion of Lambda Calculus into co-recursion, to avoid
+-- killing Haskell
 data Partial a = Now a | Later (Partial a)
 
 instance Functor Partial where
@@ -106,10 +109,16 @@ normalIn :: Eq a => Int -> Term a -> Bool
 normalIn n t = evalFor n t /= Nothing
 
 testId :: Eq a => Int -> Term a -> Bool
-testId n t = not (normalIn n t) || evalFor (n * n) (App (Lam (Var Z)) t) == evalFor n t
+testId n t = not (normalIn n t) ||
+             evalFor (n * n) (App (Lam (Var Z)) t) == evalFor n t
 ```
 
-```{pipe="nix-shell -p 'haskellPackages.ghcWithPackages (h: [ h.QuickCheck ])' --run 'ghci -v0'"}
+```{pipe="cat > testEnv.nix"}
+with import <nixpkgs> {};
+haskellPackages.ghcWithPackages (h: [ h.QuickCheck ])
+```
+
+```{pipe="nix-shell --show-trace -p 'import ./testEnv.nix' --run 'ghci -v0'"}
 :load code.hs
 quickCheck testId
 ```

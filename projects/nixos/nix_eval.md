@@ -12,7 +12,7 @@ NOTE: This page is [active code](/projects/activecode/), so check out the "view
 source" link at the bottom of the page if you want to follow along with the
 examples!
 
-```{pipe="cat > runWithPkgs.sh"}
+```{pipe="cat > runWithPkgs.sh && chmod +x runWithPkgs.sh"}
 #!/bin/sh
 
 # Separate all arguments with spaces
@@ -27,10 +27,6 @@ CMD=$(nix-shell -p which \
   --run 'which runhaskell')
 echo "Running '$CMD'" 1>&2
 $CMD -XOverloadedStrings
-```
-
-```{pipe="sh"}
-chmod +x runWithPkgs.sh
 ```
 
 As tradition dictates, we'll start with `"hello world"`, which is trivial to do

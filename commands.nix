@@ -1,10 +1,46 @@
-{ attrsToDirs, buildEnv, haskellPackages, hfeed2atom, git, glibcLocales, lib,
-  libxslt, makeWrapper, nix, pandoc, panhandle, panpipe, pythonPackages,
-  runCommand, wget, wrap, xidel, xmlstarlet }:
+{ attrsToDirs, buildEnv, dirContaining, haskellPackages, hfeed2atom, git,
+  glibcLocales, lib, libxslt, makeWrapper, mergeDirs, nix, pandoc, panhandle,
+  panpipe, pythonPackages, runCommand, wget, wrap, xidel, xmlstarlet }:
 
 with builtins;
 with lib;
 with rec {
+  NIX_PATH =
+    with rec {
+      inherit (tryEval <real>) success;
+
+      # We need this mirrors.nix file in place if we're to spoof <nixpkgs>
+      wrapped = runCommand "chriswarbo.net-nixpkgs"
+        {
+          custom = ./static/nix;
+          real   = toString <nixpkgs>;
+        }
+        ''
+          # Put our custom nixpkgs in place
+          cp -as "$custom" "$out"
+          chmod +w -R "$out"
+
+          pushd "$out"
+            # Put nixpkgs symlink in place, to resolve names
+            ln -s . nixpkgs
+
+            # Link to real nixpkgs for mirrors.nix
+            ln -s "$real/pkgs" pkgs
+          popd
+        '';
+
+      set = if success
+               then { real = <real>;    nixpkgs = <nixpkgs>;  }
+               else { real = <nixpkgs>; nixpkgs = wrapped; };
+
+    };
+    # toString turns paths into strings as-is, whilst ${..} would add them to
+    # the store which causes issues with relative symlinks and the like.
+    concatStringsSep ":" (attrValues (mapAttrs (n: v: n + "=" + toString v)
+                                               set));
+
+  NIX_REMOTE = "daemon";
+
   bins = bin: attrsToDirs { inherit bin; };
 
   includingDeps = xs:
@@ -47,15 +83,13 @@ with rec {
 
     nix-instantiate = {
       paths = [ nix ];
-      vars  = { NIX_PATH   = getEnv "NIX_PATH";
-                NIX_REMOTE = getEnv "NIX_REMOTE"; };
+      vars  = { inherit NIX_PATH NIX_REMOTE; };
       file  = "${nix}/bin/nix-instantiate";
     };
 
     nix-shell = {
       paths = [ nix ];
-      vars  = { NIX_PATH   = getEnv "NIX_PATH";
-                NIX_REMOTE = getEnv "NIX_REMOTE"; };
+      vars  = { inherit NIX_PATH NIX_REMOTE; };
       file  = "${nix}/bin/nix-shell";
     };
 
@@ -83,6 +117,7 @@ with rec {
 
     showPost = {
       paths = [ xidel ];
+      vars  = { RANTS = ./rants; };
       file  = ./static/showPost;
     };
 

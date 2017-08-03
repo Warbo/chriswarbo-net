@@ -1,29 +1,112 @@
 ---
 title: Useful Nix Hacks
+packages: [ 'jq', 'nix-instantiate' ]
 ---
 
 Here are a few helpful Nix expressions I've accumulated over the years, in case
-they're useful to anyone else.
+they're useful to anyone else. I'll assume the following stuff is in context:
+
+```{pipe="tee preamble.nix"}
+with builtins;
+with import <nixpkgs> {};
+with lib;
+```
+
+Since some of these things will reference others, let's assume they're all
+wrapped up in a big `rec {...}` expression.
+
+<!-- Write each expression individually, as is should appear on the page -->
+
+```{pipe="cat > def_filesIn.nix"}
+nixFilesIn = dir: mapAttrs (name: _: import (dir + "/${name}"))
+                           (filterAttrs (name: _: hasSuffix ".nix" name)
+                                        (readDir dir));
+```
+
+```{pipe="cat > def_sanitiseName.nix"}
+sanitiseName = stringAsChars (c: if elem c (lowerChars ++ upperChars)
+                                    then c
+                                    else "");
+```
+
+```{pipe="cat > def_fetchGitHashless.nix"}
+fetchGitHashless = args: stdenv.lib.overrideDerivation
+  # Use a dummy hash, to appease fetchgit's assertions
+  (fetchgit (args // { sha256 = hashString "sha256" args.url; }))
+
+  # Remove the hash-checking
+  (old: {
+    outputHash     = null;
+    outputHashAlgo = null;
+    outputHashMode = null;
+    sha256         = null;
+  });
+```
+
+```{pipe="cat > def_withDeps.nix"}
+withDeps = deps: drv: overrideDerivation drv (old: {
+  extraDeps = (old.extraDeps or []) ++ deps;
+});
+```
+
+<!-- Combine together so we can use Nix to generate real outputs -->
+
+```{pipe="sh > result.nix"}
+cat preamble.nix
+printf '\nrec {\n'
+
+for F in def*.nix
+do
+  cat "$F"
+  printf '\n\n'
+done
+
+printf '\n}\n'
+```
+
+<!-- Simple script to evaluate expressions -->
+
+```{pipe="cat > eval && chmod +x eval"}
+#!/usr/bin/env bash
+
+# Show (the relevant portion of) what we're evaluating
+printf '> %s\n\n' "$1"
+
+# Show the result
+PREAMBLE='with builtins;
+          with import <nixpkgs> {};
+          with lib;
+          with import ./result.nix;'
+RESULT=$(nix-instantiate --show-trace --read-write-mode --eval \
+                         -E "$PREAMBLE $PREFIX $1 $SUFFIX")
+
+echo "RESULT: $RESULT" 1>&2
+
+if [[ -n "$UNWRAP" ]]
+then
+  echo "$RESULT" | jq -r '.'
+else
+  echo "$RESULT"
+fi
+```
 
 ### Importing Directories ###
 
 Nix provides the `readDir` primitive to get the contents of a directory. We can
 use this to import all files ending in `.nix`, for example:
 
-```
-nixFilesIn ./modules
+```{pipe="cat def_filesIn.nix"}
 ```
 
-We can implement this as follows:
+This lets us do things like:
 
-```
-with builtins;
-with import <nixpkgs> {};
-with lib;
+```{pipe="sh"}
+mkdir modules
+echo '"string from foo.nix"'              > modules/foo.nix
+echo '["list" "from" "bar.nix"]'          > modules/bar.nix
+echo '{ attrs = { from = "baz.nix"; }; }' > modules/baz.nix
 
-dir: mapAttrs (name: _: import (dir + "/${name}"))
-              (filterAttrs (name: _: hasSuffix ".nix" name)
-                           (readDir dir))
+UNWRAP=1 PREFIX='toJSON (' SUFFIX=')' ./eval 'nixFilesIn ./modules'
 ```
 
 This can be useful for making modular configurations, without needing to specify
@@ -35,45 +118,77 @@ file, or even recursively on sub-directories.
 If we have an arbitrary string, we can't just use it as a Nix derivation name
 since it may contain forbidden characters. We can strip them out like this:
 
-```
-stringAsChars (c: if elem c (lowerChars ++ upperChars)
-                     then c
-                     else "")
+```{pipe="cat def_sanitiseName.nix"}
 ```
 
-Now we can do, for example: `name = "package-${sanitiseName version}"`.
+Now we can do, for example:
+
+```{pipe="sh"}
+UNWRAP=1 ./eval 'toFile (sanitiseName "a/b/c/d") "foo"'
+```
+
+### Adding Extra Dependencies ###
+
+Nix packages tend to run their tests in an attribute called `testPhase`, which
+is fine when we're defining packages from scratch, but can be awkward if we're
+trying to add extra tests to some existing derivation: not all derivations
+follow the `testPhase` convention, and appending to bash scripts isn't a
+particularly simple or composable approach in any case (what if additions have
+already been added? What if we need extra `buildInputs`?)
+
+What we can do instead is make our extra tests into one or more derivations
+(which may or may not depend on the original package), then append them as extra
+build dependencies of the package:
+
+```{pipe="cat def_withDeps.nix"}
+```
+
+```{pipe="sh"}
+export PREFIX='with { x ='
+export SUFFIX='; }; assert forceBuilds [ x ]; toString x'
+PASS='runCommand "passingTest" {} '\'\''echo pass > "$out"'\'\'
+FAIL='runCommand "failingTest" {} "exit 1"'
+
+UNWRAP=1 ./eval "withDeps [ ($PASS) ] hello" > extraDepPass
+
+         ./eval "withDeps [ ($FAIL) ] hello" > extraDepFail 2>&1 || true
+```
+
+This way, we can make a new package which is equivalent to the original when our
+tests pass:
+
+```{pipe="cat extraDepPass"}
+```
+
+But which breaks when our tests don't pass:
+
+```{pipe="cat extraDepFail"}
+```
 
 ### Hashless Git Fetching ###
 
 Nix's fixed output derivations are really useful, for ensuring that inputs are
 as expected and for more extensive caching. Unfortunately they're not as useful
 in "dynamic" situations, e.g. where we fetch or calculate which git revision to
-use. In these situations, we'd like to just say:
+use.
 
-```
-fetchGitHashless {
-  url = "http://example.com/foo.git";
-  rev = import ./version,nix;
-}
+We can work around this by overriding the hash-checking mechanism of `fetchgit`:
+
+```{pipe="cat def_fetchGitHashless.nix"}
 ```
 
-We can do this by overriding the hashing mechanism to avoid being fixed output:
+With this, we can specify a git repo without needing a hash:
 
-```
-with builtins;
-with import <nixpkgs> {};
-with lib;
-args: stdenv.lib.overrideDerivation
-  # Use a dummy hash, to appease fetchgit's assertions
-  (fetchgit (args // { sha256 = hashString "sha256" args.url; }))
+```{pipe="sh"}
+# We call the git derivation 'x', force it to be built (to ensure hash checking
+# is skipped), then spit out its store path
+export PREFIX='with { x = '
+export SUFFIX='; }; assert forceBuilds [ x ]; toString x'
 
-  # Remove the hash-checking
-  (old: {
-    outputHash     = null;
-    outputHashAlgo = null;
-    outputHashMode = null;
-    sha256         = null;
-  })
+UNWRAP=1 ./eval 'fetchGitHashless {
+    url = "http://chriswarbo.net/git/chriswarbo-net.git";
+    rev = "7a5788e";
+  }'
 ```
 
 ### Fetch Latest Git ###
@@ -182,7 +297,7 @@ with lib;
 attrs: attrs // {
   buildInputs = (attrs.buildInputs or []) ++ [ nix ];
   NIX_PATH    = if getEnv "NIX_PATH" == ""
-                   then "nixpkgs=${<nixpkgs>}"
+                   then "nixpkgs=${toString <nixpkgs>}"
                    else getEnv "NIX_PATH";
   NIX_REMOTE  = if getEnv "NIX_REMOTE" == ""
                    then "daemon"
