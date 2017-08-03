@@ -1,4 +1,4 @@
-with import ./defs.nix;
+with import ./static/nix {};
 with configuredPkgs;
 runCommand "dummy" {
   buildInputs = [ pandoc panhandle panpipe ];

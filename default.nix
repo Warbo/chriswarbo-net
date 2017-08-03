@@ -1,4 +1,4 @@
-with import ./defs.nix;
+with import ./static/nix/defs.nix {};
 with configuredPkgs;
 with rec {
   pages = callPackage ./pages.nix {
