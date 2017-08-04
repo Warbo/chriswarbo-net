@@ -81,3 +81,8 @@ div.info {
 .hidden {
     display: none;
 }
+
+pre {
+    /* Give the element a horizontal scrollbar if needed, not the whole page */
+    overflow-x: auto;
+}
