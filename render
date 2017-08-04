@@ -41,6 +41,10 @@ function build() {
 }
 
 function doBuild() {
+    build untestedSite
+}
+
+function buildAndTest() {
     build wholeSite
 }
 
@@ -62,7 +66,7 @@ function pushToIpns() {
 
 function pushToWeb() {
     # Get raw files
-    DIR=$(doBuild)
+    DIR=$(buildAndTest)
 
     echo "Pushing '$DIR' to Web root" 1>&2
 
@@ -118,6 +122,10 @@ printf "Waiting for rendering lock..." 1>&2
           doBuild
           ;;
 
+      test)
+          buildAndTest
+          ;;
+
       add)
           addToIpfs
           ;;
@@ -137,10 +145,13 @@ printf "Waiting for rendering lock..." 1>&2
 
       *)
           echo "
-Usage: $0 <build|add|ipfs|web|push>
+Usage: $0 <build|test|add|ipfs|web|push>
 
 build: Builds the HTML, CSS, etc. of the site. Outputs a directory containing
        the result.
+
+test: Builds the site and runs tests on the result. Outputs a directory
+      containing the result.
 
 add: Adds the site to IPFS, outputting the resulting hash. This may take less
      space than performing a build, since we can re-use existing hashes without
