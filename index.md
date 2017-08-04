@@ -9,7 +9,7 @@ extra_head:
 
 postprocessor: stripTitle
 packages: [ 'file2img', 'showPosts', 'stripTitle' ]
-dependencies: [ 'static/code.png' ]
+dependencies: [ 'static/code.png', 'rants' ]
 ---
 
 <div style="float: right; margin: 0 10px 10px 10px;" >
@@ -20,7 +20,9 @@ file2img "Code" < root/static/code.png
 
 </div>
 
-I'm a Free Software advocate, Physicist, Computer Scientist and metal head.
+I'm a Free Software advocate, Physicist, Computer Scientist and metal head. I'm
+currently a PhD student in Computer Science at the
+[University of Dundee](https://www.computing.dundee.ac.uk/about/staff/124).
 
 This is a place for me to collect thoughts and experiments, mostly around
 programming languages and artificial intelligence.
@@ -29,8 +31,8 @@ Pages are organised into the following overlapping categories:
 
 ## [Blog](/blog.html)
 
-A [FINO](http://en.wikipedia.org/wiki/FINO) stack of rants, hacks,
-opinions, etc. Updated frequently but rarely revised.
+A [FINO](http://en.wikipedia.org/wiki/FINO) stack of rants, hacks, opinions,
+etc. Updated frequently but rarely revised.
 
 ```{.unwrap pipe="bash | pandoc -t json"}
 find root/rendered/blog -type f -o -type l |
@@ -40,7 +42,11 @@ find root/rendered/blog -type f -o -type l |
   showPosts
 ```
 
+[More...](/blog.html)
+
 ## [Projects](/projects.html)
 
 A collection of thought-out, carefully managed articles and demos.
 Infrequently updated, but hopefully accurate.
+
+[More...](/projects.html)
