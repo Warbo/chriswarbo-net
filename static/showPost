@@ -55,10 +55,20 @@ function renderLink {
     printf '<a class="p-name u-url" href="/%s">%s</a>' "$URL" "$TITLE"
 }
 
+function extraClasses {
+    if grep -F "$(basename "$1")" < "$RANTS" > /dev/null
+    then
+        printf 'rant'
+    else
+        printf ' '
+    fi
+}
+
 function renderEntry {
-    TIME=$(renderTime "$1")
-    LINK=$(renderLink "$1")
-    printf '<li class="h-entry">%s - %s</li>' "$LINK" "$TIME"
+    TIME=$(renderTime   "$1")
+    LINK=$(renderLink   "$1")
+    CLSS=$(extraClasses "$1")
+    printf '<li class="h-entry %s">%s - %s</li>' "$CLSS" "$LINK" "$TIME"
 }
 
 renderEntry "$1"
