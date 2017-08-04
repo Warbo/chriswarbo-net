@@ -338,6 +338,8 @@ rec {
 
   wholeSite = attrsToDirs allPages;
 
+  untestedSite = attrsToDirs allPagesUntested;
+
   repoUrls = if isPath repoSource    ||
                 (isString repoSource &&
                  repoSource != ""    &&
