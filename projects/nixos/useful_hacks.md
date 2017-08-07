@@ -29,6 +29,12 @@ sanitiseName = stringAsChars (c: if elem c (lowerChars ++ upperChars)
                                     else "");
 ```
 
+```{pipe="cat > def_withDeps.nix"}
+withDeps = deps: drv: overrideDerivation drv (old: {
+  extraDeps = (old.extraDeps or []) ++ deps;
+});
+```
+
 ```{pipe="cat > def_fetchGitHashless.nix"}
 fetchGitHashless = args: stdenv.lib.overrideDerivation
   # Use a dummy hash, to appease fetchgit's assertions
@@ -43,10 +49,93 @@ fetchGitHashless = args: stdenv.lib.overrideDerivation
   });
 ```
 
-```{pipe="cat > def_withDeps.nix"}
-withDeps = deps: drv: overrideDerivation drv (old: {
-  extraDeps = (old.extraDeps or []) ++ deps;
-});
+```{pipe="cat > def_fetchLatestGit.nix"}
+# Get the commit ID for the given ref in the given repo
+latestGitCommit = { url, ref ? "HEAD" }:
+  runCommand "repo-${sanitiseName ref}-${sanitiseName url}"
+    {
+      # Avoids caching. This is a cheap operation and needs to be up-to-date
+      version = toString currentTime;
+
+      # Required for SSL
+      GIT_SSL_CAINFO = "${cacert}/etc/ssl/certs/ca-bundle.crt";
+
+      buildInputs = [ git gnused ];
+    }
+    ''
+      REV=$(git ls-remote "${url}" "${ref}") || exit 1
+
+      printf '"%s"' $(echo "$REV"        |
+                      head -n1           |
+                      sed -e 's/\s.*//g' ) > "$out"
+    '';
+
+fetchLatestGit = { url, ref ? "HEAD" }@args:
+  with { rev = import (latestGitCommit { inherit url ref; }); };
+  fetchGitHashless (removeAttrs (args // { inherit rev; }) [ "ref" ]);
+```
+
+```{pipe="cat > def_latestGit.nix"}
+latestGit = { url, ref ? "HEAD" }@args:
+  with rec {
+    # Make a unique variable name for this repo/ref combo
+    key    = "${hashString "sha256" url}_${hashString "sha256" ref}";
+
+    # Look it up
+    envRev = getEnv "nix_git_rev_${key}";
+
+    # Fetch the latest revision, if needed
+    newRev = import (latestGitCommit { inherit url ref; });
+
+    # If the environment contains a revision, use it; otherwise fetch one
+    rev = if envRev == "" then newRev else envRev;
+  };
+  fetchGitHashless (removeAttrs (args // { inherit rev; }) [ "ref" ]);
+```
+
+```{pipe="cat > def_dirsToAttrs.nix"}
+dirsToAttrs = dir: mapAttrs (n: v: if v == "regular"
+                                      then dir + "/${n}"
+                                      else dirsToAttrs (dir + "/${n}"))
+                            (readDir dir);
+```
+
+```{pipe="cat > def_attrsToDirs.nix"}
+isPath  = x: typeOf x == "path" || (isString x && hasPrefix "/" x);
+
+toPaths = prefix: val: if isPath val || isDerivation val
+                          then [{ name  = prefix;
+                                  value = val; }]
+                          else concatMap (n: toPaths (if prefix == ""
+                                                         then n
+                                                         else prefix + "/" + n)
+                                                     (getAttr n val))
+                                         (attrNames val);
+
+toCmds = attrs: map (entry: with {
+                              n = escapeShellArg entry.name;
+                              v = escapeShellArg entry.value;
+                            };
+                            ''
+                              mkdir -p "$(dirname ${n})"
+                              ln -s ${v} "$out"/${n}
+                            '')
+                    (toPaths "" attrs);
+
+attrsToDirs = attrs: runCommand "merged" {}
+  (''mkdir -p "$out"'' + concatStringsSep "\n" (toCmds attrs));
+```
+
+```{pipe="cat > def_withNix.nix"}
+withNix = attrs: attrs // {
+  buildInputs = (attrs.buildInputs or []) ++ [ nix ];
+  NIX_PATH    = if getEnv "NIX_PATH" == ""
+                   then "nixpkgs=${toString <nixpkgs>}"
+                   else getEnv "NIX_PATH";
+  NIX_REMOTE  = if getEnv "NIX_REMOTE" == ""
+                   then "daemon"
+                   else getEnv "NIX_REMOTE";
+};
 ```
 
 <!-- Combine together so we can use Nix to generate real outputs -->
@@ -80,13 +169,20 @@ PREAMBLE='with builtins;
 RESULT=$(nix-instantiate --show-trace --read-write-mode --eval \
                          -E "$PREAMBLE $PREFIX $1 $SUFFIX")
 
-echo "RESULT: $RESULT" 1>&2
+[[ -n "$QUIET" ]] || echo "RESULT: $RESULT" 1>&2
 
 if [[ -n "$UNWRAP" ]]
 then
-  echo "$RESULT" | jq -r '.'
+  RESULT2=$(echo "$RESULT" | jq -r '.')
 else
-  echo "$RESULT"
+  RESULT2="$RESULT"
+fi
+
+if [[ -n "$FORMAT" ]]
+then
+  echo "$RESULT2" | jq '.'
+else
+  echo "$RESULT2"
 fi
 ```
 
@@ -102,16 +198,59 @@ This lets us do things like:
 
 ```{pipe="sh"}
 mkdir modules
+echo 'Not a Nix file'                     > modules/notANixFile.txt
 echo '"string from foo.nix"'              > modules/foo.nix
 echo '["list" "from" "bar.nix"]'          > modules/bar.nix
 echo '{ attrs = { from = "baz.nix"; }; }' > modules/baz.nix
 
-UNWRAP=1 PREFIX='toJSON (' SUFFIX=')' ./eval 'nixFilesIn ./modules'
+FORMAT=1 UNWRAP=1 PREFIX='toJSON (' SUFFIX=')' ./eval 'nixFilesIn ./modules'
 ```
 
 This can be useful for making modular configurations, without needing to specify
-all of the required imports individually. It can also be used for other sorts of
-file, or even recursively on sub-directories.
+all of the required imports individually (in fact, that's how I define these
+things in [my nix-config repo](/git/nix-config)). It can also be used for other
+sorts of file, or even recursively on sub-directories...
+
+### Converting Between Attrsets and Directories ###
+
+If we have a directory full of files, we might want to access them in Nix,
+whilst maintaining their directory hierarchy. We can represent files using their
+paths, directories using attribute sets and hierarchies by nesting:
+
+```{pipe="cat def_dirsToAttrs.nix"}
+```
+
+We can use these attribute sets however we like, e.g. `import`ing the files,
+putting them in derivations, etc. If we give a path value, the files will be
+added to the Nix store (this is good for reproducibility):
+
+```{pipe="sh"}
+FORMAT=1 UNWRAP=1 ./eval 'toJSON (dirsToAttrs ./modules)'
+```
+
+If we give a string value, the path will be used as-is (this is good if we have
+relative paths, symlinks, etc.):
+
+```{pipe="sh"}
+FORMAT=1 UNWRAP=1 ./eval 'toJSON (dirsToAttrs (toString ./modules))'
+```
+
+Likewise, we might have a bunch of derivations or paths neatly arranged in Nix
+attribute sets which we'd like to write to disk, without wanting to write a
+bunch of boilerplate. We can do this as follows:
+
+```{pipe="cat def_attrsToDirs.nix"}
+```
+
+This makes it easy to structure the output of a derivation without having to
+resort to bash scripts:
+
+```{pipe="sh"}
+export PREFIX='toString ('
+export SUFFIX=')'
+export UNWRAP=1
+./eval 'attrsToDirs { bin = { myProg = writeScript "myProg" "echo hello"; }; }'
+```
 
 ### Sanitising Names ###
 
@@ -127,10 +266,17 @@ Now we can do, for example:
 UNWRAP=1 ./eval 'toFile (sanitiseName "a/b/c/d") "foo"'
 ```
 
+Of course, we could just hard-code a particular name when we're generating a
+derivation (like `"merged"` above), but that makes it harder to see what's going
+on during the build process (e.g. if we see 20 different builds called `merged`,
+it's hard to tell what's succeeded and what's left to go).
+
 ### Adding Extra Dependencies ###
 
-Nix packages tend to run their tests in an attribute called `testPhase`, which
-is fine when we're defining packages from scratch, but can be awkward if we're
+Sometimes we might have a Nix package which builds, but we don't want it to; for
+example if we want to check a bunch of tests and abort if they fail. Nix
+packages tend to run their tests in an attribute called `testPhase`, which is
+fine when we're defining packages from scratch, but can be awkward if we're
 trying to add extra tests to some existing derivation: not all derivations
 follow the `testPhase` convention, and appending to bash scripts isn't a
 particularly simple or composable approach in any case (what if additions have
@@ -151,7 +297,7 @@ FAIL='runCommand "failingTest" {} "exit 1"'
 
 UNWRAP=1 ./eval "withDeps [ ($PASS) ] hello" > extraDepPass
 
-         ./eval "withDeps [ ($FAIL) ] hello" > extraDepFail 2>&1 || true
+ QUIET=1 ./eval "withDeps [ ($FAIL) ] hello" > extraDepFail 2>&1 || true
 ```
 
 This way, we can make a new package which is equivalent to the original when our
@@ -196,92 +342,57 @@ UNWRAP=1 ./eval 'fetchGitHashless {
 Sometimes we want to use the latest version of a git repo, rather than keeping a
 hard-coded revision/checksum pair in our source. I don't recommend this for
 third-party libraries, but it can be useful for integration testing and for
-projects which have components spread across several repos, where we can just
-say:
+projects which have components spread across several repos.
 
-```
-src = latestGit { url = "http://example.com/bar.git"; }
-```
+We can do this using a derivation which fetches the repo's `HEAD` (or a branch,
+etc.), imports the result and passes it to `fetchGitHashless`:
 
-To do this we need to build a derivation which fetches the repo's HEAD:
-
-```
-with builtins;
-with import <nixpkgs> {};
-with lib;
-{ url, ref ? "HEAD" }@args:
-  with {
-    # Get the commit ID for the given ref in the given repo
-    rev = import (runCommand "repo-${sanitiseName ref}-${sanitiseName url}"
-      {
-        # Avoids caching. This is a cheap operation and needs to be up-to-date
-        version = toString currentTime;
-
-        # Required for SSL
-        GIT_SSL_CAINFO = "${cacert}/etc/ssl/certs/ca-bundle.crt";
-
-        buildInputs = [ git gnused ];
-      }
-      ''
-        REV=$(git ls-remote "${url}" "${ref}") || exit 1
-
-        printf '"%s"' $(echo "$REV"        |
-                        head -n1           |
-                        sed -e 's/\s.*//g' ) > "$out"
-      '');
-  };
-  fetchGitHashless (removeAttrs (args // { inherit rev; }) [ "ref" ]);
+```{pipe="cat def_fetchLatestGit.nix"}
 ```
 
-Notice that we `import` the result of `runCommand`; this prevents the
-dependencies of the command (notably `currentTime`) from propagating into the
-actual repo; only a change in the commit ID will cause a cache miss. The
-downside is that we blur the distinction between evaluation and building.
+Now we only have to provide a URL (and optionally a branch) and our repos will
+stay up to date, e.g.:
+
+```{pipe="sh"}
+export PREFIX='toString ('
+export SUFFIX=')'
+UNWRAP=1 ./eval 'import (fetchLatestGit {
+           url = "http://chriswarbo.net/git/turtleviewer.git";
+         }) {}'
+```
+
+Notice that we `import` the result of `latestGitCommit`; this prevents the
+dependencies of that derivation (notably `currentTime`) from becoming
+dependencies of the resulting repo, and hence causing everything to keep
+rebuilding. Importing ensures that only a change in the commit ID will trigger a
+rebuild. The downside is that we blur the distinction between evaluation and
+building, which can slow down any Nix commands which evaluate these expressions.
 
 ### Cached Latest Git ###
 
-If we're evaluating a lot of Nix expressions, it can get a little slow to keep
-checking git repos for their latest revisions. We can augment the above to check
-for an environment variable first, then we can set that environment variable for
-the duration of a script to avoid constant rechecking:
+When Nix evaluates an expression, the value of `builtins.currentTime` remains
+constant for the whole time Nix is running; this ensures values are consistent,
+and means we can avoid the cache (like in `latestGitCommit`) without having our
+sub-expressions re-evaluated over and over. This doesn't prevent our expressions
+being re-evaluated on *different* Nix runs though; which can be slow if we have
+a shell script that runs a bunch of separate Nix commands.
 
-```
-{ url, ref ? "HEAD" }@args:
-  with rec {
-    # Make a unique variable name for this repo/ref combo
-    key    = "${hashString "sha256" url}_${hashString "sha256" ref}";
+We can prevent such slowdowns by augmenting `fetchLatestGit` to check for an
+environment variable first, using `builtins.getEnv`; if we set that environment
+variable in our shell script, we can stop Nix checking it over and over:
 
-    # Look it up
-    envRev = getEnv "nix_git_rev_${key}";
-
-    # Get the commit ID for the given ref in the given repo.
-    newRev = import (runCommand
-      "repo-${sanitiseName ref}-${sanitiseName url}"
-      {
-        # Avoids caching. This is a cheap operation and needs to be up-to-date
-        version = toString currentTime;
-
-        # Required for SSL
-        GIT_SSL_CAINFO = "${cacert}/etc/ssl/certs/ca-bundle.crt";
-
-        buildInputs  = [ git gnused ];
-      }
-      ''
-        REV=$(git ls-remote "${url}" "${ref}") || exit 1
-
-        printf '"%s"' $(echo "$REV"        |
-                        head -n1           |
-                        sed -e 's/\s.*//g' ) > "$out"
-      '');
-
-    # If the environment contains a revision, use it
-    rev = if envRev == "" then newRev else envRev;
-  };
-  fetchGitHashless (removeAttrs (args // { inherit rev; }) [ "ref" ]);
+```{pipe="cat def_latestGit.nix"}
 ```
 
 Thanks to laziness, we will never check the repo if we find a revision in the
-environment.
+environment. This uses one environment variable per repo/ref combination (taking
+the hash of each, to ensure no funny characters appear in the name); we could
+also use one big environment variable, e.g. containing a JSON array of repos,
+refs and commits. The advantage of multiple variables is that we can append new
+commits to the environment trivially; the advantages of one big variable are
+that it's trivial to see all of the available repos, refs and commits (rather
+than e.g. scanning through the environment), and we don't need to do any hashing
+since all of the variable data appears in the value rather than the name.
 
 ### Use Nix in Builders ###
 
@@ -290,83 +401,127 @@ a dynamically-generated expression, to add a file to the store or to invoke some
 other build. This tends to fail due to missing environment variables. The
 following will augment a given attribute set to contain the needed config:
 
-```
-with builtins;
-with import <nixpkgs> {};
-with lib;
-attrs: attrs // {
-  buildInputs = (attrs.buildInputs or []) ++ [ nix ];
-  NIX_PATH    = if getEnv "NIX_PATH" == ""
-                   then "nixpkgs=${toString <nixpkgs>}"
-                   else getEnv "NIX_PATH";
-  NIX_REMOTE  = if getEnv "NIX_REMOTE" == ""
-                   then "daemon"
-                   else getEnv "NIX_REMOTE";
-}
+```{pipe="cat def_withNix.nix"}
 ```
 
-With this, we can say e.g. `stdenv.mkDerivation (withNix { ... })` and be able
-to use Nix commands in our builder. Note that it's advisable to avoid nesting
-Nix commands inside each other too much, as it can be difficult to control
-and/or override things as they get wrapped up.
+With this, we can say things like:
 
-### Converting Between Attrsets and Directories ###
-
-If we may have a derivation which builds a bunch a directory full of stuff, we
-may find ourselves wanting to read in that content to reuse or augment it in
-some way, e.g:
-
-```
-with (dirsToAttrs myDir); myFile
+```{pipe="sh"}
+FUNC='runCommand "foo" (withNix { myVar = "hello"; })'
+ STR=$(printf "''\n    %s\n    %s\n  ''" 'echo "$myVar" > myFile' \
+                                         'nix-store --add myFile > "$out"')
+EXPR="$FUNC $STR"
+export PREFIX='toString ('
+export SUFFIX=')'
+UNWRAP=1 ./eval "$EXPR"
 ```
 
-We can do that as follows:
+This uses `nix-store` to add a file to the Nix store, and puts the resulting
+path into its output. On its own that's a pretty useless thing to do, but it may
+be useful to run such Nix commands as part of a more complicated build
+process. For example, we've seen that we can blur the eval/build distinction by
+using `import` on a derivation, which triggers a build and makes the result
+available to the evaluator. `withNix` goes the other way: it allows evaluation
+to be performed during a build, which may be required if the expression we want
+isn't available at eval time.
+
+An example of this is projects which use Nix as their build system: if we want
+to include such a project in our Nix config, there are two ways to do it:
+
+ - Fetch the source using a derivation and use `import` to bring all of its
+   expressions into scope. This has the downside that "fetch" might be a very
+   expensive process, e.g. downloading, compiling, generating files, etc. which
+   we might want to avoid during "normal" evaluations.
+ - Using `withNix` we can write a simple build script which calls `nix-build`
+   (or whatever the project uses) in its source directory, just as if it were
+   using `make`, or `sbt`, or any other build tool.
+
+Which of these approaches is preferable depends on the situation. In any case,
+it's advisable to avoid nesting Nix commands inside each other too much, as it
+can be difficult to control and/or override things as they get wrapped up.
+
+Also note that we can vary the values we use for the environment variables; for
+example, if we want to override the nixpkgs collection that's used by the build,
+we can just pass some other value for `NIX_PATH`. One thing to keep in mind is
+that embedding a path directly into a string, like `"nixpkgs=${myPath}"` or
+`"nixpkgs=" + myPath`, will cause that path to be added to the Nix store; this
+may or may not be what you want (e.g. it might break symlinks and relative
+paths). To use the path as-is you should pass it to `builtins.toString`, e.g.
+`"nixpkgs=${toString myPath}"`.
+
+Another trick you might like to use if you're overriding `nixpkgs` is to avoid
+causing an infinite loop when you want to reference the "real" `nixpkgs`. For
+example, say we want to force a particular package to be available, we might
+say:
 
 ```
-with builtins;
-with import <nixpkgs> {}
 with rec {
-  dirsToAttrs = dir: mapAttrs (n: v: if v == "regular"
-                                        then dir + "/${n}"
-                                        else dirsToAttrs (dir + "/${n}"))
-                              (readDir dir);
+  myNixpkgs = attrsToDirs {
+    "default.nix" = writeScript "default.nix" ''
+      args: (import <nixpkgs> args) // {
+        foo = runCommand "foo" '''
+          mkdir -p "$out/bin"
+          printf '#!/usr/bin/env bash\necho "foo"' > "$out/bin/foo"
+        ''';
+      }
+    '';
+  };
 };
-dirsToAttrs
+runCommand "bar"
+  (withNix {
+    # Override NIX_PATH to use our augmented copy
+    NIX_PATH = "nixpkgs=$(myNixPkgs)";
+  })
+  ''
+    nix-shell -p foo --run foo 1>&2
+    echo "done" > "$out"
+  ''
 ```
 
-Likewise, we might have a bunch of files neatly arranged in Nix attribute sets
-which we'd like to reproduce as files on disk, without wanting to write a bunch
-of boilerplate, e.g.
+The idea is that the builder for `bar` will use `myNixpkgs` as its `<nixpkgs>`
+path, and hence `nix-shell` will find the `foo` package we define in there. The
+problem is that pretty much all Nix definitions, including those for `myNixpkgs`
+and `foo`, use something from `<nixpkgs>` somewhere; hence if we try to use
+`myNixpkgs` as `<nixpkgs>`, it will end up `import`ing itself, which will end up
+`import`ing itself, and so on forever.
 
-```
-attrsToDirs { dir1 = { file1 = someDrv; }; file2 = /some/path; }
-```
+To work around this, we can give the "real" `nixpkgs` a different name, then use
+that to break the cycle. I tend to call it `<real>`:
 
-We can do this as follows:
-
-```
-with builtins;
-with import <nixpkgs> {};
-with lib;
+```{pipe="tee finite.nix"}
 with rec {
-  isPath  = x: typeOf x == "path";
-
-  toPaths = prefix: val: if isPath val || isDerivation val
-                            then [{ name  = prefix;
-                                    value = val; }]
-                            else concatMap (n: toPaths (prefix + "/" + n)
-                                                           val."${n}")
-                                           (attrNames val);
-
-  toCmds = attrs: concatStringsSep "\n"
-    ([''mkdir -p "$out"''] ++
-     (map (entry: ''
-                    mkdir -p "$(dirname "${entry.name}")"
-                    ln -s "${entry.value}" "${entry.name}"
-                  '')
-          (toPaths "$out" attrs)));
+  myNixpkgs = attrsToDirs {
+    "default.nix" = writeScript "default.nix" ''
+      with tryEval <real>;
+      with rec {
+        # Will be <nixpkgs> at the 'top level', and <real> in recursive calls
+        path = if success then <real> else <nixpkgs>;
+      };
+      args: (import path args) // {
+        foo = runCommand "foo" '''
+          mkdir -p "$out/bin"
+          printf '#!/usr/bin/env bash\necho "foo"' > "$out/bin/foo"
+        ''';
+      }
+    '';
+  };
 };
-attrs: runCommand "merged" {} (toCmds attrs);
+runCommand "bar"
+  (withNix {
+    # Override NIX_PATH to use our augmented copy
+    NIX_PATH = "nixpkgs=${myNixPkgs}:real=${toString <nixpkgs>}";
+  })
+  ''
+    nix-shell -p foo --run foo 1>&2
+    echo "done" > "$out"
+  ''
+```
+
+```{pipe="sh > /dev/null"}
+echo "FIXME: Port more of useful_hacks.md to panpipe" 1>&2
+export PREFIX='with { x ='
+export SUFFIX='; }; assert forceBuilds [ x ]; toString x'
+QUIET=1 ./eval "$(cat finite.nix)" 2>&1 || true
 ```
 
 ### Wrapping Binaries ###
