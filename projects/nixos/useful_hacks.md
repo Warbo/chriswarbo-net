@@ -519,6 +519,7 @@ runCommand "bar"
 
 ```{pipe="sh > /dev/null"}
 echo "FIXME: Port more of useful_hacks.md to panpipe" 1>&2
+exit 0
 export PREFIX='with { x ='
 export SUFFIX='; }; assert forceBuilds [ x ]; toString x'
 QUIET=1 ./eval "$(cat finite.nix)" 2>&1 || true
