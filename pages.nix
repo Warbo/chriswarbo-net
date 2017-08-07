@@ -1,5 +1,5 @@
 { attrsToDirs, callPackage, dirsToAttrs, git, git2html, hfeed2atom, ipfs,
-  isPath, jq, latestConfig, lib, pages, pkgs, pythonPackages, repoRefs,
+  isPath, jq, latestConfig, lib, pages, pkgs, pythonPackages,
   repoSource, reverse, runCommand, sanitiseName, stdenv, wget, wrap,
   writeScript, xidel }:
 
@@ -365,7 +365,7 @@ rec {
                               '');
 
   inherit (callPackage ./repos.nix {
-            inherit commands ipfsKeys render repoRefs repoUrls;
+            inherit commands ipfsKeys render repoUrls;
           })
     projectRepos repoName repoPages;
 

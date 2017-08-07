@@ -39,7 +39,13 @@ with rec {
     concatStringsSep ":" (attrValues (mapAttrs (n: v: n + "=" + toString v)
                                                set));
 
-  NIX_REMOTE = "daemon";
+  nixVars = {
+    inherit NIX_PATH;
+    NIX_REMOTE = "daemon";
+    REPO_REFS  = if getEnv "REPO_REFS" == ""
+                    then "{}"
+                    else getEnv "REPO_REFS";
+  };
 
   bins = bin: attrsToDirs { inherit bin; };
 
@@ -83,13 +89,13 @@ with rec {
 
     nix-instantiate = {
       paths = [ nix ];
-      vars  = { inherit NIX_PATH NIX_REMOTE; };
+      vars  = nixVars;
       file  = "${nix}/bin/nix-instantiate";
     };
 
     nix-shell = {
       paths = [ nix ];
-      vars  = { inherit NIX_PATH NIX_REMOTE; };
+      vars  = nixVars;
       file  = "${nix}/bin/nix-shell";
     };
 
