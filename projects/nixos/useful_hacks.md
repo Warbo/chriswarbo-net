@@ -1,6 +1,6 @@
 ---
 title: Useful Nix Hacks
-packages: [ 'jq', 'nix-instantiate' ]
+packages: [ 'jq', 'nix-instantiate', 'timeout' ]
 ---
 
 Here are a few helpful Nix expressions I've accumulated over the years, in case
@@ -178,19 +178,29 @@ printf '\n}\n'
 ```{pipe="cat > eval && chmod +x eval"}
 #!/usr/bin/env bash
 
-# Show (the relevant portion of) what we're evaluating
+# Tell withTimeout to abort if we use this much RAM
+export MAX_KB=1000000
+
+# $1 is the expression we show
 printf '> %s\n\n' "$1"
 
-# Show the result
+# We always use these imports, but we don't show them (for brevity)
 PREAMBLE='with builtins;
           with import <nixpkgs> {};
           with lib;
           with import ./result.nix;'
-RESULT=$(nix-instantiate --show-trace --read-write-mode --eval \
-                         -E "$PREAMBLE $PREFIX $1 $SUFFIX")
 
+# Evaluate the actual expression: we insert PREFIX and SUFFIX, if given, to
+# allow any required fiddling that we don't want to show; for example, calling
+# 'toString', or forcing a derivation to be built, etc.
+RESULT=$(withTimeout nix-instantiate --show-trace --read-write-mode --eval \
+                                     -E "$PREAMBLE $PREFIX $1 $SUFFIX")
+
+# Show some debug/progress info when rendering; set QUIET if you want to use the
+# stderr on the page (e.g. using 2>&1 to show real error messages)
 [[ -n "$QUIET" ]] || echo "RESULT: $RESULT" 1>&2
 
+# Set UNWRAP if you want to unquote strings
 if [[ -n "$UNWRAP" ]]
 then
   RESULT2=$(echo "$RESULT" | jq -r '.')
@@ -198,6 +208,7 @@ else
   RESULT2="$RESULT"
 fi
 
+# Set FORMAT to have your JSON laid out nicely
 if [[ -n "$FORMAT" ]]
 then
   echo "$RESULT2" | jq '.'
