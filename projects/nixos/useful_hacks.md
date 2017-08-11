@@ -138,6 +138,26 @@ withNix = attrs: attrs // {
 };
 ```
 
+```{pipe="cat > def_wrap.nix"}
+wrap = { paths ? [], vars ? {}, file ? null, script ? null, name ? "wrap" }:
+  assert file != null || script != null ||
+         abort "wrap needs 'file' or 'script' argument";
+  with rec {
+    set  = n: v: "--set ${escapeShellArg (escapeShellArg n)} " +
+                   "'\"'${escapeShellArg (escapeShellArg v)}'\"'";
+    args = (map (p: "--prefix PATH : ${p}/bin") paths) ++
+           (attrValues (mapAttrs set vars));
+  };
+  runCommand name
+    {
+      f           = if file == null then writeScript name script else file;
+      buildInputs = [ makeWrapper ];
+    }
+    ''
+      makeWrapper "$f" "$out" ${toString args}
+    '';
+```
+
 <!-- Combine together so we can use Nix to generate real outputs -->
 
 ```{pipe="sh > result.nix"}
@@ -488,7 +508,7 @@ and `foo`, use something from `<nixpkgs>` somewhere; hence if we try to use
 To work around this, we can give the "real" `nixpkgs` a different name, then use
 that to break the cycle. I tend to call it `<real>`:
 
-```{pipe="tee finite.nix"}
+```
 with rec {
   myNixpkgs = attrsToDirs {
     "default.nix" = writeScript "default.nix" ''
@@ -517,63 +537,51 @@ runCommand "bar"
   ''
 ```
 
-```{pipe="sh > /dev/null"}
-echo "FIXME: Port more of useful_hacks.md to panpipe" 1>&2
-exit 0
-export PREFIX='with { x ='
-export SUFFIX='; }; assert forceBuilds [ x ]; toString x'
-QUIET=1 ./eval "$(cat finite.nix)" 2>&1 || true
-```
-
 ### Wrapping Binaries ###
 
 `nixpkgs` provides a useful script called `makeWrapper` which allows a program
 or script to be "wrapped" such that it's run in a particular environment; for
-example, using a `PATH` which contains its dependencies:
+example, using a `PATH` which contains its dependencies. Since `makeWrapper` is
+a Bash function it's a little horrible to use. We can make a nicer interface
+inside Nix (and since I often use `makeWrapper` in conjunction with
+`writeScript`, we can combine both):
 
+```{pipe="cat def_wrap.nix"}
 ```
+
+Here's an example of a script being wrapped in its dependencies and some
+variables:
+
+```{pipe="cat > wrapScript.nix"}
 wrap {
-  paths   = [ echo ];
-  vars    = {
-    PLACE = "world";
-  };
-  script  = ''
-    #!/usr/bin/env bash
-    echo "hello $PLACE"
-  '';
+    name    = "wrapped-script";
+    paths   = [ bash jq ];
+    vars    = { VAR1 = toJSON { someKey = "someValue"; }; };
+    script  = ''
+      #!/usr/bin/env bash
+      jq --arg var "$VAR1" '. + $var1.someKey'
+    '';
+  }
+```
+
+```{pipe="sh"}
+UNWRAP=1 PREFIX='toString (' SUFFIX=')' ./eval "$(cat wrapScript.nix)"
+```
+
+Alternatively, we can pass a file instead of a script:
+
+```{pipe="cat > wrapFile.nix"}
+wrap {
+  name  = "wrapped-file";
+  paths = [ python ];
+  vars  = { foo = "bar"; };
+  file  = ./script.py;
 }
 ```
 
-Since it's a Bash script, it's a little horrible to use. We can make a nicer
-interface inside Nix and, since I often use `makeWrapper` in conjunction with
-`writeScript`, we can combine both into one simple function:
-
+```{pipe="sh"}
+UNWRAP=1 PREFIX='toString (' SUFFIX=')' ./eval "$(cat wrapFile.nix)"
 ```
-with builtins;
-with import <nixpkgs> {};
-with lib;
-{ paths ? [], vars ? {}, file ? null, script ? null, name ? "wrap" }:
-  assert file != null || script != null ||
-    abort "wrap needs 'file' or 'script' argument";
-  with rec {
-    f    = if file == null then writeScript name script else file;
-    args = (map (p: "--prefix PATH : ${p}/bin") paths) ++
-           (attrValues (mapAttrs (n: v: ''--set "${n}" "${v}"'') vars));
-  };
-  runCommand name
-    {
-      inherit f;
-      params      = concatStringsSep " " args;
-      buildInputs = [ makeWrapper ];
-    }
-    ''
-      makeWrapper "$f" "$out" $params
-    ''
-```
-
-Note that, as a Bash utility, `makeWrapper` is a bit naff at handling/escaping
-quotes. If that's an issue, you could write your data to a file and put the
-filename in the environment instead of the data.
 
 ### Piping Data to the Nix Store ###
 
