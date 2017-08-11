@@ -259,8 +259,15 @@ added to the Nix store (this is good for reproducibility):
 FORMAT=1 UNWRAP=1 ./eval 'toJSON (dirsToAttrs ./modules)'
 ```
 
-If we give a string value, the path will be used as-is (this is good if we have
-relative paths, symlinks, etc.):
+We might prefer the hierarchy to be preserved in the store, which we can do by
+coercing our path to a string:
+
+```{pipe="sh"}
+FORMAT=1 UNWRAP=1 ./eval 'toJSON (dirsToAttrs "${./modules}")'
+```
+
+If we convert with `toString`, the path will be used as-is (this is good if we
+have relative paths, symlinks, etc.):
 
 ```{pipe="sh"}
 FORMAT=1 UNWRAP=1 ./eval 'toJSON (dirsToAttrs (toString ./modules))'
