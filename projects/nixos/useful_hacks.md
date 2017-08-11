@@ -604,48 +604,60 @@ UNWRAP=1 PREFIX='toString (' SUFFIX=')' ./eval "$(cat wrapFile.nix)"
 ### Piping Data to the Nix Store ###
 
 The `nix-store --add` command is really useful for adding data to the Nix store,
-and also for making better use of it as a cache (e.g. rather than processing the
-same data multiple times, if we add it to the Nix store it will end up with the
-same hash and therefore the same filename, which we can spot and avoid redoing).
+and also for making better use of it as a cache (since it chooses a filename
+based on a hash of the content, we can use it to spot duplicate data).
 
-This requires our data to be in a file though, and Bash's process substitution
-doesn't work with `nix-store --add` (it only adds the /dev/fd/...` symlink).
+The downside is that our data must be written to files first; we can't just
+stream it in. Often Bash's process substitution would work around this, but not
+in this case (it causes `/dev/fd/...` symlinks to be added rather than the
+content).
 
-Here's a simple command which will store its stdin in the Nix store:
+The following `pipeToNix` command will write its stdin to a temporary file, then
+add it to the Nix store:
 
 ```
-with builtins;
-with import <nixpkgs> {};
-with lib;
-runCommand "pipeToNix"
-  {
-    raw = writeScript "pipeToNix" ''
-      #!/usr/bin/env bash
-      set -e
+pipeToNix = attrsToDirs {
+    bin = {
+      pipeToNix = wrap {
+        name   = "pipeToNix";
+        vars   = removeAttrs (withNix {}) [ "buildInputs" ];
+        script = ''
+          #!/usr/bin/env bash
+          set -e
 
-      # If an argument is given, it's used as the file name (which Nix will
-      # prefix with a content hash).
+          # If an argument is given, it's used as the file name (which Nix will
+          # prefix with a content hash).
 
-      NAME="piped"
-      [[ -z "$1" ]] || NAME="$1"
+          NAME="piped"
+          [[ -z "$1" ]] || NAME="$1"
 
-      SCRATCH=$(mktemp -d)
-      trap "rm -rf $SCRATCH" EXIT
+          SCRATCH=$(mktemp -d)
+          trap "rm -rf $SCRATCH" EXIT
 
-      F="$SCRATCH/$NAME"
-      cat > "$F"
+          F="$SCRATCH/$NAME"
+          cat > "$F"
 
-      nix-store --add "$F"
-    '';
-  }
-  ''
-    mkdir -p "$out/bin"
-    cp "$raw" "$out/bin/pipeToNix"
-  ''
+          nix-store --add "$F"
+        '';
+      };
+    };
+  };
 ```
 
-With this in `PATH`, we can do `echo "foo" | pipeToNix myFilename` and get back
-a Nix store path for this content.
+With this in `PATH`, we can say things like:
+
+```{pipe="cat > pipeToNix.sh"}
+echo "foo" | pipeToNix myFilename
+```
+
+```
+printf '$ %s\n' "$(cat pipeToNix.sh)"
+chmod +x pipeToNix.sh
+./pipeToNix.sh
+```
+
+Note how we get back the Nix store path, which we can use elsewhere in a script,
+for example.
 
 ### Inheriting Function Arguments ###
 
