@@ -1,6 +1,6 @@
 ---
 title: Useful Nix Hacks
-packages: [ 'jq', 'nix-instantiate', 'timeout' ]
+packages: [ 'jq', 'nix-instantiate', 'nix-shell', 'timeout' ]
 ---
 
 Here are a few helpful Nix expressions I've accumulated over the years, in case
@@ -655,10 +655,11 @@ With this in `PATH`, we can say things like:
 echo "foo" | pipeToNix myFilename
 ```
 
-```
+```{.bash pipe="sh"}
 printf '$ %s\n' "$(cat pipeToNix.sh)"
 chmod +x pipeToNix.sh
-./pipeToNix.sh
+nix-shell --show-trace -p '(import ./result.nix).pipeToNix' \
+          --run './pipeToNix.sh'
 ```
 
 Note how we get back the Nix store path, which we can use elsewhere in a script,
