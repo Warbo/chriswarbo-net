@@ -158,6 +158,35 @@ wrap = { paths ? [], vars ? {}, file ? null, script ? null, name ? "wrap" }:
     '';
 ```
 
+```{pipe="cat > def_pipeToNix.nix"}
+pipeToNix = attrsToDirs {
+    bin = {
+      pipeToNix = wrap {
+        name   = "pipeToNix";
+        vars   = removeAttrs (withNix {}) [ "buildInputs" ];
+        script = ''
+          #!/usr/bin/env bash
+          set -e
+
+          # If an argument is given, it's used as the file name (which Nix will
+          # prefix with a content hash).
+
+          NAME="piped"
+          [[ -z "$1" ]] || NAME="$1"
+
+          SCRATCH=$(mktemp -d)
+          trap "rm -rf $SCRATCH" EXIT
+
+          F="$SCRATCH/$NAME"
+          cat > "$F"
+
+          nix-store --add "$F"
+        '';
+      };
+    };
+  };
+```
+
 <!-- Combine together so we can use Nix to generate real outputs -->
 
 ```{pipe="sh > result.nix"}
@@ -616,33 +645,7 @@ content).
 The following `pipeToNix` command will write its stdin to a temporary file, then
 add it to the Nix store:
 
-```
-pipeToNix = attrsToDirs {
-    bin = {
-      pipeToNix = wrap {
-        name   = "pipeToNix";
-        vars   = removeAttrs (withNix {}) [ "buildInputs" ];
-        script = ''
-          #!/usr/bin/env bash
-          set -e
-
-          # If an argument is given, it's used as the file name (which Nix will
-          # prefix with a content hash).
-
-          NAME="piped"
-          [[ -z "$1" ]] || NAME="$1"
-
-          SCRATCH=$(mktemp -d)
-          trap "rm -rf $SCRATCH" EXIT
-
-          F="$SCRATCH/$NAME"
-          cat > "$F"
-
-          nix-store --add "$F"
-        '';
-      };
-    };
-  };
+```{pipe="cat def_pipeToNix.nix"}
 ```
 
 With this in `PATH`, we can say things like:
