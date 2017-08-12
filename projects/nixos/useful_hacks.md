@@ -177,6 +177,7 @@ printf '\n}\n'
 
 ```{pipe="cat > eval && chmod +x eval"}
 #!/usr/bin/env bash
+set -e
 
 # Tell withTimeout to abort if we use this much RAM
 export MAX_KB=1000000
