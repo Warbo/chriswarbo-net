@@ -187,6 +187,33 @@ pipeToNix = attrsToDirs {
   };
 ```
 
+```{pipe="cat > def_withArgs.nix"}
+withArgs = args: f:
+  with rec {
+    # Build a string "a,b,c" for the arguments "args"
+    arglist = concatStringsSep "," args;
+
+    # Strip any dependencies off our string, so it can be embedded in a file
+    # without causing a bunch of derivations to be built.
+    arglistF = unsafeDiscardStringContext arglist;
+
+    # Write a function which eta-expands its argument, by accepting "args" and
+    # passing them on
+    eta = "f: args@{${arglistF}}: f args";
+  };
+  # Eta-expand the function "f"
+  import (toFile "withArgs.nix" eta) f;
+```
+
+```{pipe="cat > def_withArgsOf.nix"}
+withArgsOf = f: with { fArgs = functionArgs f; };
+                withArgs (filter (n: !fArgs."${n}") (attrNames fArgs));
+```
+
+```{pipe="cat > def_compose.nix"}
+compose = f: g: withArgsOf g (args: f (g args));
+```
+
 <!-- Combine together so we can use Nix to generate real outputs -->
 
 ```{pipe="sh > result.nix"}
@@ -669,53 +696,67 @@ for example.
 
 Nix functions have two sorts of arguments: variables, like `x: ...`; and named
 argument sets, like `{ foo, bar }: ...`. If we use the latter, those names can
-be found by passing the function to `builtins.functionArgs`. This is used by
-common utility functions like `callPackage` to figure out which arguments to
-pass in.
+be found by passing the function to `builtins.functionArgs`:
+
+```{pipe="sh"}
+./eval 'functionArgs ({ foo, bar, baz ? 42 }: 1337)'
+```
+
+This is used by common utility functions like `callPackage` to figure out which
+arguments to pass in.
 
 Unfortunately, this introspection ability is lost if we wrap up a function
-somehow, for example via composition: `f: g: x: f (g x)`. If we apply this to a
-`g` function with named arguments, the result will still accept those same
-arguments, but Nix will only see it as taking some variable `x`. We can work
-around this by generating Nix code which wraps a function in one with named
-arguments, i.e. `withArgs [ "x" "y" ] func` to get the equivalent of
-`{x, y}: func { inherit x y; }`:
+somehow, for example via composition:
 
-```
-with builtins;
-with import <nixpkgs> {};
-with lib;
+```{pipe="sh"}
+UNWRAP=1 FORMAT=1 ./eval 'with rec {
+    func    = { foo, bar }: 42;
 
-args: f:
-  with rec {
-
-    # Build a string "a,b,c" for the arguments "args"
-    arglist = concatStringsSep "," args;
-
-    # Strip any dependencies off our string, so it can be embedded
-    arglistF = unsafeDiscardStringContext arglist;
-
-    # Write an eta-expansion of "f", which accepts the arguments "args"
-    content = "f: args@{${arglistF}}: f args";
-
-    eta = import (toFile "withArgs.nix" content) f;
+    compose = f: g: x: f (g x);
+    id      = arg: arg;
   };
-  eta
+  toJSON {
+        funcArgs = functionArgs func;
+    composedArgs = functionArgs (compose id func);
+  }'
 ```
 
-This lets us give one function some specific named arguments. To give one
-function the same named arguments as another, e.g. `withArgsOf f g`, we can use:
+Even though `compose id func` accepts the same arguments as `func`, Nix will
+only see it as taking some variable `x`. We can work around this by generating
+Nix code for a function with named arguments, whose body calls the function that
+Nix can't inspect:
 
-```
-f: with { fArgs = functionArgs f; };
-   withArgs (filter (n: !fArgs."${n}") (attrNames fArgs))
+```{pipe="cat def_withArgs.nix"}
 ```
 
-For the common case of function composition, we can maintain our named arguments
-by using the following:
+With this, we can recover the inspection capabilities for our composed function,
+such that it'll work with `callPackage` and the like:
 
+```{pipe="sh"}
+./eval 'with rec {
+    func    = { foo, bar }: 42;
+
+    compose = f: g: x: f (g x);
+    id      = arg: arg;
+  };
+  functionArgs (withArgs [ "foo" "bar" ] (compose id func))'
 ```
-f: g: withArgsOf g (args: f (g args))
+
+Of course, specifying the arguments manually is a bit naff; even if we know what
+the arguments are when writing the code, we'll be repeating ourselves and will
+have to keep the list up to date.
+
+Instead, we'd rather work them out automatically. An easy way to do this is to
+get the original function's arguments using `functionArgs`, and use these as the
+arguments for our augmented/derived function:
+
+```{pipe="cat def_withArgsOf.nix"}
+```
+
+For the common case of function composition, we can automatically set the
+result's arguments by using the following:
+
+```{pipe="cat def_compose.nix"}
 ```
 
 ### Multiple Nixpkgs Versions ###
