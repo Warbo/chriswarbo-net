@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Wed, 02 Aug 2017 17:00:58 +0100
-State: new
+State: resolved
 Subject: Links look unclickable
 Message-Id: <9653c73880a839f5-0-artemis@nixos>
+resolution: fixed
 
 Problem with homepage UI: the "Projects" and "Blog" headers don't look
 clickable. How to "fix"? Make them use default link colour (although

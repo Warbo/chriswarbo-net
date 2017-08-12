@@ -1,0 +1,9 @@
+From: Chris Warburton
+Date: Sat, 12 Aug 2017 03:22:45 +0100
+Subject: Re: Links look unclickable
+Message-Id: <9653c73880a839f5-9b75109235f053ad-artemis@nixos>
+References: <9653c73880a839f5-0-artemis@nixos>
+In-Reply-To: <9653c73880a839f5-0-artemis@nixos>
+
+I've decided that the best approach is to put "More..." links in each
+section.

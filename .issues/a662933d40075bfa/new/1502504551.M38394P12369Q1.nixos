@@ -1,0 +1,12 @@
+From: Chris Warburton
+Date: Sat, 12 Aug 2017 03:21:04 +0100
+Subject: Re: Separate off rants
+Message-Id: <a662933d40075bfa-c41d0f80e1da63fe-artemis@nixos>
+References: <a662933d40075bfa-0-artemis@nixos>
+In-Reply-To: <a662933d40075bfa-0-artemis@nixos>
+
+Rants are included in the blog listing, but a snippet of Javascript
+hides them and adds an inobtrusive "Show rants"/"Hide rants" toggle.
+
+This way, the rants are still there by default, and hiding them is an
+"enhancement" due to JS :)
