@@ -117,7 +117,7 @@ toCmds = attrs: map (entry: with {
                               v = escapeShellArg entry.value;
                             };
                             ''
-                              mkdir -p "$(dirname ${n})"
+                              mkdir -p "$(dirname "$out"/${n})"
                               ln -s ${v} "$out"/${n}
                             '')
                     (toPaths "" attrs);
