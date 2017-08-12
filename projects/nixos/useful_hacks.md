@@ -628,6 +628,7 @@ wrap {
 ```
 
 ```{pipe="sh"}
+echo 'print "hello"' > script.py
 UNWRAP=1 PREFIX='toString (' SUFFIX=')' ./eval "$(cat wrapFile.nix)"
 ```
 
