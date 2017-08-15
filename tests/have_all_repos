@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 shopt -s nullglob
 
-echo "FIXME: have_all_repos is disabled" 1>&2
-exit
+REPO_DIR="/home/chris/Programming/repos"
+
+[[ -e "$REPO_DIR" ]] || {
+    echo "Couldn't find repo dir '$REPO_DIR', skipping test" 1>&2
+    exit 0
+}
 
 ERR=0
-for REPO in /home/chris/Programming/repos/*.git
+for REPO in "$REPO_DIR"/*.git
 do
     NAME=$(basename "$REPO" .git)
     if [[ ! -e "rendered/projects/repos/$NAME.html" ]]
