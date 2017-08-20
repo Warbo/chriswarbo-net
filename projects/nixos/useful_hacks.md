@@ -1,5 +1,6 @@
 ---
 title: Useful Nix Hacks
+dependencies: [ 'static/nix/defs.nix' ]
 packages: [ 'jq', 'nix-instantiate', 'nix-shell', 'timeout' ]
 ---
 
@@ -10,6 +11,15 @@ they're useful to anyone else. I'll assume the following stuff is in context:
 with builtins;
 with import <nixpkgs> {};
 with lib;
+```
+
+<!-- Include our custom config -->
+
+```{pipe="cat >> preamble.nix"}
+
+with {
+  inherit ((import ./root/static/nix/defs.nix {}).configuredPkgs) forceBuilds;
+};
 ```
 
 Since some of these things will reference others, let's assume they're all
@@ -242,10 +252,8 @@ export MAX_KB=1000000
 printf '> %s\n\n' "$1"
 
 # We always use these imports, but we don't show them (for brevity)
-PREAMBLE='with builtins;
-          with import <nixpkgs> {};
-          with lib;
-          with import ./result.nix;'
+PREAMBLE=$(cat ./preamble.nix)
+PREAMBLE="$PREAMBLE with import ./result.nix;"
 
 # Evaluate the actual expression: we insert PREFIX and SUFFIX, if given, to
 # allow any required fiddling that we don't want to show; for example, calling
