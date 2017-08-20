@@ -1,6 +1,6 @@
 ---
 title: Tail-recursive Unique
-packages: [ 'nix-instantiate' ]
+packages: [ 'nix-instantiate', 'time' ]
 ---
 
 ## Intro to Nix
@@ -118,15 +118,29 @@ it works!):
 with import <nixpkgs> {};
 with builtins;
 
-length (lib.unique (lib.range 1 10000))
+length (lib.unique (lib.range 1 100))
+```
+
+```{pipe="cat > eval_mem"}
+#!/usr/bin/env bash
+set -e
+
+DATA=$(command time -f 'MEM\t%M' nix-instantiate --show-trace --eval "$1" 2>&1)
+MEM=$(echo "$DATA" | grep '^MEM' | cut -f 2)
+
+[[ -n "$MAXMEM" ]] || MAXMEM=1000
+if [[ "$MEM" -lt "$MAXMEM" ]]
+then
+  echo "Evaluating '$1' should've used more memory!" 1>&2
+  echo "$DATA" 1>&2
+  exit 1
+fi
+exit
 ```
 
 ```{.odd pipe="sh"}
-if nix-instantiate --show-trace --eval big_list.nix 2>&1
-then
-  echo "Evaluating big_list.nix shouldn't have worked!" 1>&2
-  exit 1
-fi
+chmod +x eval_mem
+MAXMEM=1000 ./eval_mem big_list.nix || exit 1
 ```
 
 Uh oh! Not only did we overflow the stack, but [rendering](/projects/activecode)
@@ -375,15 +389,11 @@ try this on our original list-length
 with import <nixpkgs> {};
 with builtins;
 
-length ((import ./unique_acc.nix).unique (lib.range 1 10000))
+length ((import ./unique_acc.nix).unique (lib.range 1 100))
 ```
 
 ```{.odd pipe="sh"}
-if nix-instantiate --show-trace --eval acc_test.nix 2>&1
-then
-  echo "acc_test shouldn't work!" 1>&2
-  exit 1
-fi
+MAXMEM=1000 ./eval_mem acc_test.nix || exit 1
 ```
 
 Oops! Looks like that's not done the job. In this case, the culprit is probably
@@ -410,7 +420,7 @@ let uniq = acc: list:
 with import <nixpkgs> {};
 with builtins;
 
-length ((import ./unique_seq.nix).unique (lib.range 1 10000))
+length ((import ./unique_seq.nix).unique (lib.range 1 100))
 ```
 
 ```{.odd pipe="sh"}
