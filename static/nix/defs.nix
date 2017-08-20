@@ -2,10 +2,9 @@ args:
 
 with builtins;
 with rec {
-  # System's nixpkgs; might not have everything we need. We look for <real> in
-  # case we're being called recursively.
-  origPath = with tryEval <real>; if success then value else <nixpkgs>;
-  orig     = import origPath {};
+  origPath = <nixpkgs>;
+
+  orig = import origPath {};
 
   # We host a bunch of git repos; look up their location from the environment
   repoEnv    = getEnv "GIT_REPO_DIR";

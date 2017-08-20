@@ -5,42 +5,9 @@
 with builtins;
 with lib;
 with rec {
-  NIX_PATH =
-    with rec {
-      inherit (tryEval <real>) success;
-
-      # We need this mirrors.nix file in place if we're to spoof <nixpkgs>
-      wrapped = runCommand "chriswarbo.net-nixpkgs"
-        {
-          custom = ./static/nix;
-          real   = toString <nixpkgs>;
-        }
-        ''
-          # Put our custom nixpkgs in place
-          cp -as "$custom" "$out"
-          chmod +w -R "$out"
-
-          pushd "$out"
-            # Put nixpkgs symlink in place, to resolve names
-            ln -s . nixpkgs
-
-            # Link to real nixpkgs for mirrors.nix
-            ln -s "$real/pkgs" pkgs
-          popd
-        '';
-
-      set = if success
-               then { real = <real>;    nixpkgs = <nixpkgs>;  }
-               else { real = <nixpkgs>; nixpkgs = wrapped; };
-
-    };
-    # toString turns paths into strings as-is, whilst ${..} would add them to
-    # the store which causes issues with relative symlinks and the like.
-    concatStringsSep ":" (attrValues (mapAttrs (n: v: n + "=" + toString v)
-                                               set));
-
   nixVars = {
-    inherit NIX_PATH;
+    CALLING_NIX_RECURSIVELY = "1";
+    NIX_PATH   = getEnv "NIX_PATH";
     NIX_REMOTE = "daemon";
     REPO_REFS  = if getEnv "REPO_REFS" == ""
                     then "{}"
