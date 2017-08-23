@@ -28,7 +28,7 @@ wrapped up in a big `rec {...}` expression.
 <!-- Write each expression individually, as is should appear on the page -->
 
 ```{pipe="cat > def_nixListToBashArray.nix"}
-{ args, name }: rec {
+nixListToBashArray = { args, name }: rec {
   # Store each arg in a separate variable, named numerically
   env = with foldl' (result: arg: {
                       # Increment the count, for the next arg (if any)
@@ -137,7 +137,7 @@ latestGit = { url, ref ? "HEAD" }@args:
 ```
 
 ```{pipe="cat > def_dirsToAttrs.nix"}
-dirsToAttrs = dir: mapAttrs (n: v: if v == "regular"
+dirsToAttrs = dir: mapAttrs (n: v: if v == "regular" || v == "symlink"
                                       then dir + "/${n}"
                                       else dirsToAttrs (dir + "/${n}"))
                             (readDir dir);
@@ -291,8 +291,10 @@ PREAMBLE="$PREAMBLE with import ./result.nix;"
 # Evaluate the actual expression: we insert PREFIX and SUFFIX, if given, to
 # allow any required fiddling that we don't want to show; for example, calling
 # 'toString', or forcing a derivation to be built, etc.
+EXPR="$PREAMBLE $PREFIX $1 $SUFFIX"
+[[ -n "$QUIET" ]] || echo "EVALUATING: ($EXPR)" 1>&2
 RESULT=$(withTimeout nix-instantiate --show-trace --read-write-mode --eval \
-                                     -E "$PREAMBLE $PREFIX $1 $SUFFIX")
+                                     -E "$EXPR")
 
 # Show some debug/progress info when rendering; set QUIET if you want to use the
 # stderr on the page (e.g. using 2>&1 to show real error messages)
@@ -345,29 +347,28 @@ EXPR='with nixListToBashArray {
     name = "myVars";
     args = [ "foo bar" "baz" hello ];
   };
-  runCommand "NLTBA" env (code + "
-    for X in \"${myVars[@]}"
+  runCommand "NLTBA" env '"''
+    \${code}
+    for X in \"''\${myVars[@]}\"
     do
-      echo "X = $X" 1>&2
+      echo \"X = \$X\" 1>&2
     done
-    mkdir "$out"
-  '"''"
+
+    # Force an error to prevent caching (which would bypass the above messages!)
+    exit 1
+  ''"
 
 export PREFIX='forceBuilds [('
 export SUFFIX=')]'
-QUIET=1 ./eval "$EXPR" 2> >(tee >(cat 1>&2))
+QUIET=1 ./eval "$EXPR" 2> >(tee >(cat 1>&2)) || true
 ```
 
-#
-# We will get back an 'env' attrset like this:
-#
-#   { x1 = "bar"; x2 = "baz"; x3 = <derivation...>; }
-#
-# Note that the derivation hasn't been forced; if we append this set to a build
-# environment, it will be treated like any other dependency. We also get a
-# 'code' snippet, which will loop over these distinct variables to construct a
-# single array (in this case, called "x")
+The `code` snippet turns the variables in `env` into a Bash array with the given
+`name` (in this case `myVars`). The loop output shows that the given values are
+preserved, e.g. the string `foo bar` doesn't get split at the whitespace.
 
+Preserving strings like this, in a way which doesn't force them at eval time
+(like e.g. `escapeShellArg`) will be useful in the following utilities too.
 
 ### Importing Directories ###
 
