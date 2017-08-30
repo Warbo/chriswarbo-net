@@ -1,0 +1,14 @@
+From: Chris Warburton
+Date: Wed, 30 Aug 2017 01:14:08 +0100
+State: new
+Subject: "Relativise" pages during their build
+Message-Id: <8fd264ecb9a1db22-0-artemis@nixos>
+
+At the moment we build each page separately, then we "relativise" them
+(fix up their links) as part of building the site. This means we end up
+relativising every page whenever the site changes, which is wasteful.
+
+Instead, we should relativise either as part of the rendering process,
+or else as a wrapper around each rendered page. The site is then a
+collection of these relativised pages, so a change in the site doesn't
+cause a rerun of all the relativisers.

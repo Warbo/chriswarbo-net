@@ -1,0 +1,7 @@
+From: Chris Warburton
+Date: Wed, 30 Aug 2017 01:17:00 +0100
+State: new
+Subject: Fix JS optimisation pages
+Message-Id: <bdb49661031a8fa1-0-artemis@nixos>
+
+The demos don't work
