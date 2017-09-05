@@ -11,5 +11,6 @@ written up a few cool tricks.
  - [Useful Nix hacks](useful_hacks.html)
  - [Continuous Integration](continuous_integration.html)
  - [`nix-shell` shebangs](nix_shell_shebangs.html)
+ - [Scripting with Nix](scripting_with_nix.html)
  - [`nix-eval` for run-time evaluation of Haskell code](nix_eval.html)
  - [Benchmarking arbitrary projects with Nix and asv](asv_benchmarking.html)

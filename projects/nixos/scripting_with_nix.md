@@ -282,7 +282,7 @@ want to target non-Nix users, that can be useful; otherwise, you might want to
 make it clear that it's an internal detail which shouldn't be run as-is (e.g.
 you could put it in a subdirectory called `internal` or `src` or something).
 
-## Coupling
+## I/O
 
 It's also pretty easy to transfer data between the Nix language and the
 processes we're invoking, using `readFile`, `readDir`, `fromJSON` and `toJSON`
