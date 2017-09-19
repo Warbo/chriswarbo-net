@@ -3,7 +3,11 @@ title: Partial Application & Currying in PHP
 ---
 ## History ##
 
-It's been a while since I wrote about [currying] [1] in [Javascript] [2] and I've been meaning to do the same in PHP. I've had a prototype PHP implementation knocking around from the same time as my Javascript one, but I was never happy with it, specifically because it took a function's parameter number explicitly. In other words, whereas in Javascript we can do this:
+It's been a while since I wrote about [currying] [1] in [Javascript] [2] and
+I've been meaning to do the same in PHP. I've had a prototype PHP implementation
+knocking around from the same time as my Javascript one, but I was never happy
+with it, specifically because it took a function's parameter number
+explicitly. In other words, whereas in Javascript we can do this:
 
 [1]: http://en.wikipedia.org/wiki/Currying
 [2]: /blog/2012-10-01-better_currying_in_javascript.html
@@ -19,7 +23,10 @@ In PHP I would have to do this:
 $my_func = $curry(2, function($x, $y) { return $x + $y; });
 ```
 
-Note the explicit `<? 2`{.php}, which tells `<? $curry`{.php} how many parameters to accumulate before calling the function. I've since revisited the code and removed this restriction, as well as implementing a couple of alternatives.
+Note the explicit `<? 2`{.php}, which tells `<? $curry`{.php} how many
+parameters to accumulate before calling the function. I've since revisited the
+code and removed this restriction, as well as implementing a couple of
+alternatives.
 
 ## Context ##
 
@@ -411,7 +418,52 @@ else $ao[$i] = array_insert(
   $path, $val, isset($ao[$i])? $ao[$i] : array());
 ```
 
-We've recovered the original, clunky code :) Now let's use partial application to simplify our pile of `<? $flip`{.php}N functions:
+We've recovered the original, clunky code :)
+
+In particular, notice that if we have a function which takes two arguments, like
+`<? $f = function ($x, $y) { ... }`{.php}, then `papply` lets us give each
+argument in a separate step, e.g.
+
+```php
+<?
+$g = papply($f, $x);
+$g($y)
+```
+
+We can go even further by splitting the `<? papply($f, $x)` call into two
+separate steps as well, using *another* call to `papply`:
+
+```php
+<?
+$h = papply('papply', $f);
+```
+
+The resulting `<? $h`{.php} function will accept one set of arguments (e.g.
+`<? $x`{.php}), then another set of arguments (e.g. `<? $y`{.php}), just as if
+it were defined as
+`function($x) { return function($x) use ($x) { ... }; }`{.php}.
+
+Turning a function with one set of arguments into a function with two sets of
+arguments is really useful, so we can make a generic function to do this
+transformation. How? By using `<? papply`{.php} *again*!
+
+```php
+<?
+$splitArgs = papply('papply', 'papply');
+```
+
+With this general-purpose function, the above simplifies to:
+
+```php
+<?
+$h = $splitArgs($f);
+```
+
+To see why this function is so useful, think back to our proliferation of
+`<? $flip`{.php} functions: the reason we needed so many was because their
+calling conventions differed in exactly the ways that `<? $splitArgs`{.php} can
+convert between. With `<? papply`{.php} and `<? $splitArgs`{.php} in our tool
+box, let's see how if we can simplify the `<? $flip`{.php} functions:
 
 ```php
 <?
@@ -419,29 +471,36 @@ We've recovered the original, clunky code :) Now let's use partial application t
 $flip = function($f, $x, $y) { return $f($y, $x); };
 
 // We can implement the others via simple transformations
-$flip1 = papply('papply', $flip);
+$flip1 = $splitArgs($flip);
 
 $flip2 = $flip;
 
-$flip3 = papply('papply', $flip);
+$flip3 = $flip1;
 
-$flip4 = papply('papply', papply('papply', $flip));
+$flip4 = $splitArgs($flip1);
 
 // This is the only $flip we need for call_user_func($f($y), $x)
 $flip5 = function($f, $x, $y) {
   return call_user_func($f($y), $x);
 };
 
-$flip6 = papply('papply', $flip5);
+$flip6 = $splitArgs($flip5);
 
-$flip7 = papply('papply', papply('papply', $flip5));
+$flip7 = $splitArgs($flip6);
 ```
 
-One of the reasons we still need two forms of `<? $flip`{.php} is because these partially-applied functions are much weaker than proper curried ones which I'll explain further down. On the other hand, their advantage is predictability: each call to `<? papply`{.php} will delay a function call exactly once, which means a single lambda will be generated. This is important in PHP since we don't have [tail-call optimisation] [10], so we always have to worry about overflowing the stack.
+One of the reasons we still need two forms of `<? $flip`{.php} is because these
+partially-applied functions are much weaker than proper curried ones which I'll
+explain further down. On the other hand, their advantage is predictability: each
+call to `<? papply`{.php} will delay a function call exactly once, which means a
+single lambda will be generated. This is important in PHP since we don't
+have [tail-call optimisation] [10], so we always have to worry about overflowing
+the stack.
 
 [10]: http://en.wikipedia.org/wiki/Tail-call_optimisation
 
-Another place where this can be especially useful is in our [array combinators] [11]. For example, we can turn the following:
+Another place where this can be especially useful is in
+our [array combinators] [11]. For example, we can turn the following:
 
 [11]: http://www.giorgiosironi.com/2010/02/stop-writing-foreach-cycles.html
 
@@ -463,7 +522,9 @@ $a = array_map(papply('str_replace', '&', 'and'), $my_array1);
 $b = array_filter($my_array2, papply('preg_match', '/[0-9]+/'));
 ```
 
-This is known as [eta-reduction] [12], and it turns up all over the place in PHP. For example, today I was reading the documentation for [Silex] [13]. Here are some of their examples which can be easily eta-reduced:
+This is known as [eta-reduction] [12], and it turns up all over the place in
+PHP. For example, today I was reading the documentation for [Silex] [13]. Here
+are some of their examples which can be easily eta-reduced:
 
 [12]: http://www.lambda-bound.com/book/lambdacalc/node21.html
 [13]: http://silex.sensiolabs.org/documentation
@@ -507,7 +568,12 @@ papply('readfile', $file)
 
 ## Proper Currying ##
 
-Using `<? papply`{.php} at work prompted me to have another stab at a more general currying function, since I realised I could use [reflection] [14] to overcome the parameter number issue. We can still use the `<? $curry`{.php} function shown near the beginning, with its explicit parameter number, but I've renamed it to `<? $curry_n`{.php} (ie. 'curry N parameters'). The reflective replacement is simply:
+Using `<? papply`{.php} at work prompted me to have another stab at a more
+general currying function, since I realised I could use [reflection] [14] to
+overcome the parameter number issue. We can still use the `<? $curry`{.php}
+function shown near the beginning, with its explicit parameter number, but I've
+renamed it to `<? $curry_n`{.php} (ie. 'curry N parameters'). The reflective
+replacement is simply:
 
 [14]: http://en.wikipedia.org/wiki/Reflection_(computer_programming)
 
