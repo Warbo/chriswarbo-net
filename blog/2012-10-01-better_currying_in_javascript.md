@@ -25,8 +25,11 @@ give a function as many arguments as it was defined to have.
 
 Most implementations of currying will gather as many arguments as possible, then pass them *all* to the non-curried function they wrap, even if it's more than the non-curried function requires. That leads to the above behaviour.
 
-Instead, we should only be passing the required number of arguments; if we're given more than that, we should keep hold of the rest until the non-curried function has returned. We can then pass these extra arguments
-to the return value, under the assumtion that it's a function (if that assumption's wrong, it our caller's fault for giving us too many arguments).
+Instead, we should only be passing the required number of arguments; if we're
+given more than that, we should keep hold of the rest until the non-curried
+function has returned. We can then pass these extra arguments to the return
+value, under the assumption that it's a function (if that assumption's wrong, it
+our caller's fault for giving us too many arguments).
 
 This allows us to use a simple, single set of parentheses as the
 standard interface for what could be quite convoluted stack
