@@ -30,7 +30,10 @@ alternatives.
 
 ## Context ##
 
-Suppose we want to do a bunch of processing to a value. One way we might do it is imperatively, like this:
+### Code Smells, DRY and Expressions ###
+
+Suppose we want to do a bunch of processing to a value. One way we might do it
+is imperatively, like this:
 
 ```php
 <?
@@ -44,34 +47,43 @@ $val8 = $function7($val7);
 return  $function8($val7);
 ```
 
-This is clearly a mess, since we've got all kinds of intermediate results hanging around. There are a few ways we could change this. First of all, let's put our functions in an array so they're easier to deal with:
+This is clearly a mess, since there's a very repetitive structure and we've got
+all kinds of intermediate results hanging around. It does the job, but this sort
+of redundancy and bloat can make larger, more complicated projects balloon in
+size and become difficult to understand.
+
+There are a few ways we could improve this. For example, we might loop over the
+functions:
 
 ```php
 <?
-$functions = [$function1, $function2, $function3, $function4,
-              $function5, $function6, $function7, $function8];
-```
-
-That's starting to look much cleaner, but now we need to chain them together. One way we can do this is with a loop:
-
-```php
-<?
-foreach ($functions as $function) {
+foreach ([$function1, $function2, $function3, $function4,
+          $function5, $function6, $function7, $function8] as $function) {
   $val = $function($val);
 }
 return $val;
 ```
 
-The problem with this approach is that we're clobbering the contents of `<? $val`{.php}. Of course, we could introduce an extra variable like `<? $val2`{.php} but then we're creeping back to the mess we started with.
+That's much cleaner, but now we're clobbering the contents of `<? $val`{.php}.
+We're trying to *calculate a value*, but we're using *statements* to do it.
+Statements are PHP's way of sequencing side-effects (like variable assignment),
+but we should be keeping side-effects to a minimum if we want our code to be
+easy to understand and reusable. To calculate values we should instead use
+*expressions*.
 
-The root cause of our problems is that we're trying to calculate a value, ie. an *expression*, but we're using *statements* to do it. Statements are PHP's way of sequencing side-effects (eg. variable assignment), but we should be keeping side-effects to a minimum if we want our code to be easy to understand and reusable.
-
-We can easily turn a loop statement into an expression by asking what it is the loop is doing. In this case, we're using the loop to turn a collection of values (`<? $functions`{.php}) into a single value (the result of sending `<? $val`{.php} through them). This is known as a *fold* or a *reduction*, so we can use PHP's [`array_reduce`] [3] function:
+We can easily turn a loop statement into an expression by asking what it is the
+loop is doing. In this case, we're using the loop to turn a collection of values
+(the array of functions) into a single value (the result of sending
+`<? $val`{.php} through them). This is known as a *fold* or a *reduction*, so we
+can use PHP's [`array_reduce`] [3] function:
 
 [3]: http://uk1.php.net/array_reduce
 
 ```php
 <?
+$functions = [$function1, $function2, $function3, $function4,
+              $function5, $function6, $function7, $function8];
+
 return array_reduce($functions,
                     function($result, $function) {
                       return $function($result);
@@ -79,7 +91,11 @@ return array_reduce($functions,
                     $val);
 ```
 
-Here we've managed to get rid of most statements, but we've had to write a whole new function for something which seems pretty basic: passing a value into a function. This is pretty ugly, but at least if we pull out this function definition we won't have to do it again:
+Here we've managed to get rid of most statements, but we've had to write a whole
+new function (the second argument to `<? array_reduce`{.php}) for something
+which seems pretty basic: passing a value into a function. At least if we pull
+out this function definition, we won't have to redefine such a simple thing ever
+again:
 
 ```php
 <?
@@ -88,7 +104,12 @@ $pass_into = function($x, $f) { return $f($x); }
 return array_reduce($functions, $pass_into, $val);
 ```
 
-In fact PHP does have a function very similar to `<? $pass_into`{.php}, known as [call_user_func] [4]. Unfortunately it takes its arguments the other way around:
+That `<? array_reduce`{.php} now looks nice and simple, and we've gained a
+reusable library function in the process.
+
+In fact PHP does have a function very similar to `<? $pass_into`{.php}, known as
+[`call_user_func`] [4]. Unfortunately it takes its arguments the other way
+around:
 
 [4]: http://php.net/manual/en/function.call-user-func.php
 
@@ -99,7 +120,9 @@ $pass_into = function($x, $f) { return call_user_func($f, $x); }
 return array_reduce($functions, $pass_into, $val);
 ```
 
-Since we always want our code to be as generic as possible, we're actually better off abstracting `<? $pass_into`{.php} into a more general-purpose argument-flipping function:
+Since we always want our code to be as generic as possible, we're actually
+better off abstracting `<? $pass_into`{.php} into a more general-purpose
+argument-flipping function, giving the final result of:
 
 ```php
 <?
@@ -107,10 +130,23 @@ $flip1 = function($f) {
   return function($x, $y) use ($f) { return $f($y, $x); };
 };
 
+$functions = [$function1, $function2, $function3, $function4,
+              $function5, $function6, $function7, $function8];
+
 return array_reduce($functions, $flip1('call_user_func'), $val);
 ```
 
-Notice that our 'flip' function has a special structure: we accept one argument `<? $f`{.php}, then we return a function which accepts another two arguments `<? $x`{.php} and `<? $y`{.php}, before finally calling `<? $f`{.php} with `<? $y`{.php} and `<? $x`{.php}. Why didn't we use any of the following definitions?
+Where `<? $flip1`{.php} is a general function which can be put into a library
+for reuse elsewhere.
+
+### Flipping Awkwardness ###
+
+Notice that our 'flip' function has a special structure: we accept one argument
+`<? $f`{.php}, then we return a function which accepts another *two* arguments
+`<? $x`{.php} and `<? $y`{.php}, before finally calling `<? $f`{.php} with
+`<? $y`{.php} and `<? $x`{.php}.
+
+Why didn't we use any of the following definitions instead?
 
 ```php
 <?
@@ -132,48 +168,18 @@ $flip4 = function($f) {
 // etc.
 ```
 
-If turns out that our definition of `<? $flip1`{.php} coincides exactly with the way `array_reduce` handles its arguments, but the other `<? $flip`{.php}N functions don't. However, there's nothing *inherently* wrong with any of the `<? $flip`{.php}N functions, they may be perfectly appropriate in different circumstances.
+It turns out that our definition of `<? $flip1`{.php} coincides exactly with the
+way `array_reduce` handles its arguments, but the other `<? $flip`{.php}
+functions don't. However, there's nothing *inherently* wrong with any of those
+other definitions; they may be perfectly appropriate in different circumstances.
 
-So, should we keep all of them just in case? Well if we do, we will need to consider *even more* cases: notice that in all of the definitions above we are getting our result by calling `<? $f($y, $x)`{.php}, but what if `<? $f`{.php} doesn't take both of its arguments at once? That may sound unlikely, but notice that it's exactly what some of our `<? $flip`{.php}N functions do! For example:
-
-```php
-<?
-call_user_func($flip1($flip4('array_map')),
-               'intval', ['0', '1', '2']);
-```
-
-This (admittedly contrived) code *looks like* it will flip the arguments to [`<? array_map`{.php}] [5], then flip them back and act like the original array_map. However, it will actually give the following:
-
-[5]: http://uk1.php.net/manual/en/function.array-map.php
-
-```php
-<?
-class Closure#9 (2) {
-  public $static =>
-  array(2) {
-    'f' =>
-    string(9) "array_map"
-    'x' =>
-    array(3) {
-      [0] =>
-      string(1) "0"
-      [1] =>
-      string(1) "1"
-      [2] =>
-      string(1) "2"
-    }
-  }
-  public $parameter =>
-  array(1) {
-    '$y' =>
-    string(10) "<required>"
-  }
-}
-```
-
-This is the inner function of `<? $flip4`{.php}. Since we passed *both* arguments to `<? $flip4('array_map')`{.php} at the same time, they were *both* given to the inner function `<? function($x) use ($f) { ... }`{.php}, ie. the first argument was kept (and bound to `<? $x`{.php}) but the second was silently ignored.
-
-How can we handle such cases? Well, we need *even more* `<? $flip`{.php}N functions to handle all of these possible calling conventions:
+So, should we keep all of them just in case? Well if we do, we will need to
+consider *even more* cases: notice that in all of the definitions above we are
+getting our result by calling `<? $f($y, $x)`{.php}, but what if `<? $f`{.php}
+doesn't take both of its arguments at once? In particular, many of these
+`<? $flip`{.php} functions don't take their arguments all at once, so we need
+*even more* `<? $flip`{.php} functions to handle all of these possible calling
+conventions:
 
 ```php
 <?
@@ -198,11 +204,17 @@ $flip7 = function($f) {
 // etc.
 ```
 
-Clearly we're going too far down a rabbit hole here. How about we step back and consider a different solution, rather than writing more and more code?
+Clearly we're going too far down a rabbit hole here. How about we step back and
+consider a different solution, rather than writing more and more code to try and
+cover every possibility?
 
 ## Partial Application ##
 
-We'll start with a simple, but rather weak, solution: partial application. Recently at work I wrote a helper function to recursively insert a value at a given location in an array/object, something like the following:
+### Real-World Example ###
+
+We'll start with a simple, but rather weak, solution: partial
+application. Recently at work I wrote a helper function to recursively insert a
+value at a given location in an array/object, something like the following:
 
 ```php
 <?
@@ -239,7 +251,10 @@ function array_insert($path, $val, $ao = array()) {
 }
 ```
 
-Clearly there is redundancy here, since the if/else branches *both* call `<? array_insert`{.php} with `<? $path`{.php} and `<? $val`{.php}. This violates [DRY] [6] (Don't Repeat Yourself), but it's difficult to see how we could remove the redundancy since it's a recursive call.
+Clearly there is redundancy here, since the if/else branches *both* call
+`<? array_insert`{.php} with `<? $path`{.php} and `<? $val`{.php}. This
+violates [DRY] [6] (Don't Repeat Yourself), but it's difficult to see how we
+could remove the redundancy since it's a recursive call.
 
 [6]: http://en.wikipedia.org/wiki/Don%27t_repeat_yourself
 
@@ -273,18 +288,25 @@ function papply() {
 }
 ```
 
-`<? papply`{.php} will accept any number of arguments, since it uses [`<? func_get_args`{.php}] [7], then it returns a function also accepting any number of arguments. These two argument arrays are merged together and sent to `<? call_user_func`{.php}.
+`<? papply`{.php} will accept any number of arguments, since it
+uses [`<? func_get_args`{.php}] [7], then it returns a function also accepting
+any number of arguments. These two argument arrays are merged together and sent
+to `<? call_user_func`{.php}.
 
 [7]: http://uk3.php.net/func_get_args
 
-Here's a trivial example:
+### Detailed Example ###
+
+Here's a trivial example of using `<? papply`{.php}:
 
 ```php
 <?
 $replace_amps = papply('str_replace', '&', 'and');
 ```
 
-The resulting closure, in this case `<? $replace_amps`{.php}, has access to all of the arguments we gave, in this case `<? str_replace`{.php}, `<? '&'`{.php} and `<? 'and'`{.php}.
+The resulting closure, in this case called `<? $replace_amps`{.php}, has access
+to all of the arguments we gave, in this case `<? 'str_replace'`{.php},
+`<? '&'`{.php} and `<? 'and'`{.php}.
 
 Now we can pass some more arguments to this closure:
 
@@ -293,7 +315,12 @@ Now we can pass some more arguments to this closure:
 $my_string2 = $replace_amps($my_string1);
 ```
 
-In this example, the merged arguments will be `<? ['str_replace', '&', 'and', $my_string1]`{.php}. The closure uses [`<? call_user_func_array`{.php}] [8] to pass these as the arguments to another function (a process known as [uncurrying] [9]). It just-so-happens to pass them all to `<? call_user_func`{.php}, which performs a regular function call. Let's step through its execution:
+In this example, the merged arguments will be
+`<? ['str_replace', '&', 'and', $my_string1]`{.php}. The closure uses
+[`<? call_user_func_array`{.php}] [8] to pass these as the arguments to another
+function (a process known as [uncurrying] [9]). It just-so-happens to pass them
+all to `<? call_user_func`{.php}, which performs a regular function call. Let's
+step through its execution:
 
 [8]: http://uk3.php.net/manual/en/function.call-user-func-array.php
 [9]: http://www.haskell.org/hoogle/?hoogle=uncurry
@@ -348,9 +375,12 @@ $my_string2 = call_user_func(
 $my_string2 = str_replace('&', 'and', $my_string1);
 ```
 
-As you can see, the first argument we gave to papply (`<? str_replace`{.php}) will be called with the remaining arguments (`<? '&'`{.php}, `<? 'and'`{.php}) **and** the arguments we gave to the resulting closure (`<? $mystring1`{.php}).
+As you can see, the first argument we gave to papply (`<? 'str_replace'`{.php})
+will be called with the remaining arguments (`<? '&'`{.php}, `<? 'and'`{.php})
+**and** the arguments we gave to the resulting closure (`<? $mystring1`{.php}).
 
-The same thing happens to the recursive calls in `<? array_insert`{.php}:
+If we step through the evaluation of `<? array_insert`{.php}, we see the same
+thing happening:
 
 ```php
 <?
@@ -420,18 +450,20 @@ else $ao[$i] = array_insert(
 
 We've recovered the original, clunky code :)
 
+### Calling Conventions and Partial Application ###
+
 In particular, notice that if we have a function which takes two arguments, like
-`<? $f = function ($x, $y) { ... }`{.php}, then `papply` lets us give each
-argument in a separate step, e.g.
+`<? $f = function ($x, $y) { ... }`{.php}, then `<? papply`{.php} lets us give
+each argument in a separate step, e.g.
 
 ```php
 <?
 $g = papply($f, $x);
-$g($y)
+$g($y);
 ```
 
-We can go even further by splitting the `<? papply($f, $x)` call into two
-separate steps as well, using *another* call to `papply`:
+We can go even further by splitting the `<? papply($f, $x)`{.php} call into two
+separate steps as well, using *another* call to `<? papply`{.php}:
 
 ```php
 <?
@@ -441,7 +473,7 @@ $h = papply('papply', $f);
 The resulting `<? $h`{.php} function will accept one set of arguments (e.g.
 `<? $x`{.php}), then another set of arguments (e.g. `<? $y`{.php}), just as if
 it were defined as
-`function($x) { return function($x) use ($x) { ... }; }`{.php}.
+`<? function($x) { return function($y) use ($x) { ... }; }`{.php}.
 
 Turning a function with one set of arguments into a function with two sets of
 arguments is really useful, so we can make a generic function to do this
@@ -459,11 +491,13 @@ With this general-purpose function, the above simplifies to:
 $h = $splitArgs($f);
 ```
 
+### Simple Flipping ###
+
 To see why this function is so useful, think back to our proliferation of
 `<? $flip`{.php} functions: the reason we needed so many was because their
 calling conventions differed in exactly the ways that `<? $splitArgs`{.php} can
 convert between. With `<? papply`{.php} and `<? $splitArgs`{.php} in our tool
-box, let's see how if we can simplify the `<? $flip`{.php} functions:
+box, we can massively simplify the `<? $flip`{.php} functions:
 
 ```php
 <?
@@ -471,6 +505,7 @@ box, let's see how if we can simplify the `<? $flip`{.php} functions:
 $flip = function($f, $x, $y) { return $f($y, $x); };
 
 // We can implement the others via simple transformations
+
 $flip1 = $splitArgs($flip);
 
 $flip2 = $flip;
@@ -484,16 +519,20 @@ $flip5 = function($f, $x, $y) {
   return call_user_func($f($y), $x);
 };
 
+// The others are simple transformations
+
 $flip6 = $splitArgs($flip5);
 
 $flip7 = $splitArgs($flip6);
 ```
 
+### Advantages of Partial Application ###
+
 One of the reasons we still need two forms of `<? $flip`{.php} is because these
 partially-applied functions are much weaker than proper curried ones which I'll
 explain further down. On the other hand, their advantage is predictability: each
 call to `<? papply`{.php} will delay a function call exactly once, which means a
-single lambda will be generated. This is important in PHP since we don't
+single closure will be generated. This is important in PHP since we don't
 have [tail-call optimisation] [10], so we always have to worry about overflowing
 the stack.
 
@@ -585,9 +624,13 @@ $curry = $curry_n(1, function($f) use ($curry_n) {
 });
 ```
 
-The `<? $curry`{.php} function will take a function `<? $f`{.php} and pass it to `<? $curry_n`{.php}, looking up the parameter number via reflection. Even though the `<? $curry`{.php} function only takes 1 parameter, we also curry it for reasons explained in the **Returning Functions** section.
+The `<? $curry`{.php} function will take a function `<? $f`{.php} and pass it to
+`<? $curry_n`{.php}, looking up the parameter number via reflection. Even though
+the `<? $curry`{.php} function only takes 1 parameter, we also curry it for
+reasons explained in the **Returning Functions** section below.
 
-"So what is the definition of `<? $curry_n`{.php}?" I hear you cry. Here it is:
+As for the definition of `<? $curry_n`{.php}, it's unfortunately a little
+complicated:
 
 ```php
 <?
@@ -620,13 +663,19 @@ $curry_n = call_user_func(function() {
 });
 ```
 
-## Motivation ##
+### Motivation ###
 
-So what does currying get us, compared to not currying (I'll ignore partial application until the **Partial Application vs Currying** section)? It removes the arbitrary distinction PHP makes between functions with 'different numbers of arguments'. As well as all the different `<? $flip`{.php} functions above, PHP will distinguish between functions like these three:
+So what does currying get us, compared to not currying? (I'll ignore partial
+application until the **Partial Application vs Currying** section) Currying
+removes the arbitrary distinction PHP makes between functions with 'different
+numbers of arguments'.
+
+Like with the different `<? $flip`{.php} functions above, PHP will distinguish
+between functions like these three:
 
 ```php
 <?
-$foo1  = 'foo';
+$foo1 = 'foo';
 
 $foo2 = function($x, $y) {
           return foo($x, $y);
@@ -639,30 +688,67 @@ $foo3 = function($x) {
         };
 ```
 
-These all call the `<? foo`{.php} function, but they differ in how they take their arguments:
+These all call the `<? foo`{.php} function, but they differ in how they take
+their arguments:
 
- - `<? $foo1`{.php} will accept any number of arguments and pass them all to `<? foo`{.php}
- - `<? $foo2`{.php} will accept any number of arguments and pass the first two to `<? foo`{.php}
- - `<? $foo3`{.php} will accept any number of arguments but keep only the first; it returns a function which likewise accepts any number of arguments and only keeps the first. The two arguments that were kept are passed to `<? foo`{.php}
+ - `<? $foo1`{.php} will accept any number of arguments and pass them all to
+   `<? foo`{.php}
+ - `<? $foo2`{.php} will accept any number of arguments and pass the first two
+   to `<? foo`{.php}
+ - `<? $foo3`{.php} will accept any number of arguments but keep only the first;
+   it returns a function which likewise accepts any number of arguments and only
+   keeps the first. The two arguments that were kept are passed to
+   `<? foo`{.php}
 
-I discuss `<? $foo1`{.php} in the **Taking All The Arguments** section; for now let's compare `<? $foo2`{.php} with `<? $foo3`{.php}. The first thing to spot is that we can replace every occurrence of `<? $foo2($a, $b)`{.php} with a call to `<? call_user_func($foo3($a), $b)`{.php} but we *cannot* replace occurrences of `<? $foo3`{.php} using `<? $foo2`{.php}, unless we create a wrapper equivalent to `<? $foo3`{.php} (this is what `<? papply`{.php} would do, for example). Hence, out of these two options, we should always prefer to use `<? $foo3`{.php}.
+I discuss `<? $foo1`{.php} in the **Taking All The Arguments** section; for now
+let's compare `<? $foo2`{.php} with `<? $foo3`{.php}.
+
+The first thing to spot is that we can replace every occurrence of
+`<? $foo2($a, $b)`{.php} with `<? call_user_func($foo3($a), $b)`{.php}, yet we
+*cannot* replace occurrences of `<? $foo3`{.php} using `<? $foo2`{.php}. We need
+some sort of wrapper, but that's exactly what `<? $foo3`{.php} already is!
+
+Hence out of these two options, we should always prefer to use `<? $foo3`{.php},
+since we can easily transform it into `<? $foo2`{.php} if needed.
 
 Unfortunately, functions like `<? $foo3`{.php} cause a few problems:
- 1) The amount of boilerplate is greatly increased, since every abstraction must be delimited with the `<? function`{.php} and `<? return`{.php} keywords and we must explicitly list all of our free variables with `<? use`{.php}.
- 2) Applying several abstractions at the same time is painful, since PHP's lexer doesn't accept chained function calls, ie. `<? $foo3(10)(20)`{.php}, which forces us to reify each application with `<? call_user_func`{.php}.
- 3) There are pretty much no PHP libraries/frameworks/etc. which do this, so we would be forced to switch back and forth between each convention.
 
-These problems would all be solvable if PHP had some kind of abstraction mechanism to encapsulate duplicate code in a reusable component. Thankfully it does, they're called functions! In fact *the `<? $curry`{.php} and `<? $curry_n`{.php} functions defined above solve all of these problems!*
+ 1) The amount of boilerplate is greatly increased, since every abstraction must
+    be delimited with the `<? function`{.php} and `<? return`{.php} keywords and
+    we must explicitly list all of our free variables with `<? use`{.php}.
+ 2) Applying several abstractions at the same time is painful, since PHP's lexer
+    doesn't accept chained function calls, ie. `<? $foo3(10)(20)`{.php}, which
+    forces us to reify each application with `<? call_user_func`{.php}.
+ 3) There are pretty much no PHP libraries/frameworks/etc. which do this, so we
+    would be forced to switch back and forth between each convention.
 
-## `<? $curry`{.php} ##
+These problems would all be solvable if PHP had some kind of abstraction
+mechanism to encapsulate duplicate code in a reusable component. Thankfully it
+does, they're called functions! In fact *the `<? $curry`{.php} and
+`<? $curry_n`{.php} functions defined above solve all of these problems!*
 
-The `<? $curry`{.php} function converts an uncurried function like `<? $foo2`{.php} into a curried form like `<? $foo3`{.php}. This solves half of problem (3), since it lets us curry existing libraries and frameworks whenever we like.
+### `<? $curry`{.php} ###
 
-Rather than accepting one argument at a time, like `<? $foo3`{.php}, using `<? $curry`{.php} and `<? $curry_n`{.php} actually lets us give *any* number of arguments at a time, including all of them at once. In other words, we can still use PHP's regular calling convention `<? $blah($x, $y, $z)`{.php} for curried functions. This solves problem (2) since we don't need to use `<? call_user_func`{.php} to supply extra arguments, and it also solves the remaining half of problem (3) since existing libraries and frameworks will work perfectly well if we give them curried functions.
+The `<? $curry`{.php} function converts an uncurried function like
+`<? $foo2`{.php} into a curried form like `<? $foo3`{.php}. This solves half of
+problem (3), since it lets us curry existing libraries and frameworks whenever
+we like.
 
-What's more, the `<? $curry`{.php} and `<? $curry_n`{.php} functions allow us to write our own functions in an *non-curried* style (avoiding problem (1)), which we can then pass through `<? $curry`{.php} to get the behaviour we want.
+Rather than accepting one argument at a time, like `<? $foo3`{.php}, using
+`<? $curry`{.php} and `<? $curry_n`{.php} actually lets us give *any* number of
+arguments at a time, including all of them at once. In other words, we can still
+use PHP's regular calling convention `<? $blah($x, $y, $z)`{.php} for curried
+functions. This solves problem (2) since we don't need to use
+`<? call_user_func`{.php} to supply extra arguments, and it also solves the
+remaining half of problem (3) since existing libraries and frameworks will work
+perfectly well if we give them curried functions.
 
-For example, let's say we need some arithmetic functions. PHP doesn't have any of the basic functions, so we need to write our own:
+What's more, the `<? $curry`{.php} and `<? $curry_n`{.php} functions allow us to
+write our own functions in an *non-curried* style (avoiding problem (1)), which
+we can then pass through `<? $curry`{.php} to get the behaviour we want.
+
+For example, let's say we need some arithmetic functions. PHP doesn't have any
+of the basic functions, so we need to write our own:
 
 ```php
 <?
@@ -675,7 +761,10 @@ list($sum, $product, $subtract, $divide) = $curry_all([
   function($x, $y) { return $x / $y; }]);
 ```
 
-These definitions are non-curried, like `<? $foo2`{.php}, since they take two arguments and don't have any inner functions, but by passing them through `<? $curry`{.php} we've curried them to behave like `<? $foo3`{.php}, accumulating arguments until they have two. For example:
+These definitions are non-curried, like `<? $foo2`{.php}, since they take two
+arguments and don't have any inner functions, but by passing them through
+`<? $curry`{.php} we've curried them to behave like `<? $foo3`{.php},
+accumulating arguments until they have two. For example:
 
 ```php
 <?
@@ -710,28 +799,57 @@ $subtract(10, 3 ) === 7;
 $divide  (10, 2 ) === 5;
 ```
 
-What the `<? $curry`{.php} function does, as mentioned above, is pass its first argument to `<? $curry_n`{.php} along with its number of named parameters (ie. explicit arguments). It turns out we don't always want to use this number, since many PHP functions use more (via `<? func_get_args`{.php}) or fewer (via default values). In these cases we can call `<? $curry_n`{.php} directly.
+What the `<? $curry`{.php} function does, as mentioned above, is pass its first
+argument to `<? $curry_n`{.php} along with its number of named parameters
+(ie. explicit arguments). It turns out we don't always want to use this number,
+since many PHP functions use more (via `<? func_get_args`{.php}) or fewer (via
+default values). In these cases we can call `<? $curry_n`{.php} directly.
 
-## `<? $curry_n`{.php} ##
+### `<? $curry_n`{.php} ###
 
-The `<? $curry_n`{.php} function is the heart of the `<? $curry`{.php} function but can also be used standalone. It accepts a number `<? $n`{.php} and a function `<? $f`{.php} which it encapsulates in a closure, along with array `<? $args`{.php} of arguments which is initially empty. These closures are "acceptors" which only exist to accept arguments.
+The `<? $curry_n`{.php} function is the heart of the `<? $curry`{.php} function
+but can also be used standalone. It accepts a number `<? $n`{.php} and a
+function `<? $f`{.php} which it encapsulates in a closure, along with array `<?
+$args`{.php} of arguments which is initially empty. These closures are
+"acceptors" which only exist to accept arguments.
 
-If we ever call an acceptor, we will receive back another acceptor encapsulating the same `<? $n`{.php} and `<? $f`{.php}, but its `<? $args`{.php} array will *also* have all of the arguments we passed in (if any) pushed on to the end. Note that the original acceptor is *not affected in any way*; the extra arguments are only stored in the *new* acceptor we received back.
+If we ever call an acceptor, we will receive back another acceptor encapsulating
+the same `<? $n`{.php} and `<? $f`{.php}, but its `<? $args`{.php} array will
+*also* have all of the arguments we passed in (if any) pushed on to the
+end. Note that the original acceptor is *not affected in any way*; the extra
+arguments are only stored in the *new* acceptor we received back.
 
-This new acceptor will behave exactly like the first, except for the extra elements in its `<? $args`{.php} array. If we pass it some more arguments, we get back another *new* acceptor which has those arguments pushed on to the end of *its own* `<? $args`{.php} array, and so on.
+This new acceptor will behave exactly like the first, except for the extra
+elements in its `<? $args`{.php} array. If we pass it some more arguments, we
+get back another *new* acceptor which has those arguments pushed on to the end
+of *its own* `<? $args`{.php} array, and so on.
 
-We can keep calling these acceptors as many times as we like, in any order, passing in any amount of arguments we like. When any of the acceptors manage to accumulate `<? $n`{.php} arguments, those arguments will be sent to the function `<? $f`{.php} and the result will be returned (instead of a new acceptor).
+We can keep calling these acceptors as many times as we like, in any order,
+passing in any amount of arguments we like. When any of the acceptors manage to
+accumulate `<? $n`{.php} arguments, those arguments will be sent to the function
+`<? $f`{.php} and the result will be returned (instead of a new acceptor).
 
-Whenever `<? $f`{.php} is called, *nothing about any of the acceptors changes*. We can carry on calling them in any order with any number of arguments, just like before.
+Whenever `<? $f`{.php} is called, *nothing about any of the acceptors
+changes*. We can carry on calling them in any order with any number of
+arguments, just like before.
 
-A couple of reasons why we might want to use `<? $curry_n`{.php} instead of `<? $curry`{.php} are:
+A couple of reasons why we might want to use `<? $curry_n`{.php} instead of
+`<? $curry`{.php} are:
 
- - We want to use some of `<? $f`{.php}'s default parameters, but `<? $curry`{.php} makes us provide a value for each one ourselves. In this case, we can use `<? $curry_n`{.php} with the number of parameters we actually want to supply.
- - `<? $f`{.php} uses `<? func_get_args`{.php} to look up a variable number of arguments, so it may not have any named parameters at all. Again, we can use `<? $curry_n`{.php} to tell it how many parameters we want to supply.
+ - We want to use some of `<? $f`{.php}'s default parameters, but
+   `<? $curry`{.php} makes us provide a value for each one ourselves. In this
+   case, we can use `<? $curry_n`{.php} with the number of parameters we
+   actually want to supply.
+ - `<? $f`{.php} uses `<? func_get_args`{.php} to look up a variable number of
+   arguments, so it may not have any named parameters at all. Again, we can use
+   `<? $curry_n`{.php} to tell it how many parameters we want to supply.
 
-If we didn't use `<? $curry_n`{.php} for these cases, we would either end up calling our function without enough parameters, or else we would get back another acceptor when we expect a result.
+If we didn't use `<? $curry_n`{.php} for these cases, we would either end up
+calling our function without enough parameters, or else we would get back
+another acceptor when we expect a result.
 
-Here's an example of `<? $curry_n`{.php}, where we want to implode `<? $n`{.php} strings:
+Here's an example of `<? $curry_n`{.php}, where we want to implode `<? $n`{.php}
+strings:
 
 ```php
 <?
@@ -786,29 +904,39 @@ zero one two three four five six seven eight nine
 zero one two three four five six seven eight nine
 ```
 
-Since the `<? $space_maker`{.php} function is curried, we're free to call it however we like and as long as it eventually gets enough arguments (10 in this case) it will produce the imploded result.
+Since the `<? $space_maker`{.php} function is curried, we're free to call it
+however we like and as long as it eventually gets enough arguments (10 in this
+case) it will produce the imploded result.
 
-## Partial Application vs Currying ##
+### Partial Application vs Currying ###
 
 Currying is very similar to partial application shown above:
 
  - Both will delay the evaluation of a function
  - Both will work with regular, uncurried functions
  - Both are idempotent
- - If we don't specify any extra arguments when we curry or partially-apply a function, the resulting closure will behave the same as the original function (although reflection will show them to differ).
+ - If we don't specify any extra arguments when we curry or partially-apply a
+   function, the resulting closure will behave the same as the original function
+   (although reflection will show them to differ).
 
 However, currying is strictly more powerful:
 
- - A partially applied function lets us specify some arguments now and the rest later, whereas a curried function will keep accepting batches of arguments again and again until it reaches its threshold $n.
- - If we don't specify any extra arguments when we curry a function, we can *still* pass it batches of arguments.
+ - A partially applied function lets us specify some arguments now and the rest
+   later, whereas a curried function will keep accepting batches of arguments
+   again and again until it reaches its threshold $n.
+ - If we don't specify any extra arguments when we curry a function, we can
+   *still* pass it batches of arguments.
  - The above makes it convenient to *curry all functions as they're defined*.
- - A curried function *cannot be given an invalid number of arguments* (although you may give it an *incorrect* number of arguments)
+ - A curried function *cannot be given an invalid number of arguments* (although
+   you may give it an *incorrect* number of arguments)
 
-There is one more trick to currying compared to partial application, and that's what happens when we give *too many* arguments.
+There is one more trick to currying compared to partial application, and that's
+what happens when we give *too many* arguments.
 
-## Returning Functions ##
+### Returning Functions ###
 
-So far we've seen that `<? $curry`{.php} and `<? $curry_n`{.php} can automatically turn a function like this:
+So far we've seen that `<? $curry`{.php} and `<? $curry_n`{.php} can
+automatically turn a function like this:
 
 ```php
 <?
@@ -824,9 +952,12 @@ $bar2 = function($x) {
         };
 ```
 
-However *it converts the other way too*! Our curried functions are much more powerful than `<? $bar1`{.php} or `<? $bar2`{.php}, since they let us use PHP's regular calling convention `<? $blah($x, $y)`{.php} on **both**.
+However *it converts the other way too*! Our curried functions are much more
+powerful than `<? $bar1`{.php} or `<? $bar2`{.php}, since they let us use PHP's
+regular calling convention `<? $blah($x, $y)`{.php} on **both**.
 
-Specifically **if your curried function returns another function, it will be all be treated as one**. Here's an example:
+Specifically **if your curried function returns another function, it will all be
+treated as one**. Here's an example:
 
 ```php
 <?
@@ -848,15 +979,31 @@ $output_if_both_positive(10, -4);
 $output_if_both_positive(10, 20, 'hello', 'world');
 ```
 
-Note that this will work *even if the returned function is not curried*, since it will be passed *all* remaining arguments. However, it is especially useful when your returned functions *are* curried, because in that case they will only take as many arguments as they need and will pass the rest on to the *next* returned function.
+Note that this will work *even if the returned function is not curried*, since
+it will be passed *all* remaining arguments. However, it is especially useful
+when your returned functions *are* curried, because in that case they will only
+take as many arguments as they need and will pass the rest on to the *next*
+returned function.
 
-This makes our life an awful lot simpler, since we no longer need to care about using `<? call_user_func`{.php}, remembering which parameters need to go to which function, etc. We just need to curry all of our functions when we define them, then throw all of our arguments to the first function we call and it will send them all to the right place. This is another reason why it's important to set the right number of parameters, eg. via `<? $curry_n`{.php}; if we don't, our acceptors won't know which arguments should be sent to their encapsulated function `<? $f`{.php} and which should be sent to its return value.
+This makes our life an awful lot simpler, since we no longer need to care about
+using `<? call_user_func`{.php}, remembering which parameters need to go to
+which function, etc. We just need to curry all of our functions when we define
+them, then throw all of our arguments to the first function we call and it will
+send them all to the right place. This is another reason why it's important to
+set the right number of parameters, eg. via `<? $curry_n`{.php}; if we don't,
+our acceptors won't know which arguments should be sent to their encapsulated
+function `<? $f`{.php} and which should be sent to its return value.
 
-## Taking All The Arguments ##
+### Taking All The Arguments ###
 
-There is one unanswered question: how do we implement `<? $foo1`{.php} if all of our functions are curried? Specifically, how do we accept *all* subsequent arguments?
+There is one unanswered question: how do we implement `<? $foo1`{.php} if all of
+our functions are curried? Specifically, how do we accept *all* subsequent
+arguments?
 
-This sounds tricky, but it's actually very simple. As far as functions like `<? $foo1`{.php} are concerned, only the first batch of arguments matters, since `<? $foo1`{.php} is not curried so it can't accept any more batches. Of course, `<? foo`{.php} could be curried, but then there would be no problem ;)
+This sounds tricky, but it's actually very simple. As far as functions like
+`<? $foo1`{.php} are concerned, only the first batch of arguments matters, since
+`<? $foo1`{.php} is not curried so it can't accept any more batches. Of course,
+`<? foo`{.php} could be curried, but then there would be no problem ;)
 
 All we need to do is wrap our curried n-ary function in a non-curried function:
 
@@ -871,13 +1018,18 @@ $foo5 = function() use ($foo4) {
         };
 ```
 
-`<? $foo5`{.php} will accept all of the arguments it is given when called, then pass them on to `<? $foo4`{.php} which will either:
+`<? $foo5`{.php} will accept all of the arguments it is given when called, then
+pass them on to `<? $foo4`{.php} which will either:
 
  - Accept them all then wait for more, since it's threshold hasn't been reached
- - Accept them all, call `<? foo`{.php} and return the result, if the number of arguments equals the threshold
- - Accept enough to call `<? $foo4`{.php}, then pass the rest to whatever return value it gets
+ - Accept them all, call `<? foo`{.php} and return the result, if the number of
+   arguments equals the threshold
+ - Accept enough to call `<? $foo4`{.php}, then pass the rest to whatever return
+   value it gets
 
-What if we want to pass all of our (first batch of) arguments directly to `<? foo`{.php}, but we would like to behave like a curried function thereafter? In that case we just need to do the currying once we've got our arguments:
+What if we want to pass all of our (first batch of) arguments directly to
+`<? foo`{.php}, but we would like to behave like a curried function thereafter?
+In that case we just need to do the currying once we've got our arguments:
 
 ```php
 <?
@@ -888,17 +1040,30 @@ $foo6 = function() use ($curry_n) {
         };
 ```
 
-## Drawbacks ##
+### Drawbacks of Currying ###
 
-Besides trying to further simplify the currying implementation itself, there are still some issues with this.
+Besides trying to further simplify the currying implementation itself, there are
+still some issues with this.
 
-It's nice that curried functions 'take care of themselves', but this makes their stack usage a bit more difficult to predict, especially if we're currying all of our functions as we define them. As mentioned above, this is a problem since PHP doesn't do tail-call optimisation. Some ways our stack usage may increase unnecessarily are:
+It's nice that curried functions 'take care of themselves', but this makes their
+stack usage a bit more difficult to predict, especially if we're currying all of
+our functions as we define them. As mentioned above, this is a problem since PHP
+doesn't do tail-call optimisation. Some ways our stack usage may increase
+unnecessarily are:
 
- - Calling a curried function without any arguments will give us back an equivalent function which uses one more stack frame.
- - Curried functions which return curried functions which return curried functions, etc. can be called all at once, as the **Returning Functions** section demonstrates, but each subsequent call will be further down the stack.
- - Currying a function multiple times, eg. to keep adjusting its argument number, will add to its stack usage.
+ - Calling a curried function without any arguments will give us back an
+   equivalent function which uses one more stack frame.
+ - Curried functions which return curried functions which return curried
+   functions, etc. can be called all at once, as the **Returning Functions**
+   section demonstrates, but each subsequent call will be further down the
+   stack.
+ - Currying a function multiple times, eg. to keep adjusting its argument
+   number, will add to its stack usage.
 
-Since PHP treats named functions differently to lambdas, it is more difficult than I'd like to curry a named function. In particular, we have to explicitly eta-expand the definitions of our named functions, in order to handle our arguments properly. For example, something like this:
+Since PHP treats named functions differently to lambdas, it is more difficult
+than I'd like to curry a named function. In particular, we have to explicitly
+eta-expand the definitions of our named functions, in order to handle our
+arguments properly. For example, something like this:
 
 ```php
 <?
@@ -945,10 +1110,17 @@ function flip() {
 }
 ```
 
-Of course, the idealist in me would avoid named functions altogether, since they're global and globals should always be avoided. However, the alternatives are:
+Of course, the idealist in me would avoid named functions altogether, since
+they're global and globals should always be avoided (**UPDATE**: PHP now has
+namespaces, so the problem of globals is at least mitigated a little). However,
+the alternatives are:
 
- - Using static class properties, which require indirection to call (PHP assumes `<? Foo::bar()`{.php} is a method call), and classes are still global so we don't gain much
- - Lexically scoping everything, but PHP's `<? use`{.php} requirement gets old quickly and it would be nice if the ability to curry didn't force a particular application architecture on us
+ - Using static class properties, which require indirection to call (PHP assumes
+   `<? Foo::bar()`{.php} is a method call), and classes are still global so we
+   don't gain much
+ - Lexically scoping everything, but PHP's `<? use`{.php} requirement gets old
+   quickly and it would be nice if the ability to curry didn't force a
+   particular application architecture on us
 
 For these reasons, I've not used this currying code in a production system yet.
 
