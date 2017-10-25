@@ -8,8 +8,15 @@ with rec {
 
   # We host a bunch of git repos; look up their location from the environment
   repoEnv    = getEnv "GIT_REPO_DIR";
+  repoLocal  = "/home/chris/Programming/repos";
+  repoRemote = "http://chriswarbo.net/git";
   repoSource = if repoEnv == ""
-                  then "/home/chris/Programming/repos"
+                  then if pathExists repoLocal
+                          then repoLocal
+                          else trace ''INFO: Getting repos from ${repoRemote},
+                                       which may be slow as it's remote. You can
+                                       override this by setting GIT_REPO_DIR.''
+                                     repoRemote
                   else repoEnv;
 
   url = "${repoSource}/nix-config.git";
@@ -36,9 +43,6 @@ with rec {
               else withFixed.latestGit { inherit url; };
 };
 
-# Ensure we've got some repos, and return our latest config
-assert pathExists repoSource ||
-       abort "No git repos found at '${repoSource}', maybe set GIT_REPO_DIR?";
 rec {
   inherit repoRefs repoSource;
   latestConfig   = "${latest}/config.nix";
