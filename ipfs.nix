@@ -31,7 +31,7 @@ rec {
 
   ipfsHash = attrsToIpfs allPageHashes;
 
-    ipfsHashOf = name: content: runCommand "ipfs-hash-${name}"
+  ipfsHashOf = name: content: runCommand "ipfs-hash-${name}"
     (withIpfs {
       buildInputs = [ rsync ];
       content = if isPath content || isDerivation content

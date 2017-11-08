@@ -1,6 +1,6 @@
 { attrsToDirs, buildEnv, dirContaining, haskellPackages, hfeed2atom, git,
-  glibcLocales, lib, libxslt, makeWrapper, mergeDirs, nix, pandoc, panhandle,
-  panpipe, pythonPackages, runCommand, wget, wrap, xidel, xmlstarlet }:
+  glibcLocales, lib, libxslt, makeWrapper, mergeDirs, nix, pandocPkgs,
+  pythonPackages, runCommand, wget, wrap, xidel, xmlstarlet }:
 
 with builtins;
 with lib;
@@ -77,7 +77,7 @@ with rec {
     };
 
     render_page = {
-      paths = [ cleanup pandoc panhandle panpipe ];
+      paths = [ cleanup pandocPkgs ];
       vars  = {
         defaultTemplate = ./templates/default.html;
         LANG            = "en_US.UTF-8";
