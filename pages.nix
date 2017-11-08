@@ -1,7 +1,7 @@
-{ attrsToDirs, callPackage, dirsToAttrs, git, git2html, hfeed2atom, ipfs,
-  isPath, jq, latestConfig, lib, pages, pkgs, pythonPackages,
-  repoSource, reverse, runCommand, sanitiseName, stdenv, wget, wrap,
-  writeScript, xidel }:
+{ allDrvsIn, attrsToDirs, callPackage, dirsToAttrs, git, git2html, hfeed2atom,
+  ipfs, isPath, jq, latestConfig, lib, mkBin, pages, pkgs, python, repoSource,
+  reverse, runCommand, sanitiseName, stdenv, wget, withDeps, wrap, writeScript,
+  xidel }:
 
 with builtins;
 with lib;
@@ -321,18 +321,9 @@ rec {
     };
   });
 
-  strip = filterAttrs (n: v: !(elem n [ "override" "overrideDerivation" ]));
+  tests        = callPackage ./tests.nix { inherit pages repoPages; };
 
-  tests = strip (callPackage ./tests.nix { inherit pages repoPages; });
-
-  testsPass = import (runCommand "site"
-                       {
-                         # A failing test will fail to build
-                         tests = attrsToDirs tests;
-                       }
-                       ''echo "true" > "$out"'');
-
-  wholeSite = attrsToDirs allPages;
+  wholeSite    = withDeps (allDrvsIn tests) untestedSite;
 
   untestedSite = attrsToDirs allPages;
 
