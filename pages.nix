@@ -261,6 +261,7 @@ rec {
                     RESULT=$(mkRedirectTo "$PRJ_URL")
                     echo "$RESULT" > "$out"
                   ''
+           #then mkRedirectTo "redirected.html" (path + "/" + entry)
            else mapAttrs (go (path + "/" + entry)) content;
 
       # These pages now live in projects/ but there are links in the wild
@@ -287,11 +288,26 @@ rec {
             RESULT=$(mkRedirectTo "/projects/$entry/index.html")
             echo "$RESULT" > "$out"
           '';
-        };
+      };
+      #  "index.html" = mkRedirectTo "index.html"
+      #                              "/projects/${entry}/index.html";
+      #};
 
       oldLinks = listToAttrs (map (name: { inherit name;
                                            value = redirectDir name; })
                                   projectDirs);
+
+      mkRedirectTo = from: to: runCommand from
+        {
+          inherit to;
+          buildInputs = [ commands.mkRedirectTo ];
+        }
+        ''
+          # We make sure the redirection succeeds before we do anything to $out,
+          # to avoid creating empty or partial files
+          RESULT=$(mkRedirectTo "$to")
+          echo "$RESULT" > "$out"
+        '';
     };
     oldLinks // {
       data_custom = {
@@ -300,6 +316,7 @@ rec {
 
       essays = mapAttrs (go "/projects") projects;
 
+      #"essays.html" = mkRedirectTo "essays.html" "projects.html";
       "essays.html" = runCommand "mk-essays.html"
         { buildInputs = [ commands.mkRedirectTo ];}
         ''
