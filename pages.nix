@@ -312,7 +312,7 @@ rec {
         '';
     };
 
-  allPagesUntested = mkRel (redirects // topLevel // resources // {
+  allPages = mkRel (redirects // topLevel // resources // {
     inherit blog projects unfinished;
     "index.php" = render {
       cwd  = attrsToDirs { rendered = { inherit blog; }; };
@@ -321,11 +321,7 @@ rec {
     };
   });
 
-  allPages = assert testsPass; allPagesUntested;
-
   strip = filterAttrs (n: v: !(elem n [ "override" "overrideDerivation" ]));
-
-  untested = attrsToDirs allPagesUntested;
 
   tests = strip (callPackage ./tests.nix { inherit pages repoPages; });
 
@@ -338,7 +334,7 @@ rec {
 
   wholeSite = attrsToDirs allPages;
 
-  untestedSite = attrsToDirs allPagesUntested;
+  untestedSite = attrsToDirs allPages;
 
   repoUrls = if isPath repoSource    ||
                 (isString repoSource &&

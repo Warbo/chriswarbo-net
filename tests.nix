@@ -25,24 +25,27 @@ with rec {
   testScript = name: { buildInputs ? [], script }:
     runCommand "test-script-${name}"
       {
-        inherit buildInputs script untested;
+        inherit buildInputs script untestedSite;
 
         # Files which tests might need
         static = attrsToDirs { linkcheckerrc = ./static/linkcheckerrc; };
       }
       ''
+        set -e
+
         # Put config files in place
         cp -rs "$static" ./static
 
         # Tests look in 'rendered' for the site's HTML, etc.
-        cp -rs "$untested" rendered
+        cp -rs "$untestedSite" rendered
 
         # Make an empty "git", to prevent the broken link checker flagging it
         chmod +w -R rendered
         touch rendered/git
 
         # Run the test
-        "$script" && echo "true" > "$out"
+        "$script"
+        mkdir "$out"
       '';
 };
 mapAttrs testScript {
