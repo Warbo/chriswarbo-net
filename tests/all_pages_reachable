@@ -13,6 +13,7 @@ function ignoreInSource {
     grep -v "./projects/repos"      |
     grep -v "./projects/index.html" |
     grep -v "./blog/index.html"     |
+    grep -v "./data_custom"         |
     grep -v "./essays"              |
     grep -v "./posts"               |
     grep -v "./archive.html"        |
