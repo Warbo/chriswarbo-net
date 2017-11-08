@@ -34,12 +34,10 @@ BASE="$PWD"
 
 pushd rendered > /dev/null
 
-    rm -f ./git
-    touch ./git
     SOURCE_CONTENT=$(find . | ignoreInSource | sort)
 
     # Use 'script' to fake a tty and get a "Serving HTTP..." message. Send all
-    # output to ../fifo, and wait until we see the "Serving HTTP..." message
+    # output to ../msgs, and wait until we see the "Serving HTTP..." message
     # before continuing
     script -q /dev/null -c "python -m SimpleHTTPServer 8666" < /dev/null 2>&1 > ../msgs &
     SERVER_PID="$!"
@@ -68,13 +66,15 @@ popd > /dev/null
 # from index.html, but they should still be reachable from unfinished.html.
 # Exclude /git since it's added in during deployment, and repos/ since the
 # content may not be under our control.
-OUTPUT=$(wget --page-requisites --mirror --no-parent       \
-              --exclude-directories="/git,/projects/repos" \
-              "http://localhost:8666"                      \
-              "http://localhost:8666/unfinished.html" 2>&1 | tee >(cat >&2))
+OUTPUT=$(wget --page-requisites --mirror --no-parent --content-on-error \
+              --exclude-directories="/git,/projects/repos"              \
+              "http://localhost:8666"                                   \
+              "http://localhost:8666/unfinished.html" 2>&1 | tee >(cat >&2)) || {
+    echo "FIXME: wget exited with error code" 1>&2
+}
 
 [[ -d "localhost:8666" ]] || {
-    echo -e "Didn't find 'localhost:8666' in downloaded content\n\n$OUTPUT" 1>&2
+    echo "Didn't find 'localhost:8666' in downloaded content" 1>&2
     exit 1
 }
 
@@ -110,7 +110,5 @@ do
         ERR=1
     }
 done < <(echo "$SOURCE_CONTENT")
-
-[[ "$ERR" -eq 0 ]] || echo -e "wget output:\n\n$OUTPUT\n\n" 1>&2
 
 exit "$ERR"
