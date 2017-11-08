@@ -94,7 +94,7 @@ rec {
   gitRedirect = repo: runCommand "redirect-${repo}-to-ipns"
     {
       inherit repo;
-      key         = ipfsKeys."${repo}";
+      key         = getAttr repo ipfsKeys;
       buildInputs = [ commands.mkRedirectTo ];
     }
     ''
