@@ -302,6 +302,10 @@ rec {
                                   projectDirs);
     };
     oldLinks // {
+      data_custom = {
+        "prelude.txt" = mkRedirectTo "prelude.txt" "/git/php-prelude";
+      };
+
       essays = mapAttrs (go "/projects") projects;
 
       "essays.html" = runCommand "mk-essays.html"
