@@ -16,10 +16,20 @@ rec {
 
   metadata =
     with rec {
-      yaml2json = writeScript "yaml2json.py" ''
-        import sys, yaml, json
-        json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)
-      '';
+      yaml2json = mkBin {
+        name   = "yaml2json";
+        paths  = [ (python.withPackages (p: [ p.pyyaml ])) ];
+        script = ''
+          #!/usr/bin/env python
+          import json, re, StringIO, sys, yaml
+          bits = re.split("^----*$", sys.stdin.read(), flags=re.MULTILINE)
+          if len(bits) < 3:
+            print '"{}"'
+          else:
+            data = yaml.load(StringIO.StringIO(filter(None, bits)[0]))
+            print json.dumps(json.dumps(data))
+        '';
+      };
 
       # Choose a nice name, and avoid 'cannot refer to store path' errors
       prettyName = file:
@@ -33,34 +43,16 @@ rec {
            then name
            else base;
 
-      read = file: runCommand "metadata-${prettyName file}.json"
+      read = file: runCommand "metadata-${prettyName file}.nix"
                {
-                 inherit file yaml2json;
-                 buildInputs = [ pythonPackages.python pythonPackages.pyyaml ];
+                 inherit file;
+                 buildInputs = [ yaml2json ];
                }
                ''
-                 # Look for a YAML section between "---" lines
-
-                 # Get line numbers matching "---"
-                 LINES=$(grep -n "^---[-]*$" < "$file") || {
-                   echo "{}" > "$out"
-                   exit 0
-                 }
-
-                 NUMS=$(echo "$LINES" | cut -d ':' -f 1 | head -n2)
-                 START=$(echo "$NUMS" | head -n1)
-                   END=$(echo "$NUMS" | tail -n1)
-
-                 if [[ -n "$START" ]] && [[ -n "$END" ]]
-                 then
-                   head -n$(( END - 1         )) < "$file" |
-                   tail -n$(( END - 1 - START ))           |
-                   python "$yaml2json" > "$out"
-                 else
-                   echo "{}" > "$out"
-                 fi
+                 set -e
+                 yaml2json < "$file" > "$out"
                '';
-    }; file: fromJSON (readFile "${read file}");
+    }; file: fromJSON (import (read file));
 
   # Create a directory containing (links to) 'files'; the directory structure
   # will be relative to 'base', for example:
@@ -279,7 +271,7 @@ rec {
         "procedural" "turtleview"
       ];
 
-      projectDirs = filter (name: let val = projects."${name}";
+      projectDirs = filter (name: let val = getAttr name projects;
                                    in isAttrs val &&
                                       (!(isDerivation val)) &&
                                       elem name toplevelRedirects)
