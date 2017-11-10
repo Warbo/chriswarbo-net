@@ -193,16 +193,6 @@ rec {
     };
     x: y: withDeps [ relToTest ] (relToUntested x y);
 
-  mkRel =
-    with rec {
-      go = base: name: val: if hasSuffix ".html" name
-                               then relTo base val
-                               else if isAttrs val
-                                       then mapAttrs (go "${base}/..") val
-                                       else val;
-    };
-    mapAttrs (go ".");
-
   # Turn ".md" names in to ".html"
   mdToHtml = name: (removeSuffix ".html" (removeSuffix ".md" name)) + ".html";
   mdToHtmlRec = x: if isAttrs x
@@ -386,15 +376,14 @@ rec {
       });
     };
 
-  allPages = topLevel // redirects // resources //
-    {
-      inherit blog projects unfinished;
-      "index.php" = render {
-        cwd  = attrsToDirs { rendered = { inherit blog; }; };
-        file = ./redirect.md;
-        name = "index.php";
-      };
+  allPages = topLevel // redirects // resources // {
+    inherit blog projects unfinished;
+    "index.php" = render {
+      cwd  = attrsToDirs { rendered = { inherit blog; }; };
+      file = ./redirect.md;
+      name = "index.php";
     };
+  };
 
   tests        = callPackage ./tests.nix { inherit pages repoPages; };
 
