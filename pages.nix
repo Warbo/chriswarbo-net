@@ -138,18 +138,33 @@ rec {
           '');
         }
         ''
+          set -e
+
           function fail() {
             echo "Found absolute paths in $1" 1>&2
             exit 1
           }
 
-          xidel -q -e '//a/@href'       - < "$page" | grep "^/" && fail "anchors"
-          xidel -q -e '//link/@href'    - < "$page" | grep "^/" && fail "links"
-          xidel -q -e '//script/@src'   - < "$page" | grep "^/" && fail "scripts"
-          xidel -q -e '//img/@src'      - < "$page" | grep "^/" && fail "images"
-          xidel -q -e '//meta/@content' - < "$page" | grep "=/" && fail "meta"
+          for PAIR in '//a/@href	anchors' \
+                      '//link/@href	links'   \
+                      '//script/@src	scripts' \
+                      '//img/@src	images'  \
+                      '//meta/@content	meta'
 
-          grep 'var url = "/' < "$page" && fail "script vars"
+          do
+            QUERY=$(echo "$PAIR" | cut -f1)
+             TYPE=$(echo "$PAIR" | cut -f2)
+            FOUND=$(xidel -q -e "$QUERY" - < "$page")
+
+            echo "$FOUND" | grep "^/" || continue
+            echo "$FOUND" | grep "=/" || continue
+            fail "$TYPE"
+          done
+
+          if grep 'var url = "/' < "$page"
+          then
+            fail "script vars"
+          fi
 
           mkdir "$out"
         '';
