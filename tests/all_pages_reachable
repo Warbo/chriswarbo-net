@@ -69,11 +69,12 @@ popd > /dev/null
 OUTPUT=$(wget --page-requisites --mirror --no-parent --content-on-error \
               --exclude-directories="/git,/projects/repos"              \
               "http://localhost:8666"                                   \
-              "http://localhost:8666/unfinished.html" 2>&1 | tee >(cat >&2)) || {
+              "http://localhost:8666/unfinished.html" 2>&1) || {
     echo "FIXME: wget exited with error code" 1>&2
 }
 
 [[ -d "localhost:8666" ]] || {
+    echo "$OUTPUT" 1>&2
     echo "Didn't find 'localhost:8666' in downloaded content" 1>&2
     exit 1
 }
@@ -110,5 +111,7 @@ do
         ERR=1
     }
 done < <(echo "$SOURCE_CONTENT")
+
+[[ "$ERR" -eq 0 ]] || echo "$OUTPUT" 1>&2
 
 exit "$ERR"
