@@ -1,7 +1,7 @@
 { allDrvsIn, attrsToDirs, callPackage, dirsToAttrs, git, git2html, hfeed2atom,
-  ipfs, isPath, jq, latestConfig, lib, mkBin, pages, pkgs, python, repoSource,
-  reverse, runCommand, sanitiseName, stdenv, wget, withDeps, wrap, writeScript,
-  xidel }:
+  ipfs, isPath, jq, latestConfig, lib, mkBin, nothing, pages, pkgs, python,
+  repoSource, reverse, runCommand, sanitiseName, stdenv, wget, withDeps, wrap,
+  writeScript, xidel }:
 
 with builtins;
 with lib;
@@ -11,8 +11,6 @@ rec {
   cleanup = bins { cleanup = ./static/cleanup; };
 
   commands = callPackage ./commands.nix {};
-
-  empty = runCommand "empty" {} ''mkdir -p "$out"'';
 
   metadata =
     with rec {
@@ -89,7 +87,7 @@ rec {
     done
   '';
 
-  render = { cwd ? empty, file, inputs ? [], name ? "page.html", vars ? {},
+  render = { cwd ? nothing, file, inputs ? [], name ? "page.html", vars ? {},
              SOURCE_PATH ? "" }:
     with rec {
       md        = metadata file;
