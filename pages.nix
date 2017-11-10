@@ -346,15 +346,8 @@ rec {
                            (attrNames projects);
 
       redirectDir = entry: {
-        "index.html" = runCommand "redirect-${sanitiseName entry}"
-          {
-            inherit entry;
-            buildInputs = [ commands.mkRedirectTo ];
-          }
-          ''
-            RESULT=$(mkRedirectTo "/projects/$entry/index.html")
-            echo "$RESULT" > "$out"
-          '';
+        "index.html" = mkRedirectTo "redirect-${sanitiseName entry}"
+                                    "/projects/${entry}/index.html";
       };
 
       oldLinks = listToAttrs (map (name: { inherit name;
