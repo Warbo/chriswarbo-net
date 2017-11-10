@@ -88,34 +88,47 @@ rec {
   '';
 
   render = { cwd ? nothing, file, inputs ? [], name ? "page.html", vars ? {},
-             SOURCE_PATH ? "" }:
+             relBase ? null, SOURCE_PATH ? "" }:
     with rec {
       md        = metadata file;
       extraPkgs = map (n: (pkgs // commands // pages)."${n}")
                       (md.packages or []);
       dir       = mergeDirs [ cwd (dirContaining ./. (md.dependencies or [])) ];
+      rel       = if relBase == null
+                     then (x: x)
+                     else relTo relBase;
+      dupe      = rel (writeScript name (readFile file));
+      rendered  = runCommand name
+        (vars // {
+          buildInputs = [ commands.relativise commands.render_page ] ++
+                        inputs ++ extraPkgs;
+          inherit dir file SOURCE_PATH;
+          TO_ROOT = if relBase == null then "" else relBase;
+        })
+        ''
+          export DEST="$PWD/out.html"
+
+          cd "$dir"
+          SOURCE="$file" render_page < "$file"
+          if grep '^.' < "$DEST" > /dev/null
+          then
+            if [[ -n "$TO_ROOT" ]]
+            then
+              relativise < "$DEST" > "$out"
+            else
+              mv "$DEST" "$out"
+            fi
+          else
+            echo "No output when rendering, aborting" 1>&2
+            exit 1
+          fi
+        '';
     };
     if hasSuffix ".html" file
-       then writeScript name (readFile file)
-       else runCommand name (vars // {
-              buildInputs = [ commands.render_page ] ++ inputs ++ extraPkgs;
-              inherit dir file SOURCE_PATH;
-            })
-            ''
-              export DEST="$PWD/out.html"
+       then dupe
+       else rendered;
 
-              cd "$dir"
-              SOURCE="$file" render_page < "$file"
-              if grep '^.' < "$DEST" > /dev/null
-              then
-                mv "$DEST" "$out"
-              else
-                echo "No output when rendering, aborting" 1>&2
-                exit 1
-              fi
-            '';
-
-  mkRel =
+  relTo =
     with rec {
       relToTest = runCommand "relative"
         {
@@ -177,9 +190,11 @@ rec {
           echo "Relativising $file to $TO_ROOT" 1>&2
           relativise < "$file" > "$out"
         '';
+    };
+    x: y: withDeps [ relToTest ] (relToUntested x y);
 
-      relTo = x: y: withDeps [ relToTest ] (relToUntested x y);
-
+  mkRel =
+    with rec {
       go = base: name: val: if hasSuffix ".html" name
                                then relTo base val
                                else if isAttrs val
@@ -235,7 +250,10 @@ rec {
 
   topLevel     = mapAttrs' (name: val: {
                          inherit name;
-                         value = render (val // { inherit name; });
+                         value = render (val // {
+                           inherit name;
+                           relBase = ".";
+                         });
                        }) {
     "index.html"      = {
       cwd         = attrsToDirs { rendered = { inherit blog; }; };
@@ -370,7 +388,7 @@ rec {
         '';
     };
 
-  allPages = mkRel (redirects // topLevel // resources // {
+  allPages = topLevel // mkRel (redirects // resources // {
     inherit blog projects unfinished;
     "index.php" = render {
       cwd  = attrsToDirs { rendered = { inherit blog; }; };
