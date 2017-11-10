@@ -117,19 +117,56 @@ rec {
               fi
             '';
 
-  relTo = TO_ROOT: file: runCommand
-    "relative-${baseNameOf (unsafeDiscardStringContext file)}"
-    {
-      inherit file TO_ROOT;
-      buildInputs = [ commands.relativise ];
-    }
-    ''
-      echo "Relativising $file to $TO_ROOT" 1>&2
-      relativise < "$file" > "$out"
-    '';
-
   mkRel =
     with rec {
+      relToTest = runCommand "relative"
+        {
+          buildInputs = [ xidel ];
+          page        = relToUntested "." (writeScript "test.html" ''
+            <html>
+              <head>
+                <link rel="stylesheet" type="text/css"
+                      href="/css/default.css" />
+                <meta http-equiv="refresh" content="0;URL=./projects.html" />
+              </head>
+              <body>
+                <a href="/blog.html">Blog</a>
+                <script src="/js/foo.js"></script>
+                <img src="/images/foo.png" />
+              </body>
+            </html>
+          '');
+        }
+        ''
+          function fail() {
+            echo "Found absolute paths in $1" 1>&2
+            exit 1
+          }
+
+          xidel -q -e '//a/@href'       - < "$page" | grep "^/" && fail "anchors"
+          xidel -q -e '//link/@href'    - < "$page" | grep "^/" && fail "links"
+          xidel -q -e '//script/@src'   - < "$page" | grep "^/" && fail "scripts"
+          xidel -q -e '//img/@src'      - < "$page" | grep "^/" && fail "images"
+          xidel -q -e '//meta/@content' - < "$page" | grep "=/" && fail "meta"
+
+          grep 'var url = "/' < "$page" && fail "script vars"
+
+          mkdir "$out"
+        '';
+
+      relToUntested = TO_ROOT: file: runCommand
+        "relative-${baseNameOf (unsafeDiscardStringContext file)}"
+        {
+          inherit file TO_ROOT;
+          buildInputs = [ commands.relativise ];
+        }
+        ''
+          echo "Relativising $file to $TO_ROOT" 1>&2
+          relativise < "$file" > "$out"
+        '';
+
+      relTo = x: y: withDeps [ relToTest ] (relToUntested x y);
+
       go = base: name: val: if hasSuffix ".html" name
                                then relTo base val
                                else if isAttrs val
