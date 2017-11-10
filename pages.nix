@@ -319,7 +319,10 @@ rec {
     with rec {
       go = path: entry: content:
         if isPath content || isDerivation content
-           then mkRedirectTo "${sanitiseName entry}" "${path}/${entry}"
+           then mkRedirectTo {
+                  from = sanitiseName entry;
+                  to   = "${path}/${entry}";
+                }
            else mapAttrs (go "${path}/${entry}") content;
 
       # These pages now live in projects/ but there are links in the wild
@@ -337,15 +340,17 @@ rec {
                            (attrNames projects);
 
       redirectDir = entry: {
-        "index.html" = mkRedirectTo "redirect-${sanitiseName entry}"
-                                    "/projects/${entry}/index.html";
+        "index.html" = mkRedirectTo {
+          from = "redirect-${sanitiseName entry}";
+          to   = "/projects/${entry}/index.html";
+        };
       };
 
       oldLinks = listToAttrs (map (name: { inherit name;
                                            value = redirectDir name; })
                                   projectDirs);
 
-      mkRedirectTo = from: to: runCommand from
+      mkRedirectTo = { from, to }: runCommand from
         {
           inherit to;
           buildInputs = [ commands.mkRedirectTo ];
@@ -359,12 +364,18 @@ rec {
     };
     oldLinks // {
       data_custom = {
-        "prelude.txt" = mkRedirectTo "prelude.txt" "/git/php-prelude";
+        "prelude.txt" = mkRedirectTo {
+          from = "prelude.txt";
+          to   = "/git/php-prelude";
+        };
       };
 
       essays = mapAttrs (go "/projects") projects;
 
-      "essays.html" = mkRedirectTo "essays.html" "projects.html";
+      "essays.html" = mkRedirectTo {
+        from = "essays.html";
+        to   = "projects.html";
+      };
     };
 
   allPages = topLevel // mkRel (redirects // resources // {
