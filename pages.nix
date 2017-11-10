@@ -380,10 +380,10 @@ rec {
 
       essays = mapAttrs (go ["projects"]) projects;
 
-      "essays.html" = mkRedirectTo {
-        from = "essays.html";
-        to   = "projects.html";
-      };
+      "essays.html" = relTo "." (mkRedirectTo {
+        from    = "essays.html";
+        to      = "projects.html";
+      });
     };
 
   allPages = topLevel // redirects // resources //
