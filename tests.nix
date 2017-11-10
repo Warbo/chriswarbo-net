@@ -6,11 +6,11 @@ with builtins;
 with lib;
 with pages;
 with rec {
-  testScript = name: { buildInputs ? [], script }:
+  testScript = name: { buildInputs ? [], script, includeSite ? true }:
     runCommand "test-script-${name}"
       {
-        inherit buildInputs script untestedSite;
-
+        inherit buildInputs script;
+        untestedSite = if includeSite then untestedSite else "";
         # Files which tests might need
         static = attrsToDirs { linkcheckerrc = ./static/linkcheckerrc; };
       }
@@ -21,11 +21,14 @@ with rec {
         cp -rs "$static" ./static
 
         # Tests look in 'rendered' for the site's HTML, etc.
-        cp -rs "$untestedSite" rendered
+        if [[ -n "$untestedSite" ]]
+        then
+          cp -rs "$untestedSite" rendered
 
-        # Make an empty "git", to prevent the broken link checker flagging it
-        chmod +w -R rendered
-        touch rendered/git
+          # Make an empty "git", to prevent the broken link checker flagging it
+          chmod +w -R rendered
+          touch rendered/git
+        fi
 
         # Run the test
         "$script"
@@ -47,7 +50,8 @@ mapAttrs testScript {
   };
   cleanupTables                 = {
     buildInputs = [ commands.cleanup ];
-    script = ./tests/cleanupTables;
+    script      = ./tests/cleanupTables;
+    includeSite = false;
   };
   code_not_indented               = {
     script = ./tests/code_not_indented;
@@ -57,7 +61,8 @@ mapAttrs testScript {
   };
   empty_panpipe_blocks_stripped = {
     buildInputs = [ commands.render_page ];
-    script = ./tests/empty_panpipe_blocks_stripped;
+    script      = ./tests/empty_panpipe_blocks_stripped;
+    includeSite = false;
   };
   essays_redirects_to_projects  = {
     buildInputs = [ commands.relTo ];
@@ -87,13 +92,15 @@ mapAttrs testScript {
   hcard_test                    = {
     buildInputs = [ pythonPackages.python mf2py commands.renderHcard ];
     script      = ./tests/hcard_test;
+    includeSite = false;
   };
   homepage_has_hcard            = {
     buildInputs = [ pythonPackages.python mf2py ];
     script      = ./tests/homepage_has_hcard;
   };
   imagesWontCompressFurther     = {
-    script = ./tests/imagesWontCompressFurther;
+    script      = ./tests/imagesWontCompressFurther;
+    includeSite = false;
   };
   no_absolutes                  = {
     buildInputs = [ xidel ];

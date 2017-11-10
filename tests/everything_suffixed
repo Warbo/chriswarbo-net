@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ERR=0
-for FILE in *.md
+for FILE in rendered/*.html
 do
-    DIR=$(basename "$FILE" .md)
+    DIR=$(basename "$FILE" .html)
     if [[ -d "$DIR" ]]
     then
         while read -r ENTRY
