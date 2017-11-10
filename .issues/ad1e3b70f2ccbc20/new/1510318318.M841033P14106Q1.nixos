@@ -1,0 +1,22 @@
+From: Chris Warburton
+Date: Fri, 10 Nov 2017 12:48:13 +0000
+State: new
+Subject: Move top-level pages into dirs
+Message-Id: <ad1e3b70f2ccbc20-0-artemis@nixos>
+
+Currently, /projects.html comes from /projects.md and
+/projects/index.html is a redirect to /projects.html. The same is
+presumably true for blog pages as well.
+
+We should switch this around, so /projects.md gets moved to
+/projects/index.md and we generate /projects.html as a redirect to
+/projects
+
+This makes our URLs nicer, since we can avoid '.html' suffices.
+
+It also makes site organisation nicer, since we don't have as many
+pages sitting in the root directory.
+
+Note that we need to prevent infinite recursion: when /projects/index.md
+is rendered, it will be given the rendered contents of /projects. We
+need to make sure that index.md is filtered out of that content!

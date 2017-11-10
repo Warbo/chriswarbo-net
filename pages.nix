@@ -319,17 +319,8 @@ rec {
     with rec {
       go = path: entry: content:
         if isPath content || isDerivation content
-           then runCommand "${sanitiseName entry}"
-                  {
-                    inherit path entry;
-                    buildInputs = [ commands.mkRedirectTo ];
-                  }
-                  ''
-                    PRJ_URL="$path/$entry"
-                    RESULT=$(mkRedirectTo "$PRJ_URL")
-                    echo "$RESULT" > "$out"
-                  ''
-           else mapAttrs (go (path + "/" + entry)) content;
+           then mkRedirectTo "${sanitiseName entry}" "${path}/${entry}"
+           else mapAttrs (go "${path}/${entry}") content;
 
       # These pages now live in projects/ but there are links in the wild
       # without that prefix. We single them out here to avoid proliferating new
