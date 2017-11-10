@@ -317,13 +317,14 @@ rec {
 
   redirects =
     with rec {
-      go = path: entry: content:
+      go = paths: entry: content:
         if isPath content || isDerivation content
-           then mkRedirectTo {
-                  from = sanitiseName entry;
-                  to   = "${path}/${entry}";
-                }
-           else mapAttrs (go "${path}/${entry}") content;
+           then relTo (concatStringsSep "/" (["."] ++ map (_: "..") paths))
+                      (mkRedirectTo {
+                        from = sanitiseName entry;
+                        to   = concatStringsSep "/" ([""] ++ paths ++ [entry]);
+                      })
+           else mapAttrs (go (paths ++ [entry])) content;
 
       # These pages now live in projects/ but there are links in the wild
       # without that prefix. We single them out here to avoid proliferating new
@@ -370,7 +371,7 @@ rec {
         };
       };
 
-      essays = mapAttrs (go "/projects") projects;
+      essays = mapAttrs (go ["projects"]) projects;
 
       "essays.html" = mkRedirectTo {
         from = "essays.html";
@@ -378,7 +379,7 @@ rec {
       };
     };
 
-  allPages = topLevel // mkRel (redirects // resources // {
+  allPages = topLevel // redirects // mkRel (resources // {
     inherit blog projects unfinished;
     "index.php" = render {
       cwd  = attrsToDirs { rendered = { inherit blog; }; };
