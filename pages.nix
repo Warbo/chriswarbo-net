@@ -380,12 +380,7 @@ rec {
 
       essays = mapAttrs (go "/projects") projects;
 
-      "essays.html" = runCommand "mk-essays.html"
-        { buildInputs = [ commands.mkRedirectTo ];}
-        ''
-          RESULT=$(mkRedirectTo "projects.html")
-          echo "$RESULT" > "$out"
-        '';
+      "essays.html" = mkRedirectTo "essays.html" "projects.html";
     };
 
   allPages = topLevel // mkRel (redirects // resources // {
