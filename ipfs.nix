@@ -76,8 +76,9 @@ rec {
 
   ipfsKeys =
     with rec {
-      env  = withIpfs { inherit (builtins) currentTime; };
-      keys = runCommand "ipfs-keys.nix" env ''
+      var = getEnv("IPFS_KEYS");
+      env = withIpfs { inherit (builtins) currentTime; };
+      gen = runCommand "ipfs-keys.nix" env ''
         {
           echo '{'
           ipfs key list -l | while read -r PAIR
@@ -89,7 +90,10 @@ rec {
           echo '}'
         } > "$out"
       '';
-    }; import keys;
+    };
+    if var == ""
+       then import gen
+       else fromJSON var;
 
   gitRedirect = repo: runCommand "redirect-${repo}-to-ipns"
     {

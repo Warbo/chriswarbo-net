@@ -13,6 +13,7 @@ fi
 [[ -n "$IPFS_PATH"    ]] || export IPFS_PATH=/var/lib/ipfs/.ipfs
 [[ -n "$GIT_REPO_DIR" ]] || export GIT_REPO_DIR=/home/chris/Programming/repos
 
+printf "Getting git HEADs..." 1>&2
 function gitVersions() {
     echo "{"
     for D in "$GIT_REPO_DIR"/*.git
@@ -34,8 +35,23 @@ do
     V=$(echo "$VAR" | cut -f2)
     export "$N"="$V"
 done < <(gitRevEnvVars)
+echo "Done" 1>&2
+
+printf "Getting IPFS keys..." 1>&2
+function ipfsKeys() {
+    ipfs key list -l | while read -r PAIR
+    do
+        N=$(echo "$PAIR" | cut -d' ' -f2)
+        V=$(echo "$PAIR" | cut -d' ' -f1)
+        jq -n --arg n "$N" --arg v "$V" '{($n): $v}'
+    done | jq -s 'reduce .[] as $x ({}; . + $x)'
+}
+IPFS_KEYS=$(ipfsKeys)
+export IPFS_KEYS
+echo "Done" 1>&2
 
 function build() {
+    echo "Building '$1'" 1>&2
     BASE=$(dirname "$(readlink -f "$0")")
     nix-build --show-trace -A "$1" "$BASE"
 }
@@ -115,7 +131,7 @@ function pushToWeb() {
 printf "Waiting for rendering lock..." 1>&2
 (
   flock -x 200
-  printf "lock aquired.\n" 1>&2
+  echo "lock aquired" 1>&2
 
   case "$1" in
       build)
