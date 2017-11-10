@@ -386,14 +386,13 @@ rec {
       };
     };
 
-  allPages = topLevel // redirects // mkRel resources //
+  allPages = topLevel // redirects // resources //
     {
       inherit blog projects unfinished;
       "index.php" = render {
-        cwd     = attrsToDirs { rendered = { inherit blog; }; };
-        file    = ./redirect.md;
-        name    = "index.php";
-        relBase = ".";
+        cwd  = attrsToDirs { rendered = { inherit blog; }; };
+        file = ./redirect.md;
+        name = "index.php";
       };
     };
 
