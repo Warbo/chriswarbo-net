@@ -216,20 +216,25 @@ rec {
   # Turn ".html" into ".md"
   htmlToMd = name: (removeSuffix ".html" (removeSuffix ".html" name)) + ".md";
 
-  blog = with rec {
-    # Read filenames from ./blog and append to the path './blog', so that each
-    # is a standalone path. This way each post only depends on its own source,
-    # and won't get rebuilt if e.g. a new post is added to ./blog.
-    postNames = attrNames (readDir ./blog);
-    posts     = listToAttrs (map (p: { name  = mdToHtml p;
-                                       value = ./blog + "/${p}"; }) postNames);
-  };
-  mapAttrs (n: v: render {
-             file        = v;
-             name        = "blog-${n}";
-             SOURCE_PATH = "blog/${htmlToMd (baseNameOf n)}";
-           })
-           posts;
+  blog =
+    with rec {
+      # Read filenames from ./blog and append to the path './blog', so that each
+      # is a standalone path. This way each post only depends on its own source,
+      # and won't get rebuilt if e.g. a new post is added to ./blog.
+      postNames = attrNames (readDir ./blog);
+      posts     = listToAttrs (map (p: {
+                                     name  = mdToHtml p;
+                                     value = ./blog + "/${p}";
+                                   })
+                                   postNames);
+    };
+    mapAttrs (n: v: render {
+               file        = v;
+               name        = "blog-${n}";
+               SOURCE_PATH = "blog/${htmlToMd (baseNameOf n)}";
+               relBase     = "./..";
+             })
+             posts;
 
   renderAll = prefix: x: mdToHtmlRec (mapAttrs
     (n: v: if isDerivation v || isPath v
@@ -249,12 +254,12 @@ rec {
   unfinished   = renderAll "unfinished" (dirsToAttrs ./unfinished);
 
   topLevel     = mapAttrs' (name: val: {
-                         inherit name;
-                         value = render (val // {
-                           inherit name;
-                           relBase = ".";
-                         });
-                       }) {
+                             inherit name;
+                             value = render (val // {
+                               inherit name;
+                               relBase = ".";
+                             });
+                           }) {
     "index.html"      = {
       cwd         = attrsToDirs { rendered = { inherit blog; }; };
       file        = ./index.md;
@@ -379,15 +384,17 @@ rec {
       };
     };
 
-  allPages = topLevel // redirects // mkRel (resources // {
-    inherit blog projects unfinished; }) // {
-    "index.php" = render {
-      cwd     = attrsToDirs { rendered = { inherit blog; }; };
-      file    = ./redirect.md;
-      name    = "index.php";
-      relBase = ".";
+  allPages = topLevel // redirects //
+    mkRel (resources // { inherit projects unfinished; }) //
+    {
+      inherit blog;
+      "index.php" = render {
+        cwd     = attrsToDirs { rendered = { inherit blog; }; };
+        file    = ./redirect.md;
+        name    = "index.php";
+        relBase = ".";
+      };
     };
-  };
 
   tests        = callPackage ./tests.nix { inherit pages repoPages; };
 
