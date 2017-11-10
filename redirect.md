@@ -27,7 +27,7 @@ echo '"index.html" ];</script>'
 ```
 
 ```{.unwrap pipe="pandoc -f markdown -t json"}
-<script type="text/javascript">
+<script type="text/javascript">//<![CDATA[
   (function() {
     var bigrams = function(s) {
         return (s.length < 2)? []
@@ -74,5 +74,5 @@ echo '"index.html" ];</script>'
     console.log(posts[scores.indexOf(best)]);
     window.location.href = posts[scores.indexOf(best)];
   })();
-</script>
+//]]></script>
 ```

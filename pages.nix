@@ -380,13 +380,14 @@ rec {
     };
 
   allPages = topLevel // redirects // mkRel (resources // {
-    inherit blog projects unfinished;
+    inherit blog projects unfinished; }) // {
     "index.php" = render {
-      cwd  = attrsToDirs { rendered = { inherit blog; }; };
-      file = ./redirect.md;
-      name = "index.php";
+      cwd     = attrsToDirs { rendered = { inherit blog; }; };
+      file    = ./redirect.md;
+      name    = "index.php";
+      relBase = ".";
     };
-  });
+  };
 
   tests        = callPackage ./tests.nix { inherit pages repoPages; };
 

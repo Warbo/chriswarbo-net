@@ -1,0 +1,23 @@
+From: Chris Warburton
+Date: Fri, 10 Nov 2017 18:17:26 +0000
+State: new
+Subject: Serve index.php as HTML
+Message-Id: <913a10d93cede5c9-0-artemis@nixos>
+
+Looks like darkhttpd is choosing to serve up index.php (which is
+actually a HTML file) as a download, rather than displaying the content.
+
+This breaks some of our historical redirects, so it would be nice to
+fix.
+
+The `--mimetypes <filename>` option looks like one way to fix this. From
+https://github.com/andreasgal/darkhttpd:
+
+> Add mimetypes - in this case, serve .dat files as text/plain:
+>     $ cat extramime
+>     text/plain	dat
+>     $ ./darkhttpd /var/www/htdocs --mimetypes extramime
+
+A possible fix might be to write a HTML file, e.g. index-redirect.html,
+and symlink index.php to that file. That would be cleaner, but may not
+work.
