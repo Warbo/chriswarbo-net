@@ -1,0 +1,16 @@
+From: Chris Warburton
+Date: Fri, 10 Nov 2017 14:00:03 +0000
+Subject: Re: "Relativise" pages during their build
+Message-Id: <8fd264ecb9a1db22-c5a9bd53c71e57dd-artemis@nixos>
+References: <8fd264ecb9a1db22-0-artemis@nixos>
+In-Reply-To: <8fd264ecb9a1db22-0-artemis@nixos>
+
+The `render` function can now relativise, if asked to. This has a double
+advantage: we relativise per-page (so the whole site doesn't need
+updating at once), plus we're only invoking one Nix build process rather
+than two.
+
+I've tried to make the redirects do the same, but it doesn't seem to
+work (many thanks to the test suite for spotting this though!). For now
+it may be best to stick with two builds per redirect, but at least do
+them per-page.

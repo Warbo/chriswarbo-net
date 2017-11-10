@@ -340,10 +340,10 @@ rec {
                            (attrNames projects);
 
       redirectDir = entry: {
-        "index.html" = mkRedirectTo {
+        "index.html" = relTo "." (mkRedirectTo {
           from = "redirect-${sanitiseName entry}";
           to   = "/projects/${entry}/index.html";
-        };
+        });
       };
 
       oldLinks = listToAttrs (map (name: { inherit name;
