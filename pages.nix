@@ -241,17 +241,17 @@ rec {
               then render {
                      file        = v;
                      name        = mdToHtml n;
-                     SOURCE_PATH = "${prefix}/${n}";
+                     SOURCE_PATH = concatStringsSep "/" (prefix ++ [n]);
                    }
               else if isAttrs v
-                      then renderAll "${prefix}/${n}" v
+                      then renderAll (prefix ++ [n]) v
                       else abort "Can't render ${toJSON { inherit n v; }}")
     x);
 
-  projects     = renderAll "projects" (dirsToAttrs ./projects) //
+  projects     = renderAll ["projects"] (dirsToAttrs ./projects) //
                  { repos = projectRepos; };
 
-  unfinished   = renderAll "unfinished" (dirsToAttrs ./unfinished);
+  unfinished   = renderAll ["unfinished"] (dirsToAttrs ./unfinished);
 
   topLevel     = mapAttrs' (name: val: {
                              inherit name;
