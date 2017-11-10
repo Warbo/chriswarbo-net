@@ -242,6 +242,8 @@ rec {
                      file        = v;
                      name        = mdToHtml n;
                      SOURCE_PATH = concatStringsSep "/" (prefix ++ [n]);
+                     relBase     = concatStringsSep "/" (["."] ++ map (_: "..")
+                                                                      prefix);
                    }
               else if isAttrs v
                       then renderAll (prefix ++ [n]) v
@@ -384,10 +386,9 @@ rec {
       };
     };
 
-  allPages = topLevel // redirects //
-    mkRel (resources // { inherit projects unfinished; }) //
+  allPages = topLevel // redirects // mkRel resources //
     {
-      inherit blog;
+      inherit blog projects unfinished;
       "index.php" = render {
         cwd     = attrsToDirs { rendered = { inherit blog; }; };
         file    = ./redirect.md;
