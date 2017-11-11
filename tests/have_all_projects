@@ -3,21 +3,22 @@
 ERR=0
 while read -r NAME
 do
-    [[ "x$NAME" = "xrendered/projects/index.html" ]] && continue
+    [[ "x$NAME" = "x$rendered/projects/index.html" ]] && continue
 
-    NOREND=$(echo "$NAME" | sed -e 's@^rendered/@@g')
+    NOREND=$(echo "$NAME" | sed -e 's@^/nix/store/[^/]*/@@g')
     DEST="./$NOREND"
-    if [[ ! -e "rendered/$DEST" ]]
+    if [[ ! -e "$rendered/$DEST" ]]
     then
-        echo "Can't find rendered/$DEST" 1>&2
+        echo "Can't find $rendered/$DEST" 1>&2
         ERR=1
     fi
-    LINK=$(xidel - -q --extract "//a[@href='$DEST']/@href" < rendered/projects.html)
+    LINK=$(xidel - -q --extract \
+                 "//a[@href='$DEST']/@href" < "$rendered/projects.html")
     if ! echo "$LINK" | grep "$DEST" > /dev/null
     then
         echo "$NAME ($DEST) doesn't appear in projects.html" 1>&2
         ERR=1
     fi
-done < <(find rendered/projects -name "index.*")
+done < <(find "$rendered/projects" -name "index.*")
 
 exit "$ERR"

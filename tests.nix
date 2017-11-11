@@ -10,7 +10,7 @@ with rec {
     runCommand "test-script-${name}"
       {
         inherit buildInputs script;
-        untestedSite = if includeSite then untestedSite else "";
+        rendered = if includeSite then untestedSite else "";
         # Files which tests might need
         static = attrsToDirs { linkcheckerrc = ./static/linkcheckerrc; };
       }
@@ -19,16 +19,6 @@ with rec {
 
         # Put config files in place
         cp -rs "$static" ./static
-
-        # Tests look in 'rendered' for the site's HTML, etc.
-        if [[ -n "$untestedSite" ]]
-        then
-          cp -rs "$untestedSite" rendered
-
-          # Make an empty "git", to prevent the broken link checker flagging it
-          chmod +w -R rendered
-          touch rendered/git
-        fi
 
         # Run the test
         "$script"

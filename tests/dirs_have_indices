@@ -2,7 +2,7 @@
 set -e
 shopt -s nullglob
 
-pushd rendered > /dev/null
+pushd "$rendered" > /dev/null
 
 ERR=0
 while read -r DIR

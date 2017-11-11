@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-if grep -r /essays/ rendered/ |
-   grep -v /repos/            |
-   grep -v /unfinished/       |
+if grep -r /essays/ "$rendered/" |
+   grep -v /repos/               |
+   grep -v /unfinished/          |
    grep '^.'
 then
     exit 1

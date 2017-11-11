@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Wed, 30 Aug 2017 01:14:08 +0100
-State: new
+State: resolved
 Subject: "Relativise" pages during their build
 Message-Id: <8fd264ecb9a1db22-0-artemis@nixos>
+resolution: fixed
 
 At the moment we build each page separately, then we "relativise" them
 (fix up their links) as part of building the site. This means we end up

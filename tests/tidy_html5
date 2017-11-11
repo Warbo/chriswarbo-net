@@ -70,7 +70,7 @@ function tidyCheck {
 
 function lax {
     # Allow warnings/errors for unfinished posts
-    echo "$1" | grep "rendered/unfinished/" >/dev/null && return
+    echo "$1" | grep "$rendered/unfinished/" >/dev/null && return
 
     # Allow warnings/errors for git READMEs (since they might not be ours)
     echo "$1" | grep "/repos/" > /dev/null && return
@@ -82,6 +82,6 @@ ERR=0
 while read -r FILE
 do
     check "$FILE" || ERR=1
-done < <(find rendered -name "*.html")
+done < <(find "$rendered" -name "*.html")
 
 exit "$ERR"

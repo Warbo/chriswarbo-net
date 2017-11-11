@@ -10,6 +10,7 @@ import           Data.Microformats2.Parser
 import qualified Data.Vector               as V
 import           Network.URI
 import           System.Directory
+import           System.Environment
 
 parse = parseMf2 def . documentRoot . parseLBS
 
@@ -34,15 +35,17 @@ hasOneHentry = (== 1) . length . getHentries
 stringHasOneHentry = hasOneHentry . parse
 
 blogFiles :: IO [FilePath]
-blogFiles = fmap (filter (`notElem` [".", "..", "index.html"]))
-                 (getDirectoryContents blogDir)
+blogFiles = do dir      <- blogDir
+               contents <- getDirectoryContents dir
+               return (filter (`notElem` [".", "..", "index.html"]) contents)
 
-blogDir :: FilePath
-blogDir = "rendered/blog"
+blogDir :: IO FilePath
+blogDir = fmap (++ "/blog") (getEnv "rendered")
 
 blogsWithoutEntry :: IO [FilePath]
 blogsWithoutEntry = blogFiles >>= filterM missing
-  where missing f = keep <$> BS.readFile (blogDir ++ "/" ++ f)
+  where missing f = do dir <- blogDir
+                       keep <$> BS.readFile (dir ++ "/" ++ f)
         keep      = not . hasOneHentry . parse
 
 main = do

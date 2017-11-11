@@ -4,7 +4,7 @@
 MISSING=""
 for URL in data_custom/prelude.txt
 do
-    [[ -e "rendered/$URL" ]] || MISSING="$MISSING $URL"
+    [[ -e "$rendered/$URL" ]] || MISSING="$MISSING $URL"
 done
 
 [[ -z "$MISSING" ]] || {

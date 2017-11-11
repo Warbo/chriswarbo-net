@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 
-LINKS=$(xidel - -q --extract "//a/@href" < rendered/blog.html)
+LINKS=$(xidel - -q --extract "//a/@href" < "$rendered/blog.html")
 
 while read -r SOURCE
 do
-    [[ "x$SOURCE" = "xrendered/blog/index.html" ]] && continue
+    [[ "x$SOURCE" = "x$rendered/blog/index.html" ]] && continue
 
     NAME=$(basename "$SOURCE" | rev | cut -d '.' -f 2- | rev)
     DEST="/blog/$NAME.html"
-    if [[ ! -e "rendered$DEST" ]]
+    if [[ ! -e "$rendered$DEST" ]]
     then
-        echo "Can't find rendered$DEST" 1>&2
+        echo "Can't find $rendered$DEST" 1>&2
         exit 1
     fi
     if ! echo "$LINKS" | grep "$NAME" > /dev/null
@@ -18,6 +18,6 @@ do
         echo "blog/$NAME.html doesn't appear in blog.html" 1>&2
         exit 1
     fi
-done < <(find rendered/blog -type f -o -type l)
+done < <(find "$rendered/blog" -type f -o -type l)
 
 exit 0

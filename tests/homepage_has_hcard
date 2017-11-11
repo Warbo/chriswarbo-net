@@ -8,7 +8,7 @@ def fail(m):
     print("FAIL: " + m)
     sys.exit(1)
 
-f='rendered/index.html'
+f = os.getenv("rendered") + "/index.html"
 with open(f, 'r') as file:
     entries = mf2py.Parser(doc=file, html_parser="html5lib").to_dict(filter_by_type="h-card")
     if len(entries) != 1:

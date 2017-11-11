@@ -34,6 +34,6 @@ do
         echo "Found link to root (/) in '$FILE'" 1>&2
         ERR=1
     fi
-done < <(find rendered -name "*.html")
+done < <(find "$rendered" -name "*.html")
 
 exit "$ERR"

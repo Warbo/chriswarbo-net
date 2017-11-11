@@ -12,7 +12,8 @@ def run_checks_on(to_check, checks):
     map(lambda(b, m): b or fail(m + ': ' + repr(to_check)), checks)
 
 def check_feed(feed):
-    posts = filter(lambda f: f != 'index.html', os.listdir('rendered/blog/'))
+    posts = filter(lambda f: f != 'index.html',
+                   os.listdir(os.getenv('rendered') + '/blog/'))
 
     run_checks_on(feed, [
         (feed['type'] == ['h-feed'],          'Not a h-feed'),
@@ -32,7 +33,7 @@ def check_entry(entry):
          "Entry doesn't have one title (name)")
     ])
 
-f = 'rendered/blog.html'
+f = os.getenv('rendered') + '/blog.html'
 with open(f, 'r') as file:
     parser = mf2py.Parser(doc=file, html_parser='html5lib')
     items  = parser.to_dict(filter_by_type='h-feed')

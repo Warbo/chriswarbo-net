@@ -5,13 +5,13 @@ function fail() {
   exit 1
 }
 
-[[ -e rendered/blog.atom ]] || fail "No blog.atom"
-[[ -e rendered/blog.rss  ]] || fail "No blog.rss"
+[[ -e "$rendered/blog.atom" ]] || fail "No blog.atom"
+[[ -e "$rendered/blog.rss"  ]] || fail "No blog.rss"
 
 for FEED in blog.atom blog.rss
 do
   for PAGE in index.html blog.html
   do
-    grep "$FEED" < "rendered/$PAGE" > /dev/null || fail "$FEED isn't in $PAGE"
+    grep "$FEED" < "$rendered/$PAGE" > /dev/null || fail "$FEED isn't in $PAGE"
   done
 done

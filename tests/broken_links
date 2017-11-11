@@ -2,7 +2,7 @@
 
 function mkConfig {
   echo '[filtering]'
-  echo "localwebroot=file://$PWD/rendered/"
+  echo "localwebroot=file://$rendered/"
   echo 'ignorewarnings=file-missing-slash'
 }
 
@@ -15,7 +15,7 @@ RESULT=$(linkchecker --no-status                  \
                      --ignore-url=.xml            \
                      --ignore-url=/git            \
                      --ignore-url=/projects/repos \
-                     rendered/index.html 2>&1)
+                     "$rendered/index.html" 2>&1)
 CODE="$?"
 
 [[ "$CODE" -eq 0 ]] || echo "$RESULT"

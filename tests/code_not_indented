@@ -3,7 +3,7 @@
 # Indenting HTML is nice, but if we do it on pre/code blocks then the whitespace
 # appears verbatim in the page.
 
-F="rendered/blog/2017-01-14-rss_to_maildir.html"
+F="$rendered/blog/2017-01-14-rss_to_maildir.html"
 
 [[ -f "$F" ]] || {
     echo "Example file '$F' not found in '$PWD'" 1>&2

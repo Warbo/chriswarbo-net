@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-xidel - -q --extract "//div[@id='content']//ul/li/a" < rendered/blog.html |
+xidel - -q --extract "//div[@id='content']//ul/li/a" < "$rendered"/blog.html |
     while read -r TITLE
     do
         if [[ -z "$TITLE" ]]

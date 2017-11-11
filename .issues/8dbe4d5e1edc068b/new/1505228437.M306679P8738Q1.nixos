@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Tue, 12 Sep 2017 15:58:21 +0100
-State: new
+State: resolved
 Subject: Remove 'rendered' from tests
 Message-Id: <8dbe4d5e1edc068b-0-artemis@nixos>
+resolution: fixed
 
 Our test scripts have been left unchanged from when we used to use Make
 and output files to rendered/. We're now running them during a Nix

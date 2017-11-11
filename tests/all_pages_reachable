@@ -32,14 +32,15 @@ function ignoreInSource {
 
 BASE="$PWD"
 
-pushd rendered > /dev/null
+pushd "$rendered" > /dev/null
 
     SOURCE_CONTENT=$(find . | ignoreInSource | sort)
 
     # Use 'script' to fake a tty and get a "Serving HTTP..." message. Send all
     # output to ../msgs, and wait until we see the "Serving HTTP..." message
     # before continuing
-    script -q /dev/null -c "python -m SimpleHTTPServer 8666" < /dev/null 2>&1 > ../msgs &
+    script -q /dev/null -c "python -m SimpleHTTPServer 8666" < /dev/null 2>&1 \
+                                                             > ../msgs &
     SERVER_PID="$!"
 
     # Delete the directory *and* kill the server when we exit
@@ -79,7 +80,7 @@ OUTPUT=$(wget --page-requisites --mirror --no-parent --content-on-error \
     exit 1
 }
 
-# Compare the content we've downloaded to that in rendered/
+# Compare the content we've downloaded to that in $rendered
 
 pushd "localhost:8666" > /dev/null
 

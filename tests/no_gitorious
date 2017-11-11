@@ -7,7 +7,7 @@ function findLinks {
         [[ -n "$LINE" ]] || continue
         echo "Found link '$LINE'" 1>&2
         FOUND=0
-    done < <(grep -r "$1" rendered/ | skip)
+    done < <(grep -r "$1" "$rendered/" | skip)
     return "$FOUND"
 }
 
