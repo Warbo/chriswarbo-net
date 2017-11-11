@@ -40,7 +40,7 @@ pushd "$rendered" > /dev/null
     # output to ../msgs, and wait until we see the "Serving HTTP..." message
     # before continuing
     script -q /dev/null -c "python -m SimpleHTTPServer 8666" < /dev/null 2>&1 \
-                                                             > ../msgs &
+                                                             > "$BASE/msgs" &
     SERVER_PID="$!"
 
     # Delete the directory *and* kill the server when we exit
@@ -50,7 +50,8 @@ pushd "$rendered" > /dev/null
 
     while true
     do
-        if [[ -e ../msgs ]] && grep "^Serving HTTP.*8666" < ../msgs > /dev/null
+        if [[ -e "$BASE/msgs" ]] && grep "^Serving HTTP.*8666" < "$BASE/msgs" \
+                                                               > /dev/null
         then
             break
         fi
