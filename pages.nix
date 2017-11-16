@@ -260,7 +260,7 @@ rec {
       SOURCE_PATH = "index.md";
     };
     "blog.html"       = {
-      cwd         = attrsToDirs { rendered = { inherit blog; }; };
+      vars        = { inherit blogPages; };
       file        = ./blog.md;
       SOURCE_PATH = "blog.md";
     };
@@ -274,7 +274,7 @@ rec {
       SOURCE_PATH = "projects.md";
     };
     "unfinished.html" = {
-      cwd         = attrsToDirs { rendered = { inherit unfinished; }; };
+      vars        = { unfinishedPages = attrsToDirs unfinished; };
       file        = ./unfinished.md;
       SOURCE_PATH = "unfinished.md";
     };

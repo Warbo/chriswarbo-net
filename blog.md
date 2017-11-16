@@ -23,10 +23,10 @@ in [Atom](/blog.atom) format and [RSS](/blog.rss) format.
 
 ```{.unwrap pipe="sh | pandoc -t json" id="posts"}
 export BASE_DIR='blog'
-export STRIP_PREFIX='root/rendered/blog/'
-find root/rendered/blog -type f -o -type l | grep -v "index.html" |
-                                             sort -r              |
-                                             showPosts
+export STRIP_PREFIX="$blogPages/"
+find "$blogPages" -type f -o -type l | grep -v "index.html" |
+                                       sort -r              |
+                                       showPosts
 ```
 
 <!-- We strip leading spaces with sed to avoid becoming a code block -->
