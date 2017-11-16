@@ -26,13 +26,13 @@ with rec {
 
   projectRepos = repoPages // {
     "index.html" = render {
-      file        = ./repos.md;
-      name        = "index.html";
-      cwd         = attrsToDirs {
-        repos = repoPages;
-        keys  = mapAttrs (n: v: writeScript "ipfs-key-${n}" v) ipfsKeys;
+      file = ./repos.md;
+      name = "index.html";
+      vars = {
+        repos = attrsToDirs repoPages;
+        keys  = attrsToDirs (mapAttrs (n: v: writeScript "ipfs-key-${n}" v)
+                                      ipfsKeys);
       };
-
       SOURCE_PATH = "repos.md";
     };
   };

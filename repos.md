@@ -15,16 +15,18 @@ echo '<ul>'
   while read REPO
   do
     NAME=$(basename "$REPO" .html)
+    echo "Found repo '$NAME'" 1>&2
     echo "<li>"
       echo "<a href=\"${NAME}.html\">"
         echo "$NAME"
       echo '</a>'
-      if [[ -f "$PWD/keys/$NAME" ]]
+      if [[ -f "$keys/$NAME" ]]
       then
-        KEY=$(grep '^.' < "keys/$NAME")
-        printf '(<a href="https://ipfs.io/ipns/%s">IPFS link</a>)' "$KEY"
+        echo "Found IPNS key for '$NAME'" 1>&2
+        KEY=$(grep '^.' < "$keys/$NAME")
+        printf '(<a href="https://ipfs.io/ipns/%s">IPNS link</a>)' "$KEY"
       fi
     echo '</li>'
-  done < <(find ./root/repos -type f -o -type l | sort)
+  done < <(find "$repos" -type f -o -type l | sort)
 echo '</ul>'
 ```

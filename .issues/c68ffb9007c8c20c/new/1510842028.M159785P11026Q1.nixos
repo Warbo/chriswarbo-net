@@ -1,0 +1,21 @@
+From: Chris Warburton
+Date: Thu, 16 Nov 2017 14:16:51 +0000
+State: new
+Subject: Store base64 data with linebreaks
+Message-Id: <c68ffb9007c8c20c-0-artemis@nixos>
+
+We've got a bunch of images in data URIs, stored as base64. That's fine,
+but it leads to very long lines, which is annoying when we're editing,
+grepping, etc.
+
+Many browsers will accept newlines in these URIs, but it seems to be
+technically incorrect to put them in (which tidy-html will complain to
+us about), so we shouldn't have them in our rendered result. We should
+still put them in, splitting to 80 columns, for our Markdown source
+though.
+
+We can currently do this with calls out to PanPipe, using e.g.
+`tr -d '\n'` to strip them out before insertion. This seems a bit
+heavy-handed though, and a lot of boilerplate. Let's just have the
+`render` script look for data URIs with base64 data, and strip newlines
+from them.

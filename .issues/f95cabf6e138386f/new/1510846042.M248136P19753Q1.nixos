@@ -1,0 +1,27 @@
+From: Chris Warburton
+Date: Thu, 16 Nov 2017 15:23:42 +0000
+State: new
+Subject: Pipefail for PanPipe
+Message-Id: <f95cabf6e138386f-0-artemis@nixos>
+
+In repos.md, there's a script like this:
+
+```{.unwrap pipe="bash | pandoc -f html -t json"}
+set -e
+...
+```
+
+Bash hit a failure in the script, due to a missing file, and aborted
+with an error message, as we'd expect from using `set -e`. All well and
+good.
+
+Unfortunately, PanPipe ignored the error and carried on, generating an
+incomplete page and allowing the whole site generation process to
+continue.
+
+This is probably because we're using a pipe in `pipe=`, and bash has the
+stupid default behaviour of only treating a pipeline as failing if the
+*last* component failed; since `pandoc` didn't fail, only `bash` did, no
+error was reported.
+
+We should update PanPipe to use the `pipefail` option.
