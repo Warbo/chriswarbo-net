@@ -1,6 +1,6 @@
 { attrsToDirs, buildEnv, dirContaining, haskellPackages, hfeed2atom, git,
   glibcLocales, lib, libxslt, makeWrapper, mergeDirs, nix, pandocPkgs,
-  pythonPackages, runCommand, wget, wrap, xidel, xmlstarlet }:
+  pythonPackages, replace, runCommand, wget, wrap, xidel, xmlstarlet }:
 
 with builtins;
 with lib;
@@ -89,7 +89,7 @@ with rec {
     renderHcard = { file = ./static/renderHcard; };
 
     showPost = {
-      paths = [ xidel ];
+      paths = [ replace xidel ];
       vars  = { RANTS = ./rants; };
       file  = ./static/showPost;
     };

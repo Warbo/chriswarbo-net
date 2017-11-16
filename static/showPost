@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
 
 # Check calling convention
-if [[ -z "$1" ]]
-then
+[[ -n "$1" ]] || {
     echo "showPost requires an argument" 1>&2
     exit 1
-fi
+}
+
+[[ -n "$BASE_DIR" ]] || {
+    echo "showPost requires BASE_DIR" 1>&2
+    exit 1
+}
+
+[[ -n "$STRIP_PREFIX" ]] || {
+    echo "showPost requires STRIP_PREFIX" 1>&2
+    exit 1
+}
+
 
 function getTitle {
     # Get the contents of <title />
@@ -41,7 +51,8 @@ function getDate {
 
 function getUrl {
     # Strip local prefix off argument to get the post's URL
-    echo "$1" | sed -e 's@.*rendered/@@'
+    F=$(echo "$1" | replace "$STRIP_PREFIX" '')
+    echo "$BASE_DIR/$F"
 }
 
 function renderTime {

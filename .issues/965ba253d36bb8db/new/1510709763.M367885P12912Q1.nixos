@@ -1,0 +1,12 @@
+From: Chris Warburton
+Date: Wed, 15 Nov 2017 01:34:25 +0000
+State: new
+Subject: Use 'vars' arg of render more
+Message-Id: <965ba253d36bb8db-0-artemis@nixos>
+
+The Nix 'render' function lets us pass in 'vars', which will be put in
+the environment when rendering. We should use this to do things like
+making the blog/ dir available to blog.html, etc.
+
+Currently we're using 'attrsToDirs' to build up a directory, but we
+could use this instead.

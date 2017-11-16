@@ -22,6 +22,8 @@ Here you can find all of my previous posts. These are also available as a feed,
 in [Atom](/blog.atom) format and [RSS](/blog.rss) format.
 
 ```{.unwrap pipe="sh | pandoc -t json" id="posts"}
+export BASE_DIR='blog'
+export STRIP_PREFIX='root/rendered/blog/'
 find root/rendered/blog -type f -o -type l | grep -v "index.html" |
                                              sort -r              |
                                              showPosts

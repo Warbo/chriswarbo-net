@@ -226,6 +226,8 @@ rec {
              })
              posts;
 
+  blogPages = attrsToDirs blog;
+
   renderAll = prefix: x: mdToHtmlRec (mapAttrs
     (n: v: if isDerivation v || isPath v
               then render {
@@ -253,7 +255,7 @@ rec {
                              });
                            }) {
     "index.html"      = {
-      cwd         = attrsToDirs { rendered = { inherit blog; }; };
+      vars        = { inherit blogPages; };
       file        = ./index.md;
       SOURCE_PATH = "index.md";
     };
