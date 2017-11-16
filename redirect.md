@@ -18,7 +18,7 @@ This blog has moved. If you're not redirected, check the [archive](./blog.html).
 ```{.unwrap pipe="bash | pandoc -f markdown -t json"}
 shopt -s nullglob
 echo '<script type="text/javascript">var posts = ['
-for F in root/rendered/blog/*.html
+for F in "$blogPages"/*.html
 do
     NAME=$(basename "$F")
     echo "\"./blog/$NAME\","

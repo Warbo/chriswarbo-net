@@ -381,7 +381,7 @@ rec {
   allPages = topLevel // redirects // resources // {
     inherit blog projects unfinished;
     "index.php" = render {
-      cwd  = attrsToDirs { rendered = { inherit blog; }; };
+      vars = { inherit blogPages; };
       file = ./redirect.md;
       name = "index.php";
     };
