@@ -91,7 +91,7 @@ rec {
              relBase ? null, SOURCE_PATH ? "" }:
     with rec {
       md        = metadata file;
-      extraPkgs = map (n: (pkgs // commands // pages)."${n}")
+      extraPkgs = map (n: getAttr n (pkgs // commands // pages))
                       (md.packages or []);
       dir       = mergeDirs [ cwd (dirContaining ./. (md.dependencies or [])) ];
       rel       = if relBase == null
@@ -269,7 +269,7 @@ rec {
       SOURCE_PATH = "contact.md";
     };
     "projects.html"   = {
-      cwd         = attrsToDirs { rendered = { inherit projects; }; };
+      vars        = { projects = attrsToDirs projects; };
       file        = ./projects.md;
       SOURCE_PATH = "projects.md";
     };
