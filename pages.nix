@@ -226,8 +226,6 @@ rec {
              })
              posts;
 
-  blogPages = attrsToDirs blog;
-
   renderAll = prefix: x: mdToHtmlRec (mapAttrs
     (n: v: if isDerivation v || isPath v
               then render {
@@ -246,6 +244,11 @@ rec {
                  { repos = projectRepos; };
 
   unfinished   = renderAll ["unfinished"] (dirsToAttrs ./unfinished);
+
+  # Derivations which build entire sub-directories
+  blogPages       = attrsToDirs blog;
+  projectPages    = attrsToDirs projects;
+  unfinishedPages = attrsToDirs unfinished;
 
   topLevel     = mapAttrs' (name: val: {
                              inherit name;
@@ -269,12 +272,12 @@ rec {
       SOURCE_PATH = "contact.md";
     };
     "projects.html"   = {
-      vars        = { projects = attrsToDirs projects; };
+      vars        = { projects = projectPages; };
       file        = ./projects.md;
       SOURCE_PATH = "projects.md";
     };
     "unfinished.html" = {
-      vars        = { unfinishedPages = attrsToDirs unfinished; };
+      vars        = { inherit unfinishedPages; };
       file        = ./unfinished.md;
       SOURCE_PATH = "unfinished.md";
     };
@@ -379,7 +382,9 @@ rec {
     };
 
   allPages = topLevel // redirects // resources // {
-    inherit blog projects unfinished;
+    blog        = blogPages;
+    projects    = projectPages;
+    unfinished  = unfinishedPages;
     "index.php" = render {
       vars = { inherit blogPages; };
       file = ./redirect.md;
