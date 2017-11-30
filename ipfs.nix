@@ -1,4 +1,4 @@
-{ allPages, attrsToDirs, bins, commands, isPath, lib, repoName, repoUrls,
+{ allPages, attrsToDirs, bins, commands, ipfs, isPath, lib, repoName, repoUrls,
   rsync, runCommand, wrap }:
 
 with builtins;
