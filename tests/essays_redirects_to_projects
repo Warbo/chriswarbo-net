@@ -3,8 +3,10 @@ set -e
 
 ERR=0
 
-while read -r PRJ_FILE
+while read -r PRJ_FILE_OR_LINK
 do
+    PRJ_FILE=$(readlink "$PRJ_FILE_OR_LINK")
+    [[ -f "$PRJ_FILE" ]] || continue  # Skip directories
     ESSAY_FILE=$(echo "$PRJ_FILE" | sed -e 's@/projects/@/essays/@g')
     [[ -e "$ESSAY_FILE" ]] || {
         ERR=1
@@ -31,6 +33,6 @@ do
         echo "'$ESSAY_FILE' doesn't redirect to '$PRJ_URL'" 1>&2
         grep '<link rel="canonical"' < "$ESSAY_FILE"
     fi
-done < <(find "$rendered/projects" -type f -o -type l)
+done < <(find -L "$rendered/projects" -type f -o -type l)
 
 exit "$ERR"
