@@ -1,6 +1,6 @@
 { attrsToDirs, buildEnv, dirContaining, haskellPackages, hfeed2atom, git,
-  glibcLocales, lib, libxslt, makeWrapper, mergeDirs, nix, pandocPkgs,
-  pythonPackages, replace, runCommand, wget, wrap, xidel, xmlstarlet }:
+  glibcLocales, lib, libxslt, makeWrapper, mergeDirs, nix, pandocPkgs, python,
+  replace, runCommand, wget, wrap, xidel, xmlstarlet }:
 
 with builtins;
 with lib;
@@ -21,7 +21,7 @@ with rec {
            (xs ++ concatMap (x: x.propagatedNativeBuildInputs) xs
                ++ concatMap (x: x.propagatedBuildInputs)       xs);
 
-  bs = pythonPackages.python.withPackages (p: [ p.python p.beautifulsoup4 ]);
+  bs = python.withPackages (p: [ p.python p.beautifulsoup4 ]);
 
   commands = mapAttrs (n: v: bins {
                         "${n}" = wrap (v // {
@@ -72,7 +72,7 @@ with rec {
     };
 
     relTo = {
-      paths = [ pythonPackages.python ];
+      paths = [ python ];
       file  = ./static/relTo;
     };
 

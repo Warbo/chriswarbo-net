@@ -10,7 +10,7 @@ rec {
 
   cleanup = bins { cleanup = ./static/cleanup; };
 
-  commands = callPackage ./commands.nix {};
+  commands = callPackage ./commands.nix { inherit python; };
 
   metadata =
     with rec {
