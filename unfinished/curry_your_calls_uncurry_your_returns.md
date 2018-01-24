@@ -4,16 +4,23 @@ title: Curry Your Calls, Uncurry Your Returns
 
 ## Currying ##
 
-[Currying](https://en.wikipedia.org/wiki/Currying) is widely used in functional
-programming. Some languages, like ML and Haskell, curry everything by default;
-in others, like Scheme and Javascript, we can implement currying as a
-transformation (either a higher-order function or a macro), and call it
+[Currying](https://en.wikipedia.org/wiki/Currying) is widely used in [functional
+programming](https://en.wikipedia.org/wiki/Functional_programming). Some
+languages, like
+[ML](https://en.wikipedia.org/wiki/ML_%28programming_language%29) and
+[Haskell](https://en.wikipedia.org/wiki/Haskell_%28programming_language%29),
+curry everything by default; in others, like
+[Scheme](https://en.wikipedia.org/wiki/Scheme_%28programming_language%29) and
+[Javascript](https://en.wikipedia.org/wiki/JavaScript), we can implement
+currying as a transformation (either a
+[higher-order function](https://en.wikipedia.org/wiki/Higher-order_function) or
+a [macro](https://en.wikipedia.org/wiki/Hygienic_macro)), and call it
 explicitly wherever we want to use it.
 
 These explicit, manual implementations often look something like the following
 pseudocode:
 
-```
+```javascript
 curryWith1 = function(f, args) {
   return function(newArgs...) {
     allArgs = args + newArgs;
@@ -30,7 +37,7 @@ curry1 = function(f) {
 
 Let's use `curry1` to curry a function:
 
-```
+```javascript
 func = function(w, x) {
   return function(y) {
     return function(z) {
@@ -45,7 +52,7 @@ curriedF1 = curry1(func);
 If we call this `curriedF1` function, the evaluation will look something like
 this if we give the right number of arguments for `func`:
 
-```
+```javascript
 curriedF1(1, 2);
 
 // Substitute in curriedF1
@@ -113,7 +120,7 @@ If we call `curriedF1` with too few arguments, e.g. `curriedF1(1)`, then we'll
 get back another function, which we can call with more arguments, e.g.
 `curriedF1(1)(2)`:
 
-```
+```javascript
 curriedF1(1)(2);
 
 // Proceed as above, down to substituting in allArgs
@@ -158,7 +165,7 @@ case, if we use this `curry1` function.
 
 Consider the following, where we call `curriedF1` with 4 arguments all at once:
 
-```
+```javascript
 curriedF1(1, 2, 3, 4);
 
 // Proceed as above, up to calculating allArgs
@@ -198,7 +205,7 @@ differences aren't important to us here; my point will hold regardless.
 
 Now let's call `curriedF1` with 4 arguments, but pass them in one at a time:
 
-```
+```javascript
 curriedF1(1)(2)(3)(4);
 
 // Evaluate `curriedF1(1)(2)` as above
@@ -251,7 +258,7 @@ To get this desired behaviour, we must also perform the "dual" operation:
 As the name suggests, "uncurrying" is the opposite of currying. Given a function
 in curried form, like:
 
-```
+```javascript
 example = function(x) {
   return function(y) {
     return function(z) {
@@ -263,7 +270,7 @@ example = function(x) {
 
 We can uncurry it to get a function which takes all of its arguments in one go:
 
-```
+```javascript
 uncurry(example) == function(x, y, z) { return example(x)(y)(z); }
 ```
 
@@ -272,7 +279,7 @@ arguments, and call the underlying function with one at a time. We can do the
 latter using a loop: given a function `f` and a list of arguments `args` we can
 do something like this:
 
-```
+```javascript
 val = f;
 while length(args) > 0 {
   arg  = head(args);
@@ -288,7 +295,7 @@ The first change we should make to our `curryWith1` function is to avoid calling
 the underlying function `f` with too many arguments. Instead, we should only
 take however many `f` needs from the front of the `allArgs` list:
 
-```
+```javascript
 curryWith2 = function(f, args) {
   return function(newArgs...) {
     allArgs = args + newArgs;
@@ -310,7 +317,7 @@ simply be ignored, like in Javascript/PHP.
 The next step is to run our uncurry loop over those remaining arguments (if
 any):
 
-```
+```javascript
 curryWith3 = function(f, args) {
   return function(newArgs...) {
     allArgs = args + newArgs;
@@ -334,12 +341,12 @@ curry3 = function(f) {
 }
 ```
 
-This change doesn't affect the behaviour in the first two cases: when a function
-is called with the "right" number of arguments, or too few arguments. We can
+This change doesn't affect the behaviour in the first two cases (when a function
+is called with the "right" number of arguments, or too few arguments). We can
 step through the too-many-arguments examples to see how the previous discrepancy
 is avoided. First, calling `curriedF3(1, 2, 3, 4)`:
 
-```
+```javascript
 curriedF3 = curry3(func);
 
 curriedF3(1, 2, 3, 4);
@@ -489,7 +496,7 @@ if length([1, 2, 3, 4]) < 2 {
 
 Now we can compare this with `curriedF3(1)(2)(3)(4)`:
 
-```
+```javascript
 curriedF3(1)(2)(3)(4);
 
 // Evaluate as far as '(function(newArgs...) {...})(...)'
@@ -664,7 +671,7 @@ achieve: we just need to curry them!
 I've not yet decided if it's a good idea to automatically curry return values in
 our loop, e.g.
 
-```
+```javascript
 val = curry3(val)(arg);
 ```
 
