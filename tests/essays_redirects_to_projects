@@ -5,7 +5,7 @@ ERR=0
 
 while read -r PRJ_FILE_OR_LINK
 do
-    PRJ_FILE=$(readlink "$PRJ_FILE_OR_LINK")
+    PRJ_FILE=$(echo "$PRJ_FILE_OR_LINK")
     [[ -f "$PRJ_FILE" ]] || continue  # Skip directories
     ESSAY_FILE=$(echo "$PRJ_FILE" | sed -e 's@/projects/@/essays/@g')
     [[ -e "$ESSAY_FILE" ]] || {
