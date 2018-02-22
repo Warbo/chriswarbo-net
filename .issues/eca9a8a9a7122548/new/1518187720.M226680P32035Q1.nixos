@@ -1,0 +1,15 @@
+From: Chris Warburton
+Date: Fri, 09 Feb 2018 14:46:53 +0000
+State: new
+Subject: Update NixOS pages
+Message-Id: <eca9a8a9a7122548-0-artemis@nixos>
+
+Noticed a few out of date things on the NixOS project pages. It would be
+nice to bump these a bit closer to the present, since they come up in
+Google results, etc.
+
+I've noticed that in "continuous integration" we use 'readFile' to get
+data into Nix at eval time. It would be better to use 'import'.
+
+Also, the description of 'latestGit' could do with being updated. For
+example, including the 'stable' argument would be nice.
