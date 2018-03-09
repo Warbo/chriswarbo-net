@@ -335,7 +335,7 @@ language to use", or anything to that effect. It's a shell command: nothing
 more, but also nothing less. For example, rendering:
 
 ```{pipe="sh > /dev/null"}
-echo -e '```{pipe="tr l L | sed -e 's/ /_/g'"}\nHello world!\n```' > pp2.md
+echo -e '```{pipe="tr l L | sed -e '\''s/ /_/g'\''"}\nHello world!\n```' > pp2.md
 ```
 
 ``{pipe="cat pp2.md"}
