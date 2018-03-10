@@ -338,7 +338,8 @@ more, but also nothing less. For example, rendering:
 echo -e '```{pipe="tr l L | sed -e '\''s/ /_/g'\''"}\nHello world!\n```' > pp2.md
 ```
 
-``{pipe="cat pp2.md"}
+```{pipe="cat pp2.md"}
+```
 
 Yields a document containing:
 
