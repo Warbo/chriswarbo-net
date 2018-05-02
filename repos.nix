@@ -1,6 +1,6 @@
 # Give each git repo a page which redirects to the repo's own site
-{ attrsToDirs, commands, fetchGitHashless, ipfsKeys, latestGit, lib, render,
-  repoUrls, runCommand, writeScript }:
+{ attrsToDirs, commands, fetchGitHashless, ipfsKeys, lib, render, repoUrls,
+  runCommand, writeScript }:
 
 with builtins;
 with lib;
