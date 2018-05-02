@@ -1,0 +1,13 @@
+From: Chris Warburton
+Date: Wed, 02 May 2018 12:33:27 +0100
+State: new
+Subject: "Programming wisdom" project
+Message-Id: <f9115f324be19518-0-artemis@nixos>
+
+Look through blog for little snippets of programming wisdom, functions
+(forEach/map/reduce/etc.) are more modular, composable and declarative
+than loops; iterators are bad OOP (sequential coupling); "reprogrammable
+semicolon"; etc.
+
+Keep them where they are, but also write up a less ranty, more
+explanatory form for this new section.

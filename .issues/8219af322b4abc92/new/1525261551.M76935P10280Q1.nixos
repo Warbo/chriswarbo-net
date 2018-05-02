@@ -1,0 +1,11 @@
+From: Chris Warburton
+Date: Wed, 02 May 2018 12:44:34 +0100
+State: new
+Subject: Consolidate dependencies
+Message-Id: <8219af322b4abc92-0-artemis@nixos>
+
+It looks like we're depending on multiple versions of the same
+thing. For example, I see we're currently building haskell-src-exts
+versions 1.18 and 1.19, which is quite a waste.
+
+Maybe look through the dependency graph on Hydra or something.

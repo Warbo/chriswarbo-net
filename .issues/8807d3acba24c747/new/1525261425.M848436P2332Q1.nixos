@@ -1,0 +1,19 @@
+From: Chris Warburton
+Date: Wed, 02 May 2018 12:39:05 +0100
+State: new
+Subject: Keep import from derivation to a minimum
+Message-Id: <8807d3acba24c747-0-artemis@nixos>
+
+Where possible, we should try to accumulate dependencies on to our
+resulting derivations. We *can* import from derivations, but that will
+cause building at eval time, blowing up the evaluator's memory usage,
+etc.
+
+I think a reasonable rule is that importing something that depends on a
+local file (e.g. a blog post), and only uses "standard" dependencies
+(grep, sed, etc.) then we're OK. If something might trigger a load of
+building (e.g. pandoc) then we should try to keep that from happening
+until build time.
+
+I think yaml2json is a bit of a tricky one. I'll allow it for now, but
+maybe we could find a pure bash alternative or something?

@@ -1,0 +1,11 @@
+From: Chris Warburton
+Date: Thu, 26 Apr 2018 18:24:18 +0100
+State: new
+Subject: Use a Pandoc alternative?
+Message-Id: <fcd42c519894a562-0-artemis@nixos>
+
+Pandoc's pretty heavyweight, especially with its variety of
+dependencies.
+
+Could we use e.g. http://wiki.call-cc.org/eggref/4/lowdown to parse,
+along with simple ports of panpipe and panhandle?
