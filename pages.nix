@@ -1,7 +1,7 @@
-{ allDrvsIn, attrsToDirs, callPackage, dirsToAttrs, git, git2html, hfeed2atom,
-  ipfs, isPath, jq, latestConfig, lib, mkBin, nothing, pages, pkgs, python,
-  repoSource, reverse, runCommand, sanitiseName, stdenv, wget, withDeps, wrap,
-  writeScript, xidel }:
+{ allDrvsIn, attrsToDirs, callPackage, dirsToAttrs, git, git2html,
+  haskellPackages, hfeed2atom, ipfs, isPath, jq, lib, mkBin, nothing, pages,
+  pkgs, python, repoSource, reverse, runCommand, sanitiseName, stdenv, wget,
+  withDeps, wrap, writeScript, xidel }:
 
 with builtins;
 with lib;
@@ -14,21 +14,6 @@ rec {
 
   metadata =
     with rec {
-      yaml2json = mkBin {
-        name   = "yaml2json";
-        paths  = [ (python.withPackages (p: [ p.pyyaml ])) ];
-        script = ''
-          #!/usr/bin/env python
-          import json, re, StringIO, sys, yaml
-          bits = re.split("^----*$", sys.stdin.read(), flags=re.MULTILINE)
-          if len(bits) < 3:
-            print '"{}"'
-          else:
-            data = yaml.load(StringIO.StringIO(filter(None, bits)[0]))
-            print json.dumps(json.dumps(data))
-        '';
-      };
-
       # Choose a nice name, and avoid 'cannot refer to store path' errors
       prettyName = file:
         with rec {
@@ -41,16 +26,26 @@ rec {
            then name
            else base;
 
-      read = file: runCommand "metadata-${prettyName file}.nix"
-               {
-                 inherit file;
-                 buildInputs = [ yaml2json ];
-               }
-               ''
-                 set -e
-                 yaml2json < "$file" > "$out"
-               '';
-    }; file: fromJSON (import (read file));
+      read = file: runCommand "metadata-${prettyName file}"
+        {
+          inherit file;
+          buildInputs = [ haskellPackages.yaml ];
+          nixExpr     = "with builtins; fromJSON (readFile ./metadata.json)";
+        }
+        ''
+          set -e
+          mkdir -p "$out"
+          echo "$nixExpr" > "$out/default.nix"
+          echo '{}' > "$out/metadata.json"
+
+          PAT='^----*'
+          YAML=$(grep -B 99999 -m 2 '^----*' < "$file" | grep -v "$PAT") || true
+          [[ -z "$YAML" ]] || {
+            echo "$YAML" | yaml2json - > "$out/metadata.json"
+          }
+        '';
+    };
+    file: import (read file);
 
   # Create a directory containing (links to) 'files'; the directory structure
   # will be relative to 'base', for example:
