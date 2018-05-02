@@ -39,12 +39,12 @@ echo "Done" 1>&2
 
 printf "Getting IPFS keys..." 1>&2
 function ipfsKeys() {
-    ipfs key list -l | while read -r PAIR
+    while read -r PAIR
     do
         N=$(echo "$PAIR" | cut -d' ' -f2)
         V=$(echo "$PAIR" | cut -d' ' -f1)
         jq -n --arg n "$N" --arg v "$V" '{($n): $v}'
-    done | jq -s 'reduce .[] as $x ({}; . + $x)'
+    done < <(ipfs key list -l) | jq -s 'reduce .[] as $x ({}; . + $x)'
 }
 IPFS_KEYS=$(ipfsKeys)
 export IPFS_KEYS
