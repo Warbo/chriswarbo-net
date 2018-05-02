@@ -2,10 +2,6 @@ args:
 
 with builtins;
 with rec {
-  origPath = <nixpkgs>;
-
-  orig = import origPath {};
-
   # We host a bunch of git repos; look up their location from the environment
   repoEnv    = getEnv "GIT_REPO_DIR";
   repoLocal  = "/home/chris/Programming/repos";
@@ -19,32 +15,46 @@ with rec {
                                      repoRemote
                   else repoEnv;
 
-  url = "${repoSource}/nix-config.git";
-
   # For speed, we allow the latest commit IDs to be passed in too
   repoRefs = if getEnv "REPO_REFS" == ""
                 then {}
                 else fromJSON (getEnv "REPO_REFS");
 
-  # Get our custom nix config; nixpkgs forces us to check the hash
-  fixed = orig.fetchgit {
-    inherit url;
-    rev    = "ffa6543";
-    sha256 = "08hi2j38sy89sk5aildja453yyichm2jna8rxk4ad44h0m2wy47n";
-  };
-  withFixed = import origPath { config = import "${fixed}/config.nix"; };
+  # We rely on a bunch of helper functions, etc. from the nix-config repo
+  url = "${repoSource}/nix-config.git";
 
-  # Our nix config allows fetching git commits dynamically; get latest config
+  # Pin to a particular version of nixpkgs, to avoid updates breaking things.
+  # If stable = false then we use "unstable", which is <nixpkgs>
+  pinnedNixpkgs = if args.stable or true
+                     then "nixpkgs1709"
+                     else "unstable";
+
+  # Use fetchgit to a particular version of nix-config
+  fixed =
+    with rec {
+      pkgs = import <nixpkgs> { config = {}; };
+      src  = pkgs.fetchgit {
+        inherit url;
+        rev    = "99bc878";
+        sha256 = "0q8f30vzvngnnvszxxp6vhr649y4lvix4r9axhvmpc9wr5afls6s";
+      };
+    };
+    import src { defaultVersion = pinnedNixpkgs; };
+
+  # nix-config lets us fetch its latest version without having to specify a hash
   latest = if repoRefs ? nix-config
-              then withFixed.fetchGitHashless {
-                     inherit url;
-                     rev = repoRefs.nix-config;
-                   }
-              else withFixed.latestGit { inherit url; };
+              # Avoids having to lookup the latest revision
+              then import "${fixed.fetchGitHashless {
+                               inherit url;
+                               rev = repoRefs.nix-config;
+                             }}/unstable.nix"
+              # Looks up the latest version, fetches it and imports it
+              else fixed.latestNixCfg;
 };
 
 rec {
   inherit repoRefs repoSource;
-  latestConfig   = "${latest}/config.nix";
-  configuredPkgs = import origPath (args // { config = import latestConfig; });
+  configuredPkgs = if args.stable or true
+                      then fixed
+                      else latest;
 }
