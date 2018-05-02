@@ -1,8 +1,7 @@
-with import ./static/nix/defs.nix {};
+{ stable ? true }:
+with import ./static/nix/defs.nix { inherit stable; };
 with configuredPkgs;
 with rec {
-  pages = callPackage ./pages.nix {
-    inherit latestConfig pages repoSource;
-  };
+  pages = callPackage ./pages.nix { inherit pages repoSource; };
 };
 pages
