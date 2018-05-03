@@ -39,7 +39,7 @@ with rec {
         sha256 = "0q8f30vzvngnnvszxxp6vhr649y4lvix4r9axhvmpc9wr5afls6s";
       };
     };
-    import src { defaultVersion = pinnedNixpkgs; };
+    import src {};
 
   # nix-config lets us fetch its latest version without having to specify a hash
   latest = if repoRefs ? nix-config
