@@ -12,3 +12,26 @@ You can render everything using:
 
 Running `./render` without an argument will tell you the various arguments
 available.
+
+### IPNS
+
+Publishing this site on IPFS (Inter-Planetary File System) is easy, but each
+version will get a different address (based on a hash of its contents).
+Optionally, we can use IPNS (Inter-Planetary Name System) to 'update' an
+existing address to a new version. This is based on asymmetric encryption, so an
+address can only be updated by those with the corresponding private key.
+
+Each IPNS private key has an associated "name"; this doesn't affect the address
+or contents, it just makes it more convenient to call IPFS commands, since we
+can specify a key by name instead of its pseudo-random content. We assume the
+existence of keys with certain names; if you don't want these "polluting" your
+main IPFS node, you could run a separate node just for this purpose.
+
+In particular there should be a key named `chriswarbonet`, which we will use to
+publish the main site. Additionally, each git repo will have its own key, named
+the same as the repo (but without the `.git` suffix); for example a git repo
+`foo-bar.git` will be published to the key `foo-bar`.
+
+To generate a key for a go-ipfs node, the following command can be used:
+
+    ipfs key gen --type=rsa --size=2048 the-desired-name
