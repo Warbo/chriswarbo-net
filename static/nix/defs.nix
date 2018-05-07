@@ -56,5 +56,5 @@ rec {
   inherit repoRefs repoSource;
   configuredPkgs = if args.stable or true
                       then fixed
-                      else latest;
+                      else import <nixpkgs> { config = latest; };
 }
