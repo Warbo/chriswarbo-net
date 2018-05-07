@@ -3,8 +3,8 @@ title: Benchmark Anything with Nix and Airspeed Velocity
 ---
 
 [Airspeed velocity](https://asv.readthedocs.io) (asv) is a benchmarking
-framework originally created for Python packages. Using Nix, we can extend it to
-support anything we like.
+framework originally created for Python packages.
+ Using[Nix](http://nixos.org/nix), we can extend it tosupport anything we like.
 
 ## Using ASV ##
 
@@ -47,8 +47,9 @@ instead of `virtualenv` or `conda`. Since Nix is a general purpose package
 manager, we can set up environments for any sort of package rather than just
 Python.
 
-The required dependencies can be found in the `shell.nix` file of `asv-nix`.
-With these available we can generate a default config file using:
+The required dependencies can be found in the `shell.nix` file of
+[`asv-nix`](/git/asv-nix). With these available we can generate a default config
+file using:
 
     asv quickstart
 
@@ -162,8 +163,8 @@ With this environment, our benchmarks can access `someVal` via
 `os.getenv("SOME_VAR")`, and any binaries defined by our project will be in
 `PATH`.
 
-If use the second config, then `bench-env.nix` will need to take an argument and
-use it to look up `ourProject`:
+If we use the second config, then `bench-env.nix` will need to take an argument
+and use it to look up `ourProject`:
 
     with import <nixpkgs> {};
     args: runCommand "benchmark-env"
@@ -240,7 +241,7 @@ track_passes.unit = "tests"
 def track_failures():
   with open('result.json', 'w') as f:
     return json.loads(f.read()).failed
-track_passes.unit = "tests"
+track_failures.unit = "tests"
 ```
 
 ## More Information ##
