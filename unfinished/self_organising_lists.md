@@ -20,15 +20,23 @@ printf "${PREFIX}\n${CODE}" | ghci -v0
 
 <!-- Content -->
 
-I was marking a Haskell assignment recently which introduced the concept of [self-organising lists](http://en.wikipedia.org/wiki/Self-organizing_list) (specifically the "move to front" variety).
+I was marking a Haskell assignment recently which introduced the concept of
+[self-organising lists](http://en.wikipedia.org/wiki/Self-organizing_list)
+(specifically the "move to front" variety).
 
 ## The Context ##
 
-Let's say we have a tail-recursive list type. Haskell's Prelude defines one, called `forall a. [a]`{.haskell}. It's conventional to leave the `forall a.`{.haskell} implicit, so I'll just write `[a]`{.haskell} to mean the list type.
+Let's say we have a tail-recursive list type. Haskell's Prelude defines one,
+called `forall a. [a]`{.haskell}. It's conventional to leave the
+`forall a.`{.haskell} implicit, so I'll just write `[a]`{.haskell} to mean the
+list type.
 
-We can use `[] :: [a]`{.haskell} to construct an empty list and `(:) :: a -> [a] -> [a]`{.haskell} to prepend an element to another list.
+We can use `[] :: [a]`{.haskell} to construct an empty list and
+`(:) :: a -> [a] -> [a]`{.haskell} to prepend an element to another list.
 
-We want the ability to look up an element which matches some predicate, eg. "has the ID '100'", or "is shorter than 10", or whatever. I'll represent predicates using the function type `a -> Bool`{.haskell}.
+We want the ability to look up an element which matches some predicate, eg. "has
+the ID '100'", or "is shorter than 10", or whatever. I'll represent predicates
+using the function type `a -> Bool`{.haskell}.
 
 Implementing such a lookup function is pretty straightforward:
 
@@ -40,7 +48,10 @@ lookUp p (x:xs) = if p x
                      else lookUp p xs
 ```
 
-In the assignment we used `a`{.haskell} as the return type and allowed errors to be thrown if no match was found, but that's a horrible way to do it. Real Haskell code would avoid the errors completely by using the [`Maybe`{.haskell}](https://wiki.haskell.org/Maybe) type.
+In the assignment we used `a`{.haskell} as the return type and allowed errors to
+be thrown if no match was found, but that's a horrible way to do it. Real
+Haskell code would avoid the errors completely by using the
+[`Maybe`{.haskell}](https://wiki.haskell.org/Maybe) type.
 
 We can verify that this works using a few examples:
 
@@ -59,17 +70,35 @@ cat lookUps
 
 ## The Problem ##
 
-The `lookUp`{.haskell} function steps through the list one element at a time until it finds a match. We can calculate its computational complexity by counting how many times it runs the predicate function `p`{.haskell}, in terms of the length $N$ of the list. This should be roughly proportional to the amount of time it takes.
+The `lookUp`{.haskell} function steps through the list one element at a time
+until it finds a match. We can calculate its computational complexity by
+counting how many times it runs the predicate function `p`{.haskell}, in terms
+of the length $N$ of the list. This should be roughly proportional to the amount
+of time it takes.
 
-In the best case, the first element of the list satisfies the predicate, so we only run the predicate once. This gives best-case complexity of $O(1)$.
+In the best case, the first element of the list satisfies the predicate, so we
+only run the predicate once. This gives best-case complexity of $O(1)$.
 
-In the worst case, either *no* element satisfies the predicate, or only the *last* element of the list satisfies the predicate. In both of these cases, we must run the predicate on each element of the list, giving worst-case complexity of $O(N)$. Since the behaviour in both of these cases is identical, I'll assume there's always a match from now on.
+In the worst case, either *no* element satisfies the predicate, or only the
+*last* element of the list satisfies the predicate. In both of these cases, we
+must run the predicate on each element of the list, giving worst-case complexity
+of $O(N)$. Since the behaviour in both of these cases is identical, I'll assume
+there's always a match from now on.
 
-In general, the complexity depends on the position of the first element which satisfies the predicate. Hence the *average* (or *expected*) complexity depends on the *average* position. With no prior knowledge of how our function will be used, the average position is $\frac{N}{2}$, hence the expected complexity is $O(\frac{N}{2})$.
+In general, the complexity depends on the position of the first element which
+satisfies the predicate. Hence the *average* (or *expected*) complexity depends
+on the *average* position. With no prior knowledge of how our function will be
+used, the average position is $\frac{N}{2}$, hence the expected complexity is
+$O(\frac{N}{2})$.
 
-If we knew more about how our function was going to be used, we could improve its performace. For example, let's say that `lookUp`{.haskell} will only be run with the constant list `myList`{.haskell}. Let's also say that one particular predicate is much more likely to be used than any other; let's call it `p1`{.haskell}.
+If we knew more about how our function was going to be used, we could improve
+its performace. For example, let's say that `lookUp`{.haskell} will only be run
+with the constant list `myList`{.haskell}. Let's also say that one particular
+predicate is much more likely to be used than any other; let's call it
+`p1`{.haskell}.
 
-We can use this information to make `lookUp`{.haskell} much faster, by making use of the following function:
+We can use this information to make `lookUp`{.haskell} much faster, by making
+use of the following function:
 
 ```{.haskell pipe="./hs"}
 moveToFront :: (a -> Bool) -> [a] -> [a]
@@ -100,15 +129,21 @@ lookUpP1 = const . lookUp' (case lookUp' p1 myList of
                                  Just x  -> x : filterFirst (not . p1))
 ```
 
-Notice that `lookUpP1`{.haskell} is a function, but is calculated from other functions, rather than taking arguments explicitly. The first time `lookUpP1`{.haskell} is called, in the following way:
+Notice that `lookUpP1`{.haskell} is a function, but is calculated from other
+functions, rather than taking arguments explicitly. The first time
+`lookUpP1`{.haskell} is called, in the following way:
 
  - Based on the results of `lookUp' p1 myList`{.haskell}, we choose a list:
     - If the result is `Nothing`{.haskell}, we use `myList`{.haskell}
     - If the result is `Just x`{.haskell}, we rearrange the list to
 
-we're much more likely to call `lookUp`{.haskell} with some predicate `p1`{.haskell} is much more likely to be used than any other, we can run `lookUp p1 myList`{.haskell} right move a matching element to the front of the list and get the best-case performance for these calls.
+we're much more likely to call `lookUp`{.haskell} with some predicate
+`p1`{.haskell} is much more likely to be used than any other, we can run
+`lookUp p1 myList`{.haskell} right move a matching element to the front of the
+list and get the best-case performance for these calls.
 
-What if we *don't* know what `p1` is, but we know that *some* predicates will be more common than others? This is where self-organising lists come in.
+What if we *don't* know what `p1` is, but we know that *some* predicates will be
+more common than others? This is where self-organising lists come in.
 
 ## Self-Organising List Lookup ##
 
