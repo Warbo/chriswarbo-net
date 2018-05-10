@@ -31,8 +31,8 @@ called `forall a. [a]`{.haskell}. It's conventional to leave the
 `forall a.`{.haskell} implicit, so I'll just write `[a]`{.haskell} to mean the
 list type.
 
-We can use `[] :: [a]`{.haskell} to construct an empty list and
-`(:) :: a -> [a] -> [a]`{.haskell} to prepend an element to another list.
+We can use `[]`{.haskell} to construct an empty list and `:`{.haskell} to
+prepend an element to another list.
 
 We want the ability to look up an element which matches some predicate, eg. "has
 the ID '100'", or "is shorter than 10", or whatever. I'll represent predicates
@@ -92,183 +92,138 @@ used, the average position is $\frac{N}{2}$, hence the expected complexity is
 $O(\frac{N}{2})$.
 
 If we knew more about how our function was going to be used, we could improve
-its performace. For example, let's say that `lookUp`{.haskell} will only be run
+its performance. For example, let's say that `lookUp`{.haskell} will only be run
 with the constant list `myList`{.haskell}. Let's also say that one particular
 predicate is much more likely to be used than any other; let's call it
 `p1`{.haskell}.
 
-We can use this information to make `lookUp`{.haskell} much faster, by making
-use of the following function:
+The first thing we can do is make a `lookUp`{.haskell} function which hard-codes
+the list `myList`{.haskell}:
 
-```{.haskell pipe="./hs"}
-moveToFront :: (a -> Bool) -> [a] -> [a]
-moveToFront = let mtf acc p []     = reverse acc
-                  mtf acc p (x:xs) = if p x
-                                        then x : reverse acc ++ xs
-                                        else mtf (x:acc) p xs
-               in mtf []
+```{.haskell}
+lookUpMyList p = lookUp p myList
 ```
+
+Any speedup this gives us will be modest (e.g. due to compiler optimisations,
+like loop unrolling). We can do much better by looking up a match (if any) for
+`p1`{.haskell} ahead of time, and putting it at the start of the list:
 
 ```haskell
--- The old definition, with arguments swapped
-lookUpSwap []     p = Nothing
-lookUpSwap (x:xs) p = if p x
-                      then Just x
-                      else lookUp' xs p
-
-
--- A version of filter which only removes the *first* non-matching element
-filterFirst p []     = []
-filterFirst p (x:xs) = if p x
-                          then x : filterFirst p xs
-                          else xs  -- No recursion
-
--- Specialise lookUp' to be faster for p1 and myList
-lookUpP1 = const . lookUp' (case lookUp' p1 myList of
-                                 Nothing -> myList
-                                 Just x  -> x : filterFirst (not . p1))
+-- 'acc' accumulates elements from the given list (in reverse order)
+optimiseList :: [a] -> (a -> Bool) -> [a] -> Maybe [a]
+optimiseList acc p []     = reverse acc  -- No match, list will be unchanged
+optimiseList acc p (x:xs) = if p x
+                               then Just (x : reverse acc ++ xs)  -- Match found
+                               else optimiseList (x:acc) p xs
 ```
 
-Notice that `lookUpP1`{.haskell} is a function, but is calculated from other
-functions, rather than taking arguments explicitly. The first time
-`lookUpP1`{.haskell} is called, in the following way:
+Now we can look up matches from an optimised version of `myList`{.haskell}:
 
- - Based on the results of `lookUp' p1 myList`{.haskell}, we choose a list:
-    - If the result is `Nothing`{.haskell}, we use `myList`{.haskell}
-    - If the result is `Just x`{.haskell}, we rearrange the list to
+```haskell
+lookUpOptimised = let newList = optimiseList [] p1 myList
+                      go p    = lookUp p newList
+                   in go
+```
 
-we're much more likely to call `lookUp`{.haskell} with some predicate
-`p1`{.haskell} is much more likely to be used than any other, we can run
-`lookUp p1 myList`{.haskell} right move a matching element to the front of the
-list and get the best-case performance for these calls.
+The first time `lookUpOptimised`{.haskell} is called, the local definition
+`go`{.haskell} will be evaluated, resulting in a function. When that function
+is called, `lookUp`{.haskell} will be called, which will force
+`newList`{.haskell} to be evaluated. The `lookUp`{.haskell} function will
+perform as usual, but in those cases where it's called with `p1`{.haskell}
+(which we're assuming is quite often), and when `myList`{.haskell} does actually
+contain an element satisfying `p1`{.haskell}, then `lookUp`{.haskell} will hit
+that element immediately since it will be at the start of `newList`{.haskell},
+and hence this (assumed to be common) use-case has the $O(1)$ best-case
+behaviour. Note that we'll still get the $O(n)$ worst-case behaviour if there is
+no element in `myList`{.haskell} which satisfies `p1`{.haskell}, and we'll also
+pay a one-time cost of `$O(n)$ to do the initial search either way.
 
-What if we *don't* know what `p1` is, but we know that *some* predicates will be
-more common than others? This is where self-organising lists come in.
+This is all well and good, but its assumptions are quite strong. What if we
+*don't* know what predicates will be common, or what if there are several common
+predicates? This is where self-organising lists come in.
 
 ## Self-Organising List Lookup ##
 
-We can represent a self-organising list with a regular Haskell list, but we
+To make a self-organising list we just need to combine the processing performed
+by `lookUp`{.haskell} and `optimiseList`{.haskell}. When we're asked to look
+up a value in a list, rather than *just* returning a matching element (if found)
+we *also* return a permutation of the list optimised for that predicate:
 
-lookupKey db k = let isK  d = get1 d == k
-                     notK d = not (isK d)
-                     x      = filter  isK db
-                     xs     = filter notK db
-                  in (head x, x ++ xs)
+```haskell
+selfOrganisingLookUp :: (a -> Bool) -> [a] -> ([a], Maybe a)
+selfOrganisingLookUp =
+  let go acc p [] = (reverse acc, Nothing)
+      go acc p (x:xs) = if p x
+                           then (x : reverse acc ++ xs, Just x)
+                           else go (x:acc) p xs
+```
 
-For reference, here's an alternative implementation, which looks
-completely different to both of the above:
+To see any benefit we need to ensure that the list returned from each lookup is
+used as input to the following lookup. We can do this by propagating the
+resulting list up through our return values, all the way to our "main loop",
+then pass them into the next iteration. We can do this explicitly, or get fancy
+with monads, applicatives, etc.
 
-lookupKey = lookupKey' []
+## Analysing Performance ##
 
-lookupKey' acc []     k = error ("ID " ++ show k ++ " not found")
-lookupKey' acc (x:xs) k = if get1 x == k
-                             then (x, x : reverse acc ++ xs)
-                             else lookupKey' (x:acc) xs k
+The complexity of `selfOrganisingLookUp`{.haskell} is tricky, and depends on the
+ratio of common-element lookups to non-common-element lookups. The best and
+worst case complexity match the regular list, $O(1)$ and $O(N)$, but the
+rearranging increases the chance that we'll hit the best case, if some queries
+are more frequent than others. Hence, the self-organising list is *at least as
+fast* as the regular list, when lookups are drawn at random from some fixed
+distribution.
 
-Notice that it doesn't do any filtering at all: the elements come in via
-"x", "xs" and "acc", and the result always contains "x", "xs" and "acc";
-nothing is ever discarded, just re-arranged.
+It's also interesting to consider an "adversarial" situation, where an attacker
+knows that we're using a self-organising list and wants to take down some
+service that we're providing.
 
----
+By choosing queries which match the *last* element of the list, an attacker can
+make this system work harder than then a normal list would for the same
+queries. However, a similar attack is possible by providing queries with no
+matches, since they'll always check the whole list; or by timing how long it
+takes to perform certain queries and performing the slow ones over and over
+(which will never get a speed up when using regular lists).
 
-The question says that "lookupKey" should give us a "self-organising
-list" (SOL). The only reason we care about SOLs is that they allow
-faster lookups of commonly-requested items than regular lists do.
+### A Poorly Performing Implementation ###
 
-For example, consider a chain of lookups with regular lists (using
-numbers rather than Data, for simplicity):
+One student submitted an implementation something like the following:
 
-lookupReg n []     = error "Not found"
-lookupReg n (x:xs) = if x == n
-                        then x
-                        else lookupReg n xs
+```haskell
+selfOrganisingLookUp p xs = let notP x = not (p x)
+                                ys     = filter    p xs
+                                zs     = filter notP xs
+                             in (ys ++ zs, listToMaybe ys)
+```
 
-lookupReg 4 [1, 2, 3, 4, 5]
-lookupReg 3 [1, 2, 3, 4, 5]
-lookupReg 4 [1, 2, 3, 4, 5]
-lookupReg 4 [1, 2, 3, 4, 5]
+This approach produce *almost* the right output: it moves *all* matching
+elements to the front of the list; since only one is needed to speed up repeated
+queries, there's nothing to be gained by moving multiple matches to the front;
+in fact this will *slow down* repetitions of *prior* queries, since they may
+have to skip past all of these front elements before they reach the match we
+previously prepended for them.
 
-If we measure speed as the number of comparisons we make (x == y or
-x /= y), then our most common use-case, looking up "4", requires
-4 + 4 + 4 = 12 comparisons:
+Despite the mostly-correct input/output behaviour, this solution is actually
+pretty bad due to the *way* it's implemented. By using `filter`{.haskell} and
+`++`{.haskell} in this way, the input list will often get fully traversed
+*twice*: once to look for elements which match `p`{.haskell}, once for elements
+which don't. It's slightly complicated by lazy evaluation, but it's generally
+pretty bad since we're duplicating work.
 
-4 == 1, 4 == 2, 4 == 3, 4 == 4,
-4 == 1, 4 == 2, 4 == 3, 4 == 4,
-4 == 1, 4 == 2, 4 == 3, 4 == 4.
-
-Compare this to the self-organising version, which rearranges the
-list each time:
-
-lookupSOL 4 [1, 2, 3, 4, 5]
-lookupSOL 3 [4, 1, 2, 3, 5]
-lookupSOL 4 [3, 4, 1, 2, 5]
-lookupSOL 4 [4, 3, 1, 2, 5]
-
-If "lookupSOL" acts like "lookupReg", it should only require
-4 + 2 + 1 = 7 comparisons:
-
-4 == 1, 4 == 2, 4 == 3, 4 == 4,
-4 == 3, 4 == 4,
-4 == 4.
-
-That's how many comparisons are *required*, so let's see how many your
-implementation will use:
-
-4 == 1, 4 == 2, 4 == 3, 4 == 4, 4 == 5, (from getMatches)
-4 /= 1, 4 /= 2, 4 /= 3, 4 /= 4, 4 /= 5, (from getRest)
-4 == 3, 4 == 4, 4 == 1, 4 == 2, 4 == 5, (from getMatches)
-4 /= 3, 4 /= 4, 4 /= 1, 4 /= 2, 4 /= 5, (from getRest)
-4 == 4, 4 == 3, 4 == 1, 4 == 2, 4 == 5, (from getMatches)
-4 /= 4, 4 /= 3, 4 /= 1, 4 /= 2, 4 /= 5. (from getRest)
-
-In total your approach would do 30 comparisons, regardless of where the
-element is. That's less than half the speed of a regular list, which we
-were trying to avoid because they're too slow! In this case, we've made
-our code more complicated *and* made it slower, so we're always better
-off using regular lists which are simpler and faster.
-
-Now consider the "alternative" implementation I showed
-above, "lookupKey'":
-
-4 == 1, 4 == 2, 4 == 3, 4 == 4,
-4 == 3, 4 == 4,
-4 == 4.
-
-Its complexity matches the minimum requirement! The code is still more
-complicated than using regular lists, but it does give us a speedup, so
-it may be useful in some places where speed is a concern.
-
-We can analyse the runtime complexity of these three approaches
-too. Let's say "N" is the length of our list, and use the number of
-comparisons as the measure of time, like above:
-
-The number of comparisons made by lookupReg depends on how far through
-the list our common value is. In the worst case it's at the end,
-requiring O(N) comparisons, in the best case it's at the start, giving
-O(1) comparisons and the expected position is N/2, giving an expected
-performance of O(N/2).
-
-Your implementation will always perform 2N comparisons, so the best,
-worst and expected complexity is O(2N).
-
-The complexity of lookupKey' is more tricky, and depends on the ratio of
-common-element lookups to non-common-element lookups. The best and worst
-case complexity match the regular list, O(1) and O(N), but the
-rearranging increases the chance that we'll hit the best case. Hence,
-the self-organising list is *at least as fast* as the regular list, when
-lookups are "independent and identically distributed" (IID).
-
-It's also interesting to consider an "adversarial" situation, where an
-attacker knows that you're using a self-organising list and wants to
-take down some service that you're providing.
-
-By requesting the last element of the list, an attacker can make your
-system work harder than normal, which makes DDOS attacks much easier. By
-sending lots of requests, they can manipulate the order of elements in
-your list, and hence they can predict what the last element will be.
-
-This breaks the IID assumption, and makes such a system perform *worse*
-than a regular list!
+The moral is that there's more to software than just correct input/output
+behaviour: there are many other 'non-semantic' features of an implementation.
+Since the only point of using self-organising lists is to speed up queries
+compared to using regular lists, we're actually *doubly* worse off with this
+implementation: it's *slower*, which is the opposite of what we wanted; but it's
+also *more complicated* than a function like `lookUp`{.haskell}. I'm a big fan
+of simple code, even if it's slow; in this case it's more complicated and
+slower. If I came across this in the wild I would just replace it with the
+built-in list functions. In the rare event that this became a bottleneck,
+demonstrated by profiling data, then I would set up some benchmarks (e.g. using
+Criterion and ASV); I'd pull this old code out of git and compare its
+performance; I'd optimise both versions (e.g. coming up with my previous, fast
+solution); and keep the normal list version around for testing purposes (e.g.
+property checking with QuickCheck).
 
 <!-- Sanity checks to abort rendering on error -->
 
