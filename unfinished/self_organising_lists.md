@@ -240,16 +240,19 @@ half of the list before it found any odd number, rearranging the result to be
 multiple matches to the front will disrupt the optimisations performed by
 previous queries, for no benefit and significant extra cost.
 
-The third problem I think is the worst, and it isn't related to the input/output
-behaviour at all: this implementation is more *complicated* than a function like
-`lookUp`{.haskell}. I'm a big fan of simple code, even if it's slow; in this
-case there's not even a speed benefit from the extra complication. If I came
-across this in the wild I would just rip it out and replace it with the built-in
-list functions (perhaps moving it into a QuickCheck property test to test that
-the simpler version works the same). In the rare event that this actually *was*
-a bottleneck, demonstrated by profiling data, then I would set up some
-benchmarks (e.g. using Criterion and ASV), and measure that the optimisations
-I'm making are actually increasing performance rather than hurting it.
+If the assignment were just about spitting out particular values then these
+issues wouldn't be too bad; but since the context is that self-organising lists
+are an *optimisation* compared to regular lists, this implementation *isn't* a
+very good solution since it's actually *slower*.
+
+The third problem isn't specific to this assignment, and it isn't related to the
+input/output behaviour at all: this implementation is more *complicated* than a
+function like `lookUp`{.haskell}. I'm a big fan of simplifying code, even at the
+expense of speed (if speed's an issue, profile it and benchmark). Yet this code
+is not only more complicated than it needs to be, it's more complicated than the
+thing it's replacing. If I came across this in the wild I wouldn't hesitate to
+rip it out and replace it with built-in list functions, since they're so much
+simpler.
 
 <!-- Sanity checks to abort rendering on error -->
 
