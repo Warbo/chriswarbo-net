@@ -110,11 +110,11 @@ like loop unrolling). We can do much better by looking up a match (if any) for
 
 ```haskell
 -- 'acc' accumulates elements from the given list (in reverse order)
-optimiseList :: [a] -> (a -> Bool) -> [a] -> Maybe [a]
-optimiseList acc p []     = reverse acc  -- No match, list will be unchanged
+optimiseList :: [a] -> (a -> Bool) -> [a] -> [a]
+optimiseList acc p []     = reverse acc                        -- No match
 optimiseList acc p (x:xs) = if p x
-                               then Just (x : reverse acc ++ xs)  -- Match found
-                               else optimiseList (x:acc) p xs
+                               then x : reverse acc ++ xs      -- x matches
+                               else optimiseList (x:acc) p xs  -- Recurse on xs
 ```
 
 Now we can look up matches from an optimised version of `myList`{.haskell}:
@@ -128,15 +128,20 @@ lookUpOptimised = let newList = optimiseList [] p1 myList
 The first time `lookUpOptimised`{.haskell} is called, the local definition
 `go`{.haskell} will be evaluated, resulting in a function. When that function
 is called, `lookUp`{.haskell} will be called, which will force
-`newList`{.haskell} to be evaluated. The `lookUp`{.haskell} function will
-perform as usual, but in those cases where it's called with `p1`{.haskell}
-(which we're assuming is quite often), and when `myList`{.haskell} does actually
-contain an element satisfying `p1`{.haskell}, then `lookUp`{.haskell} will hit
-that element immediately since it will be at the start of `newList`{.haskell},
-and hence this (assumed to be common) use-case has the $O(1)$ best-case
-behaviour. Note that we'll still get the $O(n)$ worst-case behaviour if there is
-no element in `myList`{.haskell} which satisfies `p1`{.haskell}, and we'll also
-pay a one-time cost of `$O(n)$ to do the initial search either way.
+`newList`{.haskell} to be evaluated. Since `newList`{.haskell} is defined
+*outside* the `go`{.haskell} function, it will be reused in subsequent calls to
+`lookUpOptimised`{.haskell}, rather than being calculated again (in fact, we
+would probably see the same performance even if we wrote `newList`{.haskell}
+inside `go`{.haskell}, since Haskell implementations may spot that it's a
+constant and "float" it outside). The `lookUp`{.haskell} function will perform
+as usual, but in those cases where it's called with `p1`{.haskell} (which we're
+assuming is quite often), and when `myList`{.haskell} does actually contain an
+element satisfying `p1`{.haskell}, then `lookUp`{.haskell} will hit that element
+immediately since it will be at the start of `newList`{.haskell}, and hence this
+(assumed to be common) use-case has the $O(1)$ best-case behaviour. Note that
+we'll still get the $O(n)$ worst-case behaviour if there is no element in
+`myList`{.haskell} which satisfies `p1`{.haskell}, and we'll also pay a one-time
+cost to do the initial search either way ($O(n)$ in the worst case).
 
 This is all well and good, but its assumptions are quite strong. What if we
 *don't* know what predicates will be common, or what if there are several common
@@ -152,10 +157,11 @@ we *also* return a permutation of the list optimised for that predicate:
 ```haskell
 selfOrganisingLookUp :: (a -> Bool) -> [a] -> ([a], Maybe a)
 selfOrganisingLookUp =
-  let go acc p [] = (reverse acc, Nothing)
+  let go acc p [] = (reverse acc, Nothing)                      -- No match
       go acc p (x:xs) = if p x
-                           then (x : reverse acc ++ xs, Just x)
-                           else go (x:acc) p xs
+                           then (x : reverse acc ++ xs, Just x) -- x matches
+                           else go (x:acc) p xs                 -- Recurse on xs
+   in go []  -- Start with an empty accumulator
 ```
 
 To see any benefit we need to ensure that the list returned from each lookup is
@@ -171,23 +177,35 @@ ratio of common-element lookups to non-common-element lookups. The best and
 worst case complexity match the regular list, $O(1)$ and $O(N)$, but the
 rearranging increases the chance that we'll hit the best case, if some queries
 are more frequent than others. Hence, the self-organising list is *at least as
-fast* as the regular list, when lookups are drawn at random from some fixed
-distribution.
+fast* (asymptotically) as the regular list, when lookups are drawn at random
+from some fixed distribution. In reality there is some constant overhead caused
+by propagating the new lists around, and an $O(N)$ overhead from calling
+`reverse`{.haskell} (although we're only reversing the part of the list that we
+had to check, so this will match the complexity of the lookup: $O(1)$ when a
+match was found near the start, $O(N)$ when it was near the end or not found).
 
 It's also interesting to consider an "adversarial" situation, where an attacker
 knows that we're using a self-organising list and wants to take down some
 service that we're providing.
 
-By choosing queries which match the *last* element of the list, an attacker can
-make this system work harder than then a normal list would for the same
-queries. However, a similar attack is possible by providing queries with no
-matches, since they'll always check the whole list; or by timing how long it
-takes to perform certain queries and performing the slow ones over and over
-(which will never get a speed up when using regular lists).
+By sending lots of queries, an attacker can manipulate the overall order of the
+list, and hence come up with queries whose matches are near the end, causing us
+to hit the $O(N)$ worst-case performance again and again, which may be enough to
+slow down or disable our server. However, this isn't too much of a worry since
+a simpler attack can cause the same behaviour by repeatedly sending a query
+which has no matches: that would also trigger the $O(N)$ behaviour, but doesn't
+require manipulation of the order. Since this simpler attack works on regular
+lists too, I don't see much disadvantage to using self-organising lists. Even if
+we limited ourselves to queries which always match, regular lists can be subject
+to a timing attack: timing how long different queries take, then sending the
+slowest ones again and again. Self-organising lists aren't vulnerable to such
+repetitions of the same query, so at least they'd force attackers to work a
+little harder.
 
 ### A Poorly Performing Implementation ###
 
-One student submitted an implementation something like the following:
+For the assignment, one student submitted an implementation something like the
+following:
 
 ```haskell
 selfOrganisingLookUp p xs = let notP x = not (p x)
@@ -196,34 +214,42 @@ selfOrganisingLookUp p xs = let notP x = not (p x)
                              in (ys ++ zs, listToMaybe ys)
 ```
 
-This approach produce *almost* the right output: it moves *all* matching
-elements to the front of the list; since only one is needed to speed up repeated
-queries, there's nothing to be gained by moving multiple matches to the front;
-in fact this will *slow down* repetitions of *prior* queries, since they may
-have to skip past all of these front elements before they reach the match we
-previously prepended for them.
+This approach produces *almost* the right output, so they wanted almost full
+marks. However, there are three problems with this implementation.
 
-Despite the mostly-correct input/output behaviour, this solution is actually
-pretty bad due to the *way* it's implemented. By using `filter`{.haskell} and
-`++`{.haskell} in this way, the input list will often get fully traversed
-*twice*: once to look for elements which match `p`{.haskell}, once for elements
-which don't. It's slightly complicated by lazy evaluation, but it's generally
-pretty bad since we're duplicating work.
+Firstly, the behaviour is not *quite* right: it moves *all* matching elements to
+the front of the list, but since only one is needed to speed up repeated
+queries, there's nothing to be gained by looking for any others; we're hence
+performing extra work (looking for more matches) which is of no benefit, slowing
+us down. This can actually make the implementation *slower* than regular lists,
+when averaged over multiple calls (laziness saves us from doing all of this
+extra work on the first call, but only manages to defer it to subsequent calls).
 
-The moral is that there's more to software than just correct input/output
-behaviour: there are many other 'non-semantic' features of an implementation.
-Since the only point of using self-organising lists is to speed up queries
-compared to using regular lists, we're actually *doubly* worse off with this
-implementation: it's *slower*, which is the opposite of what we wanted; but it's
-also *more complicated* than a function like `lookUp`{.haskell}. I'm a big fan
-of simple code, even if it's slow; in this case it's more complicated and
-slower. If I came across this in the wild I would just replace it with the
-built-in list functions. In the rare event that this became a bottleneck,
-demonstrated by profiling data, then I would set up some benchmarks (e.g. using
-Criterion and ASV); I'd pull this old code out of git and compare its
-performance; I'd optimise both versions (e.g. coming up with my previous, fast
-solution); and keep the normal list version around for testing purposes (e.g.
-property checking with QuickCheck).
+The second problem is that moving multiple matches to the front will *slow down*
+repetitions of *prior* queries, since they may have to skip past all of these
+front elements before they reach the match we previously prepended for them. For
+example, say our list is `[1, 2, 3, ..., 200]`{.haskell} and the most common
+queries are for even numbers and odd numbers. Both versions would return the
+even number `2`{.haskell}, but the fast version would return the list
+`[2, 1, 3, 4, 5, ..., 200]`{.haskell} whilst the student's version would
+return `[2, 4, 6, ..., 200, 1, 3, 5, ..., 199]`{.haskell}. Querying the fast
+result for an odd number would quickly find `1`{.haskell}, resulting in the list
+`[1, 2, 3, ..., 200]`{.haskell}; yet the student's version would have to check
+half of the list before it found any odd number, rearranging the result to be
+`[1, 3, 5, ..., 199, 2, 4, 6, ..., 200]`{.haskell}. In other words, moving
+multiple matches to the front will disrupt the optimisations performed by
+previous queries, for no benefit and significant extra cost.
+
+The third problem I think is the worst, and it isn't related to the input/output
+behaviour at all: this implementation is more *complicated* than a function like
+`lookUp`{.haskell}. I'm a big fan of simple code, even if it's slow; in this
+case there's not even a speed benefit from the extra complication. If I came
+across this in the wild I would just rip it out and replace it with the built-in
+list functions (perhaps moving it into a QuickCheck property test to test that
+the simpler version works the same). In the rare event that this actually *was*
+a bottleneck, demonstrated by profiling data, then I would set up some
+benchmarks (e.g. using Criterion and ASV), and measure that the optimisations
+I'm making are actually increasing performance rather than hurting it.
 
 <!-- Sanity checks to abort rendering on error -->
 
