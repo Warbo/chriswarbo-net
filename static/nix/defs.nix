@@ -25,9 +25,23 @@ with rec {
 
   # Pin to a particular version of nixpkgs, to avoid updates breaking things.
   # If stable = false then we use "unstable", which is <nixpkgs>
-  pinnedNixpkgs = if args.stable or true
-                     then "nixpkgs1709"
-                     else "unstable";
+  pinnedNixpkgs = "nixpkgs1709";
+
+  fetch   = args: import ((import <nixpkgs> {}).fetchgit (args // {
+    url = "${repoSource}/${args.url}";
+  }));
+
+  helpers = pkgs.nix-helpers or fetch {
+    url    = http://chriswarbo.net/git/nix-helpers.git;
+    rev    = "66f9a00";
+    sha256 = "0f84hyqslzb56gwc8yrrn8s95nvdfqn0hf6c9i3cng3bsz3yk53v";
+  };
+
+  packages = pkgs.warbo-packages or fetch {
+    url    = http://chriswarbo.net/git/warbo-packages.git;
+    rev    = "9fe8653";
+    sha256 = "0nzcqs4sxac4kigg3y8aqx8jiwrp71wvvi7a8dviahf766nb6lb4";
+  };
 
   # Use fetchgit to a particular version of nix-config
   fixed =
@@ -40,21 +54,9 @@ with rec {
       };
     };
     import src {};
-
-  # nix-config lets us fetch its latest version without having to specify a hash
-  latest = if repoRefs ? nix-config
-              # Avoids having to lookup the latest revision
-              then import "${fixed.fetchGitHashless {
-                               inherit url;
-                               rev = repoRefs.nix-config;
-                             }}/unstable.nix"
-              # Looks up the latest version, fetches it and imports it
-              else fixed.latestNixCfg;
 };
 
 rec {
   inherit repoRefs repoSource;
-  configuredPkgs = if args.stable or true
-                      then fixed
-                      else import <nixpkgs> { config = latest; };
+  configuredPkgs = fixed;
 }
