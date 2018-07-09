@@ -1,5 +1,5 @@
 { attrsToDirs, buildEnv, dirContaining, haskellPackages, hfeed2atom, git,
-  glibcLocales, lib, libxslt, makeWrapper, mergeDirs, nix, pandocPkgs, python,
+  glibcLocales, lib, libxslt, makeWrapper, mergeDirs, nix, nixpkgs1803, python,
   replace, runCommand, wget, wrap, xidel, xmlstarlet }:
 
 with builtins;
@@ -77,7 +77,7 @@ with rec {
     };
 
     render_page = {
-      paths = [ cleanup pandocPkgs ];
+      paths = [ cleanup nixpkgs1803.pandocPkgs ];
       vars  = {
         defaultTemplate = ./templates/default.html;
         LANG            = "en_US.UTF-8";
