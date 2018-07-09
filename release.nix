@@ -1,7 +1,4 @@
-with {
-  go = stable: (import ./. { inherit stable; }).wholeSite;
-};
 {
-    stable = go true;
-  unstable = go false;
+  inherit (import ./.) wholeSite;
+  shell = import ./shell.nix;
 }

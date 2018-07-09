@@ -1,3 +1,2 @@
-with import ./static/nix {};
-with configuredPkgs;
+with import ./static/nix;
 runCommand "dummy" {} "exit 1"

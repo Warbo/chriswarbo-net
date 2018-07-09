@@ -1,6 +1,6 @@
 ---
 title: Useful Nix Hacks
-dependencies: [ 'static/nix/defs.nix' ]
+dependencies: [ 'static/nix/default.nix' ]
 packages: [ 'jq', 'nix-instantiate', 'nix-shell', 'timeout' ]
 ---
 
@@ -18,7 +18,7 @@ with lib;
 ```{pipe="cat >> preamble.nix"}
 
 with {
-  inherit ((import ./root/static/nix/defs.nix).configuredPkgs) forceBuilds;
+  inherit ((import ./root/static/nix).configuredPkgs) forceBuilds;
 };
 ```
 
