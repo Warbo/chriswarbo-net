@@ -25,36 +25,36 @@ with rec {
   # We rely on a bunch of helper functions, etc. from the nix-config repo
   url = "${repoSource}/nix-config.git";
 
+  overlayed = repo: import repo {
+    overlays = [
+      (import "${helpers}/overlay.nix")
+      (import "${packages}/overlay.nix")
+    ];
+  };
+
   # Pin to a particular version of nixpkgs, to avoid updates breaking things.
-  pinnedNixpkgs = helpers.nixpkgs1709;
+  pinnedNixpkgs = overlayed (overlayed <nixpkgs>).repo1709;
 
-  fetch   = args: import (nixpkgs.fetchgit (args // {
+  fetch   = args: (import <nixpkgs> {}).fetchgit (args // {
     url = "${repoSource}/${args.url}";
-  }));
+  });
 
-  helpers = nixpkgs.nix-helpers or fetch {
+  helpers = fetch {
     url    = "nix-helpers.git";
     rev    = "66f9a00";
     sha256 = "0f84hyqslzb56gwc8yrrn8s95nvdfqn0hf6c9i3cng3bsz3yk53v";
   };
 
-  packages = nixpkgs.warbo-packages or fetch {
+  packages = fetch {
     url    = "warbo-packages.git";
     rev    = "9fe8653";
     sha256 = "0nzcqs4sxac4kigg3y8aqx8jiwrp71wvvi7a8dviahf766nb6lb4";
   };
-
-  nixpkgs = import <nixpkgs> {};
-
-  fixed =
-    with {
-      src  = fetch {
-        url    = "nix-config.git";
-        rev    = "99bc878";
-        sha256 = "0q8f30vzvngnnvszxxp6vhr649y4lvix4r9axhvmpc9wr5afls6s";
-      };
-    };
-    import src {};
 };
 
-pinnedNixpkgs // helpers // packages
+pinnedNixpkgs // {
+  inherit repoRefs repoSource;
+
+  # Force working pandocPkgs
+  inherit (overlayed pinnedNixpkgs.repo1803) pandocPkgs;
+}

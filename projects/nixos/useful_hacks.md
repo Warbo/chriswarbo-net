@@ -18,7 +18,7 @@ with lib;
 ```{pipe="cat >> preamble.nix"}
 
 with {
-  inherit ((import ./root/static/nix).configuredPkgs) forceBuilds;
+  inherit (import ./root/static/nix) forceBuilds;
 };
 ```
 

@@ -1,7 +1,7 @@
 { allDrvsIn, attrsToDirs, callPackage, dirsToAttrs, git, git2html,
   haskellPackages, hfeed2atom, ipfs, isPath, jq, lib, mkBin, nothing, pages,
-  pkgs, python, repoSource, reverse, runCommand, sanitiseName, stdenv, wget,
-  withDeps, wrap, writeScript, xidel }:
+  pandocPkgs, pkgs, python, repoSource, reverse, runCommand, sanitiseName,
+  stdenv, wget, withDeps, wrap, writeScript, xidel }:
 
 with builtins;
 with lib;
@@ -10,7 +10,7 @@ rec {
 
   cleanup = bins { cleanup = ./static/cleanup; };
 
-  commands = callPackage ./commands.nix { inherit python; };
+  commands = callPackage ./commands.nix { inherit pandocPkgs python; };
 
   metadata =
     with rec {

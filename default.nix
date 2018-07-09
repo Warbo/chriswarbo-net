@@ -1,6 +1,5 @@
 with import ./static/nix;
-with configuredPkgs;
 with rec {
-  pages = callPackage ./pages.nix { inherit pages repoSource; };
+  pages = callPackage ./pages.nix { inherit pages pandocPkgs repoSource; };
 };
 pages
