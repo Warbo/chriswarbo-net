@@ -23,7 +23,7 @@ do
   PKGS="$PKGS $PKG"
 done
 
-CMD=$(nix-shell -p which \
+CMD=$(nix-shell --show-trace -p which \
   -p "with import <nixpkgs> {}; haskellPackages.ghcWithPackages (h: [$PKGS])" \
   --run 'which runhaskell')
 echo "Running '$CMD'" 1>&2
