@@ -1,12 +1,21 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2154
 LINKS=$(xidel - -q --extract "//a/@href" < "$rendered/blog.html")
+
+function getBlogs {
+    # shellcheck disable=SC2154
+    find "$rendered/blog/" -type f -o -type l
+}
 
 while read -r SOURCE
 do
+    # shellcheck disable=SC2154
     [[ "x$SOURCE" = "x$rendered/blog/index.html" ]] && continue
 
     NAME=$(basename "$SOURCE" | rev | cut -d '.' -f 2- | rev)
+
+    # shellcheck disable=SC2154
     DEST="$rendered/blog/$NAME.html"
     if [[ ! -e "$DEST" ]]
     then
@@ -18,6 +27,6 @@ do
         echo "blog/$NAME.html doesn't appear in blog.html" 1>&2
         exit 1
     fi
-done < <(find "$rendered/blog/" -type f -o -type l)
+done < <(getBlogs)
 
 exit 0

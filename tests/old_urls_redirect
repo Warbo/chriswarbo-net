@@ -2,10 +2,10 @@
 
 # Ensure old URLs, which are scattered around the Web, will resolve to something
 MISSING=""
-for URL in data_custom/prelude.txt
-do
-    [[ -e "$rendered/$URL" ]] || MISSING="$MISSING $URL"
-done
+URL='data_custom/prelude.txt'
+
+# shellcheck disable=SC2154
+[[ -e "$rendered/$URL" ]] || MISSING="$MISSING $URL"
 
 [[ -z "$MISSING" ]] || {
     echo "Missing content for: $MISSING" 1>&2

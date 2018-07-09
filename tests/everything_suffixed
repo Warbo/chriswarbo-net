@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 ERR=0
-for FILE in "$rendered/*.html"
+# shellcheck disable=SC2154
+for FILE in "$rendered"/*.html
 do
     DIR=$(basename "$FILE" .html)
     if [[ -d "$DIR" ]]

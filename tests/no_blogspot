@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
+
 function get_imgs() {
     xidel - -q --extract "//img/@src" < "$1"
+}
+
+function get_html {
+    # shellcheck disable=SC2154
+    find "$rendered" -name "*.html"
 }
 
 ERR=0
@@ -11,6 +17,6 @@ do
         echo "Found references to blogspot.com in '$FILE'" 1>&2
         ERR=1
     fi
-done < <(find "$rendered" -name "*.html")
+done < <(get_html)
 
 exit "$ERR"

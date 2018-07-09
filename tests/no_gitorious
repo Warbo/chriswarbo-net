@@ -7,12 +7,13 @@ function findLinks {
         [[ -n "$LINE" ]] || continue
         echo "Found link '$LINE'" 1>&2
         FOUND=0
-    done < <(grep -r "$1" "$rendered/" | skip)
+    done < <(mkList "$1")
     return "$FOUND"
 }
 
-function skip {
-    grep -v "projects/repos/"
+function mkList {
+    # shellcheck disable=SC2154
+    grep -r "$1" "$rendered/" | grep -v "projects/repos/"
 }
 
 function gitorious {

@@ -70,6 +70,7 @@ function tidyCheck {
 
 function lax {
     # Allow warnings/errors for unfinished posts
+    # shellcheck disable=SC2154
     echo "$1" | grep "$rendered/unfinished/" >/dev/null && return
 
     # Allow warnings/errors for git READMEs (since they might not be ours)
@@ -78,10 +79,15 @@ function lax {
     return 1
 }
 
+function get_files {
+    # shellcheck disable=SC2154
+    find "$rendered" -name "*.html"
+}
+
 ERR=0
 while read -r FILE
 do
     check "$FILE" || ERR=1
-done < <(find "$rendered" -name "*.html")
+done < <(get_files)
 
 exit "$ERR"

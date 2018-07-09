@@ -12,6 +12,7 @@ ERR=0
 for REPO in "$REPO_DIR"/*.git
 do
     NAME=$(basename "$REPO" .git)
+    # shellcheck disable=SC2154
     if [[ ! -e "$rendered/projects/repos/$NAME.html" ]]
     then
         ERR=1
@@ -22,6 +23,7 @@ done
 if [[ "$ERR" -gt 0 ]]
 then
     echo "Found repos:"             1>&2
+    # shellcheck disable=SC2154
     find "$rendered/projects/repos" 1>&2
 fi
 

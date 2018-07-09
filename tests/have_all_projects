@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+function indices {
+    # shellcheck disable=SC2154
+    find "$rendered/projects" -name "index.*"
+}
+
 ERR=0
 while read -r NAME
 do
@@ -19,6 +24,6 @@ do
         echo "$NAME ($DEST) doesn't appear in projects.html" 1>&2
         ERR=1
     fi
-done < <(find "$rendered/projects" -name "index.*")
+done < <(indices)
 
 exit "$ERR"

@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2154
 for F in "$rendered"/blog/*.html
 do
   NAME=$(basename "$F")
+  # shellcheck disable=SC2154
   grep "$NAME" < "$rendered"/index.php > /dev/null || {
+    # shellcheck disable=SC2154
     echo "Couldn't find '$NAME' in $rendered/index.php" 1>&2
     exit 1
   }

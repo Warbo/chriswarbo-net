@@ -9,7 +9,7 @@ OUT_OPTIONS=(-f json -s --mathml --template "$defaultTemplate")
 if echo "$SOURCE" | grep -P "\d{4}-\d{2}-\d{2}" > /dev/null
 then
     D=$(echo "$SOURCE" | grep -oP "\d{4}-\d{2}-\d{2}" | head -n1)
-    OUT_OPTIONS+=(-M date="$D")
+    OUT_OPTIONS+=(-M "date=\"$D\"")
 fi
 
 # If we're writing to a file, tell pandoc so it can guess the format. Also add
@@ -23,7 +23,7 @@ fi
 # See if we have a path to the source, for giving to pandoc
 if [[ -n "$SOURCE_PATH" ]]
 then
-    OUT_OPTIONS+=(-M path="$SOURCE_PATH")
+    OUT_OPTIONS+=(-M "path=\"$SOURCE_PATH\"")
 fi
 
 # If we're reading from a file, use it as pandoc's input, and provide the path
@@ -32,7 +32,7 @@ if [[ -n "$SOURCE" ]]
 then
     if [[ -z "$SOURCE_PATH" ]]
     then
-        OUT_OPTIONS+=(-M path="$SOURCE")
+        OUT_OPTIONS+=(-M "path=\"$SOURCE\"")
     fi
     IN_OPTIONS+=("$SOURCE") # This should go at the end; add extra options above
 fi

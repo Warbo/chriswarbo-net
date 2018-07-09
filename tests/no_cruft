@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
+function getRel {
+    # shellcheck disable=SC2154
+    find "$rendered" -name "*.rel"
+}
+
 while read -r FILE
 do
   echo "Found cruft $FILE" 1>&2
   exit 1
-done < <(find "$rendered" -name "*.rel")
+done < <(getRel)

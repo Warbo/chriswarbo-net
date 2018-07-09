@@ -85,7 +85,7 @@ function pushToIpns() {
     }
 
     HASHFILE=$(build ipfsHash)
-    IPFSHASH=$(cat "$HASHFILE" | tr -d '\n')
+    IPFSHASH=$(tr -d '\n' < "$HASHFILE")
     ipfs name publish -k chriswarbonet "$IPFSHASH"
 }
 

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2154
 
 function mkConfig {
-  echo '[filtering]'
-  echo "localwebroot=file://$rendered/"
-  echo 'ignorewarnings=file-missing-slash'
+    echo '[filtering]'
+    echo "localwebroot=file://$rendered/"
+    echo 'ignorewarnings=file-missing-slash'
 }
 
 export HOME="$PWD/home"

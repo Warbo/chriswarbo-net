@@ -3,6 +3,7 @@
 # Indenting HTML is nice, but if we do it on pre/code blocks then the whitespace
 # appears verbatim in the page.
 
+# shellcheck disable=SC2154
 F="$rendered/blog/2017-01-14-rss_to_maildir.html"
 
 [[ -f "$F" ]] || {

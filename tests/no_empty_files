@@ -2,6 +2,11 @@
 
 ERR=0
 
+function noGit {
+    # shellcheck disable=SC2154
+    find "$rendered" | grep -v "/git"
+}
+
 while read -r F
 do
     ABS=$(readlink -f "$F")
@@ -11,12 +16,17 @@ do
         ERR=1
         echo "File '$F' looks empty" 1>&2
     }
-done < <(find "$rendered" | grep -v "/git")
+done < <(noGit)
+
+function emptyDirs {
+    # shellcheck disable=SC2154
+    find "$rendered" -type d -empty | grep -v "/git"
+}
 
 while read -r D
 do
     ERR=1
     echo "Directory '$D' is empty" 1>&2
-done < <(find "$rendered" -type d -empty | grep -v "/git")
+done < <(emptyDirs)
 
 exit "$ERR"

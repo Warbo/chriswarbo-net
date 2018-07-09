@@ -4,6 +4,7 @@ shopt -s nullglob
 # Make sure READMEs get included into repo pages
 
 ERR=0
+# shellcheck disable=SC2154
 for REPO in "$rendered"/projects/repos/*.html
 do
     NAME=$(basename "$REPO" .html)

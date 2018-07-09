@@ -32,6 +32,7 @@ function ignoreInSource {
 
 BASE="$PWD"
 
+# shellcheck disable=SC2154
 pushd "$rendered" > /dev/null
 
     SOURCE_CONTENT=$(find . | ignoreInSource | sort)

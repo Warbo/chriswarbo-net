@@ -5,6 +5,7 @@ function fail() {
   exit 1
 }
 
+# shellcheck disable=SC2154
 [[ -e "$rendered/blog.atom" ]] || fail "No blog.atom"
 [[ -e "$rendered/blog.rss"  ]] || fail "No blog.rss"
 
