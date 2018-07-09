@@ -13,7 +13,8 @@ source" link at the bottom of the page if you want to follow along with the
 examples!
 
 ```{pipe="cat > runWithPkgs.sh && chmod +x runWithPkgs.sh"}
-#!/bin/sh
+#!/usr/bin/env bash
+set -e
 
 # Separate all arguments with spaces
 PKGS=""
