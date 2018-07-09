@@ -33,13 +33,13 @@ with rec {
   }));
 
   helpers = nixpkgs.nix-helpers or fetch {
-    url    = http://chriswarbo.net/git/nix-helpers.git;
+    url    = "nix-helpers.git";
     rev    = "66f9a00";
     sha256 = "0f84hyqslzb56gwc8yrrn8s95nvdfqn0hf6c9i3cng3bsz3yk53v";
   };
 
   packages = nixpkgs.warbo-packages or fetch {
-    url    = http://chriswarbo.net/git/warbo-packages.git;
+    url    = "warbo-packages.git";
     rev    = "9fe8653";
     sha256 = "0nzcqs4sxac4kigg3y8aqx8jiwrp71wvvi7a8dviahf766nb6lb4";
   };
