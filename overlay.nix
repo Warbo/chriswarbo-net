@@ -5,7 +5,7 @@ with super.lib;
 {
   bins = bin: self.attrsToDirs' "bins" { inherit bin; };
 
-  cleanup = bins { cleanup = ./static/cleanup; };
+  cleanup = self.bins { cleanup = ./static/cleanup; };
 
   commands = self.callPackage ./commands.nix {};
 
@@ -82,17 +82,17 @@ with super.lib;
   render = { cwd ? self.nothing, file, inputs ? [], name ? "page.html", vars ? {},
              relBase ? null, SOURCE_PATH ? "" }:
     with rec {
-      md        = metadata file;
-      extraPkgs = map (n: getAttr n (self // commands))
+      md        = self.metadata file;
+      extraPkgs = map (n: getAttr n (self // self.commands))
                       (md.packages or []);
-      dir       = mergeDirs [ cwd (dirContaining ./. (md.dependencies or [])) ];
+      dir       = self.mergeDirs [ cwd (self.dirContaining ./. (md.dependencies or [])) ];
       rel       = if relBase == null
                      then (x: x)
-                     else relTo relBase;
+                     else self.relTo relBase;
       dupe      = rel (self.writeScript name (readFile file));
       rendered  = self.runCommand name
         (vars // {
-          buildInputs = [ commands.relativise commands.render_page ] ++
+          buildInputs = [ self.commands.relativise self.commands.render_page ] ++
                         inputs ++ extraPkgs;
           inherit dir file SOURCE_PATH;
           TO_ROOT = if relBase == null then "" else relBase;
@@ -176,7 +176,7 @@ with super.lib;
         "relative-${baseNameOf (unsafeDiscardStringContext file)}"
         {
           inherit file TO_ROOT;
-          buildInputs = [ commands.relativise ];
+          buildInputs = [ self.commands.relativise ];
         }
         ''
           echo "Relativising $file to $TO_ROOT" 1>&2
@@ -189,9 +189,9 @@ with super.lib;
   mdToHtml = name: (removeSuffix ".html" (removeSuffix ".md" name)) + ".html";
   mdToHtmlRec = x: if isAttrs x
                       then mapAttrs' (n: v: { name  = if hasSuffix ".md" n
-                                                         then mdToHtml n
+                                                         then self.mdToHtml n
                                                          else n;
-                                              value = mdToHtmlRec v; })
+                                              value = self.mdToHtmlRec v; })
                                      x
                       else x;
 
@@ -205,46 +205,46 @@ with super.lib;
       # and won't get rebuilt if e.g. a new post is added to ./blog.
       postNames = attrNames (readDir ./blog);
       posts     = listToAttrs (map (p: {
-                                     name  = mdToHtml p;
+                                     name  = self.mdToHtml p;
                                      value = ./blog + "/${p}";
                                    })
                                    postNames);
     };
-    mapAttrs (n: v: render {
+    mapAttrs (n: v: self.render {
                file        = v;
                name        = "blog-${n}";
-               SOURCE_PATH = "blog/${htmlToMd (baseNameOf n)}";
+               SOURCE_PATH = "blog/${self.htmlToMd (baseNameOf n)}";
                relBase     = "./..";
              })
              posts;
 
-  renderAll = prefix: x: mdToHtmlRec (mapAttrs
+  renderAll = prefix: x: self.mdToHtmlRec (mapAttrs
     (n: v: if isDerivation v || self.isPath v
-              then render {
+              then self.render {
                      file        = v;
-                     name        = mdToHtml n;
+                     name        = self.mdToHtml n;
                      SOURCE_PATH = concatStringsSep "/" (prefix ++ [n]);
                      relBase     = concatStringsSep "/" (["."] ++ map (_: "..")
                                                                       prefix);
                    }
               else if isAttrs v
-                      then renderAll (prefix ++ [n]) v
+                      then self.renderAll (prefix ++ [n]) v
                       else abort "Can't render ${toJSON { inherit n v; }}")
     x);
 
-  projects     = renderAll ["projects"] (self.dirsToAttrs ./projects) //
-                 { repos = projectRepos; };
+  projects     = self.renderAll ["projects"] (self.dirsToAttrs ./projects) //
+                 { repos = self.projectRepos; };
 
-  unfinished   = renderAll ["unfinished"] (self.dirsToAttrs ./unfinished);
+  unfinished   = self.renderAll ["unfinished"] (self.dirsToAttrs ./unfinished);
 
   # Derivations which build entire sub-directories
-  blogPages       = self.attrsToDirs' "blog"       blog;
-  projectPages    = self.attrsToDirs' "projects"   projects;
-  unfinishedPages = self.attrsToDirs' "unfinished" unfinished;
+  blogPages       = self.attrsToDirs' "blog"       self.blog;
+  projectPages    = self.attrsToDirs' "projects"   self.projects;
+  unfinishedPages = self.attrsToDirs' "unfinished" self.unfinished;
 
   topLevel     = mapAttrs' (name: val: {
                              inherit name;
-                             value = render (val // {
+                             value = self.render (val // {
                                inherit name;
                                relBase = ".";
                              });
@@ -278,7 +278,7 @@ with super.lib;
   resources = with rec {
     atom = self.runCommand "blog.atom"
       {
-        blog        = topLevel."blog.html";
+        blog        = self.topLevel."blog.html";
         buildInputs = [ self.hfeed2atom ];
       }
       ''
@@ -296,7 +296,7 @@ with super.lib;
     rss  = self.runCommand "blog.rss"
       {
         inherit atom;
-        buildInputs = [ commands.mkRss ];
+        buildInputs = [ self.commands.mkRss ];
       }
       ''
         mkRss < "$atom" > "$out"
@@ -313,7 +313,7 @@ with super.lib;
     with rec {
       go = paths: entry: content:
         if self.isPath content || isDerivation content
-           then relTo (concatStringsSep "/" (["."] ++ map (_: "..") paths))
+           then self.relTo (concatStringsSep "/" (["."] ++ map (_: "..") paths))
                       (mkRedirectTo {
                         from = self.sanitiseName entry;
                         to   = concatStringsSep "/" ([""] ++ paths ++ [entry]);
@@ -328,14 +328,14 @@ with super.lib;
         "procedural" "turtleview"
       ];
 
-      projectDirs = filter (name: let val = getAttr name projects;
+      projectDirs = filter (name: let val = getAttr name self.projects;
                                    in isAttrs val &&
                                       (!(isDerivation val)) &&
                                       elem name toplevelRedirects)
-                           (attrNames projects);
+                           (attrNames self.projects);
 
       redirectDir = entry: {
-        "index.html" = relTo "." (mkRedirectTo {
+        "index.html" = self.relTo "." (mkRedirectTo {
           from = "redirect-${self.sanitiseName entry}";
           to   = "/projects/${entry}/index.html";
         });
@@ -348,7 +348,7 @@ with super.lib;
       mkRedirectTo = { from, to }: self.runCommand from
         {
           inherit to;
-          buildInputs = [ commands.mkRedirectTo ];
+          buildInputs = [ self.commands.mkRedirectTo ];
         }
         ''
           # We make sure the redirection succeeds before we do anything to $out,
@@ -365,30 +365,30 @@ with super.lib;
         };
       };
 
-      essays = mapAttrs (go ["projects"]) projects;
+      essays = mapAttrs (go ["projects"]) self.projects;
 
-      "essays.html" = relTo "." (mkRedirectTo {
+      "essays.html" = self.relTo "." (mkRedirectTo {
         from    = "essays.html";
         to      = "projects.html";
       });
     };
 
-  allPages = topLevel // redirects // resources // {
+  allPages = self.topLevel // self.redirects // self.resources // {
     blog        = blogPages;
     projects    = projectPages;
     unfinished  = unfinishedPages;
-    "index.php" = render {
+    "index.php" = self.render {
       vars = { inherit blogPages; };
       file = ./redirect.md;
       name = "index.php";
     };
   };
 
-  tests        = self.callPackage ./tests.nix { inherit self repoPages; };
+  tests        = self.callPackage ./tests.nix { inherit self; };
 
-  wholeSite    = self.withDeps (self.allDrvsIn tests) untestedSite;
+  wholeSite    = self.withDeps (self.allDrvsIn self.tests) self.untestedSite;
 
-  untestedSite = self.attrsToDirs' "untestedSite" allPages;
+  untestedSite = self.attrsToDirs' "untestedSite" self.allPages;
 
   repoUrls = if self.isPath self.repoSource    ||
                 (isString self.repoSource &&
@@ -414,13 +414,11 @@ with super.lib;
                                 } > "$out"
                               '');
 
-  inherit (self.callPackage ./repos.nix {
-            inherit commands /*ipfsKeys*/ render repoUrls;
-          })
+  inherit (self.callPackage ./repos.nix {})
     projectRepos repoName repoPages;
 
   /*inherit (self.callPackage ./ipfs.nix {
-            inherit allPages attrsToDirs bins commands repoName repoUrls;
+            inherit self.allPages attrsToDirs self.bins self.commands self.repoName self.repoUrls;
           })
     ipfsHash ipfsKeys;*/
 }
