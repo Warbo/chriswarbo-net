@@ -37,27 +37,27 @@ do
 done < <(gitRevEnvVars)
 echo "Done" 1>&2
 
-printf "Getting IPFS keys..." 1>&2
-function ipfsKeys() {
-    while read -r PAIR
-    do
-        N=$(echo "$PAIR" | cut -d' ' -f2)
-        V=$(echo "$PAIR" | cut -d' ' -f1)
-        jq -n --arg n "$N" --arg v "$V" '{($n): $v}'
-    done < <(ipfs key list -l) | jq -s 'reduce .[] as $x ({}; . + $x)'
-}
-IPFS_KEYS=$(ipfsKeys)
-for D in "$GIT_REPO_DIR"/*.git
-do
-    N=$(basename "$D" .git)
-    echo "$IPFS_KEYS" | jq -e --arg n "$N" 'has($n)' > /dev/null || {
-        echo "No IPFS key found for git repo '$N':" 1>&2
-        echo "$IPFS_KEYS" 1>&2
-        exit 1
-    }
-done
-export IPFS_KEYS
-echo "Done" 1>&2
+#printf "Getting IPFS keys..." 1>&2
+#function ipfsKeys() {
+#    while read -r PAIR
+#    do
+#        N=$(echo "$PAIR" | cut -d' ' -f2)
+#        V=$(echo "$PAIR" | cut -d' ' -f1)
+#        jq -n --arg n "$N" --arg v "$V" '{($n): $v}'
+#    done < <(ipfs key list -l) | jq -s 'reduce .[] as $x ({}; . + $x)'
+#}
+#IPFS_KEYS=$(ipfsKeys)
+#for D in "$GIT_REPO_DIR"/*.git
+#do
+#    N=$(basename "$D" .git)
+#    echo "$IPFS_KEYS" | jq -e --arg n "$N" 'has($n)' > /dev/null || {
+#        echo "No IPFS key found for git repo '$N':" 1>&2
+#        echo "$IPFS_KEYS" 1>&2
+#        exit 1
+#    }
+#done
+#export IPFS_KEYS
+#echo "Done" 1>&2
 
 function build() {
     echo "Building '$1'" 1>&2
