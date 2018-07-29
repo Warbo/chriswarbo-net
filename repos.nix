@@ -1,5 +1,5 @@
 # Give each git repo a page which redirects to the repo's own site
-{ attrsToDirs, commands, fetchGitHashless, ipfsKeys, lib, render, repoUrls,
+{ attrsToDirs, commands, fetchGitHashless, ipfsKeys ? {}, lib, render, repoUrls,
   runCommand, writeScript }:
 
 with builtins;
@@ -30,8 +30,8 @@ with rec {
       name = "index.html";
       vars = {
         repos = attrsToDirs repoPages;
-        keys  = attrsToDirs (mapAttrs (n: v: writeScript "ipfs-key-${n}" v)
-                                      ipfsKeys);
+        /*keys  = attrsToDirs (mapAttrs (n: v: writeScript "ipfs-key-${n}" v)
+                                      ipfsKeys);*/
       };
       SOURCE_PATH = "repos.md";
     };
