@@ -1,16 +1,13 @@
-{ allDrvsIn, attrsToDirs, callPackage, dirsToAttrs, git, git2html,
-  haskellPackages, hfeed2atom, ipfs, isPath, jq, lib, mkBin, nothing, pages,
-  pandocPkgs, pkgs, python, repoSource, reverse, runCommand, sanitiseName,
-  stdenv, wget, withDeps, wrap, writeScript, xidel }:
+self: super:
 
 with builtins;
-with lib;
-rec {
-  bins = bin: attrsToDirs { inherit bin; };
+with super.lib;
+{
+  bins = bin: self.attrsToDirs' "bins" { inherit bin; };
 
   cleanup = bins { cleanup = ./static/cleanup; };
 
-  commands = callPackage ./commands.nix { inherit pandocPkgs python; };
+  commands = self.callPackage ./commands.nix {};
 
   metadata =
     with rec {
@@ -20,16 +17,16 @@ rec {
           base       = baseNameOf file;
           bits       = splitString "redirect-to-" base;
           isRedirect = length bits != 1;
-          name       = unsafeDiscardStringContext (head (reverse bits));
+          name       = unsafeDiscardStringContext (head (self.reverse bits));
         };
         if isRedirect
            then name
            else base;
 
-      read = file: runCommand "metadata-${prettyName file}"
+      read = file: self.runCommand "metadata-${prettyName file}"
         {
           inherit file;
-          buildInputs = [ haskellPackages.yaml ];
+          buildInputs = [ self.haskellPackages.yaml ];
           nixExpr     = "with builtins; fromJSON (readFile ./metadata.json)";
         }
         ''
@@ -54,7 +51,7 @@ rec {
   #
   # Will produce a directory containing 'baz' and 'quux/foobar'.
   dirContaining = base: files:
-    mergeDirs (map (f: runCommand "dir"
+    mergeDirs (map (f: self.runCommand "dir"
                          {
                            base = toString base;
                            file = toString base + "/${f}";
@@ -68,7 +65,7 @@ rec {
                    files);
 
   # Link the contents of a bunch of directories into one
-  mergeDirs = dirs: runCommand "merged-dirs" { dirs = map toString dirs; } ''
+  mergeDirs = dirs: self.runCommand "merged-dirs" { dirs = map toString dirs; } ''
     shopt -s nullglob
     mkdir -p "$out"
 
@@ -82,18 +79,18 @@ rec {
     done
   '';
 
-  render = { cwd ? nothing, file, inputs ? [], name ? "page.html", vars ? {},
+  render = { cwd ? self.nothing, file, inputs ? [], name ? "page.html", vars ? {},
              relBase ? null, SOURCE_PATH ? "" }:
     with rec {
       md        = metadata file;
-      extraPkgs = map (n: getAttr n (pkgs // commands // pages))
+      extraPkgs = map (n: getAttr n (self // commands))
                       (md.packages or []);
       dir       = mergeDirs [ cwd (dirContaining ./. (md.dependencies or [])) ];
       rel       = if relBase == null
                      then (x: x)
                      else relTo relBase;
-      dupe      = rel (writeScript name (readFile file));
-      rendered  = runCommand name
+      dupe      = rel (self.writeScript name (readFile file));
+      rendered  = self.runCommand name
         (vars // {
           buildInputs = [ commands.relativise commands.render_page ] ++
                         inputs ++ extraPkgs;
@@ -125,10 +122,10 @@ rec {
 
   relTo =
     with rec {
-      relToTest = runCommand "relative"
+      relToTest = self.runCommand "relative"
         {
-          buildInputs = [ xidel ];
-          page        = relToUntested "." (writeScript "test.html" ''
+          buildInputs = [ self.xidel ];
+          page        = relToUntested "." (self.writeScript "test.html" ''
             <html>
               <head>
                 <link rel="stylesheet" type="text/css"
@@ -175,7 +172,7 @@ rec {
           mkdir "$out"
         '';
 
-      relToUntested = TO_ROOT: file: runCommand
+      relToUntested = TO_ROOT: file: self.runCommand
         "relative-${baseNameOf (unsafeDiscardStringContext file)}"
         {
           inherit file TO_ROOT;
@@ -186,7 +183,7 @@ rec {
           relativise < "$file" > "$out"
         '';
     };
-    x: y: withDeps [ relToTest ] (relToUntested x y);
+    x: y: self.withDeps [ relToTest ] (relToUntested x y);
 
   # Turn ".md" names in to ".html"
   mdToHtml = name: (removeSuffix ".html" (removeSuffix ".md" name)) + ".html";
@@ -222,7 +219,7 @@ rec {
              posts;
 
   renderAll = prefix: x: mdToHtmlRec (mapAttrs
-    (n: v: if isDerivation v || isPath v
+    (n: v: if isDerivation v || self.isPath v
               then render {
                      file        = v;
                      name        = mdToHtml n;
@@ -235,15 +232,15 @@ rec {
                       else abort "Can't render ${toJSON { inherit n v; }}")
     x);
 
-  projects     = renderAll ["projects"] (dirsToAttrs ./projects) //
+  projects     = renderAll ["projects"] (self.dirsToAttrs ./projects) //
                  { repos = projectRepos; };
 
-  unfinished   = renderAll ["unfinished"] (dirsToAttrs ./unfinished);
+  unfinished   = renderAll ["unfinished"] (self.dirsToAttrs ./unfinished);
 
   # Derivations which build entire sub-directories
-  blogPages       = attrsToDirs blog;
-  projectPages    = attrsToDirs projects;
-  unfinishedPages = attrsToDirs unfinished;
+  blogPages       = self.attrsToDirs' "blog"       blog;
+  projectPages    = self.attrsToDirs' "projects"   projects;
+  unfinishedPages = self.attrsToDirs' "unfinished" unfinished;
 
   topLevel     = mapAttrs' (name: val: {
                              inherit name;
@@ -279,10 +276,10 @@ rec {
   };
 
   resources = with rec {
-    atom = runCommand "blog.atom"
+    atom = self.runCommand "blog.atom"
       {
         blog        = topLevel."blog.html";
-        buildInputs = [ hfeed2atom ];
+        buildInputs = [ self.hfeed2atom ];
       }
       ''
         ATOM=$("${./static/mkAtom}" < "$blog")
@@ -296,7 +293,7 @@ rec {
         echo "$ATOM" > "$out"
       '';
 
-    rss  = runCommand "blog.rss"
+    rss  = self.runCommand "blog.rss"
       {
         inherit atom;
         buildInputs = [ commands.mkRss ];
@@ -315,10 +312,10 @@ rec {
   redirects =
     with rec {
       go = paths: entry: content:
-        if isPath content || isDerivation content
+        if self.isPath content || isDerivation content
            then relTo (concatStringsSep "/" (["."] ++ map (_: "..") paths))
                       (mkRedirectTo {
-                        from = sanitiseName entry;
+                        from = self.sanitiseName entry;
                         to   = concatStringsSep "/" ([""] ++ paths ++ [entry]);
                       })
            else mapAttrs (go (paths ++ [entry])) content;
@@ -339,7 +336,7 @@ rec {
 
       redirectDir = entry: {
         "index.html" = relTo "." (mkRedirectTo {
-          from = "redirect-${sanitiseName entry}";
+          from = "redirect-${self.sanitiseName entry}";
           to   = "/projects/${entry}/index.html";
         });
       };
@@ -348,7 +345,7 @@ rec {
                                            value = redirectDir name; })
                                   projectDirs);
 
-      mkRedirectTo = { from, to }: runCommand from
+      mkRedirectTo = { from, to }: self.runCommand from
         {
           inherit to;
           buildInputs = [ commands.mkRedirectTo ];
@@ -387,24 +384,24 @@ rec {
     };
   };
 
-  tests        = callPackage ./tests.nix { inherit pages repoPages; };
+  tests        = self.callPackage ./tests.nix { inherit self repoPages; };
 
-  wholeSite    = withDeps (allDrvsIn tests) untestedSite;
+  wholeSite    = self.withDeps (self.allDrvsIn tests) untestedSite;
 
-  untestedSite = attrsToDirs allPages;
+  untestedSite = self.attrsToDirs' "untestedSite" allPages;
 
-  repoUrls = if isPath repoSource    ||
-                (isString repoSource &&
-                 repoSource != ""    &&
-                 substring 0 1 repoSource == "/")
-                then map (n: "${repoSource}/${n}")
+  repoUrls = if self.isPath self.repoSource    ||
+                (isString self.repoSource &&
+                 self.repoSource != ""    &&
+                 substring 0 1 self.repoSource == "/")
+                then map (n: "${self.repoSource}/${n}")
                          (attrNames (filterAttrs (n: v: v == "directory" &&
                                                         hasSuffix ".git" n)
-                                                 (readDir repoSource)))
-                else import (runCommand "repoUrls.nix"
+                                                 (readDir self.repoSource)))
+                else import (self.runCommand "repoUrls.nix"
                               {
-                                inherit repoSource;
-                                buildInputs = [ jq wget xidel ];
+                                inherit (self) repoSource;
+                                buildInputs = [ self.jq self.wget self.xidel ];
                               }
                               ''
                                 {
@@ -417,13 +414,13 @@ rec {
                                 } > "$out"
                               '');
 
-  inherit (callPackage ./repos.nix {
-            inherit commands ipfsKeys render repoUrls;
+  inherit (self.callPackage ./repos.nix {
+            inherit commands /*ipfsKeys*/ render repoUrls;
           })
     projectRepos repoName repoPages;
 
-  inherit (callPackage ./ipfs.nix {
+  /*inherit (self.callPackage ./ipfs.nix {
             inherit allPages attrsToDirs bins commands repoName repoUrls;
           })
-    ipfsHash ipfsKeys;
+    ipfsHash ipfsKeys;*/
 }
