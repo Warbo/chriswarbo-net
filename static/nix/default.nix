@@ -34,26 +34,24 @@ with rec {
   # Pin to a particular version of nixpkgs, to avoid updates breaking things.
   pinnedNixpkgs = overlayed (overlayed <nixpkgs>).repo1709;
 
-  fetch   = args: (import <nixpkgs> {}).fetchgit (args // {
-    url = "${repoSource}/${args.url}";
-  });
+  fetch   = args: (import <nixpkgs> {
+                    config   = {};
+                    overlays = [];
+                  }).fetchgit (args // {
+                    url = "${repoSource}/${args.url}";
+                  });
 
   helpers = fetch {
     url    = "nix-helpers.git";
-    rev    = "66f9a00";
-    sha256 = "0f84hyqslzb56gwc8yrrn8s95nvdfqn0hf6c9i3cng3bsz3yk53v";
+    rev    = "9fc3a6b";
+    sha256 = "147zffc8bcvd869dh8snz4rk8y53v4zhxzid9pfp89p2fbhvxb6c";
   };
 
   packages = fetch {
     url    = "warbo-packages.git";
-    rev    = "9fe8653";
-    sha256 = "0nzcqs4sxac4kigg3y8aqx8jiwrp71wvvi7a8dviahf766nb6lb4";
+    rev    = "a236f24";
+    sha256 = "0152glhq6xarn017kvbwdmyrrsjrsfwy6fh6i1d3qqa9y2gsks44";
   };
 };
 
-pinnedNixpkgs // {
-  inherit repoRefs repoSource;
-
-  # Force working pandocPkgs
-  inherit (overlayed pinnedNixpkgs.repo1803) pandocPkgs;
-}
+pinnedNixpkgs
