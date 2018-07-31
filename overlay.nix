@@ -207,13 +207,17 @@ with super.lib;
 
   # Turn ".md" names in to ".html"
   mdToHtml = name: (removeSuffix ".html" (removeSuffix ".md" name)) + ".html";
-  mdToHtmlRec = x: if isAttrs x
-                      then mapAttrs' (n: v: { name  = if hasSuffix ".md" n
-                                                         then self.mdToHtml n
-                                                         else n;
-                                              value = self.mdToHtmlRec v; })
-                                     x
-                      else x;
+  mdToHtmlRec =
+    with rec {
+      go = x: if isAttrs x
+                 then mapAttrs' (n: v: { name  = if hasSuffix ".md" n
+                                                    then self.mdToHtml n
+                                                    else n;
+                                         value = go v; })
+                                x
+                 else x;
+    };
+    go;
 
   # Turn ".html" into ".md"
   htmlToMd = name: (removeSuffix ".html" (removeSuffix ".html" name)) + ".md";
@@ -238,19 +242,23 @@ with super.lib;
              })
              posts;
 
-  renderAll = prefix: x: self.mdToHtmlRec (mapAttrs
-    (n: v: if isDerivation v || self.isPath v
-              then self.render {
-                     file        = v;
-                     name        = self.mdToHtml n;
-                     SOURCE_PATH = concatStringsSep "/" (prefix ++ [n]);
-                     relBase     = concatStringsSep "/" (["."] ++ map (_: "..")
-                                                                      prefix);
-                   }
-              else if isAttrs v
-                      then self.renderAll (prefix ++ [n]) v
-                      else abort "Can't render ${toJSON { inherit n v; }}")
-    x);
+  renderAll =
+    with rec {
+      go = prefix: x: self.mdToHtmlRec (mapAttrs
+        (n: v: if isDerivation v || self.isPath v
+                  then self.render {
+                         file        = v;
+                         name        = self.mdToHtml n;
+                         SOURCE_PATH = concatStringsSep "/" (prefix ++ [n]);
+                         relBase     = concatStringsSep "/" (["."] ++ map (_: "..")
+                                                                          prefix);
+                       }
+                  else if isAttrs v
+                          then go (prefix ++ [n]) v
+                          else abort "Can't render ${toJSON { inherit n v; }}")
+        x);
+    };
+    go;
 
   projects     = self.renderAll ["projects"] (self.dirsToAttrs ./projects) //
                  { repos = self.projectRepos; };
