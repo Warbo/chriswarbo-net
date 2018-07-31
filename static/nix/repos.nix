@@ -26,7 +26,7 @@ with rec {
 
   projectRepos = repoPages // {
     "index.html" = render {
-      file = ./repos.md;
+      file = ../../repos.md;
       name = "index.html";
       vars = {
         repos = attrsToDirs repoPages;
