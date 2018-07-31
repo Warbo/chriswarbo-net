@@ -5,7 +5,7 @@ with super.lib;
 {
   bins = bin: self.attrsToDirs' "bins" { inherit bin; };
 
-  cleanup = self.bins { cleanup = ./static/cleanup; };
+  cleanup = self.bins { cleanup = ../cleanup; };
 
   commands = self.callPackage ./commands.nix {};
 
@@ -26,7 +26,7 @@ with super.lib;
                             then [ "${toString path}" ]
                             else []);
     };
-    go { path = ./.; type = "directory"; } [];
+    go { path = ../..; type = "directory"; } [];
 
   metadataMap = import (self.runCommand "metadata-map"
                          {
@@ -105,7 +105,7 @@ with super.lib;
       md        = self.metadata file;
       extraPkgs = map (n: getAttr n (self // self.commands))
                       (md.packages or []);
-      dir       = self.mergeDirs [ cwd (self.dirContaining ./. (md.dependencies or [])) ];
+      dir       = self.mergeDirs [ cwd (self.dirContaining ../.. (md.dependencies or [])) ];
       rel       = if relBase == null
                      then (x: x)
                      else self.relTo relBase;
@@ -227,10 +227,10 @@ with super.lib;
       # Read filenames from ./blog and append to the path './blog', so that each
       # is a standalone path. This way each post only depends on its own source,
       # and won't get rebuilt if e.g. a new post is added to ./blog.
-      postNames = attrNames (readDir ./blog);
+      postNames = attrNames (readDir ../../blog);
       posts     = listToAttrs (map (p: {
                                      name  = self.mdToHtml p;
-                                     value = ./blog + "/${p}";
+                                     value = ../../blog + "/${p}";
                                    })
                                    postNames);
     };
@@ -260,10 +260,10 @@ with super.lib;
     };
     go;
 
-  projects     = self.renderAll ["projects"] (self.dirsToAttrs ./projects) //
+  projects     = self.renderAll ["projects"] (self.dirsToAttrs ../../projects) //
                  { repos = self.projectRepos; };
 
-  unfinished   = self.renderAll ["unfinished"] (self.dirsToAttrs ./unfinished);
+  unfinished   = self.renderAll ["unfinished"] (self.dirsToAttrs ../../unfinished);
 
   # Derivations which build entire sub-directories
   blogPages       = self.attrsToDirs' "blog"       self.blog;
@@ -279,26 +279,26 @@ with super.lib;
                            }) {
     "index.html"      = {
       vars        = { inherit (self) blogPages; };
-      file        = ./index.md;
+      file        = ../../index.md;
       SOURCE_PATH = "index.md";
     };
     "blog.html"       = {
       vars        = { inherit (self) blogPages; };
-      file        = ./blog.md;
+      file        = ../../blog.md;
       SOURCE_PATH = "blog.md";
     };
     "contact.html"    = {
-      file        = ./contact.md;
+      file        = ../../contact.md;
       SOURCE_PATH = "contact.md";
     };
     "projects.html"   = {
       vars        = { projects = self.projectPages; };
-      file        = ./projects.md;
+      file        = ../../projects.md;
       SOURCE_PATH = "projects.md";
     };
     "unfinished.html" = {
       vars        = { inherit (self) unfinishedPages; };
-      file        = ./unfinished.md;
+      file        = ../../unfinished.md;
       SOURCE_PATH = "unfinished.md";
     };
   };
@@ -310,7 +310,7 @@ with super.lib;
         buildInputs = [ self.hfeed2atom ];
       }
       ''
-        ATOM=$("${./static/mkAtom}" < "$blog")
+        ATOM=$("${../mkAtom}" < "$blog")
 
         if [[ "x$ATOM" = "xNone" ]]
         then
@@ -333,8 +333,8 @@ with super.lib;
   {
     "blog.atom" = atom;
     "blog.rss"  = rss;
-    css         = ./css;
-    js          = ./js;
+    css         = ../../css;
+    js          = ../../js;
   };
 
   redirects =
@@ -407,7 +407,7 @@ with super.lib;
     unfinished  = self.unfinishedPages;
     "index.php" = self.render {
       vars = { inherit (self) blogPages; };
-      file = ./redirect.md;
+      file = ../../redirect.md;
       name = "index.php";
     };
   };
