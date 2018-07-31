@@ -21,7 +21,7 @@ with rec {
     overlays = [
       (import "${helpers}/overlay.nix")
       (import "${packages}/overlay.nix")
-      (import ../../overlay.nix)
+      (import ./overlay.nix)
       (self: super: {
         inherit repoSource;
 
