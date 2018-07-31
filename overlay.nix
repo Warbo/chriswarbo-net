@@ -278,12 +278,12 @@ with super.lib;
                              });
                            }) {
     "index.html"      = {
-      vars        = { inherit blogPages; };
+      vars        = { inherit (self) blogPages; };
       file        = ./index.md;
       SOURCE_PATH = "index.md";
     };
     "blog.html"       = {
-      vars        = { inherit blogPages; };
+      vars        = { inherit (self) blogPages; };
       file        = ./blog.md;
       SOURCE_PATH = "blog.md";
     };
@@ -292,12 +292,12 @@ with super.lib;
       SOURCE_PATH = "contact.md";
     };
     "projects.html"   = {
-      vars        = { projects = projectPages; };
+      vars        = { projects = self.projectPages; };
       file        = ./projects.md;
       SOURCE_PATH = "projects.md";
     };
     "unfinished.html" = {
-      vars        = { inherit unfinishedPages; };
+      vars        = { inherit (self) unfinishedPages; };
       file        = ./unfinished.md;
       SOURCE_PATH = "unfinished.md";
     };
@@ -402,11 +402,11 @@ with super.lib;
     };
 
   allPages = self.topLevel // self.redirects // self.resources // {
-    blog        = blogPages;
-    projects    = projectPages;
-    unfinished  = unfinishedPages;
+    blog        = self.blogPages;
+    projects    = self.projectPages;
+    unfinished  = self.unfinishedPages;
     "index.php" = self.render {
-      vars = { inherit blogPages; };
+      vars = { inherit (self) blogPages; };
       file = ./redirect.md;
       name = "index.php";
     };
