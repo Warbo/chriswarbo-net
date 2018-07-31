@@ -7,7 +7,7 @@ with super.lib;
 
   cleanup = self.bins { cleanup = ./static/cleanup; };
 
-  commands = self.callPackage ./commands.nix {};
+  commands = self.callPackage ./static/nix/commands.nix {};
 
   metadata =
     with rec {
