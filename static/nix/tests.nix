@@ -8,14 +8,12 @@ with pages;
 with rec {
   base = ../..;
 
-  testFile = f: base + "/tests/${f}";
-
   testScript = name: { buildInputs ? [], includeSite ? true }:
     runCommand "test-script-${name}"
       {
         inherit buildInputs;
         rendered = if includeSite then untestedSite else "";
-        script   = testFile name;
+        script   = base + "/tests/${name}";
         # Files which tests might need
         static = attrsToDirs {
           linkcheckerrc = base + "/static/linkcheckerrc";
