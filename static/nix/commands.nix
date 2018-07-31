@@ -33,25 +33,25 @@ with rec {
   entries = self: with self; {
     cleanup = {
       paths = [ stripEmptyPreCode summariseTables ];
-      file  = ./static/cleanup;
+      file  = ../cleanup;
     };
 
-    file2img = { file = ./static/file2img; };
+    file2img = { file = ../file2img; };
 
     git2md = {
       paths = [ git wget ];
-      file  = ./static/git2md;
+      file  = ../git2md;
     };
 
     mkRedirectTo = {
-      vars = { TEMPLATE = ./static/redirectTemplate.html; };
-      file = ./static/mkRedirectTo;
+      vars = { TEMPLATE = ../redirectTemplate.html; };
+      file = ../mkRedirectTo;
     };
 
     mkRss = {
       paths = [ libxslt ];
-      vars  = { XSL = ./static/atom2rss.xsl; };
-      file  = ./static/mkRss;
+      vars  = { XSL = ../atom2rss.xsl; };
+      file  = ../mkRss;
     };
 
     nix-instantiate = {
@@ -68,12 +68,12 @@ with rec {
 
     relativise = {
       paths = [ xmlstarlet ];
-      file  = ./static/relativise;
+      file  = ../relativise;
     };
 
     relTo = {
       paths = [ python ];
-      file  = ./static/relTo;
+      file  = ../relTo;
     };
 
     render_page = {
@@ -83,38 +83,38 @@ with rec {
         LANG            = "en_US.UTF-8";
         LOCALE_ARCHIVE  = "${glibcLocales}/lib/locale/locale-archive";
       };
-      file  = ./static/render_page;
+      file  = ../render_page;
     };
 
-    renderHcard = { file = ./static/renderHcard; };
+    renderHcard = { file = ../renderHcard; };
 
     showPost = {
       paths = [ replace xidel ];
       vars  = { RANTS = ./rants; };
-      file  = ./static/showPost;
+      file  = ../showPost;
     };
 
     showPosts = {
       paths = [ showPost ];
-      file  = ./static/showPosts;
+      file  = ../showPosts;
     };
 
     stripEmptyPreCode = {
       paths = [ bs ];
-      file  = ./static/stripEmptyPreCode;
+      file  = ../stripEmptyPreCode;
     };
 
     stripTitle = {
       paths = [ bs ];
-      file  = ./static/stripTitle;
+      file  = ../stripTitle;
     };
 
     summariseTables = {
       paths = [ bs ];
-      file  = ./static/summariseTables;
+      file  = ../summariseTables;
     };
 
-    wrapCode = { file = ./static/wrapCode; };
+    wrapCode = { file = ../wrapCode; };
   };
 };
 commands
