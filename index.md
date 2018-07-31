@@ -9,7 +9,7 @@ extra_head:
 
 postprocessor: stripTitle
 packages: [ 'file2img', 'showPosts', 'stripTitle' ]
-dependencies: [ 'static/code.png', 'rants' ]
+dependencies: [ 'static/code.png', 'static/rants' ]
 ---
 
 <div style="float: right; margin: 0 10px 10px 10px;" >

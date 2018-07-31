@@ -90,7 +90,7 @@ with rec {
 
     showPost = {
       paths = [ replace xidel ];
-      vars  = { RANTS = ./rants; };
+      vars  = { RANTS = ../rants; };
       file  = ../showPost;
     };
 

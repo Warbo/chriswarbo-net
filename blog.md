@@ -15,7 +15,7 @@ extra_head: |
     }
   </style>
 
-dependencies: [ 'rants' ]
+dependencies: [ 'static/rants' ]
 ---
 
 Here you can find all of my previous posts. These are also available as a feed,
