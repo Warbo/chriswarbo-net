@@ -9,40 +9,60 @@ with super.lib;
 
   commands = self.callPackage ./static/nix/commands.nix {};
 
-  metadata =
+  markdownPaths =
     with rec {
-      # Choose a nice name, and avoid 'cannot refer to store path' errors
-      prettyName = file:
-        with rec {
-          base       = baseNameOf file;
-          bits       = splitString "redirect-to-" base;
-          isRedirect = length bits != 1;
-          name       = unsafeDiscardStringContext (head (self.reverse bits));
-        };
-        if isRedirect
-           then name
-           else base;
+      dirEntries = dir:
+        with { entries = readDir dir; };
+        map (entry: {
+              path = dir + "/${entry}";
+              type = getAttr entry entries;
+            })
+            (attrNames entries);
 
-      read = file: self.runCommand "metadata-${prettyName file}"
-        {
-          inherit file;
-          buildInputs = [ self.haskellPackages.yaml ];
-          nixExpr     = "with builtins; fromJSON (readFile ./metadata.json)";
-        }
-        ''
-          set -e
-          mkdir -p "$out"
-          echo "$nixExpr" > "$out/default.nix"
-          echo '{}' > "$out/metadata.json"
-
-          PAT='^----*'
-          YAML=$(grep -B 99999 -m 2 '^----*' < "$file" | grep -v "$PAT") || true
-          [[ -z "$YAML" ]] || {
-            echo "$YAML" | yaml2json - > "$out/metadata.json"
-          }
-        '';
+      go = { path, type }: rest:
+        if type == "directory"
+           then fold go rest (dirEntries path)
+           else rest ++ (if hasSuffix ".md" (toString path)
+                            then [ "${toString path}" ]
+                            else []);
     };
-    file: import (read file);
+    go { path = ./.; type = "directory"; } [];
+
+  metadataMap = import (self.runCommand "metadata-map"
+                         {
+                           buildInputs = [ self.haskellPackages.yaml ];
+                           default     = self.writeScript "metadata.nix" ''
+                             with builtins;
+                             fromJSON (readFile ./metadata.json)
+                           '';
+                           paths = self.writeScript "markdown-paths"
+                                     (concatStringsSep "\n" self.markdownPaths);
+                         }
+                         ''
+                           mkdir "$out"
+                           cp "$default" "$out/default.nix"
+
+                           PAT='^----*'
+                           while read -r P
+                           do
+                             echo "Looking for YAML in '$P'..." 1>&2
+                             YAML=$(grep -B 99999 -m 2 "$PAT" < "$P" |
+                                    grep -v "$PAT") || true
+                             if [[ -z "$YAML" ]]
+                             then
+                               YAML='{}'
+                             fi
+                             INDENTED=$(echo "$YAML" | sed -e 's/^/  /')
+
+                             printf '"%s":\n%s\n' "$P" "$INDENTED" >> yaml.yaml
+                           done < "$paths"
+
+                           echo "Converting to JSON" 1>&2
+                           cat yaml.yaml
+                           yaml2json - < yaml.yaml > "$out/metadata.json"
+                         '');
+
+  metadata = path: self.metadataMap."${toString path}" or {};
 
   # Create a directory containing (links to) 'files'; the directory structure
   # will be relative to 'base', for example:
