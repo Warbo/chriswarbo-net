@@ -6,13 +6,19 @@ with builtins;
 with lib;
 with pages;
 with rec {
+  base = ../..;
+
+  testFile = f: base + "/tests/${f}";
+
   testScript = name: { buildInputs ? [], script, includeSite ? true }:
     runCommand "test-script-${name}"
       {
         inherit buildInputs script;
         rendered = if includeSite then untestedSite else "";
         # Files which tests might need
-        static = attrsToDirs { linkcheckerrc = ./static/linkcheckerrc; };
+        static = attrsToDirs {
+          linkcheckerrc = base + "/static/linkcheckerrc";
+        };
       }
       ''
         set -e
@@ -28,89 +34,89 @@ with rec {
 mapAttrs testScript {
   all_pages_reachable           = {
     buildInputs = [ procps pythonPackages.python utillinux wget ];
-    script      = ./tests/all_pages_reachable;
+    script      = testFile "all_pages_reachable";
   };
   archive_is_hfeed              = {
     buildInputs = [ pythonPackages.python mf2py ];
-    script      = ./tests/archive_is_hfeed;
+    script      = testFile "archive_is_hfeed";
   };
   broken_links                  = {
     buildInputs = [ linkchecker ];
-    script      = ./tests/broken_links;
+    script      = testFile "broken_links";
   };
   cleanupTables                 = {
     buildInputs = [ commands.cleanup ];
-    script      = ./tests/cleanupTables;
+    script      = testFile "cleanupTables";
     includeSite = false;
   };
   code_not_indented               = {
-    script = ./tests/code_not_indented;
+    script = testFile "code_not_indented";
   };
   dirs_have_indices             = {
-    script = ./tests/dirs_have_indices;
+    script = testFile "dirs_have_indices";
   };
   empty_panpipe_blocks_stripped = {
     buildInputs = [ commands.render_page ];
-    script      = ./tests/empty_panpipe_blocks_stripped;
+    script      = testFile "empty_panpipe_blocks_stripped";
     includeSite = false;
   };
   essays_redirects_to_projects  = {
     buildInputs = [ commands.relTo ];
-    script      = ./tests/essays_redirects_to_projects;
+    script      = testFile "essays_redirects_to_projects";
   };
   everything_suffixed           = {
-    script = ./tests/everything_suffixed;
+    script = testFile "everything_suffixed";
   };
   have_all_posts                = {
     buildInputs = [ utillinux xidel ];
-    script      = ./tests/have_all_posts;
+    script      = testFile "have_all_posts";
   };
   have_all_projects             = {
     buildInputs = [ utillinux xidel ];
-    script      = ./tests/have_all_projects;
+    script      = testFile "have_all_projects";
   };
   have_all_repos                = {
-    script = ./tests/have_all_repos;
+    script = testFile "have_all_repos";
   };
   have_feeds                    = {
-    script = ./tests/have_feeds;
+    script = testFile "have_feeds";
   };
   have_readmes                  = {
     buildInputs = [ git ];
-    script      = ./tests/have_readmes;
+    script      = testFile "have_readmes";
   };
   hcard_test                    = {
     buildInputs = [ pythonPackages.python mf2py commands.renderHcard ];
-    script      = ./tests/hcard_test;
+    script      = testFile "hcard_test";
     includeSite = false;
   };
   homepage_has_hcard            = {
     buildInputs = [ pythonPackages.python mf2py ];
-    script      = ./tests/homepage_has_hcard;
+    script      = testFile "homepage_has_hcard";
   };
   imagesWontCompressFurther     = {
-    script      = ./tests/imagesWontCompressFurther;
+    script      = testFile "imagesWontCompressFurther";
     includeSite = false;
   };
   no_absolutes                  = {
     buildInputs = [ xidel ];
-    script      = ./tests/no_absolutes;
+    script      = testFile "no_absolutes";
   };
   no_blogspot                   = {
     buildInputs = [ xidel ];
-    script      = ./tests/no_blogspot;
+    script      = testFile "no_blogspot";
   };
   no_cruft                      = {
-    script = ./tests/no_cruft;
+    script = testFile "no_cruft";
   };
   no_empty_files                = {
-    script = ./tests/no_empty_files;
+    script = testFile "no_empty_files";
   };
   no_essays_links               = {
-    script = ./tests/no_essays_links;
+    script = testFile "no_essays_links";
   };
   no_gitorious                  = {
-    script = ./tests/no_gitorious;
+    script = testFile "no_gitorious";
   };
   posts_are_hentries            = {
     buildInputs = [ (haskellPackages.ghcWithPackages (h: [
@@ -118,18 +124,18 @@ mapAttrs testScript {
                       h.directory
                       h.bytestring
                     ])) ];
-    script      = ./tests/posts_are_hentries;
+    script      = testFile "posts_are_hentries";
   };
   posts_have_titles             = {
     buildInputs = [ xidel ];
-    script      = ./tests/posts_have_titles;
+    script      = testFile "posts_have_titles";
   };
   redirect_posts                = {
-    script = ./tests/redirect_posts;
+    script = testFile "redirect_posts";
   };
   tidy_html5                    = {
     buildInputs = [ tidy-html5 ];
-    script      = ./tests/tidy_html5;
+    script      = testFile "tidy_html5";
   };
 } // {
   reposRedirect = runCommand "reposRedirect"
