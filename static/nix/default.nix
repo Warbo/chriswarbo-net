@@ -17,14 +17,6 @@ with rec {
                             GIT_REPO_DIR.
                     '' remote;
 
-  # For speed, we allow the latest commit IDs to be passed in too
-  repoRefs = if getEnv "REPO_REFS" == ""
-                then {}
-                else fromJSON (getEnv "REPO_REFS");
-
-  # We rely on a bunch of helper functions, etc. from the nix-config repo
-  url = "${repoSource}/nix-config.git";
-
   overlayed = repo: import repo {
     overlays = [
       (import "${helpers}/overlay.nix")

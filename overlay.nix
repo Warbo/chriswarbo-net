@@ -442,6 +442,11 @@ with super.lib;
                                 } > "$out"
                               '');
 
+  # For speed, we allow the latest commit IDs to be passed in too
+  repoRefs = if getEnv "REPO_REFS" == ""
+                then {}
+                else fromJSON (getEnv "REPO_REFS");
+
   inherit (self.callPackage ./repos.nix {})
     projectRepos repoName repoPages;
 
