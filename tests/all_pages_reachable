@@ -31,7 +31,7 @@ function ignoreInSource {
 }
 
 function cleanup {
-    echo "all_pages_reachable exiting, killing server (pid $SERVER_PID)" 1>&2
+    echo "all_pages_reachable exiting, killing server (PID $SERVER_PID)" 1>&2
     kill "$SERVER_PID" || true
     sleep 3
     kill -9 "$SERVER_PID" || true
@@ -54,7 +54,7 @@ pushd "$rendered" > /dev/null
     # Delete the directory *and* kill the server when we exit
     trap cleanup EXIT
 
-    printf "Waiting for server to start..." 1>&2
+    printf "Waiting for server to start (PID $SERVER_PID)..." 1>&2
 
     while true
     do
