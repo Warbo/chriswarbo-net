@@ -71,18 +71,18 @@ with super.lib;
   #
   # Will produce a directory containing 'baz' and 'quux/foobar'.
   dirContaining = base: files:
-    mergeDirs (map (f: self.runCommand "dir"
-                         {
-                           base = toString base;
-                           file = toString base + "/${f}";
-                         }
-                         ''
-                           REL=$(echo "$file" | sed -e "s@$base/@@g")
-                           DIR=$(dirname "$REL")
-                           mkdir -p "$out/$DIR"
-                           ln -s "$file" "$out/$REL"
-                         '')
-                   files);
+    self.mergeDirs (map (f: self.runCommand "dir"
+                          {
+                            base = toString base;
+                            file = toString base + "/${f}";
+                          }
+                          ''
+                            REL=$(echo "$file" | sed -e "s@$base/@@g")
+                            DIR=$(dirname "$REL")
+                            mkdir -p "$out/$DIR"
+                            ln -s "$file" "$out/$REL"
+                          '')
+                        files);
 
   # Link the contents of a bunch of directories into one
   mergeDirs = dirs: self.runCommand "merged-dirs" { dirs = map toString dirs; } ''
