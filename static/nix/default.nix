@@ -18,6 +18,7 @@ with rec {
                     '' remote;
 
   overlayed = repo: import repo {
+    config   = {};
     overlays = [
       (import "${helpers}/overlay.nix")
       (import "${packages}/overlay.nix")
