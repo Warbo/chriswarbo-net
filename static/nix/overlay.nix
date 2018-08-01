@@ -23,14 +23,15 @@ with super.lib;
         if type == "directory"
            then fold go rest (dirEntries path)
            else rest ++ (if hasSuffix ".md" (toString path)
-                            then [ "${toString path}" ]
-                            else []);
+                            then [ (toString path) ]
+                            else [                 ]);
     };
     go { path = ../..; type = "directory"; } [];
 
   metadataMap = import (self.runCommand "metadata-map"
                          {
                            buildInputs = [ self.haskellPackages.yaml ];
+                           cacheBust   = toString currentTime;
                            default     = self.writeScript "metadata.nix" ''
                              with builtins;
                              fromJSON (readFile ./metadata.json)
