@@ -1,10 +1,9 @@
-{ attrsToDirs, git, haskellPackages, lib, linkchecker, mf2py, pages, procps,
-  pythonPackages, repoPages, runCommand, tidy-html5, utillinux, wget,
-  writeScript, xidel }:
+{ attrsToDirs, commands, git, haskell, haskellPackages, lib, linkchecker, mf2py,
+  procps, pythonPackages, repoPages, runCommand, tidy-html5, untestedSite,
+  utillinux, wget, writeScript, xidel }:
 
 with builtins;
 with lib;
-with pages;
 with rec {
   base = ../..;
 
@@ -69,13 +68,28 @@ mapAttrs testScript {
   no_empty_files                = {};
   no_essays_links               = {};
   no_gitorious                  = {};
-  posts_are_hentries            = {
-    buildInputs = [ (haskellPackages.ghcWithPackages (h: [
-                      h.microformats2-parser
-                      h.directory
-                      h.bytestring
-                    ])) ];
-  };
+  posts_are_hentries            =
+    with {
+      hsPkgs = haskellPackages.override (old: {
+        overrides = lib.composeExtensions
+          (old.overrides or (_: _: {}))
+          (self: super: {
+            # Avoid doctest failure:
+            #   expected: [("a",Number 4.0),("b",Number 7.0)]
+            #   but got: [("b",Number 7.0),("a",Number 4.0)]
+            lens-aeson = haskell.lib.dontCheck super.lens-aeson;
+          });
+      });
+    };
+    {
+      buildInputs = [
+        (hsPkgs.ghcWithPackages (h: [
+          h.microformats2-parser
+          h.directory
+          h.bytestring
+        ]))
+      ];
+    };
   posts_have_titles             = { buildInputs = [ xidel ]; };
   redirect_posts                = {};
   tidy_html5                    = { buildInputs = [ tidy-html5 ]; };
