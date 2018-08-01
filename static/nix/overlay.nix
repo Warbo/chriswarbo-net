@@ -42,10 +42,11 @@ with super.lib;
                            mkdir "$out"
                            cp "$default" "$out/default.nix"
 
+                           printf 'Looking for YAML metadata' 1>&2
                            PAT='^----*'
                            while read -r P
                            do
-                             echo "Looking for YAML in '$P'..." 1>&2
+                             printf '.' 1>&2
                              YAML=$(grep -B 99999 -m 2 "$PAT" < "$P" |
                                     grep -v "$PAT") || true
                              if [[ -z "$YAML" ]]
@@ -58,7 +59,6 @@ with super.lib;
                            done < "$paths"
 
                            echo "Converting to JSON" 1>&2
-                           cat yaml.yaml
                            yaml2json - < yaml.yaml > "$out/metadata.json"
                          '');
 
