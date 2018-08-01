@@ -121,7 +121,7 @@ with super.lib;
           export DEST="$PWD/out.html"
 
           cd "$dir"
-          SOURCE="$file" render_page < "$file"
+          SOURCE="$file" render_page
           if grep '^.' < "$DEST" > /dev/null
           then
             if [[ -n "$TO_ROOT" ]]
