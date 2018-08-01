@@ -30,7 +30,7 @@ with rec {
   };
 
   # Pin to a particular version of nixpkgs, to avoid updates breaking things.
-  pinnedNixpkgs = overlayed (overlayed <nixpkgs>).repo1709;
+  pinnedNixpkgs = overlayed (overlayed <nixpkgs>).repo1803;
 
   fetch   = args: (import <nixpkgs> {
                     config   = {};
@@ -41,8 +41,8 @@ with rec {
 
   helpers = fetch {
     url    = "nix-helpers.git";
-    rev    = "9fc3a6b";
-    sha256 = "147zffc8bcvd869dh8snz4rk8y53v4zhxzid9pfp89p2fbhvxb6c";
+    rev    = "72d9d88";
+    sha256 = "1kggqr07dz2widv895wp8g1x314lqg19p67nzr3b97pg97amhjsi";
   };
 
   packages = fetch {
