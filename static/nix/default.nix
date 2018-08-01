@@ -24,9 +24,6 @@ with rec {
       (import ./overlay.nix)
       (self: super: {
         inherit repoSource;
-
-        # Force working pandocPkgs
-        inherit (overlayed pinnedNixpkgs.repo1803) pandocPkgs;
       })
     ];
   };
