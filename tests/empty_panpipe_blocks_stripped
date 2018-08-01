@@ -5,9 +5,10 @@ function fail {
     exit 1
 }
 
-OUTPUT=$(echo '<pre><code></code></pre>' | render_page)
+echo '<pre><code></code></pre>' > source
+SOURCE="$PWD/source" DEST="$PWD/dest" render_page
 
-echo "$OUTPUT" | grep '<code>' > /dev/null && fail "Didn't strip <code>"
-echo "$OUTPUT" | grep '<pre>'  > /dev/null && fail "Didn't strip <pre>"
+grep '<code>' < dest > /dev/null && fail "Didn't strip <code>"
+grep '<pre>' < dest > /dev/null && fail "Didn't strip <pre>"
 
 echo "Success" 1>&2

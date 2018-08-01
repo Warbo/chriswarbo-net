@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+set -o pipefail
 
 # Common options
 IN_OPTIONS=(-t json)
@@ -47,14 +48,36 @@ else
 fi
 
 echo "Running pandoc, capturing output for post-processing" 1>&2
+echo "Pandoc options: ${IN_OPTIONS[@]}"                     1>&2
 
 # We don't use pandoc's --filter option, as it buffers stderr which makes
 # debugging harder
-OUTPUT=$(echo "$INPUT"             |
-         pandoc "${IN_OPTIONS[@]}" |
-         panpipe                   |
-         panhandle                 |
-         pandoc "${OUT_OPTIONS[@]}")
+JSON=$(pandoc "${IN_OPTIONS[@]}") || {
+    echo -e "Failed to convert to JSON. JSON:\n$JSON\n" 1>&2
+    exit 1
+}
+
+echo "Applying panpipe" 1>&2
+PIPED=$(echo "$JSON" | panpipe) || {
+    echo -e "Failed to apply panpipe. JSON:\n$JSON\n\nPIPED:\n$PIPED\n" 1>&2
+    exit 1
+}
+unset JSON
+
+echo "Applying panhandle" 1>&2
+HANDLED=$(echo "$PIPED" | panhandle) || {
+    echo -e "Panhandle failed. PIPED:\n$PIPED\n\nHANDLED:\n$HANDLED\n" 1>&2
+    exit 1
+}
+unset PIPED
+
+echo "Converting from JSON" 1>&2
+echo "Pandoc options: ${OUT_OPTIONS[@]}" 1>&2
+OUTPUT=$(echo "$HANDLED" | pandoc "${OUT_OPTIONS[@]}") || {
+    echo -e "Failed to convert back. JSON:\n$JSON\n\nOUTPUT:\n$OUTPUT\n" 1>&2
+    exit 1
+}
+unset HANDLED
 
 # If output was written to $DEST, read it back. This allows pandoc to determine
 # the output format from the filename.
@@ -79,32 +102,10 @@ echo "$OUTPUT" | grep '[^ \n\t]' > /dev/null || {
 
 # Post-processing. This is slightly complicated, so we use more functions.
 
-function getInput {
-    # Get out input, either from stdin or $SOURCE
-    if [[ -n "$SOURCE" ]]
-    then
-        cat "$SOURCE"
-    else
-        echo "$INPUT"
-    fi
-}
-
-function writeOutput {
-    # Send stdin to its final destination, either stdout or $DEST
-    if [[ -n "$DEST" ]]
-    then
-        echo "Finished postprocessing, writing to '$DEST'" 1>&2
-        cat > "$DEST"
-    else
-        echo "Finished postprocessing, writing to stdout" 1>&2
-        cat
-    fi
-}
-
 function getPostprocessor {
     # Check if YAML (between two "---" lines) specifies a postprocessor
     PP=""
-    YAML=$(getInput | sed -n '/^---[-]*$/,/^---[-]*$/p')
+    YAML=$(sed -n '/^---[-]*$/,/^---[-]*$/p' < "$SOURCE")
     if [[ -n "$YAML" ]]
     then
         if LINE=$(echo "$YAML" | grep "postprocessor[ ]*:")
@@ -118,19 +119,28 @@ function getPostprocessor {
     echo "$PP"
 }
 
-function postprocess {
-    CLEANED=$(cleanup)
-
-    # Next, perform any custom postprocessing
-    PP=$(getInput | getPostprocessor)
-    if [[ -n "$PP" ]]
-    then
-        echo "Running postprocessor '$PP'" 1>&2
-        echo "$CLEANED" | "$PP"
-    else
-        echo "$CLEANED"
-    fi
-}
-
 # Perform post-processing before outputting the result
-echo "$OUTPUT" | postprocess | writeOutput
+CLEANED=$(echo "$OUTPUT" | cleanup)
+unset OUTPUT
+
+# Next, perform any custom postprocessing
+POSTPROCESSOR=$(getPostprocessor)
+if [[ -n "$POSTPROCESSOR" ]]
+then
+    echo "Running postprocessor '$POSTPROCESSOR'" 1>&2
+    POSTPROCESSED=$(echo "$CLEANED" | "$POSTPROCESSOR")
+else
+    POSTPROCESSED="$CLEANED"
+fi
+unset CLEANED
+unset POSTPROCESSOR
+
+# Send stdin to its final destination, either stdout or $DEST
+if [[ -n "$DEST" ]]
+then
+    echo "Finished postprocessing, writing to '$DEST'" 1>&2
+    echo "$POSTPROCESSED" > "$DEST"
+else
+    echo "Finished postprocessing, writing to stdout" 1>&2
+    echo "$POSTPROCESSED"
+fi
