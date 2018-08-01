@@ -12,6 +12,60 @@ NOTE: This page is [active code](/projects/activecode/), so check out the "view
 source" link at the bottom of the page if you want to follow along with the
 examples!
 
+```{pipe="cat > hsPkgs.nix"}
+with {
+  nixpkgs1803 = (import <nixpkgs> {}).fetchgit {
+    url    = https://github.com/NixOS/nixpkgs.git;
+    rev    = "94d80eb";
+    sha256 = "1l4hdxwcqv5izxcgv3v4njq99yai8v38wx7v02v5sd96g7jj2i8f";
+  };
+};
+with import nixpkgs1803 {};
+(haskell.packages.ghc7103.override (old: {
+  overrides = lib.composeExtensions
+    (old.overrides or (_: _: {}))
+    (self: super:
+      with {
+        spr = lib.mapAttrs (n: v: self.callHackage n v {}) {
+          # Required by mlspec
+          haskell-src-exts = "1.17.1";
+
+          # Required by nix-eval, newer versions conflict with haskell-src-exts 1.17
+          hindent = "4.6.4";
+
+          # QuickCheck 2.10+ breaks quickspec 1.x
+          QuickCheck = "2.9.2";
+
+          # Nixpkgs version doesn't support QuickCheck < 2.10
+          quickcheck-instances = "0.3.14";
+
+          # Force version 1 of quickspec, since nixpkgs may be using 2.x
+          quickspec = "0.9.6";
+
+          # Needed for text-short
+          tasty-quickcheck = "0.8.4";
+
+          # Nixpkgs version has incorrect dependencies, presumably due to being built
+          # against GHC 8 rather than 7
+          text-short = "0.1.1";
+
+          # Nixpkgs version is missing semigroups dependency
+          transformers-compat = "0.5.1.4";
+        };
+      };
+      spr // {
+        # Missing Arbitrary instances
+        aeson = haskell.lib.dontCheck super.aeson;
+
+        # Archive is missing files needed for tests
+        hindent = haskell.lib.dontCheck spr.hindent;
+
+        # This seems to be needed for nix-eval to use our overrides
+        nix-eval = super.nix-eval.override { inherit (self) hindent; };
+      });
+})).ghcWithPackages
+```
+
 ```{pipe="cat > runWithPkgs.sh && chmod +x runWithPkgs.sh"}
 #!/usr/bin/env bash
 set -e
@@ -23,11 +77,12 @@ do
   PKGS="$PKGS $PKG"
 done
 
-CMD=$(nix-shell --show-trace -p which \
-  -p "with import <nixpkgs> {}; haskellPackages.ghcWithPackages (h: [$PKGS])" \
-  --run 'which runhaskell')
+PKG="import ./hsPkgs.nix (h: [$PKGS])"
+echo "Using pkg '$PKG'" 1>&2
+command -v nix-shell 1>&2
+CMD=$(nix-shell --show-trace -p which -p "$PKG" --run 'which runhaskell')
 echo "Running '$CMD'" 1>&2
-$CMD -XOverloadedStrings
+"$CMD" -XOverloadedStrings
 ```
 
 As tradition dictates, we'll start with `"hello world"`, which is trivial to do
