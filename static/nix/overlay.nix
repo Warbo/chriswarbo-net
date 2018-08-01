@@ -412,7 +412,7 @@ with super.lib;
     };
   };
 
-  tests        = self.callPackage ./tests.nix { inherit self; };
+  tests        = self.callPackage ./tests.nix {};
 
   wholeSite    = self.withDeps (self.allDrvsIn self.tests) self.untestedSite;
 
