@@ -7,6 +7,10 @@ packages: [ 'jq', 'nix-instantiate', 'nix-shell', 'timeout' ]
 Here are a few helpful Nix expressions I've accumulated over the years, in case
 they're useful to anyone else. I'll assume the following stuff is in context:
 
+``` pipe="sh > /dev/null"
+find root 1>&2
+```
+
 ```{pipe="tee preamble.nix"}
 with builtins;
 with import <nixpkgs> {};
@@ -342,7 +346,8 @@ variable, and `args` for the list we want to convert. This gives us an attrset
 `env` which we can merge with our derivation's environment, and a snippet of
 Bash called `code` which we can splice into our builder:
 
-```{pipe="bash"}
+```
+{pipe="bash"}
 EXPR='with nixListToBashArray {
     name = "myVars";
     args = [ "foo bar" "baz" hello ];
@@ -380,7 +385,8 @@ use this to import all files ending in `.nix`, for example:
 
 This lets us do things like:
 
-```{pipe="sh"}
+```
+{pipe="sh"}
 mkdir modules
 echo 'Not a Nix file'                     > modules/notANixFile.txt
 echo '"string from foo.nix"'              > modules/foo.nix
@@ -408,21 +414,24 @@ We can use these attribute sets however we like, e.g. `import`ing the files,
 putting them in derivations, etc. If we give a path value, the files will be
 added to the Nix store (this is good for reproducibility):
 
-```{pipe="sh"}
+```
+{pipe="sh"}
 FORMAT=1 UNWRAP=1 ./eval 'toJSON (dirsToAttrs ./modules)'
 ```
 
 We might prefer the hierarchy to be preserved in the store, which we can do by
 coercing our path to a string:
 
-```{pipe="sh"}
+```
+{pipe="sh"}
 FORMAT=1 UNWRAP=1 ./eval 'toJSON (dirsToAttrs "${./modules}")'
 ```
 
 If we convert with `toString`, the path will be used as-is (this is good if we
 have relative paths, symlinks, etc.):
 
-```{pipe="sh"}
+```
+{pipe="sh"}
 FORMAT=1 UNWRAP=1 ./eval 'toJSON (dirsToAttrs (toString ./modules))'
 ```
 
@@ -436,7 +445,8 @@ bunch of boilerplate. We can do this as follows:
 This makes it easy to structure the output of a derivation without having to
 resort to bash scripts:
 
-```{pipe="sh"}
+```
+{pipe="sh"}
 export PREFIX='toString ('
 export SUFFIX=')'
 export UNWRAP=1
@@ -453,7 +463,8 @@ since it may contain forbidden characters. We can strip them out like this:
 
 Now we can do, for example:
 
-```{pipe="sh"}
+```
+{pipe="sh"}
 UNWRAP=1 ./eval 'toFile (sanitiseName "a/b/c/d") "foo"'
 ```
 
@@ -480,7 +491,8 @@ build dependencies of the package:
 ```{pipe="cat def_withDeps.nix"}
 ```
 
-```{pipe="sh"}
+```
+{pipe="sh"}
 export PREFIX='with { x ='
 export SUFFIX='; }; assert forceBuilds [ x ]; toString x'
 PASS='runCommand "passingTest" {} '\'\''echo pass > "$out"'\'\'
@@ -494,12 +506,14 @@ UNWRAP=1 ./eval "withDeps [ ($PASS) ] hello" > extraDepPass
 This way, we can make a new package which is equivalent to the original when our
 tests pass:
 
-```{pipe="cat extraDepPass"}
+```
+{pipe="cat extraDepPass"}
 ```
 
 But which breaks when our tests don't pass:
 
-```{pipe="cat extraDepFail"}
+```
+{pipe="cat extraDepFail"}
 ```
 
 ### Hashless Git Fetching ###
@@ -516,7 +530,8 @@ We can work around this by overriding the hash-checking mechanism of `fetchgit`:
 
 With this, we can specify a git repo without needing a hash:
 
-```{pipe="sh"}
+```
+{pipe="sh"}
 # We call the git derivation 'x', force it to be built (to ensure hash checking
 # is skipped), then spit out its store path
 export PREFIX='with { x = '
@@ -544,7 +559,8 @@ etc.), imports the result and passes it to `fetchGitHashless`:
 Now we only have to provide a URL (and optionally a branch) and our repos will
 stay up to date, e.g.:
 
-```{pipe="sh"}
+```
+{pipe="sh"}
 export PREFIX='toString ('
 export SUFFIX=')'
 UNWRAP=1 ./eval 'import (fetchLatestGit {
@@ -597,7 +613,8 @@ following will augment a given attribute set to contain the needed config:
 
 With this, we can say things like:
 
-```{pipe="sh"}
+```
+{pipe="sh"}
 FUNC='runCommand "foo" (withNix { myVar = "hello"; })'
  STR=$(printf "''\n    %s\n    %s\n  ''" 'echo "$myVar" > myFile' \
                                          'nix-store --add myFile > "$out"')
@@ -735,7 +752,8 @@ wrap {
   }
 ```
 
-```{pipe="sh"}
+```
+{pipe="sh"}
 UNWRAP=1 PREFIX='toString (' SUFFIX=')' ./eval "$(cat wrapScript.nix)"
 ```
 
@@ -750,7 +768,8 @@ wrap {
 }
 ```
 
-```{pipe="sh"}
+```
+{pipe="sh"}
 echo 'print "hello"' > script.py
 UNWRAP=1 PREFIX='toString (' SUFFIX=')' ./eval "$(cat wrapFile.nix)"
 ```
@@ -778,7 +797,8 @@ With this in `PATH`, we can say things like:
 echo "foo" | pipeToNix myFilename
 ```
 
-```{.bash pipe="sh"}
+```
+{.bash pipe="sh"}
 printf '$ %s\n' "$(cat pipeToNix.sh)"
 chmod +x pipeToNix.sh
 nix-shell --show-trace -p '(import ./result.nix).pipeToNix' \
@@ -794,7 +814,8 @@ Nix functions have two sorts of arguments: variables, like `x: ...`; and named
 argument sets, like `{ foo, bar }: ...`. If we use the latter, those names can
 be found by passing the function to `builtins.functionArgs`:
 
-```{pipe="sh"}
+```
+{pipe="sh"}
 ./eval 'functionArgs ({ foo, bar, baz ? 42 }: 1337)'
 ```
 
@@ -804,7 +825,8 @@ arguments to pass in.
 Unfortunately, this introspection ability is lost if we wrap up a function
 somehow, for example via composition:
 
-```{pipe="sh"}
+```
+{pipe="sh"}
 UNWRAP=1 FORMAT=1 ./eval 'with rec {
     func    = { foo, bar }: 42;
 
@@ -828,7 +850,8 @@ Nix can't inspect:
 With this, we can recover the inspection capabilities for our composed function,
 such that it'll work with `callPackage` and the like:
 
-```{pipe="sh"}
+```
+{pipe="sh"}
 ./eval 'with rec {
     func    = { foo, bar }: 42;
 
