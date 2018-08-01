@@ -1,6 +1,6 @@
 ---
 title: Goedel Machines
-packages: [ 'coq' ]
+packages: [ 'coqNoIde' ]
 ---
 
 <!-- Quick way to build up our Coq script -->
