@@ -30,6 +30,13 @@ function ignoreInSource {
     grep -v "./turtleview"
 }
 
+function cleanup {
+    echo "all_pages_reachable exiting, killing server (pid $SERVER_PID)" 1>&2
+    kill "$SERVER_PID" || true
+    sleep 3
+    kill -9 "$SERVER_PID" || true
+}
+
 BASE="$PWD"
 
 # shellcheck disable=SC2154
@@ -45,7 +52,7 @@ pushd "$rendered" > /dev/null
     SERVER_PID="$!"
 
     # Delete the directory *and* kill the server when we exit
-    trap 'kill "$SERVER_PID"' EXIT
+    trap cleanup EXIT
 
     printf "Waiting for server to start..." 1>&2
 
