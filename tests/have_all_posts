@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # shellcheck disable=SC2154
-LINKS=$(xidel - -s --extract "//a/@href" < "$rendered/blog.html")
+LINKS=$(xidel - -q --extract "//a/@href" < "$rendered/blog.html")
 
 function getBlogs {
     # shellcheck disable=SC2154

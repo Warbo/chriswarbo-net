@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2154
-xidel - -s --extract "//div[@id='content']//ul/li/a" < "$rendered"/blog.html |
+xidel - -q --extract "//div[@id='content']//ul/li/a" < "$rendered"/blog.html |
     while read -r TITLE
     do
         if [[ -z "$TITLE" ]]

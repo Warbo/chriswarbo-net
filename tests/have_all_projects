@@ -17,7 +17,7 @@ do
         echo "Can't find $rendered/$DEST" 1>&2
         ERR=1
     fi
-    LINK=$(xidel - -s --extract \
+    LINK=$(xidel - -q --extract \
                  "//a[@href='$DEST']/@href" < "$rendered/projects.html")
     if ! echo "$LINK" | grep "$DEST" > /dev/null
     then

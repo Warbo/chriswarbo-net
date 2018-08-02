@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -e
+
+echo "Checking if xidel accepts '-q' option" 1>&2
+xidel --help | grep -- '--quiet' || fail "No quiet options for xidel"

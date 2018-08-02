@@ -19,13 +19,13 @@
 
 function getTitle {
     # Get the contents of <title />
-    TTL=$(xidel - -s --extract "/html/head/title/text()" < "$1")
+    TTL=$(xidel - -q --extract "/html/head/title/text()" < "$1")
     [[ -n "$TTL" ]] && {
         echo "$TTL"
         return
     }
 
-    TTL=$(xidel - -s --extract "//h1/text()" < "$1")
+    TTL=$(xidel - -q --extract "//h1/text()" < "$1")
     [[ -n "$TTL" ]] && {
         echo "No <title /> element for '$1', falling back to <h1 />" 1>&2
         echo "$TTL"
