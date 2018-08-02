@@ -25,6 +25,9 @@ with rec {
       (import ./overlay.nix)
       (self: super: {
         inherit repoSource;
+
+        # To force -q instead of -s
+        inherit (self.nixpkgs1709) xidel;
       })
     ];
   };
