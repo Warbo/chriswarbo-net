@@ -1,3 +1,3 @@
 {
-  inherit (import ./.) wholeSite;
+  inherit (import ./static/nix) wholeSite;
 }
