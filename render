@@ -62,7 +62,7 @@ echo "Done" 1>&2
 function build() {
     echo "Building '$1'" 1>&2
     BASE=$(dirname "$(readlink -f "$0")")
-    nix-build --show-trace -A "$1" "$BASE"
+    nix-build --show-trace -A "$1" "$BASE/static/nix"
 }
 
 function doBuild() {
