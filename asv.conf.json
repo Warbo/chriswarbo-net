@@ -1,0 +1,18 @@
+{
+    "benchmark_dir"  : "./benchmarks",
+         "branches"  : ["master"],
+         "builders"  : {"dir":"args: args.dir"},
+             "dvcs"  : "git",
+          "env_dir"  : ".asv/env",
+  "environment_type" : "nix",
+         "html_dir"  : ".asv/html",
+  "install_timeout"  : 600,
+        "installer"  : "args: import (args.dir + \"/benchmarks\") args",
+           "matrix"  : {"dir" : ["null"]},
+          "plugins"  : ["asv_nix"],
+          "project"  : "chriswarbo-net",
+       "project_url" : "http://chriswarbo.net",
+              "repo" : "http://chriswarbo.net/git/chriswarbo-net.git",
+       "results_dir" : ".asv/results",
+           "version" : 1
+}
