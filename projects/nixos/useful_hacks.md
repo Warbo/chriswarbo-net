@@ -7,10 +7,6 @@ packages: [ 'jq', 'nix-instantiate', 'nix-shell', 'timeout' ]
 Here are a few helpful Nix expressions I've accumulated over the years, in case
 they're useful to anyone else. I'll assume the following stuff is in context:
 
-``` pipe="sh > /dev/null"
-find root 1>&2
-```
-
 ```{pipe="tee preamble.nix"}
 with builtins;
 with import <nixpkgs> {};
@@ -210,7 +206,6 @@ pipeToNix = attrsToDirs {
     bin = {
       pipeToNix = wrap {
         name   = "pipeToNix";
-        vars   = removeAttrs (withNix {}) [ "buildInputs" ];
         script = ''
           #!/usr/bin/env bash
           set -e
@@ -329,14 +324,18 @@ written in Bash. Annoyingly, lists are converted by simply separating their
 contents with spaces; this can sometimes be used as a quick and dirty hack, e.g.
 to loop through each element with `for X in $myList`, but in general this will
 barf if our data contains any whitespace, or other characters deemed to be
-"special" by Bash.
+"special" by Bash. We could instead use Nix's `builtins.toJSON` function, but
+there's no native support in Bash to pull out those values (we'd have to use
+something like `jq`). Both JSON and space-separated strings can also hit limits
+on the allowed length of environment variables
 
-The solution is to use a Bash array, instead of a space-separated string, and to
-escape the data correctly as it's added to the array. There is a slight
-difficulty though: if we try splicing values into our Bash script, those values
-will be forced during evaluation; if they're derivations, they'll be built
-prematurely. We're better off using individual environment variables for each
-list element, then combining them into an array *in Bash*:
+The solution is to use a Bash array, but there is a slight difficulty: if we try
+splicing values into our Bash script, those values may be forced earlier than
+we'd like (e.g. if they use import-from-derivation, then forcing the body of the
+script will force derivations to be built at eval time). We're better off using
+individual environment variables for each list element, since those can remain
+unevaluated until the derivation is instantiated, and have them combined into an
+array *in Bash*:
 
 ```{pipe="cat def_nixListToBashArray.nix"}
 ```
@@ -371,8 +370,8 @@ The `code` snippet turns the variables in `env` into a Bash array with the given
 `name` (in this case `myVars`). The loop output shows that the given values are
 preserved, e.g. the string `foo bar` doesn't get split at the whitespace.
 
-Preserving strings like this, in a way which doesn't force them at eval time
-(like e.g. `escapeShellArg`) will be useful in the following utilities too.
+Preserving strings like this, in a way which avoids forcing them until needed,
+will be useful in the following utilities too.
 
 ### Importing Directories ###
 
@@ -520,8 +519,7 @@ We can work around this by overriding the hash-checking mechanism of `fetchgit`:
 
 With this, we can specify a git repo without needing a hash:
 
-```
-{pipe="sh"}
+```{pipe="sh"}
 # We call the git derivation 'x', force it to be built (to ensure hash checking
 # is skipped), then spit out its store path
 export PREFIX='with { x = '
@@ -549,8 +547,7 @@ etc.), imports the result and passes it to `fetchGitHashless`:
 Now we only have to provide a URL (and optionally a branch) and our repos will
 stay up to date, e.g.:
 
-```
-{pipe="sh"}
+```{pipe="sh"}
 export PREFIX='toString ('
 export SUFFIX=')'
 UNWRAP=1 ./eval 'import (fetchLatestGit {
@@ -603,8 +600,7 @@ following will augment a given attribute set to contain the needed config:
 
 With this, we can say things like:
 
-```
-{pipe="sh"}
+```{pipe="sh"}
 FUNC='runCommand "foo" (withNix { myVar = "hello"; })'
  STR=$(printf "''\n    %s\n    %s\n  ''" 'echo "$myVar" > myFile' \
                                          'nix-store --add myFile > "$out"')
@@ -737,13 +733,12 @@ wrap {
     vars    = { VAR1 = toJSON { someKey = "someValue"; }; };
     script  = ''
       #!/usr/bin/env bash
-      jq --arg var "$VAR1" '. + $var1.someKey'
+      jq --arg var "$VAR1" '. + $var.someKey'
     '';
   }
 ```
 
-```
-{pipe="sh"}
+```{pipe="sh"}
 UNWRAP=1 PREFIX='toString (' SUFFIX=')' ./eval "$(cat wrapScript.nix)"
 ```
 
@@ -758,8 +753,7 @@ wrap {
 }
 ```
 
-```
-{pipe="sh"}
+```{pipe="sh"}
 echo 'print "hello"' > script.py
 UNWRAP=1 PREFIX='toString (' SUFFIX=')' ./eval "$(cat wrapFile.nix)"
 ```
@@ -787,8 +781,7 @@ With this in `PATH`, we can say things like:
 echo "foo" | pipeToNix myFilename
 ```
 
-```
-{.bash pipe="sh"}
+```{.bash pipe="sh"}
 printf '$ %s\n' "$(cat pipeToNix.sh)"
 chmod +x pipeToNix.sh
 nix-shell --show-trace -p '(import ./result.nix).pipeToNix' \
