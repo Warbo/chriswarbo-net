@@ -797,8 +797,7 @@ Nix functions have two sorts of arguments: variables, like `x: ...`; and named
 argument sets, like `{ foo, bar }: ...`. If we use the latter, those names can
 be found by passing the function to `builtins.functionArgs`:
 
-```
-{pipe="sh"}
+```{pipe="sh"}
 ./eval 'functionArgs ({ foo, bar, baz ? 42 }: 1337)'
 ```
 
@@ -808,8 +807,7 @@ arguments to pass in.
 Unfortunately, this introspection ability is lost if we wrap up a function
 somehow, for example via composition:
 
-```
-{pipe="sh"}
+```{pipe="sh"}
 UNWRAP=1 FORMAT=1 ./eval 'with rec {
     func    = { foo, bar }: 42;
 
@@ -833,8 +831,7 @@ Nix can't inspect:
 With this, we can recover the inspection capabilities for our composed function,
 such that it'll work with `callPackage` and the like:
 
-```
-{pipe="sh"}
+```{pipe="sh"}
 ./eval 'with rec {
     func    = { foo, bar }: 42;
 
