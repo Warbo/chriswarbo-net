@@ -396,7 +396,7 @@ FORMAT=1 UNWRAP=1 PREFIX='toJSON (' SUFFIX=')' ./eval 'nixFilesIn ./modules'
 
 This can be useful for making modular configurations, without needing to specify
 all of the required imports individually (in fact, that's how I define these
-things in [my nix-config repo](/git/nix-config)). It can also be used for other
+things in [my nix-helpers repo](/git/nix-helpers)). It can also be used for other
 sorts of file, or even recursively on sub-directories...
 
 ### Converting Between Attrsets and Directories ###
@@ -412,24 +412,21 @@ We can use these attribute sets however we like, e.g. `import`ing the files,
 putting them in derivations, etc. If we give a path value, the files will be
 added to the Nix store (this is good for reproducibility):
 
-```
-{pipe="sh"}
+```{pipe="sh"}
 FORMAT=1 UNWRAP=1 ./eval 'toJSON (dirsToAttrs ./modules)'
 ```
 
 We might prefer the hierarchy to be preserved in the store, which we can do by
 coercing our path to a string:
 
-```
-{pipe="sh"}
+```{pipe="sh"}
 FORMAT=1 UNWRAP=1 ./eval 'toJSON (dirsToAttrs "${./modules}")'
 ```
 
 If we convert with `toString`, the path will be used as-is (this is good if we
 have relative paths, symlinks, etc.):
 
-```
-{pipe="sh"}
+```{pipe="sh"}
 FORMAT=1 UNWRAP=1 ./eval 'toJSON (dirsToAttrs (toString ./modules))'
 ```
 
@@ -443,8 +440,7 @@ bunch of boilerplate. We can do this as follows:
 This makes it easy to structure the output of a derivation without having to
 resort to bash scripts:
 
-```
-{pipe="sh"}
+```{pipe="sh"}
 export PREFIX='toString ('
 export SUFFIX=')'
 export UNWRAP=1
@@ -461,8 +457,7 @@ since it may contain forbidden characters. We can strip them out like this:
 
 Now we can do, for example:
 
-```
-{pipe="sh"}
+```{pipe="sh"}
 UNWRAP=1 ./eval 'toFile (sanitiseName "a/b/c/d") "foo"'
 ```
 
@@ -489,8 +484,7 @@ build dependencies of the package:
 ```{pipe="cat def_withDeps.nix"}
 ```
 
-```
-{pipe="sh"}
+```{pipe="sh"}
 export PREFIX='with { x ='
 export SUFFIX='; }; assert forceBuilds [ x ]; toString x'
 PASS='runCommand "passingTest" {} '\'\''echo pass > "$out"'\'\'
@@ -504,14 +498,12 @@ UNWRAP=1 ./eval "withDeps [ ($PASS) ] hello" > extraDepPass
 This way, we can make a new package which is equivalent to the original when our
 tests pass:
 
-```
-{pipe="cat extraDepPass"}
+```{pipe="cat extraDepPass"}
 ```
 
 But which breaks when our tests don't pass:
 
-```
-{pipe="cat extraDepFail"}
+```{pipe="cat extraDepFail"}
 ```
 
 ### Hashless Git Fetching ###
