@@ -346,8 +346,7 @@ variable, and `args` for the list we want to convert. This gives us an attrset
 `env` which we can merge with our derivation's environment, and a snippet of
 Bash called `code` which we can splice into our builder:
 
-```
-{pipe="bash"}
+```{pipe="bash"}
 EXPR='with nixListToBashArray {
     name = "myVars";
     args = [ "foo bar" "baz" hello ];
