@@ -384,8 +384,7 @@ use this to import all files ending in `.nix`, for example:
 
 This lets us do things like:
 
-```
-{pipe="sh"}
+```{pipe="sh"}
 mkdir modules
 echo 'Not a Nix file'                     > modules/notANixFile.txt
 echo '"string from foo.nix"'              > modules/foo.nix
