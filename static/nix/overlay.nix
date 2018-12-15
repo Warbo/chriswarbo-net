@@ -117,6 +117,7 @@ with super.lib;
                         inputs ++ extraPkgs;
           inherit dir file SOURCE_PATH;
           TO_ROOT = if relBase == null then "" else relBase;
+          postprocessor = md.postprocessor or "";
         })
         ''
           export DEST="$PWD/out.html"

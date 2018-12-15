@@ -100,40 +100,20 @@ echo "$OUTPUT" | grep '[^ \n\t]' > /dev/null || {
     exit 1
 }
 
-# Post-processing. This is slightly complicated, so we use more functions.
-
-function getPostprocessor {
-    # Check if YAML (between two "---" lines) specifies a postprocessor
-    PP=""
-    YAML=$(sed -n '/^---[-]*$/,/^---[-]*$/p' < "$SOURCE")
-    if [[ -n "$YAML" ]]
-    then
-        if LINE=$(echo "$YAML" | grep "postprocessor[ ]*:")
-        then
-            PP=$(echo "$LINE"                       |
-                 sed -e 's/.*postprocessor[ ]*://g' |
-                 sed -e 's/^ *//g'                  |
-                 sed -e 's/ *$//g')
-        fi
-    fi
-    echo "$PP"
-}
-
 # Perform post-processing before outputting the result
 CLEANED=$(echo "$OUTPUT" | cleanup)
 unset OUTPUT
 
-# Next, perform any custom postprocessing
-POSTPROCESSOR=$(getPostprocessor)
-if [[ -n "$POSTPROCESSOR" ]]
+# Next, perform any custom postprocessing. This is specified by the file's YAML,
+# and passed to us via the 'postprocessor' environment variable.
+if [[ -n "$postprocessor" ]]
 then
-    echo "Running postprocessor '$POSTPROCESSOR'" 1>&2
-    POSTPROCESSED=$(echo "$CLEANED" | "$POSTPROCESSOR")
+    echo "Running postprocessor '$postprocessor'" 1>&2
+    POSTPROCESSED=$(echo "$CLEANED" | "$postprocessor")
 else
     POSTPROCESSED="$CLEANED"
 fi
 unset CLEANED
-unset POSTPROCESSOR
 
 # Send stdin to its final destination, either stdout or $DEST
 if [[ -n "$DEST" ]]
