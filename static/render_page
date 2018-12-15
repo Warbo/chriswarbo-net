@@ -48,36 +48,16 @@ else
 fi
 
 echo "Running pandoc, capturing output for post-processing" 1>&2
-echo "Pandoc options: ${IN_OPTIONS[@]}"                     1>&2
+echo "Pandoc input  options: ${IN_OPTIONS[@]}"              1>&2
+echo "Pandoc output options: ${OUT_OPTIONS[@]}"             1>&2
 
 # We don't use pandoc's --filter option, as it buffers stderr which makes
 # debugging harder
-JSON=$(pandoc "${IN_OPTIONS[@]}") || {
-    echo -e "Failed to convert to JSON. JSON:\n$JSON\n" 1>&2
+OUTPUT=$(pandoc "${IN_OPTIONS[@]}" | panpipe | panhandle |
+         pandoc "${OUT_OPTIONS[@]}") || {
+    echo -e "Rendering pipeline failed\n$OUTPUT\n" 1>&2
     exit 1
 }
-
-echo "Applying panpipe" 1>&2
-PIPED=$(echo "$JSON" | panpipe) || {
-    echo -e "Failed to apply panpipe. JSON:\n$JSON\n\nPIPED:\n$PIPED\n" 1>&2
-    exit 1
-}
-unset JSON
-
-echo "Applying panhandle" 1>&2
-HANDLED=$(echo "$PIPED" | panhandle) || {
-    echo -e "Panhandle failed. PIPED:\n$PIPED\n\nHANDLED:\n$HANDLED\n" 1>&2
-    exit 1
-}
-unset PIPED
-
-echo "Converting from JSON" 1>&2
-echo "Pandoc options: ${OUT_OPTIONS[@]}" 1>&2
-OUTPUT=$(echo "$HANDLED" | pandoc "${OUT_OPTIONS[@]}") || {
-    echo -e "Failed to convert back. JSON:\n$JSON\n\nOUTPUT:\n$OUTPUT\n" 1>&2
-    exit 1
-}
-unset HANDLED
 
 # If output was written to $DEST, read it back. This allows pandoc to determine
 # the output format from the filename.
