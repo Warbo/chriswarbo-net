@@ -106,17 +106,22 @@ with super.lib;
       md        = self.metadata file;
       extraPkgs = map (n: getAttr n (self // self.commands))
                       (md.packages or []);
-      dir       = self.mergeDirs [ cwd (self.dirContaining ../.. (md.dependencies or [])) ];
+      dir       = self.mergeDirs [
+                    cwd
+                    (self.dirContaining ../.. (md.dependencies or []))
+                  ];
       rel       = if relBase == null
                      then (x: x)
                      else self.relTo relBase;
       dupe      = rel (self.writeScript name (readFile file));
       rendered  = self.runCommand name
         (vars // {
-          buildInputs = [ self.commands.relativise self.commands.render_page ] ++
-                        inputs ++ extraPkgs;
           inherit dir file SOURCE_PATH;
-          TO_ROOT = if relBase == null then "" else relBase;
+          buildInputs   = inputs ++ extraPkgs ++ [
+                            self.commands.relativise
+                            self.commands.render_page
+                          ];
+          TO_ROOT       = if relBase == null then "" else relBase;
           postprocessor = md.postprocessor or "";
         })
         ''

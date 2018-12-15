@@ -3,7 +3,7 @@ set -e
 set -o pipefail
 
 # Common options
-IN_OPTIONS=(-t json)
+ IN_OPTIONS=(-t json)
 OUT_OPTIONS=(-f json -s --mathml --template "$defaultTemplate")
 
 # If the filename contains a date, provide it to the output template
