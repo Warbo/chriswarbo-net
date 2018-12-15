@@ -1,6 +1,5 @@
-{ attrsToDirs, bash, buildEnv, commands, coq, dirContaining, haskellPackages,
-  hfeed2atom, git, glibcLocales, lib, libxslt, mergeDirs, mkBin, pandocPkgs,
-  python, replace, runCommand, wget, withNix, wrap, xidel, xmlstarlet }:
+{ attrsToDirs, bash, commands, coq, git, glibcLocales, lib, libxslt, mkBin,
+  pandocPkgs, python, replace, wget, withNix, xidel, xmlstarlet }:
 
 with builtins;
 with lib;
