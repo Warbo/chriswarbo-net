@@ -13,7 +13,6 @@ fi
 [[ -n "$IPFS_PATH"    ]] || export IPFS_PATH=/var/lib/ipfs/.ipfs
 [[ -n "$GIT_REPO_DIR" ]] || export GIT_REPO_DIR=/home/chris/Programming/repos
 
-printf "Getting git HEADs..." 1>&2
 function gitVersions() {
     echo "{"
     for D in "$GIT_REPO_DIR"/*.git
@@ -25,17 +24,21 @@ function gitVersions() {
     echo "}"
 }
 
-REPO_REFS=$(gitVersions)
-export REPO_REFS
+function cacheGit() {
+    [[ -z "$REPO_REFS" ]] || return 0
+    printf "Getting git HEADs..." 1>&2
+    REPO_REFS=$(gitVersions)
+    export REPO_REFS
 
-# Speeds up latestGit
-while read -r VAR
-do
-    N=$(echo "$VAR" | cut -f1)
-    V=$(echo "$VAR" | cut -f2)
-    export "$N"="$V"
-done < <(gitRevEnvVars)
-echo "Done" 1>&2
+    # Speeds up latestGit
+    while read -r VAR
+    do
+        N=$(echo "$VAR" | cut -f1)
+        V=$(echo "$VAR" | cut -f2)
+        export "$N"="$V"
+    done < <(gitRevEnvVars)
+    echo "Done" 1>&2
+}
 
 #printf "Getting IPFS keys..." 1>&2
 #function ipfsKeys() {
@@ -60,6 +63,7 @@ echo "Done" 1>&2
 #echo "Done" 1>&2
 
 function build() {
+    cacheGit
     echo "Building '$1'" 1>&2
     BASE=$(dirname "$(readlink -f "$0")")
     nix-build --show-trace -A "$1" "$BASE/static/nix"
