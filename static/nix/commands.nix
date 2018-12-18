@@ -1,5 +1,5 @@
-{ attrsToDirs, bash, commands, coq, git, glibcLocales, lib, libxslt, mkBin,
-  pandocPkgs, python, replace, wget, withNix, xidel, xmlstarlet }:
+{ attrsToDirs, bash, commands, coq, fail, git, glibcLocales, lib, libxslt,
+  mkBin, pandocPkgs, python, replace, wget, withNix, xidel, xmlstarlet }:
 
 with builtins;
 with lib;
@@ -82,7 +82,7 @@ extras // mapAttrs wrapScript {
   };
 
   render_page = {
-    paths = [ commands.cleanup pandocPkgs ];
+    paths = [ commands.cleanup fail pandocPkgs ];
     vars  = {
       defaultTemplate = ../../templates/default.html;
       LANG            = "en_US.UTF-8";
