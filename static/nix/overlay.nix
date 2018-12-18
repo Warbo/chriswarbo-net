@@ -100,8 +100,8 @@ with super.lib;
     done
   '';
 
-  render = { cwd ? self.nothing, file, inputs ? [], name ? "page.html", vars ? {},
-             relBase ? null, SOURCE_PATH ? "" }:
+  render = { cwd ? self.nothing, file, inputs ? [], name ? "page.html",
+             vars ? {}, relBase ? null, SOURCE_PATH }:
     with rec {
       md        = self.metadata file;
       extraPkgs = map (n: getAttr n (self // self.commands))
@@ -413,9 +413,10 @@ with super.lib;
     projects    = self.projectPages;
     unfinished  = self.unfinishedPages;
     "index.php" = self.render {
-      vars = { inherit (self) blogPages; };
-      file = ../../redirect.md;
-      name = "index.php";
+      vars        = { inherit (self) blogPages; };
+      file        = ../../redirect.md;
+      name        = "index.php";
+      SOURCE_PATH = "redirect.md";
     };
   };
 
