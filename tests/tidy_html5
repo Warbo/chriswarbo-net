@@ -26,7 +26,8 @@ function check {
     fi
 
     # Otherwise, abort
-    echo -e "Tidy failed for '$1':\n\n$STDERR\n\n---\nEnd report for '$1'\n\n" 1>&2
+    echo -e "Tidy failed for '$1':\\n\\n$STDERR\\n" 1>&2
+    echo -e "---\\nEnd report for '$1'\\n\\n"       1>&2
     return 1
 }
 

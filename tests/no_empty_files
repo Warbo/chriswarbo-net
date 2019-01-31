@@ -12,7 +12,7 @@ do
     ABS=$(readlink -f "$F")
     [[ -f "$ABS" ]] || continue
 
-    grep "[^ \t\n]" < "$ABS" > /dev/null || {
+    grep "[^ \\t\\n]" < "$ABS" > /dev/null || {
         ERR=1
         echo "File '$F' looks empty" 1>&2
     }

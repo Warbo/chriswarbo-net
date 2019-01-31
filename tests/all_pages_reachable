@@ -3,7 +3,7 @@ set -e
 
 if PROCESS=$(pgrep ".*8666.*" | grep python)
 then
-    echo -e "Server already running, aborting\n$PROCESS" 1>&2
+    echo -e "Server already running, aborting\\n$PROCESS" 1>&2
     exit 1
 fi
 
@@ -54,7 +54,7 @@ pushd "$rendered" > /dev/null
     # Delete the directory *and* kill the server when we exit
     trap cleanup EXIT
 
-    printf "Waiting for server to start (PID $SERVER_PID)..." 1>&2
+    printf "Waiting for server to start (PID %s)..." "$SERVER_PID" 1>&2
 
     while true
     do

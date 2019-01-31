@@ -13,7 +13,7 @@ README=""
 if [ -d "/home/chris/Programming/repos/$1.git" ]
 then
     echo "Found local copy of '$1.git'" 1>&2
-    pushd "/home/chris/Programming/repos/$1.git" > /dev/null
+    pushd "/home/chris/Programming/repos/$1.git" > /dev/null || exit 1
 
     DATE=$(git log -n 1 --format=%ci)
     echo "Latest commit date for '$1.git' is '$DATE'" 1>&2
@@ -24,11 +24,11 @@ then
         then
             echo "Found '$f' for '$1.git'" 1>&2
             README="$FOUND"
-            README_MSG=$(echo -e "Contents of $f follows\n\n---\n\n")
+            README_MSG=$(echo -e "Contents of $f follows\\n\\n---\\n\\n")
             break
         fi
     done
-    popd > /dev/null
+    popd > /dev/null || exit 1
 else
     echo "Looking up '$1.git' remotely" 1>&2
 
@@ -42,7 +42,7 @@ else
         then
             echo "Found '$f' for '$1.git'" 1>&2
             README="$FOUND"
-            README_MSG=$(echo -e "Contents of $f follows\n\n---\n\n")
+            README_MSG=$(echo -e "Contents of $f follows\\n\\n---\\n\\n")
             break
         fi
     done

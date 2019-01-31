@@ -9,7 +9,7 @@ do
     then
         while read -r ENTRY
         do
-            if ! echo "$ENTRY" | grep "[^/][^/]*\.[^/][^/]*" > /dev/null
+            if ! echo "$ENTRY" | grep "[^/][^/]*\\.[^/][^/]*" > /dev/null
             then
                 echo "File '$ENTRY' has no extension" 1>&2
                 ERR=1

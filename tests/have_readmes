@@ -21,7 +21,7 @@ do
                 ERR=1
                 echo "'$NAME' has no README, but found '$DIR/$READMES'" 1>&2
             fi
-            popd > /dev/null
+            popd > /dev/null || exit 1
         done
     fi
 done

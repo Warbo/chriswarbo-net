@@ -29,7 +29,7 @@ do
     # To make this work, we also have to strip out the protocol (e.g. http://)
     # since that obviously contains a '/'.
     if get_urls "$FILE" | sed -e 's@^.*://@@g' -e 's@/.*$@@g' |
-                          grep "chriswarbo\.net"
+                          grep "chriswarbo\\.net"
     then
         echo "Found absolute links to chriswarbo.net in '$FILE'" 1>&2
         ERR=1
