@@ -11,8 +11,6 @@ with rec {
                                  else getEnv "REPO_REFS";
   };
 
-  bins = bin: attrsToDirs { inherit bin; };
-
   includingDeps = xs:
     filter (x: x != null)
            (xs ++ concatMap (x: x.propagatedNativeBuildInputs) xs

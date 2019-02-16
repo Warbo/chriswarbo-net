@@ -6,9 +6,11 @@ assert super ? nix-helpers || abort (toJSON {
 });
 with super.lib;
 {
-  bins = bin: self.attrsToDirs' "bins" { inherit bin; };
-
-  cleanup = self.bins { cleanup = ../cleanup; };
+  cleanup = self.attrsToDirs' "cleanup" {
+    bin = {
+      cleanup = ../cleanup;
+    };
+  };
 
   commands = self.callPackage ./commands.nix {};
 
