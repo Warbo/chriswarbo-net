@@ -1,6 +1,9 @@
 self: super:
 
 with builtins;
+assert super ? nix-helpers || abort (toJSON {
+  error = "'nix-helpers' not found; has nix-helpers overlay been included?";
+});
 with super.lib;
 {
   bins = bin: self.attrsToDirs' "bins" { inherit bin; };
@@ -65,50 +68,15 @@ with super.lib;
 
   metadata = path: self.metadataMap."${toString path}" or {};
 
-  # Create a directory containing (links to) 'files'; the directory structure
-  # will be relative to 'base', for example:
-  #
-  #   dirContaining /foo/bar [ /foo/bar/baz /foo/bar/quux/foobar ]
-  #
-  # Will produce a directory containing 'baz' and 'quux/foobar'.
-  dirContaining = base: files:
-    self.mergeDirs (map (f: self.runCommand "dir"
-                          {
-                            base = toString base;
-                            file = toString base + "/${f}";
-                          }
-                          ''
-                            REL=$(echo "$file" | sed -e "s@$base/@@g")
-                            DIR=$(dirname "$REL")
-                            mkdir -p "$out/$DIR"
-                            ln -s "$file" "$out/$REL"
-                          '')
-                        files);
-
-  # Link the contents of a bunch of directories into one
-  mergeDirs = dirs: self.runCommand "merged-dirs" { dirs = map toString dirs; } ''
-    shopt -s nullglob
-    mkdir -p "$out"
-
-    for D in $dirs
-    do
-      for F in "$D"/*
-      do
-        cp -as "$F" "$out"/
-      done
-      chmod +w -R "$out"
-    done
-  '';
-
   render = { cwd ? self.nothing, file, inputs ? [], name ? "page.html",
              vars ? {}, relBase ? null, SOURCE_PATH }:
     with rec {
       md        = self.metadata file;
       extraPkgs = map (n: getAttr n (self // self.commands))
                       (md.packages or []);
-      dir       = self.mergeDirs [
+      dir       = super.mergeDirs [
                     cwd
-                    (self.dirContaining ../.. (md.dependencies or []))
+                    (super.dirContaining ../.. (md.dependencies or []))
                   ];
       rel       = if relBase == null
                      then (x: x)
