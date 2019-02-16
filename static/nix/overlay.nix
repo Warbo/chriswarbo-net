@@ -8,72 +8,15 @@ with super.lib;
 {
   commands = self.callPackage ./commands.nix {};
 
-  markdownPaths =
-    with rec {
-      dirEntries = dir:
-        with { entries = readDir dir; };
-        map (entry: {
-              path = dir + "/${entry}";
-              type = getAttr entry entries;
-            })
-            (attrNames entries);
+  metadata = self.callPackage ./metadata.nix {};
 
-      go = { path, type }: rest:
-        if type == "directory"
-           then fold go rest (dirEntries path)
-           else rest ++ (if hasSuffix ".md" (toString path)
-                            then [ (toString path) ]
-                            else [                 ]);
-    };
-    go { path = ../..; type = "directory"; } [];
-
-  metadataMap = import (self.runCommand "metadata-map"
-                         {
-                           buildInputs = [ self.haskellPackages.yaml ];
-                           cacheBust   = toString currentTime;
-                           default     = self.writeScript "metadata.nix" ''
-                             with builtins;
-                             fromJSON (readFile ./metadata.json)
-                           '';
-                           paths = self.writeScript "markdown-paths"
-                                     (concatStringsSep "\n" self.markdownPaths);
-                         }
-                         ''
-                           mkdir "$out"
-                           cp "$default" "$out/default.nix"
-
-                           printf 'Looking for YAML metadata' 1>&2
-                           PAT='^----*'
-                           while read -r P
-                           do
-                             printf '.' 1>&2
-                             YAML=$(grep -B 99999 -m 2 "$PAT" < "$P" |
-                                    grep -v "$PAT") || true
-                             if [[ -z "$YAML" ]]
-                             then
-                               YAML='{}'
-                             fi
-                             INDENTED=$(echo "$YAML" | sed -e 's/^/  /')
-
-                             printf '"%s":\n%s\n' "$P" "$INDENTED" >> yaml.yaml
-                           done < "$paths"
-
-                           echo "Converting to JSON" 1>&2
-                           yaml2json - < yaml.yaml > "$out/metadata.json"
-                         '');
-
-  metadata = path: self.metadataMap."${toString path}" or {};
-
-  render = { cwd ? self.nothing, file, inputs ? [], name ? "page.html",
-             vars ? {}, relBase ? null, SOURCE_PATH }:
+  render = { file, inputs ? [], name ? "page.html", vars ? {}, relBase ? null,
+             SOURCE_PATH }:
     with rec {
       md        = self.metadata file;
       extraPkgs = map (n: getAttr n (self // self.commands))
                       (md.packages or []);
-      dir       = super.mergeDirs [
-                    cwd
-                    (super.dirContaining ../.. (md.dependencies or []))
-                  ];
+      dir       = super.dirContaining ../.. (md.dependencies or []);
       rel       = if relBase == null
                      then (x: x)
                      else self.relTo relBase;
