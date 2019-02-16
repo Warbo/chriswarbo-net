@@ -6,12 +6,6 @@ assert super ? nix-helpers || abort (toJSON {
 });
 with super.lib;
 {
-  cleanup = self.attrsToDirs' "cleanup" {
-    bin = {
-      cleanup = ../cleanup;
-    };
-  };
-
   commands = self.callPackage ./commands.nix {};
 
   markdownPaths =
