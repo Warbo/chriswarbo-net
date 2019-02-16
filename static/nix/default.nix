@@ -50,8 +50,8 @@ with rec {
 
   packages = fetch {
     url    = "warbo-packages.git";
-    rev    = "6011511";
-    sha256 = "0a4rn41k9vaibyvjadhcc8bxfnmjii2047wx1w24m171b95z6rp2";
+    rev    = "9f129aa";
+    sha256 = "1v35m8xxqav8cq4g1hjn8yhzhaf9g4jyrmz9a26g7hk04ybjwc7k";
   };
 };
 
