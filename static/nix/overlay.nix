@@ -10,8 +10,7 @@ with super.lib;
 
   metadata = self.callPackage ./metadata.nix {};
 
-  render = { file, inputs ? [], name ? "page.html", vars ? {}, relBase ? null,
-             SOURCE_PATH }:
+  render = { file, inputs ? [], name, vars ? {}, relBase ? null, SOURCE_PATH }:
     with rec {
       md        = self.metadata file;
       extraPkgs = map (n: getAttr n (self // self.commands))
