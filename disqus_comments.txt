@@ -1,0 +1,1089 @@
+http://grisha.org/blog/2018/01/23/explaining-proof-of-work/
+
+"In the context of the blockchain, Proof-of-Work is probably a misnomer. The term is a legacy from the Hashcash project, where it indeed served to prove work. In the blockchain it is primarily about verifiably taking time."
+
+Blockchains don't seem to be any different from hashcash in this particular respect, since the point of hashcash was also to use proof-of-work as a way to verifiably take time. Hashcash was meant to slow down email, so that sending each email would "verifiably" take a few seconds. Legitimate users wouldn't much notice this delay, whilst spammers and marketers would be throttled right down to the point of unprofitability.
+
+They *do* differ in other respects. Notably the "miners" of hashcash aren't in direct competition with each other since they're working on different emails, although there would be indirect effects where the capabilities of "miners" would influence the minimum difficulty that receivers will accept. The "ticks" in hashcash aren't related to each other in the same way as in a blockchain, but as you say that's a somewhat orthogonal aspect.
+
+The property that you've (rather grandiosely) called "universal" *does* apply to hashcash though, i.e. it doesn't matter *who* is "mining", where they are, whether they're doing so in secret, etc. since only the *total rate* (for each message) matters. This ensures that there's nothing to gain from using multiple accounts, multiple domains, etc. since it's not based on quotas, etc.
+
+-----
+
+"Chains" (or lists) are trees, they just-so-happen to have a single child rather than multiple. They're sometimes called 'degenerate trees'. Googling brings up things like https://stackoverflow.com/questions/43445155/can-we-consider-linked-list-to-be-a-skewed-tree and https://en.wikipedia.org/wiki/Binary_tree#Types_of_binary_trees
+
+=====
+
+http://chrispenner.ca/posts/python-tail-recursion
+
+Whilst all of the mechanisms might be there to produce equivalent results, there are still big differences between iterative and recursive code when it comes to readability, etc.. Personally, I find recursive functions much easier to think about than loops, since each call is its own self-contained little world: values come in as arguments, which are either returned or passed to another call; if we forget a parameter, or do something in the wrong order, the computer tells us (e.g. 'undefined variable' or 'variable used before bound').
+
+With loops, we have a single "world" where each iteration clobbers the values from the previous one, every calculation takes place in some weird half-out-of-date intermediate state, there's nothing to tell us if we got the order of things wrong (except for silently corrupted results), etc.
+
+Anything which helps me avoid loops is a blessing. Whilst I do find `reduce` quite useful, there are lots of situations where a simple recursive function seems much more intuitive than some convoluted fold/unfold recursion scheme.
+
+-----
+
+I appreciate your nit-pick, but think you back-fired a little by calling a function/procedure a "method" ;)
+
+Personally, I distinguish between "tail-call optimisation" and "tail-call elimination". I use "tail-call optimisation" to refer to a feature of a language *implementation* (e.g. CPython for Python, GCC for C, Chicken for Scheme, etc.); if this optimisation is present we can use it to avoid stack overflows, but we lose portability to implementations which don't have this optimisation.
+
+What I call "tail-call elimination" is a feature of a *language*, which we can absolutely rely on being present in all implementations (otherwise the implementation is buggy, since it doesn't implement the language properly). Languages like Scheme, ML and Haskell feature tail-call elimination.
+
+For things like the code in this article, I would say that Python *as a language* doesn't provide tail-call elimination by default, but it *does* provide mechanisms (loops and exceptions) to build mechanisms like tail-call elimination. We could say similar things about other language/mechanism combos, e.g. Python doesn't have delimited continuations but it does have exceptions and yield, which can approximate them; Haskell doesn't have loops, but it does have recursion and tail-call elimination, which can approximate them; etc.
+
+=====
+
+http://gregoryszorc.com/blog/2017/12/11/high-level-problems-with-git-and-how-to-fix-them
+
+I'd be interested to see whether these "high level" concepts/workflows from DAG-based DVCS like git/hg also map to patch-based DVCS like Darcs/Pijul. Most of my experience is with CVS, SVN and Git, and I use the latter mostly due to inertia; but patch-based systems appeal to me due to their power and simplicity.
+
+I absolutely agree that GitHub and friends requiring forks to contribute is off-putting and inefficient (e.g. reconfiguring existing clones after deciding to fork). I also dislike the idea of having important data in some external DB (e.g. GitHub's issue system); it's just completely avoidable vendor lock-in. For example, in my own projects I use Artemis for issue tracking, since it's really simple and stores all data inside the repo itself; although it may be rather "user-unfriendly" for widespread adoption ;)
+
+=====
+
+https://www.pknopf.com/post/2017-03-20-an_immutable_reproducible_and_inheritable_linux_operating_system/
+
+> No inheritance.
+
+I don't understand where you got this idea from; inheritance is used *all over the place* in Nixpkgs and NixOS! Often, functions which do this will have arguments with names like "self" and "super". Since Nix comes from the world of functional programming rather than OO, it uses a different terminology, namely "open recursion", but it's basically the same thing. See http://r6.ca/blog/20140422T... and https://stackoverflow.com/q... for more info.
+
+> Nix expressions for EVERYTHING. Node modules? Pip packages? NuGet packages? Crickey.
+
+You can use Nix at whatever granularity you like. A "package" (AKA "derivation") in Nix is basically just the path to a program (usually bash) and an argument list for that program (usually the path to a bash script). Nix doesn't really care what that program is or what it does; you can have a huge script, calling out to npm, yarn, virtualenv, cabal, sbt, rpm, dpkg, docker or whatever else you want. As long as you save the result to the path specified in the `$out` env var, Nix will handle it. You can even use a "normal" filesystem layout during your build script (try searching for "Nix FHS environment").
+
+Of course, massive bash scripts aren't particularly suited to things like modularity, overrides, inheritance, composition, etc. which is why Nixpkgs and NixOS offer wrapper functions for specifying node modules, pip packages, etc. for those who want such niceties.
+
+> Learning curve. There is a lot of magic happening in NixOS. It really over takes the booting process.
+
+I agree that NixOS contains a *lot* of wrappers around things that sysadmins would normally deal with directly, but it's not exactly "magic": it's mostly just a whole bunch of string concatenation and symlinking.
+
+Still, there's no particular reason to use NixOS if you don't like it; it's just a (rather extreme) example of how to build an OS using Nix. If you'd rather generate small, simple system images, Nix is great for that too :)
+
+=====
+
+https://www.dailydrip.com/blog/a-case-for-linters
+
+The recommended tool for Emacs is Flycheck, which calls out to external tools like linters, syntax checkers, type checkers, etc.
+
+=====
+
+http://www.lihaoyi.com/post/WhatsFunctionalProgrammingAllAbout.html
+
+I agree with the author that trying to make firm boundaries between what is/isn't functional is rather futile.
+
+For example, whilst many functional languages are based on lambda calculus, there are many which aren't; for example some (like Unlambda) use combinatory logic, some (like Joy) use stack models, etc. The statement/expression distinction is also fuzzy, since we can use one to simulate the other; this is similar to arguing about loops vs recursion, when we can write recursive functions which simulate `for`/`while`/etc. and we can write loops which push and pop an explicit stack (rather than the one provided by the language).
+
+Even things like referential transparency can get fuzzy; for example, do logic languages like Prolog and miniKanren have referential transparency? Do we care about the *particular* value an expression evaluates to, or the *possibilities* (like in answer set programming?); and so on. What about term rewriting languages, where confluence may not hold (depending on what rules the program contains)?
+
+And so on :)
+
+=====
+
+http://www.kovach.me/posts/2017-05-11-easy-json.html
+
+Thanks for this! In the last few years I've written quite a few Haskell scripts which pass data around as JSON, but I've only just dipped my toes into the world of lenses. I get the theory, after watching various talks, and my JSON commands provide a good use-case; I was just waiting for a simple, concrete example of using lenses with JSON :)
+
+=====
+
+https://www.fpcomplete.com/blog/2017/05/pure-functional-programming-part-2
+
+The "part 1" link is broken; looks like "/03/" should be "/04/"
+
+Also there's some dodgy formatting, like ampersand-less-than, in the code examples, e.g.
+
+```
+GetLine f -> do
+line <- getLine
+interpretIO (f line)
+```
+
+=====
+
+https://www.snoyman.com/blog/2016/12/beware-of-readfile
+
+This crops up again and again when writing Nix packages involving Haskell, since they're built in isolated environments with explicit dependencies: i.e. unless your package explicitly sets a locale variable, the build environment won't have one.
+
+I now liberally sprinkle this snippet of code all over my Nix definitions (the second line prevents a similar complaint from Perl):
+
+LANG = "en_US.UTF-8";
+LOCALE_ARCHIVE = "${glibcLocales}/lib/locale/locale-archive";
+
+=====
+
+http://blog.klipse.tech//javascript/2016/08/31/monads-javascript.html
+
+Interesting. I think the scope of the article is reduced unnecessarily by emphasising "avoiding side-effects", and working within imaginary constraints, e.g. saying "we’re not allowed to do this in a system that only allows pure functions" when JS allows impure functions. In fact, your example basically replaces something simple (calling `console.log`) with several layers of abstraction, using Haskell as a justification when you're not actually using Haskell.
+
+I think this would put off experienced programmers, as it introduces complexity for no real gain. Perhaps some more compelling examples would be Maybe and List, since they have nothing to do with side-effects, and can end up *simplifying* code rather than complicating it (removing null checks and nested loops, respectively).
+
+Since you're defining "map" (which you call "lift"), it might also be simpler to use "join" rather than "bind"; pre-processing a function with "bind" may be harder to understand than post-processing a result with "join".
+
+Also, it seems a bit arbitrary to hard-code `+` into your Writer implementation; accumulating an array of outputs would be more general and less arbitrary, since arrays are a free monoid.
+
+A rather minor point: many of your examples are overly complicated, e.g. `sine` and `round` can be eta-reduced, and `roundDebug` is a composition.
+
+-----
+
+I assure you I only intended my criticism in a constructive way! Probably the closest thing I've written to a Monad tutorial myself is http://chriswarbo.net/blog/2012-09-11-perhaps__perhaps__perhaps.html which is a brief introduction to Applicative Functors using Maybe as an example. It's not quite a Monad tutorial, but notice that this page only uses Writer as an Applicative Functor!
+
+Monads can choose which "action" to take next, depending on the value of a previous result, whilst Applicative Functors can't. Since all of the examples use pre-defined sequences of actions (e.g. "compose(bind(sine), bind(cube))"), the use of Monad is unnecessary.
+
+Also keep in mind that there are already many monad other tutorials around (e.g. https://wiki.haskell.org/Monad_tutorials_timeline )
+
+=====
+
+https://daveceddia.com/the-lost-art-of-typing-shit-by-hand/
+
+I agree with you about bringing stuff in from elsewhere (stackoverflow, tutorials, etc.) but I don't think writing boilerplate over and over again is particularly badass. Reducing boilerplate with macros, higher-order functions, metaprogramming, etc. seems more badass to me, and probably aids learning too.
+
+=====
+
+http://marcjuch.li/blog/2015/05/19/time-allocation-profiling-in-haskell/
+
+In case anyone else gets confused by messages like 'Perhaps you haven't installed the "p_dyn" libraries for package ‘integer-gmp-1.0.0.0’?', try removing the "-prof" argument from "--ghc-options", as per https://github.com/haskell/cabal/issues/2827
+
+=====
+
+https://lexi-lambda.github.io/blog/2016/08/11/climbing-the-infinite-ladder-of-abstraction/
+
+Your argument is valid, but only if you take "programming" to mean "solving the sorts of problems that existing companies already pay people to solve via programming". That's the bread and butter of most developer's salaries, and it runs an awful lot of our modern world, but there is still space to a) adapt programming/automation to problems which it's not currently suited to, b) discover problems we didn't know we had, and c) solve the higher-level problem of requiring a team of developers just to have yet-another-state-machine-plus-storage system. All of these require research into paradigms, abstractions, etc. In 50 years time the mundane daily grind might be based on technology from the golden age of the 2010s.
+
+=====
+
+https://intelligence.org/2016/04/21/two-new-papers-uniform/
+
+> In some sense isn't my opening the door to check also just executing a computation?
+
+Opening the door provides new information, independent of what you already knew (unless you already had exact knowledge of what was behind the door). Executing a "pure" computation (e.g. a Turing Machine) doesn't provide such independent information: there is no interaction with the outside world (i.e. no input/output of bits). Rather, the definition of the computation is an exact description of the result; it's just in an "inconvenient" form, which may require an arbitrary amount of effort to assign an exact number to.
+
+I'm not sure of the technicalities of how things "break down", but intuitively I can see how assigning a probability to such results can cause contradictions: in a sense, we already "know" the result, so assigning a probability is asserting a contradiction.
+
+For example, assuming Andrew Wiles wasn't mistaken, the statement of Fermat's Last Theorem is, in a sense, equivalent to the statement "true". If, prior to the proof's discovery, we had assigned a probability of, say, 0.7 to Fermat's Last Theorem (or, equivalently, that a Turing Machine searching for its proof would halt), we would in effect be assigning that probability to the statement "true", which already has the probability 1. Of course, without the proof, we wouldn't know whether we're assigning probabilities 1 and 0.7 to "true", or 0 and 0.7 to "false", but both lead to contradictions. For example, by reflexivity, P("true") = P("true"); substituting in our assignments, 0.7 = 1; we can use arithmetic to prove not(0.7 = 1), an hence have a contradiction.
+
+=====
+
+http://third-bit.com/2016/03/19/continuous-installation-checking.html
+
+There are many better ways to do this.
+
+Firstly, there's no need to do NLP on your own docs. You could either a) mark up your installation instructions such that a test can extract the steps, perform them, and check that it results in a working system or b) include an installation script which is run by a test, and is used to automatically generate the installation instructions for your documentation.
+
+Of course, if you follow path (b) then your installation instructions might as well be "run the install script". To make it as portable as possible, you might want to have the installation take place in a VM or container of some sort, or use a packaging system specifically designed for cross-platform reproducible builds, like Nix or Guix.
+
+-----
+
+In a similar vein, Python's "doctest" ( https://docs.python.org/2/l... ) will look through documentation for examples of Python code and its supposed output, it will run the Python snippet and check whether the output matches what's in the docs. You could use this directly, by having users install by typing commands into a Python REPL instead of a shell prompt. Alternatively, you could build a similar tool using, say, expect ( http://linux.die.net/man/1/expect ).
+
+=====
+
+http://cms.nautil.us/issue/33/attraction/curiosity-depends-on-what-you-already-know
+
+There are lots more papers and links on the robotics/computing aspects of curiosity at http://people.idsia.ch/~juergen/interest.html
+
+=====
+
+http://ewanvalentine.io/why-go-solves-so-many-problems-for-web-developers/
+
+I agree with others that PHP is a low bar to beat ;) If you're doing serious data crunching, maybe behind a REST API or message queue, then Go looks like a great way to go. For more mundane stuff, e.g. SQL-backed CRUD Web apps, I don't think performance or concurrency are as much of an issue (unless you've got *serious* bloat). Hardware time is usually cheaper than developer time, and nothing should be optimised unless it's been profiled first ;)
+
+Although it paid my wages for several years, I'd generally avoid using PHP unless some "killer app/library" that I need is only available in it (which is very unlikely). Whilst dynamic languages are fine for prototyping and exploring the design space, I've come to the opinion that Web development without strong, static types is a security problem waiting to happen. In particular, HTML, SQL, user input, URLs, shell commands, etc. should all be different types; that way, the type system can enforce correct escaping, and it becomes impossible to (for example) append user input to HTML or SQL. Far too many languages and frameworks are "stringly typed", i.e. they use types everywhere, but they're all "string", which doesn't really prevent many problems!
+
+-----
+
+FYI your fancy JS breaks scrolling for me; up/down buttons didn't work, so I had to use my mouse :( (I'm using Conkeror)
+
+=====
+
+https://pykello.github.io/haskell-skyline/
+
+Nice work! Just a couple of observations which might prettify the code a little:
+
+In case you didn't realise, you can define functions in "where" clauses just like you can at the top-level, i.e. code like "where add_building = \xs (x1, h, x2) -> ...." can be written "where add_building xs (x1, h, x2) = ...", which is more consistent with your top-level "skyline bs = ..."
+
+Also, sometimes a complicated looking function like "merge" doesn't seem so bad if the pieces are more aligned, e.g. if an operator like ":" occurs on two lines, I'll usually add some space to line them up. I've had a go here:
+
+```
+merge (        [],    _) (        ys,    _) = ys
+merge (        xs,    _) (        [],    _) = xs
+merge ((x, xh):xs, xh_p) ((y, yh):ys, yh_p)
+  |             x >  y           =                    merge ((y, yh):ys, yh_p) ((x, xh):xs, xh_p)
+  |             x == y           = (x, max xh yh  ) : merge (        xs,   xh) (        ys,   yh)
+  | max xh_p yh_p /= max xh yh_p = (x, max xh yh_p) : merge (        xs,   xh) ((y, yh):ys, yh_p)
+  |                    otherwise =                    merge (        xs,   xh) ((y, yh):ys, yh_p)
+```
+
+I think this makes the correspondence between each case easier to see. This often can't be done at the start of a line though, as it can mess up Haskell's indentation-based parsing.
+
+=====
+
+https://engineering.wework.com/why-wework-com-uses-a-static-generator-and-why-you-should-too-86268921a4af
+
+-----
+
+NOTE: They don't seem to any more! Plus their Disqus comments are using a
+localhost address, so they don't work for anyone other than their own server :P
+
+-----
+
+"You will need to rebuild the entire site and generate new HTML. The good
+news is, for a site that doesn’t have a ton of content, this static
+site generation is actually really fast. Like in the tens of seconds
+fast. A couple of minutes if you consider the entire proecss of
+minifying assets, building and deploying your site."
+
+I generate and deploy my static site with GNU make, so the only files which are rebuilt are those which need it. Is there any reason to rebuild the whole thing every time (other than as a bug-fixing sanity check, akin to "turning it off and on again")?
+
+Of course, tens of seconds isn't bad; in my case, it can take a while to render some pages as their content is procedurally generated by some quite intensive algorithms.
+
+-----
+
+Surely a "featured content" section depends on the "content" (e.g. everything in /posts, excluding index.html itself)? It's no different than e.g. having an index of all posts, which is regenerated whenever /posts is changed.
+
+I agree that *exact* dependencies are hard, but conservative over-estimates can be made pretty easily.
+
+-----
+
+That sounds far too complicated and fragile. If any article in "posts/" has the potential to be "featured", then "posts/index" depends on everything in "posts/". Likewise, if anything in "posts/" might be tagged with "#computer-science", then "/comp-sci" depends on everything in "posts/", and ditto for /security.
+
+I don't understand how cyclic graphs have anything to do with this; if your page dependencies contain a cycle then there's no way to generate the site statically at all.
+
+-----
+
+That quote is misleading, I said "depends on everything in "/posts"". It's fine for some pages to depend on all source files (or all files under some directory). This naturally happens for archive/listings pages, RSS feeds, sitemaps, etc.
+
+This is still much better than regenerating the whole site, because such files are typically few in number (e.g. one for each "section" of a site) and quick to create (show a list of links, for example).
+
+This allows the *majority* of files, e.g. *particular* posts, to be left alone. These may also be the most intensive to produce, e.g. if their content is programatically generated in some expensive way.
+
+As for your example, it appears to be less about circular dependencies and more about confusion between sources and build products. Circular dependencies would mean there is no source, e.g. "given /a, I could build /b; given /b I could build /a". Since /a and /b can be built, they are build products rather than sources, and hence such a site cannot be built from source, regardless of whether there is a database involved at any point. Such sites would have a status analogous to binary executables after their source has been lost: usable, but practically unmaintainable.
+
+The reason I say your example sounds confused between sources and build products is that you talk about "the content from" /a and /b, which doesn't mean that /a and /b are mutually dependent or circular in any way. For example, if /a includes sections A and B, /b includes C and D, and there are dependencies A -> C and D -> B, then there are no dependencies betwee /a and /b and cycles: we build A and D, then B and C, then /a and /b. Whether these sections are stored in a DB, or files on disk, etc. doesn't make any difference.
+
+=====
+
+https://joearms.github.io/published/2015-03-12-The_web_of_names.html
+
+I agree with other commenters that UUIDs are open to abuse (copying known UUIDs into malicious content) and neglect (the need to manually maintain them).
+
+Some other ideas spring to mind, which may or may not be related:
+
+- Regarding mutable content: The Darcs version control system seems related. It treats patches (diffs) as first-class entities, and defines an algebra for composing them ( http://darcs.net/Theory ).
+
+- Regarding discoverability: VPRI have explored this sort of problem ( http://vpri.org/html/writin... ), eg. see "Call by Meaning". Alan Kay has discussed at length the "How to communicate with aliens?" problem; ie. having clients explore a server's capabilities, rather than hard-coding explicit APIs.
+
+-----
+
+> I really wanted to tag all paragraphs in the Internet with a SHA1 - name them and we can talk about them :-)
+
+We should really be able to address DOM elements by appending to URLs: http://www.example.com/path...{id="foo"}/p
+
+Of course, this is very related to Project Xanadu ;)
+
+=====
+
+http://journal.stuffwithstuff.com/2015/02/01/what-color-is-your-function
+
+I thought it was talking about methods and functions, ie. functions can be called anywhere whereas methods require an associated object for "this".
+
+I think the relevance to Haskell is that control flow follows data flow: there's no sync/async distinction in Haskell because functions are only called when "forced". It's true that IO actions may care about sync/async, but that only matters in a tiny fraction of the code (if you're writing everything in IO you're doing it wrong)
+
+=====
+
+http://users.softlab.ece.ntua.gr/~ttsiod/asn1.html
+
+Just thought I'd point out the "Every Bit Counts" technique, which makes it easy to build optimal encoders/decoders out of composable pieces: https://dl.acm.org/citation.cfm?id=1863548
+
+=====
+
+http://josdejong.com/blog/2015/01/06/code-reuse/
+
+Yes it does. The point is not to treat every abstraction(/class) as a module.
+
+For example, I've worked with people who refuse to instantiate *any* class from inside another class (unless it's a "provider" class); they inject *everything*. Then, in their tests, they mock *all* of those dependencies, which is a huge amount of work for little benefit. The idea is that the Invoice class can be tested in isolation from the Transaction class, and so on; but what's the point? The application only has one implementation of Transaction, so that's clearly the only one which matters. Teasing apart every class like this actually *destroys* abstraction, since it forces us to care about the implementation details (the other classes used) rather than just the abstract interface.
+
+We end up separating classes using dependency injection in order to cope with alternative implementations; then we create alternative, mock implementations during tests, to satisfy those dependencies. The whole justification uses circular logic: it's self-consistent, but pointlessly complicated.
+
+The problem is using the existence of dependencies as a justification for writing mocks. Why bother? It's perfectly legitimate to inject real (non-mock) objects during tests. Not only does this reduce the amount of work required (no need to write mocks), it also regains some of our abstraction (we can pass in real objects without knowing what they implement or how), it also makes the tests more accurate (since we're testing real code, in the way it will be used during production).
+
+By removing the mocks, we've removed some of the alternative implementations. When there's only one implementation left, then there's no need for using dependency injection at all. YAGNI, so just hard-code it.
+
+So why use mocks at all? Well, that's actually the wrong question. Mocks are an approach to solving a problem; they're not a goal in and of themselves. Instead, we should write our code in the most appropriate way for the task at hand.
+
+Sometimes it's not worth running a particular piece of code during tests; for example, if it requires a MySQL database to be set up. To work around this, we can hide that code behind an interface, then provide a simpler alternative implementation which *is* good for testing with (eg. by keeping its data in memory).
+
+Such alternative implementations are, of course, mocks; but that's not *why* we write them. We write them to solve real problems, just like any other code. They are grounded in reality and practicality, not philosophy and principle. "We should use mocks" isn't a problem, it's a solution looking for one, which is why many codebases get into that circular argument.
+
+Of course, if we do happen to have multiple database implementations, regardless of whether some of them could be considered mocks or not, then we should use dependency injection to avoid hard-coding one or the other.
+
+-----
+
+I think much of the problem is with building abstract models. It's really easy to write generic code to deal with abstract Mathematical models, like lists, binary trees, mappings, functions, etc. since we can implement them exactly.
+
+When we try to *represent* some real-world system using a software model, we should expect our code to be less reusable, since our interpretation of the domain will often differ from other people's. Our code will inevitably miss some details that other applications would need, which leads to bloat and complexity as those features are added. Our code may even approach the domain from a perspective that's inappropriate for some other application, eg. our email server might use a chronological lists of incoming messages, but that's inappropriate for a tool which maps communication networks (ie. who talks to who, which would need to be parsed from the headers of each email). This can lead to abstractions-on-abstractions.
+
+You mentioned functional programming as a good way to reduce coupling and improve reusability; I think one way it does this is by avoiding the coupling of behaviour to data (ie. using objects). Instead, we parse all of our inputs into some kind of generic datastructure, like a list or a tree, we write all of our logic based on this structure, then we generate our output from these structures. The input and output sides are often single-purpose, but the middle part can end up being quite reusable, since it doesn't matter what the data *means*. For example, we might write an email-header-processing function, which turns out to be "apply a function to the first element of a list"; that's very generic, and reusable by all kinds of non-email code.
+
+-----
+
+1. I would say a stubbed-out class serves just the same purpose as an interface in this case. If we're writing a class A using TDD, and its tests need some functionality from an unwritten class B, then there's nothing wrong with adding code to B in order to make A's test pass. It's no different than writing mock code in A's tests, except we don't have to implement it twice.
+
+2. You've described the approach (which I was fully aware of, BTW), but not made any argument about why makes tests more or less realistic/accurate. The correctness of isolated components only matters when playing the blame game; what *really* matters is the correctness of the application.
+
+Every time we add an abstraction layer, there's the potential to introduce bugs; caused by subtle misunderstandings or assumptions about what we're abstracting, and the empirical more code == more bugs rule. This is why we have integration testing, but no amount of testing can eliminate all bugs, so it's best to give them as few places to hide as possible. That's why I claimed that testing separately reduces accuracy.
+
+3. True, but those are all implementation details. If I'm testing an Invoice class which uses an Order class, I shouldn't have to care *how* that Order is being used, as long as the Invoice API gives me the correct results. This is an example of mocks destroying abstraction, from point 5.
+
+The only time I care whether particular methods are called, with what arguments, in what order, etc. are when those calls have external side-effects (eg. manipulating files). That is exactly when mocks *should* be used anyway!
+
+4. The thing you're arguing against is called YAGNI ("You Aren't Gonna Need It"). This has been debated many times in thorough detail (eg. at http://c2.com/xp/YouArentGo... ), so I won't say much here.
+
+What I will say is that, even if you think you have the time to make all these interfaces, and even if you think you've got the skills to avoid introducing errors, and even if you think you've got the genius to comprehend the added complexity, the point still remains that you're writing code for which the requirements haven't been specified yet (if they ever are). What makes you think the interfaces you come up with *now* are going to be useful when the architect/manager/client/etc. *does* request such changes. If you think you can predict those requirements now, why not implement those features now (since time, complexity, bugs, etc. are apparently non-issues)?
+
+5. Extracting an interface from a class *improves* abstraction. It's extracting internal objects into injectable dependencies that destroys abstraction.
+
+If class A uses class B internally, there's no problem hiding B behind an interface, eg. changing `B helper = new B();` to `HelperInterface helper = new B();`. The abstraction still holds, because this implementation detail has only changed *inside* A's methods. Nobody using A has to care (ie. it's abstracted).
+
+However, if we stop instantiating `helper` inside A and instead turn it into an injectable dependency, eg. via a constructor argument, then we've leaked an implementation detail to everyone who was instantiating A. If we inject mocks during tests then we've made matters even worse, since our tests of A will end up defining a whole bunch of functionality found in B.
+
+Again, this cost is usually worth it when we want multiple implementations, like a mock database or filesystem. It's a ridiculous waste of time to enforce it between every class though.
+
+Also, as a minor aside, such a policy also makes it more difficult to write code in small, independent pieces, since it increases the psychological barrier of making new classes. When a developer spots some code smell, like a class having too many responsibilities, they *should* split it up into a few smaller, well-defined classes with a single responsibility each.
+
+However, that's in a perfect world. If the developer knows that splitting up the methods will also require abstracting away all of their interactions and mocking all of those abstractions, they're less likely to do it.
+
+Hence the policy is increasing the chance that classes are larger, more complex and more ambiguous than necessary.
+
+-----
+
+I'm skeptical of the "fail for exactly one reason" idea. Of course, I appreciate that it's nice to have, just like having everything decoupled from everything else would be nice to have; but likewise, I worry about the cost involved, and the fact we don't live in a perfect world where we understand how everything interacts, and where all those interactions are tested.
+
+I would much rather have a bug cause a whole bunch of "unrelated" tests to fail, for hard-to-figure-out reasons, than have none of the test fail.
+
+=====
+
+http://geekdevs.com/2012/03/solved-the-git-protocol-is-read-only-when-doing-git-push-on-gitorious/
+
+Worked like a charm. My repo addresses aren't "~user/project/repo" though, they're just "project/repo", eg. "warbo-dotfiles/warbo-dotfiles"
+
+=====
+
+http://jozefg.bitbucket.org/posts/2014-07-30-many-shades-of-halting.html
+
+Termination-checking is an alien concept to many programmers, but conservative workarounds for the halting problem aren't. Whenever someone tells me my conservative approach is "impossible due to the halting problem", I ask them how Java compilers can possibly check type annotations.
+
+By Rice's Theorem, checking "int x = foo();" is undecidable for arbitrary methods "foo". For example, foo might branch on the result of an arbitrary program, returning an int in one branch and a bool in the other. Checking which branch will be taken requires us to solve the halting problem, therefore compiling Java is impossible.
+
+Of course, the workaround here is obvious. Java doesn't allow calling arbitrary methods; only those which are known to return the correct type (if at all) are allowed. We know a method's return type by only allowing return statements with known types. We know the type of return statements by only allowing expressions with known types, and so on recursively until we reach primitives which have their associated types hard-coded.
+
+=====
+
+https://blog.abevoelker.com/sick-of-ruby-dynamic-typing-side-effects-object-oriented-programming/
+
+If it's simpler with a for or while loop, use a for or while loop ;) https://web.archive.org/web/20080820160146/http://www.xoltar.org/2003/sep/09/haskellLoops.html
+
+-----
+
+Ah, I misunderstood. I thought you meant "I end up writing so many combinators compared to just using for/while loops", in which case my link makes perfect sense. For the problem of being overwhelmed by combinators, I agree I'm just adding to the problem!
+I treat that mostly as a matter of personal style. As for boxing/unboxing, I've only encountered that with String/Text/ByteString (which is admittedly a mess when trying to combine 2 libraries which made different choices!) and speed-conscious stuff like Repa.
+
+-----
+
+That's a straw man, nobody's calling static typing a "savior". I would also argue that choice of language is more important than you think. Of course, it's not important when the languages are carbon copies of each other, like choosing between Perl/PHP/Python/Ruby/Javascript or between Java/C#.
+
+It *is* important when languages are wildly different, eg. choosing between Python/Prolog, between Java/Forth or between C/Haskell. Shittiness usually creeps in due to laziness (no pun intended); therefore we should look for a language where the approach we want is the path of least resistance.
+
+In unityped languages, we must specifically go out of our way to write tests, or split code into small cooperating functions(/methods), or even to wrap it in a functions at all! In a strongly typed language, the path of least resistance is to follow the types. Adding a pile of flags to a huge uber-function can be more difficult than writing a fresh function, separate from the others.
+
+Also, strong types make incremental safety possible. In unsafe languages like PHP, there's a tendency for safety to degenerate; the more features gets added, the less predictable everything becomes, the less safe everything becomes and therefore the less incentive there is to make our new feature safe. In a strongly typed language, our code is much more modular; we can refactor small pieces to be safer, knowing that they won't be interfered with by the outside world. We can ratchet up the safety, rather than degenerating into an unsafe tangle, praying that we have enough tests to catch the problems we're inevitably going to cause.
+
+-----
+
+As a subjective point, I think your car analogy of Haskell being a tractor an Ruby being a Porsche is plain wrong. How about Ruby is a quadbike; it will take you, slowly, anywhere on or off road, until you crash and die. Haskell is like a maglev train; it's a fast, smooth, reliable ride. You have to lay the track first, but at least you can see exactly where you're going to end up.
+
+PS: A test suite can have 100% coverage without containing any assertions.
+
+-----
+
+> the main thing Perl, PHP, Python, Ruby, and Javascript have in common is that they are dynamically typed.
+
+I was referring to preferred programming styles and paths of least resistance.
+Perl, PHP, Python, Ruby and JS all have OO features which their respective communities consider best-practice, but their path of least resistance is one big file of top-level procedural code. In other words, all devs must go out of their way to avoid the default shittiness. Admittedly JS has a few nifty Scheme-like functional libraries, but still has a large OO-focused community.
+
+> You honestly can't distinguish between anything besides dynamic vs static typing?
+
+I wasn't on about static vs dynamic. I was saying that it's a good idea to make best-practices, whatever they are chosen to be, as easy as possible, and making unsafe practices as awkward as possible.
+
+> Static typing automatically results in safety?
+
+No. Where did I say that?
+
+> Tell that to any C/C++ programmer
+
+Since this article compares Ruby to Haskell, I was specifically referring to "strong types" a la Haskell. Types a la C/C++ are IMHO more about getting the machine to align things correctly in memory rather than ensuring semantically-correct programs (C++ classes are used for semantic safety, but classes are tags not types).
+
+> Unsafe behavior is almost always the result of things like mismanaged
+scope, or poorly documented undefined behavior. Static typing doesn't
+solve either of those problems.
+
+I didn't claim that it does. Note that the article is specifically talking about Haskell, not C/C++. Haskell is lexically-scoped, garbage-collected and has immutable values, so "scope errors" are mostly limited to space leaks.
+
+Haskell has a formal specification, so there is no undefined behaviour; there is an "undefined" value which is of course unsafe, but that's because it's essentially an escape hatch for the type system, equivalent to a proof of False and hence allowing anything via "ex falso quodlibet". Interestingly, the behaviour of a pure function cannot depend on "undefined": if "undefined" is ever forced, evaluation will stop and can only be caught in a side-effecting IO function. This makes it a much safer escape-hatch than "NULL" for example.
+
+> Static typed languages magically don't require a large amount of tests?
+
+Really? Where did you hear that? Certainly not from me...
+
+> We don't write tests to check that the function returns an int. We write
+tests to check that the function has correct behavior.
+
+This is another obvious straw man. "returns an int" is not an interesting property, and it would be immediately obvious if it weren't true, so nobody tests it. Some more interesting properties which types can guarantee are avoiding buffer overflows ( https://www.schoolofhaskell.com/user/konn/prove-your-haskell-for-great-safety/dependent-types-in-haskell ) and escaping user input (SQL injection, cross-site scripting, etc.) ( http://blog.moertel.com/posts/2006-10-18-a-type-based-solution-to-the-strings-problem.html ).
+
+> You have to test correct behavior regardless of types
+
+Yes, but there's little value in testing a behaviour which is guaranteed by the types. For example, we can use types to guarantee the "big-O" runtime of our functions ( https://twanvl.nl/blog/agda/sorting ), while using tests to measure their wall-clock runtime.
+
+> You don't have to write more tests for dynamic type systems.
+
+This is completely unquantifiable, since you don't "have to" write any tests, or write any types for that matter (you can either infer them all or use a unityped language). However, for a given level of confidence, a static implementation will require *at most* the same number of tests. The proof is simple:
+
+1) Dynamic types are a sub-set of static types ( https://existentialtype.wordpress.com/2011/03/19/dynamic-languages-are-static-languages ) so in a worst-case scenario we can just use the same tests for both.
+
+2) Since types offer machine-checked proofs of correct behaviour for all inputs, they give us much more confidence than tests, so a few well-placed types can allow us to throw away many tests while maintaining the same confidence level.
+
+> Your compiler will tell you when you made a typo and called a function
+with the wrong signature. It won't tell you that your algorithm has a
+subtle bug in it.
+
+Of course it can, if you tell it. That's the whole point! For example, if you're writing a crypto system and want to avoid leaking information via side-channels, just write some types to make sure you don't ( http://www.crash-safe.org/node/29 ).
+
+> Testing the behavior of a unit will also test whether or not you made stupid typos.
+
+If typos are the only mistakes you ever make, then you're a much better programmer than I! Tests can only guarantee behaviour for a few possible inputs, types guarantee behavious for all possible inputs. This actually makes testing a particularly bad fit for dynamically typed languages: in a static language, we can write tests to exhaustively check any functions with small input domains, like booleans; but in dynamic languages, all domains are infinite (since we can call any function with any argument), so tests will never even scratch the surface of what a function may do.
+
+> You think static typing automatically makes you write more modular code? Why on earth would you even say that!
+
+Let's say we have some existing code which does some tricky traversal of a large datastructure to count the number of Foo elements. We are asked to write some code which makes a list of any Bar elements found in those same datastructures. Let's assume we're really lazy and follow the path of least resistance.
+
+In a dynamic language, we can see that the traversal code already exists, so we just add a flag to the function, defaulting to False, which tells it to return a list of Bars instead of counting the Foos. All existing code continues to work, since we're the only ones calling this function with the flag set to True.
+
+Now, in a strongly typed language we can't do that. If we try to return a list of Bars from a function which is declared as returning an Int, we'll get a type error. We can change the type to be "Either Int (List Bar)", but then we get type errors at every existing call site. We can't be bothered to change all of those, since we're lazy, so instead we either copy/paste the existing definition (which isn't great, but it avoids massive God functions); or, for about the same level of effort, we rip the Foo-counting out of the traversal and have our Foo-counter and Bar-finder functions just call the traversal function with different callbacks.
+
+-----
+
+It always amuses me when Hindley-Milner types are referred to as "modern" and C-style types are "decades behind". According to Wikipedia, C debuted in 1972[1] and ML in 1973[2] :)
+
+Of course the capabilities of type systems have evolved since ML, and more importantly we've discovered more ways of leveraging them; eg. monads only started to gain traction in 1991[3]
+
+[1] https://en.wikipedia.org/wiki/C_language
+[2] https://en.wikipedia.org/wiki/ML_(programming_language)
+[3] https://en.wikipedia.org/wiki/Monad_(functional_programming)
+
+-----
+
+If a caveman hadn't thought so much about his sticks, we would not have painters today.
+
+-----
+
+The main benefit of lazy evaluation is that control flow follows data flow. In many languages there are operations which "short-circuit" like "false && foo" and "true || bar", but those languages don't allow our custom functions to short-circuit.
+
+We can do it 'manually', by wrapping each argument in a thunk and forcing the one we want, but that's essentially what lazy evaluation does automatically.
+
+The problems appear whenever we want to predict when a resource will be freed. There are solutions to this (eg. iteratees, pipes, conduits, etc.) but they're a bit clunky IMHO. The most elegant way I've seen is to evaluate strictly by default, but allow the types to specify when something should be lazy, like Idris does. This can go hand-in-hand with separate codata/coinduction/corecursion schemes, like in Coq.
+
+PS: The Haskell spec explicitly state's that it's "non-strict", so "const 'hello' undefined" is guaranteed to reduce to 'hello', for example. GHC implement "call-by-need" (AKA "lazy") evaluation, which is one kind of non-strict evaluation, but there may be others.
+
+=====
+
+http://jakevdp.github.io/blog/2014/05/09/why-python-is-slow/
+
+I think many of the "reasons" you state are actually *symptoms* of Python's slowness.
+
+1) The reason "c = a + b" is slow in Python is not completely down to dynamic typing.
+
+1a) The "1" and "2" objects are constants (modulo the hacks you mention), so there's no need to create new Python objects for "a" and "b" and "c" like you describe; they can just be pointers to pre-existing global constants. You mention that this is the case when "digging into integers".
+
+1b) There's actually no need to have such constant objects at all! We can use tagged pointers to store the values of a, b and c as raw ints with a bitmask. Some Javascript implementations do this, eg. http://nikic.github.io/2012/02/02/Pointer-magic-for-efficient-dynamic-value-representations.html
+
+1c) Looking up the definition of "+" based on the type isn't actually "dynamic typing", it's "dynamic dispatch" (combined with operator overloading). Dynamically typed languages may not have dynamic dispatch (eg. Scheme) and statically typed languages may have it (eg. C++ vtables). In other words, Python's "a + b" just-so-happens to be sugar for "a.__add__(b)", which clearly depends on "a". If we used a function call, like "my_add(a, b)", there would be no dynamic dispatch (or operator overloading, for that matter).
+
+2) There's no need for Python to be interpreted, other than historical accident. For example Ian Piumarta's "Id" object model for C is at least as dynamic as Python's http://piumarta.com/software/id-objmodel
+
+3) Python's indirection is certainly costly, but it's not inevitable. The tagged pointers I mentioned in (1b) would make Python lists much more like Numpy arrays. Objects could be represented in a more cache-efficient way too. For reference, Id objects are a pointer followed by a blob of data. If the contents are encapsulated, there's no reason this blob couldn't be raw, C-like data.
+
+In my opinion, the above are merely implementation details, caused by some more fundamental design decisions:
+
+1) Backwards compatibility. Ironically, speeding up Python with C extensions means that Python can't be sped up much without breaking those extensions.
+
+2) Mutability. This clearly goes against the spirit of the language, but if its data were immutable then Python could be sped up massively by unboxing values and re-using pointers. As it stands, anything can change at any moment, so we *must* perform lookups explicitly every time, just in case someone's eg. changed a class definition since we last checked.
+
+3) Massive scopes. By definition we can only modify what's in scope, so we know that whatever's not in scope will be unchanged and hence doesn't need looking up again. However, Python allows us to access pretty much anything from pretty much anywhere, so this knowledge isn't much use for optimisation.
+
+-----
+
+"Compiled" and "interpreted" aren't mutually exclusive; "compiled to machine code" and "interpreted" are.
+
+For example, compiling Java to machine code (eg. with GCJ) means it's not interpreted. Compiling Java to bytecode for a JVM means it's interpreted.
+
+Likewise, compiling Python to CPython bytecode means it's interpreted, whilst compiling it to machine code via Shedskin means its not interpreted (although Shedskin is a very poor implementation of Python's semantics).
+
+-----
+
+From a Python point of view, that sounds reasonable (since Python is dynamically typed after all). However, you're comparing Python to C, so it *absolutely* makes a difference, because C cares so much about integers!
+
+For example, we might use MyClass instead of integers, or even a whole bunch of heterogenous classes, and call their __contains__ methods instead of their __add__ method (ie. "+"). Will NumPy help us now? Not really. Will CPython's pointer indirection and dynamic dispatch be more overhead than doing it in C? Not by much, since we'd need to implement those manually in our C in order to support heterogeneous types.
+
+Tagging pointers can bring Python closer to C by implementing C-like workloads (eg. arithmetic on ints and floats) in a C-like way. It won't (dramatically) speed up anything non-C-like, but then again neither will C.
+
+-----
+
+Your bench.py isn't very definitive, since it's clear that xrange will be faster than range. On my laptop this simple change took your original bench.py from 11 seconds down to 7.1 seconds. The speedup on your edited version is more modest, down from 9.2 seconds to 8.7 seconds.
+
+=====
+
+http://codeofrob.com/entries/you-have-ruined-javascript.html
+
+The "horrible feel of J2EE" is, IMHO, mostly due to Java's lack of first-class classes and first-class functions. This is terribly stifling, since a) it forces everything to be first-order and b) it forces us to reify all of the intermediate steps.
+
+This is bad, but it's a consequence of the language. Seeing it infesting languages like JS is worse, since these languages allow higher-order programming, and don't even have classes to worry about (if you do decide to implement your own class-like dynamic dispatch mechanism (why??) then at least the resulting functions *will* be first-class citizens).
+
+Not only are these abstractions inappropriate for higher-order languages like JS, they're also completely unnecessary. Just looking at their implementations shows you that it's all just functions! Why treat them as anything else? Questions like "Should I use a Provider or a Factory?", etc. can be rephrased as "What should my function do?". That, right there, is the right question to be asking. The only things that matter are that /the answer will be different for different problems/ and /you need to actually implement the function/, not just hide the real problem under layers of abstractions.
+
+-----
+
+I think the point is that "MVC framework" is not the answer to every question. They may form parts of some solutions, but they're just a way of organising the bits which actually matter. *Solve the damned problem* before you worrying about interfaces.
+
+As an analogy, we may lament the growing influence of Big Science projects and how amateur scientific research in a garage seems to be a less popular hobby. In this analogy, your reply would translate to "So what, you're going to roll your own hobbyist hadron collider?"
+
+=====
+
+http://motherboard.vice.com/read/the-gleeful-buffoons-who-keep-the-gates-of-hell-propped-open
+
+Unfortunately, to many people 'a 95% chance of catastrophy' means 'it will all turn out OK in the end', thanks to a lifetime of watching action movies. As Terry Pratchett wrote: "Scientists have calculated that the chances of something so patently absurd actually existing are millions to one. But magicians have calculated that million-to-one chances crop up nine times out of ten."
+
+=====
+
+https://www.fpcomplete.com/blog/2014/03/monte-carlo-haskell
+
+If a Python list comprehension is taking up too much memory, we can often replace it with a generator (replace "[...]" with "(...)"). I tried this in the first snippet, but NumPy didn't like it (apparently generators are "iterable", but not "array-like"). Wrapping the generator in numpy.fromiter made it run, but gave very little benefit.
+
+I then tried replacing the imperative version with a generator and a reduce, which managed to reduce the time and memory usage considerably. Here's my code:
+
+(n, d) = reduce(
+lambda (num, denom), (x, y): (num + (x*x + y*y < 1), denom + 1),
+(((random.random(), random.random()) for x in xrange(10000000))))
+print (n / d) * 4
+
+This gives plausible results (eg. 3.14230378908) with a 'maximum resident set size' of 14672kB in 5.07s (as reported by time -v). For reference, the list comprehension snippet uses 258948kB in 20.84s and the imperative snippet uses 14656kB in 39.29s.
+
+=====
+
+https://intelligence.org/2014/01/10/kathleen-fisher-on-high-assurance-systems/
+
+The goal of composition mentioned at the end would be a game-changer IMHO. One reason that verified software requires more effort than unverified is that it's very un-modular. It's perfectly possible to write verified code in a modular way, but those modules will be useless in any other project, since the properties each project needs will be different. For example, I've written basic list-manipulation functions over and over again, but for slightly different lists (eg. "lists of numbers where each is larger than the last", "lists of solutions to the problems in this other list", etc.). If I didn't care about verification, I'd just use plain lists for all of them and not have to write this stuff myself.
+
+One approach to solving this is McBride's "ornaments" http://arxiv.org/abs/1201.4801 which allows functions on plain data to be 'lifted' to more precise data, where we only need to specify the differences. A much more ambitious approach is to use Homotopy Type Theory, where we just need to show an isomorphism between our data and some plain data, then the theory will lift every function for us automatically https://homotopytypetheory.org/2011/07/27/canonicity-for-2-dimensional-type-theory/
+
+=====
+
+https://jtreminio.com/2013/03/unit-testing-tutorial-part-5-mock-methods-and-overriding-constructors/
+
+I know they're just examples, but please stop encouraging terrible code. Why not use "public function authorize($password)
+{
+return boolval($this->checkPassword($password)); }"? Why not "public function authorize()
+{
+return call_user_func_array([&$this, 'checkPassword'], func_get_args()); }"? Hell, why not make the checkPassword function public? If/then/else statements which only return booleans are infuriating.
+Also, I think your wording w.r.t. constructors being 'sissy' is a bit vague. Constructors have exactly one purpose: to create a complete, consistent object, such that calling any public method on the result should work. In other words, users of your class should never have to care about internal details like being "initialised". The problem with NaughtyConstructor isn't that its constructor is performing non-trivial work, but that the procedure it's using to obtain its HTML has potentially-undesirable global side-effects, with such tight coupling that the class itself becomes potentially-undesirable. If the constructor took its HTML-obtaining procedure as an argument (ie. dependency injection, which could easily default to 'file_get_contents') then the problem would go away.
+
+-----
+
+Yes I did. I wasn't complaining about the parts of the examples that you were improving, but about the surrounding code. Especially when using phrases like "The problem with this class...", implying that everything else is fine.
+
+Tutorials and examples are meant to be educational, so shouldn't teach bad habits like "if (foo) return true; else return false".
+
+=====
+
+http://intelligence.org/2014/02/17/new-ebook-smarter-than-us/
+
+Hi, FYI the link at the end is relative ("/smarter-than-us") in your RSS feed, so I get sent to "file:///smarter-than-us" when I try to follow it. Obviously visiting the link on this page is fine :)
+
+=====
+
+http://roscidus.com/blog/blog/2014/02/13/ocaml-what-you-gain/
+
+A note on tail recursion; IMHO functions which call themselves aren't the big win (although I do prefer them to loops http://lambda-the-ultimate.org/node/4683#comment-74319 ). The nice part is the ability to keep calling functions without fear of stack overflows (as long as they're tail calls, of course!), without having to worry whether they'll loop back or not.
+
+When we're worried about stack space, we're forced to artificially chunk our computation into relatively-shallow operations, then chain these chunks back together using some kind of 'main loop'. With tail call optimisation, we can structure our code more naturally, for example with functions for each sub-problem.
+
+If it turns out that the "foo" function is always followed by the "bar" function, then we can go ahead and put a tail call to bar inside foo. If "bar" is always followed by "baz" then we can put a tail-call to baz inside bar. If "baz" is always followed by "foo" then we can put a tail-call to foo inside baz. We've just given our program its 'main loop', but it's now distributed throughout the program, in a way which we can reason about *locally*: "Hmm, surely we should be calling "bar" at this point? Oh, if I grep the codebase it turns out that, nestled in this pile of mutually-unrelated code, 'main.ml' just-so-happens to be calling "bar" like I thought".
+
+By allowing our program to loop around the natural path of the problem/algorithm, rather than shuttling back and forth to an arbitrary 'central station', we completely avoid the need for the complex switching network that any central station would inevitably involve.
+
+=====
+
+http://johnkurkowski.com/posts/dont-learn-to-code-learn-to-program-but-come-back-in-10-years/
+
+I disagree that programming should be visual or "touch-based" (I'm reminded of Eben Moglen's comment that textual representations allow us to converse with our machines, whilst GUIs reduce us to the level of cavemen as we point and grunt). I do think that computers need to know more about what our software artifacts *are*, which would allow us to switch between multiple representations, even shallow, clunky ones like GUIs. Note that this isn't the same as 'writing yet another parser/compiler/markup-language'!
+
+I do agree wholeheartedly that *solving problems* should always be the focus. I've lead a few 'learn to code' sessions, including some using EToys (which is entirely visual), but the main problem always boils down to working out *what we want to do*. If the examples aren't engaging, nobody will care enough to try.
+
+Investing in a top-of-the-line set of carpentry tools is silly if we find our passion is for electronics, and the same goes for software. Learning to make responsive, AJAX, HTML5 Web sites isn't a good use of time if your passion is natural language processing, and vice versa. Learning to 'code' will only work for those people who care about the particular skills and examples taught in the course.
+
+=====
+
+http://james-iry.blogspot.com/2009/05/brief-incomplete-and-mostly-wrong.html
+
+FORTH of mention no there is Why ?
+
+=====
+
+http://intelligence.org/2014/01/13/miri-strategy-conversation-with-steinhardt-karnofsky-and-amodei/
+
+I agree that purely statistical methods can't give us the confidence we would like in predicting as far ahead as we would like, there is also an important flaw in purely logical methods; namely that they're chaotic. Flipping a single bit can cause most theories to 'explode' (become inconsistent and allow everything).
+
+There are some interesting logics which try to address this, eg. defeasible reasoning. Personally I think it would be interesting to develop a logic with some kind of 'surprise' or 'convincingness' factor, where propositions are less convincing if we can only prove them in a long, tenuous way. If we can make many 'different' short proofs (ie. tackling the problem in a different way, rather than just adding no-ops), the proposition is more convincing. This would be less chaotic and could prevent errors from dominating the system.
+
+=====
+
+http://jlongster.com/Stop-Writing-JavaScript-Compilers--Make-Macros-Instead
+
+"let (a = b) c;" is just shorthand for "(function(a) { return c; }(b));". If you agree that "let" uses lexical scope, then you must concede that JS already has lexical scope.
+
+Besides, the difference between function scope, block scope and hoisting vs. not hoisting are just a matter of language-specific style. The essential feature of lexical scoping is that the resolution of a free variable begins in the scope where it was defined as opposed to the scope where it is evaluated; how those scopes are delimited (blocks, functions, lets, classes, namespaces, modules, etc.) doesn't matter.
+
+-----
+
+"I've got a C compiler and a Fortran compiler and a Lisp compiler on my
+system... but it's even harder to use all of them in the same program
+(much less the same source file) than your situation in Javascript."
+
+The difference is between an addon to an existing language and a standalone language. C, FORTRAN and LISP are standalone, since they aim to provide everything you may want, and an FFI if you need it.
+
+We don't care if our LISP compiles down to C (eg. Chicken Scheme), Javascript (eg. BiwaScheme), etc. Everything we want to do can be done in LISP, and we get an FFI for those awkward compatibility issues.
+
+An addon to an existing language *DOES* care what it compiles in to, since it relies on that language for *EVERYTHING*. In which case, it's rather cumbersome to implement a single feature as a whole language, which is why macros are useful.
+
+Other approaches to the same thing are aggressive use of higher-order functions (like Haskell) and redefinable syntax (like Coq).
+
+-----
+
+It also remains without what I consider to be a true Scotsman...
+
+=====
+
+https://intelligence.org/2013/12/31/7-new-technical-reports-and-a-new-paper/
+
+Great news, I look forward to reading through these papers :)
+
+=====
+
+http://blog.smartbear.com/programming/why-johnny-cant-write-multithreaded-programs/
+
+What you're arguing is that "it's not hard to do multithreading properly"; that may be true, but it's not the same as "multithreading is not hard". The difference is that when I'm investigating a bug in a sprawling, undocumented, under-tested codebase written by some less-than-stellar former employees, it doesn't help me to know that they *could have* implemented it correctly, since they invariably didn't.
+
+I think your points are all valid, but I would say they form an argument against shared mutable state in general (you specifically pick on global state, but it applies to any level of sharing, whether it's lexical closures, message queues, files, etc.). Multithreading is just an implementation detail; it's one way that people end up with shared mutable state (other examples are databases and p2p networks).
+
+-----
+
+Do you have any evidence to support this claim?
+
+Here's just one page with a bunch of refutations: https://wiki.haskell.org/Haskell_in_industry
+
+=====
+
+http://www.extremetech.com/extreme/171417-bill-gates-funds-creation-of-thin-light-impenetrable-graphene-condoms
+
+"condoms that are more desirable than today’s range of thick and sensation-free latex and polyurethane condoms"
+
+How on Earth are condoms "sensation-free"? Spreading that kind of nonsense only serves to prevent people using condoms. You should be ashamed.
+
+=====
+
+http://intelligence.org/2013/11/05/greg-morrisett-on-secure-and-reliable-systems-2/
+
+Great interview. I think 'formalizing the notion of correctness' is important for the AGI community, since it forces us to remain realistic and practical. An example is Steve Omohundro's call for more formal verification (see https://selfawaresystems.com/2012/11/28/oxford-keynote-on-autonomous-technology-and-the-greater-human-good/ ).
+
+One of the questions asked after the talk was how can we be sure a verified agent won't work around its safety mechanisms. The example was an agent having a safety mechanism which ensures it will be turned off at a particular time, ie. even if our goals and constraints are insufficient, the system won't remain out of control indefinitely. The short discussion is very vague and seemingly unsatisfying, but the reason is that the premise is vague and unsatisfying; ie. it's not formal.
+
+We cannot formally verify that an agent will turn off at a particular time, since "turn off" and "time" are not formal notions. We could formalise these somehow, for example verifying that no further steps of a program will be executed once an incoming NTP signal contains a timestamp greater than a particular value, but then there are clear workarounds (write another program to carry on after the first stops, disconnect the system from all NTP sources, etc.). Specific, formal notions like this can lead to useful discussions and improvements, but requiring rigorous proofs of vague properties is an impossible task which only leads to philosophical word games.
+
+=====
+
+http://intelligence.org/2013/10/03/proofs/
+
+It is certainly important to take the adjective "proven" with a pinch of salt. Proofs never apply to the real world, they only ever apply to abstract mathematical models which may or may not relate to the real world. However, the same can be said for any form of mental model.
+
+The nice property of formal systems is that we don't lose confidence with each step, so once we've entered the mathematical realm by choosing a model (eg. a wave model for light), we can transform it into something that's easier to study (for example, wave properties are equivalent to complex numbers, so we can study complex numbers with no further loss of accuracy).
+
+-----
+
+I agree with your main point, but disagree about proofs being 'low-level' and your particular choice of invalid abstractions. It is certainly possible to prove properties of whole systems, but the main factor is how the property relates to the system.
+
+For example, in proof assistants like Coq and Agda our models are represented as computer programs and our properties are represented as (very strong!) types. To state that a model M satisfies a property P, we declare a function which accepts M as an argument and returns a value of type P. To prove this statement we must implement the function. Now, this can be easy or difficult depending on how M relates to P. The easiest case is when P is already the type of M, in which case we refer to M as being "correct by construction" (ie. it serves as its own correctness proof). The hardest case is when M 'just so happens' to be correct, ie. the way it is constructed coincidentally satisfies our property. In this case, we must show that every possible branch of the constructor code satisfies our property, which can get very tedious very quickly.
+The reason I take issue with your examples of floats not being Reals and words not being Integers is because those are such terrible models that anybody using them as assumptions in their formal proofs is DoingItWrong. Many verified systems use Integers, but they don't implement them with machine words, they usually use a library like GMP. There are some verified systems which use floats, but they follow the IEEE754 specification rather than making such a terrible assumption.
+
+I don't know of any verified system that uses Real arithmetic, but even if there are some, they certainly wouldn't use floats as their implementation. Many verification tools are built on constructive logics, and in a constructive logic a Real number isn't a simple value like a float; it's actually a function which takes a Natural number representing the desired accuracy (eg. number of decimal places) and returns a Rational, which approximates the Real to that accuracy. This is clearly very different from a float.
+
+A good example of a dangerous assumption would be assuming infinite memory. Low-level systems will take this into account, eg. verified chips and possibly even operating system kernels, but most high-level systems are verified in some abstract language like lambda calculus, with the assumption that proofs at the source level will be maintained during compilation, but out-of-memory is a situation which doesn't exist at the source level (hence it doesn't feature in the correctness proof) but does at the machine level, even for the most faithful compilation. It's also a manifestation of the halting problem, which makes it unsolvable in general.
+
+=====
+
+http://techblog.badoo.com/blog/2013/11/01/type-checking-in-javascript/
+
+These aren't really types per-se, since types cannot affect the runtime behaviour of an application*. This is more like design-by-contract. There's a nice approach for this at https://jscategory.wordpress.com/
+
+* Particular languages may seem to violate this, but that's usually due to extra features which just-so-happen to be tied to the type system, usually for inference purposes. For example, it's more useful to model Java classes as a property of 'object' values, it's more useful to model Haskell typeclasses as dictionaries of functions, etc.
+
+=====
+
+https://worldofweirdthings.com/2013/09/21/no-we-cant-just-explore-space-with-more-robots/
+
+In my opinion, robots are definitely the best approach for space: in the short-term. We need to send robots up to build habitats and colonies, so there's something worth going to. It's unsustainable to carry absolutely everything with us wherever we go, and to make every trip a return from/to Earth.
+A remote-controlled robotic lunar colony is the next sensible step. It might be less glamorous than a Mars rover, but would be a wiser investment.
+
+=====
+
+http://worldofweirdthings.com/2013/09/18/how-not-to-lose-your-sanity-on-an-alien-planet/
+
+I agree that artificial stimuli like games and TV should be available, simply because they're incredibly cheap: the required computers will be on-board already for things like data logging and messaging (I'm not suggesting the navigation computer be used!) and everything else is EM waves which don't require rockets (although launching a few relay stations to Lagrange points would probably be a good idea).
+
+Another good stimulus would be tending plants. According to http://modernfarmer.com/2013/09/starship-salad-bar/ the presence of plants on board the ISS helped the crew's state of mind. A colony will need a sustainable source of food, and tending crops can provide a sense of purpose and normality.
+
+=====
+
+http://worldofweirdthings.com/2013/09/13/why-you-cant-marry-a-robot-or-electrogonorrhea-the-noisy-killer-revisited/
+
+"Unlike another human, robots are not looking for companionship, they were built to be companions."
+
+The same could be said about any living thing, including humans; we were built to be 'companions' (or, less euphemistically, sperm donors/baby incubators), by natural selection. From a low-level perspective we were built by our genes as vessels for reproduction; from a high-level perspective we were built by our society as replacements for our aging parents. Of course we can't equate intensions to these processes like we can for individual humans, but even the most die-hard believers in free will must admit that the psychology of sexuality and relationships is under huge evolutionary pressure.
+
+-----
+
+I think arguments about properties of AIs in general are fragile, but I completely agree for the specific case of sex bots. I think the key is that being re-programmable is a major feature for a sex bot, and the rest follows from that (asymmetric relationships, lack of identity, legal status as property, etc.).
+
+I don't think this applies uniformly to every other AI application though. For example, the relationships between human and machine crew members on a long-haul space mission would be much more sophisticated and nuanced than those between sex bots and their socially awkward owners.
+
+Especially in resource-contrained life-or-death situations like space travel, there will always be some psychology going on, so it makes sense to leverage that. Having such machines do exactly what anyone asks them would be very dangerous, so it may be better to have the machine assess its crewmates' motives, judgement skills, trustworthiness, on-going politics, etc. Once the computer starts judging your commands, it makes sense to think of it as person-like; maybe you prefer one of the AIs because it trusts you more, or it knows that it 'owes you one', etc. The feedback in mutual-trust and -understanding could turn into a legitimate form of (not necessarily sexual) relationship.
+
+=====
+
+http://intelligence.org/2013/09/06/laurent-orseau-on-agi/
+
+I think it's unfair to dismiss Automated Theorem Proving (ATP) as inefficient, relative to techniques like Levin Search. The Curry-Howard correspondence tells us that proofs and programs are the same thing, and that theorems and types are the same thing, so all of the program-generation techniques mentioned (levin search, inductive programming, genetic programming, etc.) are also proof-finding techniques, ie. ATPs.
+
+For example, at the moment I'm working on a proof-of-concept self-improving ATP using type theory (Coq) as the formal system and proof-by-reflection for self-reference. Type theory embraces the Curry-Howard correspondence, which makes programming and theorem proving literally the same thing: functions are implications and universal quantifications, tuples are conjunctions and existential quantifications, unions are disjunctions, null is the trivial truth, primitives are axioms, types are theorems and computation is derivation.
+
+Unknown values, like the time of future improvements, aren't difficult: if you don't care about their value, use a universal quantifier around your proof (ie. wrap it in a thunk); if you do care about the value, use an existential quantifier in your result (ie. return a tuple containing it). Another nice property of type theory is that it's constructive; this means we can extract programs from their existence proofs. As an example this means that we don't need to produce (new program, proof of improvement) pairs, which you guess will double the program length and hence make LS double-exponential; instead we produce a single proof that an improvement exists, then extract the program from that. Constructive proofs are generally longer than classical ones, since classical logic can invoke computationally-meaningless shortcuts like the law of the excluded middle, but I doubt it would be as bad as doubling the program length.
+
+I think this is an interesting area, since it can give us a microcosm into singularity scenarios: will improvements get harder and harder to find as the program complexity grows, or will the improvements outweigh the complexity and allow subsequent improvements to be found faster?
+
+=====
+
+http://emacsredux.com/blog/2013/08/26/search-youtube/
+
+There's a nice CLI frontend for youtube called "whitey". It's written in Python, and hooks into external video players (eg. mplayer) so there's no need to fire up a Web browser. Personally I've hooked it up to youtube-dl so I can buffer videos to disk. https://pypi.org/project/whitey/
+
+=====
+
+http://blog.trevnorris.com/2013/08/long-live-callbacks.html
+
+Not only are his functions anonymous, but so are his numbers and booleans! Here's a much-improved version:
+
+function Points(x0, y0, x1, y1) {
+this.distance = function distance() {
+var x = x1 - x0;
+var y = y1 - y0;
+var x_squared = x * x;
+var y_squared = y * y;
+var xy_square_sum = x_squared + y_squared;
+var result = Math.sqrt(xy_square_sum);
+return result;
+};
+}
+
+var iter = 1e6;
+var rand = Math.random;
+var zero = 0;
+var i_lessthan_iter = function() {
+var result = i < iter;
+return result;
+};
+
+var a_thousand = 1e3;
+for (var i = zero; i_lessthan_iter(); i++) {
+var r1 = rand();
+var r2 = rand();
+var r3 = rand();
+var r4 = rand();
+var p = new Points(r1, r2, r3, r4);
+var j_lessthan_thousand = function() {
+var result = j < a_thousand;
+return result;
+}
+for (var j = zero; j_lessthan_thousand(); j++)
+p.distance();
+}
+
+Of course, the reason why Javascript is such a terrible language is that assignment is an expression (ie. an anonymous value). This makes getting rid of anonymous functions *really* hard:
+
+// Function is anonymous
+function() {}
+
+// Name the function "f", but the assignment produces another anonymous function!
+var f;
+f = function() {};
+
+// Name the result of the assignment "f2", but that makes another anonymous function!
+var f2;
+f2 = (f = function() {});
+
+var f3, f4, f5, f6, f7, f8, f9, f10;
+f10 = (f9 = (f8 = (f7 = (f6 = (f5 = (f4 = (f3 = (f2 = (f = function() {})))))))));
+
+AAAAAAAAAAAAAAAA!
+
+Or, you know, we name things when it's appropriate, and use values (including functions) anonymously where appropriate.
+
+-----
+
+"Side note: I challenge anyone to come up with a faster prime generator in JavaScript."
+
+What do I win?
+
+var SB = require('buffer').SlowBuffer;
+
+function runner(cb, arg) {
+
+process.nextTick(function() {
+
+cb(arg);
+
+});
+
+}
+
+var iter = 2e4;
+
+var genPrimes = function(max) {
+
+var primes = [];
+
+var len = ((max / 8) >>> 0) + 1;
+
+var sieve = new SB(len).fill(0xff, 0, len);
+
+var cntr, x, j;
+
+for (cntr = 0, x = 2; x <= max; x++) {
+
+if (sieve[(x / 8) >>> 0] & (1 << (x % 8))) {
+
+primes[cntr++] = x;
+
+for (j = 2 * x; j <= max; j += x) {
+
+sieve[(j / 8) >>> 0] &= ~(1 << (j % 8));
+
+}
+
+}
+
+}
+
+return primes;
+
+};
+
+for (var i = 0; i < iter; i++) {
+
+runner(genPrimes, i);
+
+}
+
+-----
+
+I can only think of one reason why someone would write code like your first example: they're confusing themselves by pretending that Javascript has classes.
+
+The use of "new" and a capitalised initial on "Point" makes that function *look* like it might be a class, except of course for the word "function" at the start. I had a co-worker complain to me once that "Javascript's classes are really verbose", which of course is nonsense since it doesn't use classes. Anyone thinking this is a class would naturally think of it as a declaration of object methods, when actually it's imperative code being executed over and over. Personally, I never use "new"; the same could be achieved by:
+
+function mkPoint(x0, y0, x1, y1) {
+
+return {distance: function distance() {
+var x = x1 - x0;
+var y = y1 - y0;
+return Math.sqrt(x * x + y * y);
+};
+}
+
+Also, the confusing double-naming of the "distance" function: "this.distance = function distance() {...}". By using a C-style function declaration, this may confuse some people into thinking that the function will be declared once. I've had another co-worker (different job) use the phrase "populating the function table" when talking about Javascript; despite the fact that Javascript's functions are lexically scoped values. Someone who thinks that Javascript has a "function table" which gets "populated" will naturally think that functions are only declared once, when again this will be executed over and over. I also avoid C-style function declarations, since they're ugly anyway:
+
+function Points(x0, y0, x1, y1) {
+this.distance = function() {
+var x = x1 - x0;
+var y = y1 - y0;
+return Math.sqrt(x * x + y * y);
+};
+}
+
+-----
+
+"there is really no interesting difference from classes (like they are in e.g. ruby or python) at all"
+
+Yes there is: the code will be using prototypes and closures, not classes! My point is not that code will behave differently, or that there will be some performance difference, my point is that we will be thinking in terms of the wrong concepts.
+
+There are no classes in Javascript, so to say "foo is an object of class Bar" is just plain wrong. It's one step away from "Javascript is Java scripts". Saying "foo is a function which inherits properties from the Bar function" is fine, because that's what the code's doing.
+
+Using patterns is fine, but they are only patterns; thinking in terms of the wrong concepts causes us to write silly code, eg. it can be full of redundancies, inefficiencies or unsafe practices. It can blind us to more elegant solutions. It can cause a great deal of confusion when we hit a leak in our abstraction and our assumptions no longer hold. It can make other people's code harder to understand (since they probably won't be using our incorrect conceptions). It makes debugging a nightmare, since it forces us to consider our code using the real concepts, which may go directly against the flow, naming and comments in what we're reading.
+
+Regarding "new", the reason I don't use it myself because I've never had to. All of the Javascript I write is functional, so I never bother with patterns like storing functions inside public properties of other functions' prototypes. If I want to find the "distance" of a "point" I'd arrange my code to ensure that the "distance" function is in scope. Doing otherwise breaks locality and leads to spaghetti code IMHO.
+
+-----
+
+Declaring functions within closures isn't bad. Re-running the same code over and over when not necessary is bad.
+
+Closures are great for structuring code around the flow of data. As a rule, functions should be declared where they're used unless there's a reason not to, eg. they might need to be pulled up a level or two to avoid redefining them over and over (as in these examples). Doing otherwise is bad for many reasons:
+* Forces everyone to go elsewhere to find the function definition
+* Breaks encapsulation, allowing unrelated code to break ours by redefining things
+* Creates rigidity, since we might not be able to improve our code without fear of breaking something else (again, breaks encapsulation)
+
+I've worked on codebases before where every function was named in the global scope. It was horrible. Some files were just page after page of definitions without any uses, other files were page after page of random names plumbed together. To make any sense of it required constant jumping between files, and of course because all of the definitions were external, they had no access to the lexical scope where they were being used, so there were all manner of kludges for passing state around. That's what happens when PHP programmers are allowed to write Javascript, I suppose.
+
+-----
+
+Note that I'm not talking specifically about behavioural differences between Javascript using constructors+prototypes vs, say, Ruby using classes. Even if, as you say, there are no 'interesting' behavioural differences, I'm talking about *conceptual* differences. One conceptual difference which is immediately obvious and interesting is that we can use constructor functions without touching prototypes and we can use prototypes without creating constructor functions. In a language with classes it makes little sense to have a constructor with no class, or to assign methods to something we cannot construct. Knowing this may allow us to come up with *more efficient solutions to our problems*, where "carrying a distance function around with some numbers" is not a problem, it is an implementation detail. Your claims about the efficiency of two particular ways of writing this implementation detail don't say anything about *whether we should be implementing this at all*. When we think in the right concepts for our language, we are free to come up with solutions that don't fit into other, incorrect models. These could be more efficient by making this code unnecessary; you can't get more efficient than not doing it in the first place ;)
+
+Note that we can't directly compare the code in this article with something else, precisely because it is not solving any problem. I certainly wouldn't write code which looks like the above, but I don't know what I would write instead because I don't know what it's trying to do. If we say the problem it's trying to solve is the benchmark loop then I wouldn't bother with the "Point" abstraction, I'd write the "distance" function standalone outside the loop, then call it inside the loop (actually, I would map it since loops can't be run in parallel).
+
+Indeed Java is not the only language with classes. Smalltalk was the first to reify classes as a specific language construct. Note that Self (which inspired Javascript's object model) is a Smalltalk dialect, but it is a separate language precisely because it uses a prototype-based object model instead of classes+instances. If the two had no interesting differences, they wouldn't be different languages. Yes we can pretend that Self or Javascript has classes, but we will come up with suboptimal solutions to our problems because we will end up writing code that doesn't need to exist.
+
+-----
+
+I don't understand how inline object literals are non-DRY and tedious; they're just over-engineered hashtables IMHO. Certainly they're still overly verbose, for example it will be nice to use the new destructor syntax (AKA "destructuring", probably to avoid name-classing with C++ nomenclature).
+
+I never claimed that Javascript's object model is exactly the same as Self's. You've just put words in my mouth and strawmanned yourself, I think. Rather, I was pointing out that different languages are different, and patterns do not change the language. Javascript certainly has functions which act like classes, but the concept of "class" has a lot of associated baggage (declarative code, vtables/function tables, etc.). If you want to talk about "Javascript classes" then it has to be distinct from any other language's classes to prevent confusion; but if you're going to do that, why bother making up the concept at all for Javascript? There are functions, and there are common patterns and idioms for using them.
+
+Personally, I don't bother with any of Javascript's OO nonsense unless I'm forced to by some third-party API.
+
+-----
+
+I used the analogy that Self is not Smalltalk, I never directly compared Self to Javascript. Your claim that JS is similar to Java is ridiculous; the entire Java language is built around classes. For example, Java has parametric polymorphism which wouldn't even make sense in JS.
+
+Your second point completely validates my argument. Javascript has first-class functions, lexical scope, key/value dictionaries and prototypical inheritance of properties. Not only are there no classes, there are no methods! There isn't a "very optimized presentation[sic] for the methods on the prototype" because there are no methods on the prototype; only properties. Of course, some of these properties may be functions, which we can call "methods" if we like, but again it's just a pattern; I would say a throwback from languages without first-class functions (C++ pre-C++11, Java pre-Project Lambda, etc.)
+
+For example at some point v8, according to http://www.jayconrod.com/posts/52/a-tour-of-v8-object-representation , certainly did contain optimisations for 'methods' (function properties); but that optimisation has nothing to do with their implementation as functions (like vtables do in C++) and everything to do with the empirical observation that function properties don't often change, so we can assume they're constant unless told otherwise. We could do the same thing with other properties, and it would work well as long as our code doesn't do much mutation. When this optimisation is invalidated, the regular property lookup code kicks in. In fact, that post also tells us that "numbered properties" (ie. numeric indices) get much more special treatment than methods, regardless of *what* they are. In other words, there is more in common between these:
+
+o['hello'] = 5;
+o['world'] = function() { console.log(this); };
+
+Than there is between these:
+
+o['hello'] = 5;
+o[1] = 5;
+
+Thanks for pointing out that ES6 is going to include "class", I didn't know that. From what I've found through Google, it looks pretty horrible :(
+
+-----
+
+If a library uses callbacks and exceptions at the same time, it's doing it wrong. Exceptions are just syntactic sugar for callbacks, so the two shouldn't overlap. Callbacks are generally better since they play nicer with async. For example, jQuery.ajax takes "success" and "error" callbacks, so it doesn't need exceptions.
+
+I avoid exceptions where possible, since they're harder to reason about than callbacks. When I pass a callback around, it is a value which I can reason about and trace just like any other. "throw", on the other hand, is basically a GOTO with a dynamically-scoped argument.
+
+-----
+
+My advice is actually to never throw exceptions at all. If there are exceptions being thrown inside a callback, eg. by third-party code, then just put a try block inside the callback. If you want to use the same error-handler for the code triggering the async request and the code handling it, then make the error-handler a function and put it in a local variable, then call it from your error handler, eg.
+
+(function() {
+var handler = function(e) { console.log(e); };
+try {
+somethingAsync(
+function(result) {
+try {
+somethingDangerous();
+} catch (e) { handler(e); }
+},
+handler
+);
+} catch (e) { handler(e); }
+}());
+
+There is some copy-paste when we translate from exceptions to functions, but that's a problem with exceptions, since they don't compose. In fact, it's a problem with every JS 'feature' which should be a function but isn't (the number of time's I've had to write "plus = function(x, y) { return x + y; }.......)
+
+=====
+
+http://worldofweirdthings.com/2013/08/08/the-online-freedom-that-was-never-there/
+
+The example of Britain's overseas activity during a declining empire is an example of Parkinson's Law ( https://en.wikipedia.org/wiki/Parkinson's_law ). "...the Colonial Office had its greatest number of staff at the point when it was folded into the Foreign Office because of a lack of colonies to administer."
+
+=====
+
+https://www.jamesward.com/2013/07/29/an-alternative-to-required-api-keys
+
+I agree that developers often ignore error cases, but this is easily worked around by sending multiple requests and ignoring the failures, which just exacerbates the abuse.
+
+I think a proof-of-work system like HashCash ( https://en.wikipedia.org/wiki/Hashcash ) is a better idea in general. Basically we require API users to solve a computationally-hard problem, like hash inversion, for each request. This makes API users pay a computational cost which is proportional to the cost of providing the service. Note that this is basically how BitCoin works.
+
+Whilst a system like HashCash works right now, I would rather a more productive use of computational power, eg. hooking it up to the World Community Grid.
+
+=====
+
+http://devblog.arnebrasseur.net/2013-04-plain-text
+
+The problem stems from not telling the computer what we actually mean, in other words from using overly-general types.
+
+If I write a function which accepts strings and sends them to an SQL database, the computer will happily send me 'malformed query' responses every time I use it. Presumably I would then write some special-case handling code for this, as long as I remember.
+
+Likewise, if I write a "urlEncode" function from strings to strings, then the computer will happily encode strings twice, or any other number of times. Again, I would presumably write my entire codebase with enough discipline to avoid ever double-encoding a string. If I remember.
+
+This is not a sensible or scalable way to work, especially since we (programmers) are in the best position to automate it. The alternative is to tell the computer exactly what we want, so that it can help us make it. My database-querying function should accepts SQL, not strings. My URL-encoding function should return URLs, not strings. Types aren't something computers care about; the computer was happy to executed my insecure, error-triggering functions. Types are for us, as people, to write down what we mean.
+
+Programs which don't utilise a type system require more effort to write and maintain, since they require us to juggle all of the implied constraints in our head ('this variable stores the length of that one', 'this variable is HTML-encoded and that one is SQL-encoded', 'this might be null', etc.). Usually, something will get dropped. Note that I say "utilise"; even languages with a rich type system like Coq can be ignored and everything made into "String".
+
+Of course a decent approach to security requires careful consideration of the problem domain and the system as a whole, but a chain is only as string as its weakest link. Twitter's developers can't expect a built-in "Tweet" type to constrain the length of text, they would have to make this themselved. However, we should expect our computers to complain when we try to append GET parameters on to a shell command (no matter how many layers of indirection it's gone through).
+
+This is such an easy problem to solve that its continued, high-profile presence is shameful to the whole of Software Engineering.
+
+=====
+
+http://bbatsov.github.com/articles/2012/03/08/emacs-tip-number-5-save-buffers-automatically-on-buffer-or-window-switch/
+
+It also tries saving files which are unsavable (eg. no permission), which makes it difficult to actually leave the buffer. One workaround is to run something like M-x shell, since that won't trigger the auto-save. Urgh.
+
+=====
+
+http://theothersideofcode.com/renaming-backend-frontend-to-application-ui-developers
+
+The use of the word "Historically" is completely bogus.
+
+'Historically' the distinction between frontend and backend was between the server running on the mainframe and its terminal-accessible command-line clients. Writing a command-line frontend 50 years ago was far more complex and involved than the latest gee-whizz Web apps.
+
+=====
+
+http://worldofweirdthings.com/2012/10/14/is-this-the-real-life-is-this-just-a-complex-cosmological-simulation/
+
+If the Universe were a simulation, there is no reason to suppose that its software would work in ways we might think, in particular what makes it reasonable to conjecture that Universes should be modelled numerically by making tiny little boxes of space?
+
+For my Masters thesis I wrote numerical simulations of little boxes of space, and quickly came to the conclusion that it is an ugly way to do things. Computers are exact*, discrete machines (excepting the odd cosmic ray) which run exact*, discrete software, but numerical simulations choose to ignore this; rather than encode the exact*, discrete symbolic laws of Physics into computers, they encode inexact representation of the Real numbers. The handle is turned a few times, then we spend years trying to explain the resulting numbers using exact*, discrete formulas!
+
+A far more elegant way to run a simulation would be to remain exact and discrete, performing symbolic algebra with the laws of Physics themselves, rather than plugging in numbers. Unfortunately we don't know the laws of Physics well enough to do this yet; we have existential representations like differential equations, which *describe* solutions exactly but which are not the solutions themselves. In simple cases these can be manipulated symbolically, but most of the time we have to resort to methods like numerical simulation to find approximate solutions. If we could find a more direct representation of Physical laws (probably algorithms of some kind) then simulating Universes would be easy (though still very resource-intensive!).
+
+I think there's a long road ahead before we discover such things, but as for the argument that we're living in a simulation: I think it far more likely that our Universe is emergent from an exact, discrete symbol manipulating algorithm, compared to being a blurry approximation of something else which stops after some number of decimal places.
+
+* When I say that software or Physical formulas are "exact" I don't mean to imply that they always gives 'correct' results. I mean that when I write "E = mc^2", the forumula itself is perfectly represented using 8 characters. If instead I plugged some numbers into it, I'd get imperfect, inexact answers. This is because Physics generally work with Real numbers, which ironically can never be represented exactly.
+
+PS: A voxel is not a little cube http://alvyray.com/Memos/CG/Microsoft/6_pixel.pdf
+
+=====
+
+http://worldofweirdthings.com/2013/03/12/no-computers-cant-be-trusted-with-maths-future/
+
+I think it's vitally important for discussions of 'maths using computers' to take the Curry-Howard correspondence into account. My comment got rather long so I've turned it into a blog post :)
+
+http://chriswarbo.net/blog/2013-04-24-computers_and_maths.html
+
+=====
+
+http://igstan.ro/posts/2011-05-02-understanding-monads-with-javascript.html
+
+Can't tell if you think that the "declarative façade" is a good thing or not. However, I think it's far too limiting to consider modern computational devices as executing instructions in sequence. Not only does this ignore parallel CPUs and massively parallel GPUs, but it is also limiting computations to a single machine. I think the philosophy behind Erlang, or even Smalltalk-71, shows this to be out-of-date.
+
+One generalisation of the monad which captures concurrent, asynchronous and recursive computations as well as sequential is the "arrow". Arrows have found use in modelling declarative, event-driven APIs such as GUIs and reactive robot controllers. Here the computation isn't a definite series of steps, it's an interweaving of threads, and arrows allow this to be captured more naturally than, say, an imperative event-handler-dispatching main loop.
