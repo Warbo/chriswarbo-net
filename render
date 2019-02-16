@@ -10,7 +10,6 @@ then
 fi
 
 # Set default parameter, if none supplied
-[[ -n "$IPFS_PATH"    ]] || export IPFS_PATH=/var/lib/ipfs/.ipfs
 [[ -n "$GIT_REPO_DIR" ]] || export GIT_REPO_DIR=/home/chris/Programming/repos
 
 function gitVersions() {
@@ -40,28 +39,6 @@ function cacheGit() {
     echo "Done" 1>&2
 }
 
-#printf "Getting IPFS keys..." 1>&2
-#function ipfsKeys() {
-#    while read -r PAIR
-#    do
-#        N=$(echo "$PAIR" | cut -d' ' -f2)
-#        V=$(echo "$PAIR" | cut -d' ' -f1)
-#        jq -n --arg n "$N" --arg v "$V" '{($n): $v}'
-#    done < <(ipfs key list -l) | jq -s 'reduce .[] as $x ({}; . + $x)'
-#}
-#IPFS_KEYS=$(ipfsKeys)
-#for D in "$GIT_REPO_DIR"/*.git
-#do
-#    N=$(basename "$D" .git)
-#    echo "$IPFS_KEYS" | jq -e --arg n "$N" 'has($n)' > /dev/null || {
-#        echo "No IPFS key found for git repo '$N':" 1>&2
-#        echo "$IPFS_KEYS" 1>&2
-#        exit 1
-#    }
-#done
-#export IPFS_KEYS
-#echo "Done" 1>&2
-
 function build() {
     cacheGit
     echo "Building '$1'" 1>&2
@@ -75,22 +52,6 @@ function doBuild() {
 
 function buildAndTest() {
     build wholeSite
-}
-
-function addToIpfs() {
-    build ipfsHash | tr -d '\n'
-}
-
-function pushToIpns() {
-    echo "Checking for chriswarbo.net key" 1>&2
-    ipfs key list | grep chriswarbonet > /dev/null || {
-        echo "Couldn't find key for chriswarbo.net, can't push" 1>&2
-        exit 1
-    }
-
-    HASHFILE=$(build ipfsHash)
-    IPFSHASH=$(tr -d '\n' < "$HASHFILE")
-    ipfs name publish -k chriswarbonet "$IPFSHASH"
 }
 
 function pushToWeb() {
@@ -155,26 +116,13 @@ printf "Waiting for rendering lock..." 1>&2
           buildAndTest
           ;;
 
-      add)
-          addToIpfs
-          ;;
-
-      ipfs)
-          pushToIpns
-          ;;
-
-      web)
-          pushToWeb
-          ;;
-
       push)
           pushToWeb
-          pushToIpns
           ;;
 
       *)
           echo "
-Usage: $0 <build|test|add|ipfs|web|push>
+Usage: $0 <build|test|push>
 
 build: Builds the HTML, CSS, etc. of the site. Outputs a directory containing
        the result.
@@ -182,15 +130,7 @@ build: Builds the HTML, CSS, etc. of the site. Outputs a directory containing
 test: Builds the site and runs tests on the result. Outputs a directory
       containing the result.
 
-add: Adds the site to IPFS, outputting the resulting hash. This may take less
-     space than performing a build, since we can re-use existing hashes without
-     having to make a copy of the files they refer to.
-
-ipfs: Performs an add, then attempts to publish the result to IPNS.
-
-web: Builds the site and pushes pages to chriswarbo.net over SSH.
-
-push: Push to ipfs and web.
+push: Builds the site and pushes pages to chriswarbo.net over SSH.
           " 1>&2
           exit 1
           ;;

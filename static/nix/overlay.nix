@@ -425,9 +425,4 @@ with super.lib;
 
   inherit (self.callPackage ./repos.nix {})
     projectRepos repoName repoPages;
-
-  /*inherit (self.callPackage ./ipfs.nix {
-            inherit self.allPages attrsToDirs self.bins self.commands self.repoName self.repoUrls;
-          })
-    ipfsHash ipfsKeys;*/
 }

@@ -18,12 +18,6 @@ function genEntry {
     echo "<a href=\"${1}.html\">"
       echo "$1"
     echo '</a>'
-    if [[ -f "$keys/$1" ]]
-    then
-      echo "Found IPNS key for '$1'" 1>&2
-      KEY=$(grep '^.' < "$keys/$1")
-      printf '(<a href="https://ipfs.io/ipns/%s">IPNS link</a>)' "$KEY"
-    fi
   echo '</li>'
 }
 
