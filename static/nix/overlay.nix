@@ -7,71 +7,8 @@ assert super ? nix-helpers || abort (toJSON {
 with super.lib;
 {
   commands = self.callPackage ./commands.nix {};
-  relTo =
-    with rec {
-      relToTest = self.runCommand "relative"
-        {
-          buildInputs = [ self.xidel ];
-          page        = relToUntested "." (self.writeScript "test.html" ''
-            <html>
-              <head>
-                <link rel="stylesheet" type="text/css"
-                      href="/css/default.css" />
-                <meta http-equiv="refresh" content="0;URL=./projects.html" />
-              </head>
-              <body>
-                <a href="/blog.html">Blog</a>
-                <script src="/js/foo.js"></script>
-                <img src="/images/foo.png" />
-              </body>
-            </html>
-          '');
-        }
-        ''
-          set -e
-
-          function fail() {
-            echo "Found absolute paths in $1" 1>&2
-            exit 1
-          }
-
-          for PAIR in '//a/@href	anchors' \
-                      '//link/@href	links'   \
-                      '//script/@src	scripts' \
-                      '//img/@src	images'  \
-                      '//meta/@content	meta'
-
-          do
-            QUERY=$(echo "$PAIR" | cut -f1)
-             TYPE=$(echo "$PAIR" | cut -f2)
-            FOUND=$(xidel -q -e "$QUERY" - < "$page")
-
-            echo "$FOUND" | grep "^/" || continue
-            echo "$FOUND" | grep "=/" || continue
-            fail "$TYPE"
-          done
-
-          if grep 'var url = "/' < "$page"
-          then
-            fail "script vars"
-          fi
-
-          mkdir "$out"
-        '';
-
-      relToUntested = TO_ROOT: file: self.runCommand
-        "relative-${baseNameOf (unsafeDiscardStringContext file)}"
-        {
-          inherit file TO_ROOT;
-          buildInputs = [ self.commands.relativise ];
-        }
-        ''
-          echo "Relativising $file to $TO_ROOT" 1>&2
-          relativise < "$file" > "$out"
-        '';
-    };
-    x: y: self.withDeps [ relToTest ] (relToUntested x y);
   render   = self.callPackage ./render.nix   { inherit self; };
+  relTo    = self.callPackage ./relTo.nix    {};
 
   # Turn ".md" names in to ".html"
   mdToHtml    = n: (removeSuffix ".html" (removeSuffix ".md" n)) + ".html";
