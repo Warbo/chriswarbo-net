@@ -27,25 +27,19 @@ with super.lib;
   # Turn ".html" into ".md"
   htmlToMd = name: (removeSuffix ".html" (removeSuffix ".html" name)) + ".md";
 
-  blog =
-    with rec {
-      # Read filenames from ./blog and append to the path './blog', so that each
-      # is a standalone path. This way each post only depends on its own source,
-      # and won't get rebuilt if e.g. a new post is added to ./blog.
-      postNames = attrNames (readDir ../../blog);
-      posts     = listToAttrs (map (p: {
-                                     name  = self.mdToHtml p;
-                                     value = ../../blog + "/${p}";
-                                   })
-                                   postNames);
-    };
-    mapAttrs (n: v: self.render {
-               file        = v;
-               name        = "blog-${n}";
-               SOURCE_PATH = "blog/${self.htmlToMd (baseNameOf n)}";
-               relBase     = "./..";
-             })
-             posts;
+  # Read filenames from ./blog and append to the path './blog', so that each
+  # is a standalone path. This way each post only depends on its own source,
+  # and won't get rebuilt if e.g. a new post is added to ./blog.
+  blog = mapAttrs' (p: _: with { name  = self.mdToHtml p; }; {
+                     inherit name;
+                     value = self.render {
+                       file        = ../../blog + "/${p}";
+                       name        = "blog-${name}";
+                       SOURCE_PATH = "blog/${p}";
+                       relBase     = "./..";
+                     };
+                   })
+                   (readDir ../../blog);
 
   renderAll =
     with rec {
