@@ -56,14 +56,23 @@ pushd "$rendered" > /dev/null
 
     printf "Waiting for server to start (PID %s)..." "$SERVER_PID" 1>&2
 
+    COUNTDOWN=10
     while true
     do
+        [[ "$COUNTDOWN" -gt 1 ]] || {
+            echo "Time out"  1>&2
+            cat "$BASE/msgs" 1>&2
+            exit 1
+        }
+        COUNTDOWN=$(( COUNTDOWN - 1 ))
+
         if [[ -e "$BASE/msgs" ]] && grep "^Serving HTTP.*8666" < "$BASE/msgs" \
                                                                > /dev/null
         then
+            echo "Found server" 1>&2
             break
         fi
-        printf '.' 1>&2
+        printf '%s.' "$COUNTDOWN" 1>&2
         sleep 1
     done
 
