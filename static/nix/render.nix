@@ -1,4 +1,4 @@
-{ callPackage, commands, dirContaining, lib, relTo, runCommand, self,
+{ callPackage, commands, dirContaining, fail, lib, relTo, runCommand, self,
   writeScript }:
 
 { file, inputs ? [], name, vars ? {}, relBase ? null, SOURCE_PATH }:
@@ -21,6 +21,7 @@ with rec {
       buildInputs   = inputs ++ extraPkgs ++ [
                         commands.relativise
                         commands.render_page
+                        fail
                       ];
       TO_ROOT       = if relBase == null then "" else relBase;
       postprocessor = md.postprocessor or "";
@@ -30,17 +31,13 @@ with rec {
 
       cd "$dir"
       SOURCE="$file" render_page
-      if grep '^.' < "$DEST" > /dev/null
+      grep '^.' < "$DEST" > /dev/null || fail "Error: No output when rendering"
+
+      if [[ -n "$TO_ROOT" ]]
       then
-        if [[ -n "$TO_ROOT" ]]
-        then
-          relativise < "$DEST" > "$out"
-        else
-          mv "$DEST" "$out"
-        fi
+        relativise < "$DEST" > "$out"
       else
-        echo "No output when rendering, aborting" 1>&2
-        exit 1
+        mv "$DEST" "$out"
       fi
     '';
 };
