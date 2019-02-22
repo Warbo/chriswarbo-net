@@ -1,4 +1,4 @@
-{ commands, dirContaining, lib, metadata, relTo, runCommand, self,
+{ callPackage, commands, dirContaining, lib, relTo, runCommand, self,
   writeScript }:
 
 { file, inputs ? [], name, vars ? {}, relBase ? null, SOURCE_PATH }:
@@ -6,6 +6,7 @@
 with builtins;
 with lib;
 with rec {
+  metadata  = callPackage ./metadata.nix {};
   md        = metadata file;
   extraPkgs = map (n: getAttr n (self // commands))
                   (md.packages or []);

@@ -7,11 +7,6 @@ assert super ? nix-helpers || abort (toJSON {
 with super.lib;
 {
   commands = self.callPackage ./commands.nix {};
-
-  metadata = self.callPackage ./metadata.nix {};
-
-  render = self.callPackage ./render.nix { inherit self; };
-
   relTo =
     with rec {
       relToTest = self.runCommand "relative"
@@ -76,9 +71,10 @@ with super.lib;
         '';
     };
     x: y: self.withDeps [ relToTest ] (relToUntested x y);
+  render   = self.callPackage ./render.nix   { inherit self; };
 
   # Turn ".md" names in to ".html"
-  mdToHtml = name: (removeSuffix ".html" (removeSuffix ".md" name)) + ".html";
+  mdToHtml    = n: (removeSuffix ".html" (removeSuffix ".md" n)) + ".html";
   mdToHtmlRec =
     with rec {
       go = x: if isAttrs x
