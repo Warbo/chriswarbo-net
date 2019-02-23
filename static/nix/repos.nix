@@ -5,6 +5,8 @@
 with builtins;
 with lib;
 with rec {
+  isAbsPath = p: isString p && p != "" && substring 0 1 p == "/";
+
   repoName = url: removeSuffix ".git" (baseNameOf url);
 
   repoPageOf = repo: runCommand "redirect-to-${repo}"

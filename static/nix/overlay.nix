@@ -218,8 +218,6 @@ with super.lib;
 
   untestedSite = self.attrsToDirs' "untestedSite" self.allPages;
 
-  isAbsPath = p: isString p && p != "" && substring 0 1 p == "/";
-
   inherit (self.callPackage ./repos.nix {})
     projectRepos repoName repoPages;
 }
