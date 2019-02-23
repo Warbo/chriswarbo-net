@@ -218,34 +218,7 @@ with super.lib;
 
   untestedSite = self.attrsToDirs' "untestedSite" self.allPages;
 
-  repoUrls = if self.isPath self.repoSource    ||
-                (isString self.repoSource &&
-                 self.repoSource != ""    &&
-                 substring 0 1 self.repoSource == "/")
-                then map (n: "${self.repoSource}/${n}")
-                         (attrNames (filterAttrs (n: v: v == "directory" &&
-                                                        hasSuffix ".git" n)
-                                                 (readDir self.repoSource)))
-                else import (self.runCommand "repoUrls.nix"
-                              {
-                                inherit (self) repoSource;
-                                buildInputs = [ self.jq self.wget self.xidel ];
-                              }
-                              ''
-                                {
-                                  echo "["
-                                  wget -O- "$repoSource"   |
-                                    xidel - -e '//a/@href' |
-                                    grep '\.git'           |
-                                    jq -R '.'
-                                  echo "]"
-                                } > "$out"
-                              '');
-
-  # For speed, we allow the latest commit IDs to be passed in too
-  repoRefs = if getEnv "REPO_REFS" == ""
-                then {}
-                else fromJSON (getEnv "REPO_REFS");
+  isAbsPath = p: isString p && p != "" && substring 0 1 p == "/";
 
   inherit (self.callPackage ./repos.nix {})
     projectRepos repoName repoPages;
