@@ -19,31 +19,33 @@ with rec {
       echo "$RESULT" > "$out"
     '';
 
-  repoUrls = if isPath repoSource || isAbsPath repoSource
-                then map (n: "${repoSource}/${n}")
-                         (attrNames (filterAttrs (n: v: v == "directory" &&
-                                                        hasSuffix ".git" n)
-                                                 (readDir repoSource)))
-                else import (runCommand "repoUrls.nix"
-                              {
-                                inherit repoSource;
-                                buildInputs = [ jq wget xidel ];
-                              }
-                              ''
-                                {
-                                  echo "["
-                                  wget -O- "$repoSource"   |
-                                    xidel - -e '//a/@href' |
-                                    grep '\.git'           |
-                                    jq -R '.'
-                                  echo "]"
-                                } > "$out"
-                              '');
-
-
-  repoPages = listToAttrs (map (url: { name  = repoName url + ".html";
-                                       value = repoPageOf (repoName url); })
-                               repoUrls);
+  repoPages =
+    with {
+      f = repo: {
+        name  = repoName repo + ".html";
+        value = repoPageOf (repoName repo);
+      };
+    };
+    if isPath repoSource || isAbsPath repoSource
+       then mapAttrs' (n: _: f n)
+                      (filterAttrs (n: v: v == "directory" &&
+                                          hasSuffix ".git" n)
+                                   (readDir repoSource))
+       else listToAttrs (map f (import (runCommand "repoUrls.nix"
+                                 {
+                                   inherit repoSource;
+                                   buildInputs = [ jq wget xidel ];
+                                 }
+                                 ''
+                                   {
+                                     echo "["
+                                       wget -O- "$repoSource"   |
+                                         xidel - -e '//a/@href' |
+                                         grep '\.git'           |
+                                         jq -R '.'
+                                     echo "]"
+                                   } > "$out"
+                                 '')));
 };
 {
   inherit repoName repoPages;
