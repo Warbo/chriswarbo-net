@@ -36,7 +36,7 @@ with super.lib;
                        file        = ../../blog + "/${p}";
                        name        = "blog-${name}";
                        SOURCE_PATH = "blog/${p}";
-                       relBase     = "./..";
+                       TO_ROOT     = "./..";
                      };
                    })
                    (readDir ../../blog);
@@ -49,7 +49,7 @@ with super.lib;
                          file        = v;
                          name        = self.mdToHtml n;
                          SOURCE_PATH = concatStringsSep "/" (prefix ++ [n]);
-                         relBase     = concatStringsSep "/" (["."] ++ map (_: "..")
+                         TO_ROOT     = concatStringsSep "/" (["."] ++ map (_: "..")
                                                                           prefix);
                        }
                   else if isAttrs v
@@ -73,7 +73,7 @@ with super.lib;
                              inherit name;
                              value = self.render (val // {
                                inherit name;
-                               relBase = ".";
+                               TO_ROOT = ".";
                              });
                            }) {
     "index.html"      = {
