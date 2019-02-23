@@ -3,7 +3,7 @@
 
 with { metadata = callPackage ./metadata.nix {}; };
 
-{ file, inputs ? [], name, vars ? {}, relBase ? null, SOURCE_PATH }:
+{ file, inputs ? [], name, vars ? {}, relBase ? "", SOURCE_PATH }:
 
 with builtins;
 with lib;
@@ -12,10 +12,6 @@ with rec {
   extraPkgs = map (n: getAttr n (self // commands))
                   (md.packages or []);
   dir       = dirContaining ../.. (md.dependencies or []);
-  rel       = if relBase == null
-                 then (x: x)
-                 else relTo relBase;
-  dupe      = rel (writeScript name (readFile file));
   rendered  = runCommand name
     (vars // {
       inherit dir file SOURCE_PATH;
@@ -24,7 +20,7 @@ with rec {
                         commands.render_page
                         fail
                       ];
-      TO_ROOT       = if relBase == null then "" else relBase;
+      TO_ROOT       = relBase;
       postprocessor = md.postprocessor or "";
     })
     ''
@@ -38,5 +34,8 @@ with rec {
     '';
 };
 if hasSuffix ".html" file
-   then dupe
+   then with { data = writeScript name (readFile file); };
+        if relBase == ""
+           then data
+           else relTo relBase data
    else rendered
