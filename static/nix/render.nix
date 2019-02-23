@@ -1,12 +1,13 @@
 { callPackage, commands, dirContaining, fail, lib, relTo, runCommand, self,
   writeScript }:
 
+with { metadata = callPackage ./metadata.nix {}; };
+
 { file, inputs ? [], name, vars ? {}, relBase ? null, SOURCE_PATH }:
 
 with builtins;
 with lib;
 with rec {
-  metadata  = callPackage ./metadata.nix {};
   md        = metadata file;
   extraPkgs = map (n: getAttr n (self // commands))
                   (md.packages or []);
@@ -33,12 +34,7 @@ with rec {
       SOURCE="$file" render_page
       grep '^.' < "$DEST" > /dev/null || fail "Error: No output when rendering"
 
-      if [[ -n "$TO_ROOT" ]]
-      then
-        relativise < "$DEST" > "$out"
-      else
-        mv "$DEST" "$out"
-      fi
+      relativise < "$DEST" > "$out"
     '';
 };
 if hasSuffix ".html" file

@@ -7,8 +7,9 @@ set -e
 
 if [[ -z "$TO_ROOT" ]]
 then
-    echo "No TO_ROOT given, aborting" 1>&2
-    exit 1
+    echo "No TO_ROOT given, not relativising" 1>&2
+    cat
+    exit 0
 fi
 
 INPUT=$(cat)
