@@ -5,14 +5,10 @@ set -o pipefail
 # Capture and discard stdin, to avoid pandoc waiting on user input
 [ -t 0 ] || cat > /dev/null
 
-# Common options. Make sure SOURCE is at the end of IN_OPTIONS.
- IN_OPTIONS=(-t json "$SOURCE")
 OUT_OPTIONS=(-f json -t html -s --mathml --template "$defaultTemplate")
 
 # Provide 'path' arg for our View Source links.
-P="$SOURCE"
-[[ -n "$SOURCE_PATH" ]] && P="$SOURCE_PATH"
-OUT_OPTIONS+=(-M "path=\"$P\"")
+OUT_OPTIONS+=(-M "path=\"${SOURCE_PATH:-$SOURCE}\"")
 
 # If filename contains a date (e.g. blogs), provide it to the output template
 if D=$(echo "$SOURCE" | grep -om1 -P "\\d{4}-\\d{2}-\\d{2}")
@@ -22,7 +18,7 @@ fi
 
 # We don't use pandoc's --filter option, as it buffers stderr which makes
 # debugging harder. 'postprocessor' comes from the file's YAML (default: 'cat')
-pandoc "${IN_OPTIONS[@]}"      |
+pandoc -t json "$SOURCE"       |
     panpipe                    |
     panhandle                  |
     pandoc "${OUT_OPTIONS[@]}" |
