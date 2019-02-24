@@ -207,7 +207,9 @@ Another thing we can do with `circle`{.haskell} is to approximate pi:
   </div>
 </div>
 
-<script src="/js/jquery.js"></script>
+<script src="/js/jquery.js">
+</script>
+
 <script type="text/javascript">
 $('.togglable').click(function() {
                         $('.toggled', $(this)).toggle();
