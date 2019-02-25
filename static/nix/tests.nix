@@ -1,5 +1,5 @@
-{ attrsToDirs, commands, fail, git, haskell, haskellPackages, lib, linkchecker,
-  mf2py, procps, pythonPackages, repoPages, runCommand, tidy-html5,
+{ attrsToDirs, commands, darkhttpd, fail, git, haskell, haskellPackages, lib,
+  linkchecker, mf2py, procps, pythonPackages, repoPages, runCommand, tidy-html5,
   untestedSite, utillinux, wget, writeScript, xidel }:
 
 with builtins;
@@ -31,7 +31,7 @@ with rec {
 };
 mapAttrs testScript {
   all_pages_reachable           = {
-    buildInputs = [ procps pythonPackages.python utillinux wget ];
+    buildInputs = [ darkhttpd procps utillinux wget ];
   };
   archive_is_hfeed              = {
     buildInputs = [ pythonPackages.python mf2py ];
