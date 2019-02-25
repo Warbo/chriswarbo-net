@@ -121,8 +121,11 @@ $('#list-container span').each(function() {
 </li>
 </ul>
 
-<script src="/js/jquery.js"></script>
-<script src="/js/underscore.js"></script>
+<script src="/js/jquery.js">
+</script>
+
+<script src="/js/underscore.js">
+</script>
 
 ```{.unwrap pipe="sh | pandoc -f markdown -t json"}
 echo '<script type="text/javascript"> // <![CDATA['

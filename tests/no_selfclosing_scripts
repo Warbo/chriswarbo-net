@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -e
+
+BROKEN=""
+while read -r F
+do
+    GOT=$(xidel - -q -e '//script[@src]/@src' < "$F")
+    [[ -n "$GOT" ]] || continue
+
+    if grep '<script *src="[^"]*" */>' < "$F"
+    then
+        BROKEN=$(echo "$BROKEN $F")
+    fi
+done < <(find -L "$rendered" -iname '*.html')
+
+[[ -z "$BROKEN" ]] && exit 0
+
+echo "Self-closing script tags found. This is invalid HTML, and messes up" 1>&2
+echo "any content which follows. This is probably caused by putting"       1>&2
+echo "'<script src="..."></script>' all on one line, which Pandoc shrinks" 1>&2
+echo "down to '<script src="..."/>'. If so, put a newline between the"     1>&2
+echo "open and close tags; that should be enough for Pandoc to leave it."  1>&2
+
+fail "These pages contain self-closing script tags (invalid HTML): $BROKEN"

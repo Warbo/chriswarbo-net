@@ -3,7 +3,8 @@ title: Harmony Search
 ---
 ## WORK IN PROGRESS ##
 
-<div id="harmony_playfield" style="width: 500px; height: 500px;"></div>
+<div id="harmony_playfield" style="width: 500px; height: 500px;">
+</div>
 
 <form action="#" method="get">
  <div>
@@ -38,7 +39,14 @@ title: Harmony Search
  </div>
 </form>
 
-<script src="/js/jquery.js"></script>
-<script src="/js/jquery_svg.js"></script>
-<script src="/js/underscore.js"></script>
-<script src="/js/optimisation/harmony_ui.js"></script>
+<script src="/js/jquery.js">
+</script>
+
+<script src="/js/jquery_svg.js">
+</script>
+
+<script src="/js/underscore.js">
+</script>
+
+<script src="/js/optimisation/harmony_ui.js">
+</script>

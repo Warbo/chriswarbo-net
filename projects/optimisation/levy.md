@@ -11,13 +11,23 @@ Each (x, y) point in the square is a solution, and our goal is to find the best 
 
 Like the other algorithms, the edges will wrap around. For simplicity, when this happens we don't draw a line. Sometimes it may look like the search has teleported from one place to another, but it's actually gone off the edge and wrapped around!
 
-<div id="levy_playfield" style="width: 500px; height: 500px;"></div>
+<div id="levy_playfield" style="width: 500px; height: 500px;">
+</div>
+
 <form action="#" method="get">
 </form>
-<script src="/js/jquery.js"></script>
-<script src="/js/jquery_svg.js"></script>
-<script src="/js/underscore.js"></script>
-<script src="/js/optimisation/levy.js"></script>
+
+<script src="/js/jquery.js">
+</script>
+
+<script src="/js/jquery_svg.js">
+</script>
+
+<script src="/js/underscore.js">
+</script>
+
+<script src="/js/optimisation/levy.js">
+</script>
 
 Click the box to start the search. The fittest solution found so far is highlighted in green.
 

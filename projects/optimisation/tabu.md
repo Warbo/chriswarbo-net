@@ -7,17 +7,27 @@ In this example, like with the other random walks, the fitness of a particular l
 
 Each (x, y) point in the square is a solution, and our goal is to find the best (lightest). We start in the centre and move a set distance at a random angle at each step. If the location is in our tabu list (once again, rounded to the nearest pixel) then we keep choosing new angles until we find a non-tabu location. Once we've moved to a new location, we add it to our tabu list, and we shift off an item from the start of the list if it's over a certain length. Like the standard random walk, I've made the edges wrap around. Note that if you choose a step size of 1 then the trails will only be removed once they leave the tabu list. This allows the tabu areas to be seen (we couldn't do this for larger step sizes, as it's only the end points that are chosen, not the line in-between).
 
-<div id="tabu_playfield" style="width: 500px; height: 500px;"></div>
+<div id="tabu_playfield" style="width: 500px; height: 500px;">
+</div>
+
 <form action="#" method="get">
-<div>
+ <div>
   <input type="range" name="_" id="tabu_step" min="1" max="10" value="2" style="width: 500px;" />
   <label for="tabu_step">Step size:</label>&nbsp;&nbsp;<a href="#" id="tabu_step_display"></a>
-</div>
+ </div>
 </form>
-<script src="/js/jquery.js"></script>
-<script src="/js/jquery_svg.js"></script>
-<script src="/js/underscore.js"></script>
-<script src="/js/optimisation/tabu.js"></script>
+
+<script src="/js/jquery.js">
+</script>
+
+<script src="/js/jquery_svg.js">
+</script>
+
+<script src="/js/underscore.js">
+</script>
+
+<script src="/js/optimisation/tabu.js">
+</script>
 
 Clicking the box will start the search. The "Step size" tells the search how far to move from its current location when it takes a step; low values mean that not much of the space gets explored, high values mean that nearby solutions may get missed. The fittest solution found so far is marked in green.
 

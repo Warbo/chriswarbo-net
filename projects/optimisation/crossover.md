@@ -11,7 +11,9 @@ In a genetic algorithm, these ideas are implemented literally in the code: full 
 
 In the genetic algorithm on this page, I've only included "crossover", which is the random combination of 2 parents into a pair of children, making a crude model of sexual reproduction. To start the simulation, click on the playfield (the box showing the greyscale fitness function).
 
-<div id="crossover_playfield" style="width: 500px; height: 500px;"></div>
+<div id="crossover_playfield" style="width: 500px; height: 500px;">
+</div>
+
 <form action="#" method="get">
  <div>
   <input type="range" min="1" max="100" value="20" id="crossover_population" style="width: 500px;" />
@@ -28,10 +30,18 @@ In the genetic algorithm on this page, I've only included "crossover", which is 
   <input type="checkbox" id="crossover_stable" value="0" /><label for="crossover_stable">Stable sort. Slower, but stops the green blob jumping between equal-fitness solutions.</label>
  </div>
 </form>
-<script src="/js/jquery.js"></script>
-<script src="/js/jquery_svg.js"></script>
-<script src="/js/underscore.js"></script>
-<script src="/js/optimisation/crossover.js"></script>
+
+<script src="/js/jquery.js">
+</script>
+
+<script src="/js/jquery_svg.js">
+</script>
+
+<script src="/js/underscore.js">
+</script>
+
+<script src="/js/optimisation/crossover.js">
+</script>
 
 In the example above, the same greyscale fitness landscape is used as in the individual (ie. non-population-based) search algorithms. Since our genetic algorithm contains a population of many competing solutions, there's no advantage to running multiple instances at the same time. Instead, we have a population slider which tells us how many solutions are kept in the population at any one time.
 

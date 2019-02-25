@@ -1,0 +1,12 @@
+From: Chris Warburton
+Date: Mon, 25 Feb 2019 08:48:20 +0000
+State: resolved
+Subject: We're getting self-closing script tags
+Message-Id: <ac5542597bcfc06b-0-artemis@nixos>
+resolution: fixed
+
+HTML script tags cannot be self-closing, i.e. '<script src="..." />' is
+not allowed. It should be '<script src="..."></script>' instead.
+
+Something (pandoc?) is giving out these self-closing script tags, and
+that is messing up the resulting pages.

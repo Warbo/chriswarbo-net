@@ -1,0 +1,9 @@
+From: Chris Warburton
+Date: Mon, 25 Feb 2019 15:43:06 +0000
+Subject: Re: We're getting self-closing script tags
+Message-Id: <ac5542597bcfc06b-9ece688f5fa77f93-artemis@nixos>
+References: <ac5542597bcfc06b-0-artemis@nixos>
+In-Reply-To: <ac5542597bcfc06b-0-artemis@nixos>
+
+Putting a newline between the open and close tags seems to fix
+this. I've added a test which checks for these.

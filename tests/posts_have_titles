@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
+set -e
+
 # shellcheck disable=SC2154
 xidel - -q --extract "//div[@id='content']//ul/li/a" < "$rendered"/blog.html |
     while read -r TITLE
     do
-        if [[ -z "$TITLE" ]]
-        then
-            echo "Missing title!" 1>&2
-            exit 1
-        fi
+        [[ -n "$TITLE" ]] || fail "Missing title!"
     done

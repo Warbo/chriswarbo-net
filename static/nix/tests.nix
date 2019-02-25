@@ -1,6 +1,6 @@
-{ attrsToDirs, commands, git, haskell, haskellPackages, lib, linkchecker, mf2py,
-  procps, pythonPackages, repoPages, runCommand, tidy-html5, untestedSite,
-  utillinux, wget, writeScript, xidel }:
+{ attrsToDirs, commands, fail, git, haskell, haskellPackages, lib, linkchecker,
+  mf2py, procps, pythonPackages, repoPages, runCommand, tidy-html5,
+  untestedSite, utillinux, wget, writeScript, xidel }:
 
 with builtins;
 with lib;
@@ -41,7 +41,7 @@ mapAttrs testScript {
     buildInputs = [ commands.cleanup ];
     includeSite = false;
   };
-  code_not_indented             = {};
+  code_not_indented             = { buildInputs = [ fail ]; };
   dirs_have_indices             = {};
   empty_panpipe_blocks_stripped = {
     buildInputs = [ commands.render_page ];
@@ -68,6 +68,7 @@ mapAttrs testScript {
   no_empty_files                = {};
   no_essays_links               = {};
   no_gitorious                  = {};
+  no_selfclosing_scripts        = { buildInputs = [ fail xidel ]; };
   posts_are_hentries            =
     with {
       hsPkgs = haskellPackages.override (old: {
@@ -90,10 +91,11 @@ mapAttrs testScript {
         ]))
       ];
     };
-  posts_have_titles = { buildInputs = [ xidel ]; };
+  posts_have_titles = { buildInputs = [ fail xidel ]; };
   redirect_posts    = {};
+  scripts_in_place  = { buildInputs = [ fail xidel ]; };
   tidy_html5        = { buildInputs = [ tidy-html5 ]; };
-  xidel_args        = { buildInputs = [ xidel ]; };
+  xidel_args        = { buildInputs = [ xidel      ]; };
 } // {
   reposRedirect = runCommand "reposRedirect"
     {

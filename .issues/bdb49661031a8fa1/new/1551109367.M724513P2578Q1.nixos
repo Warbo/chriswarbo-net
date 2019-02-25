@@ -1,0 +1,15 @@
+From: Chris Warburton
+Date: Mon, 25 Feb 2019 15:41:39 +0000
+Subject: Re: Fix JS optimisation pages
+Message-Id: <bdb49661031a8fa1-8e7944eb67c8e57b-artemis@nixos>
+References: <bdb49661031a8fa1-0-artemis@nixos>
+In-Reply-To: <bdb49661031a8fa1-0-artemis@nixos>
+
+Turns out to be a pandoc bug where '<script ...></script>' gets turned
+into '<script .../>' which is invalid.
+
+Putting a newline in between the open and close tags seems to avoid
+this.
+
+I've added a test which checks for such invalid elements (you'd think
+tidy-html5 would do it, but no...)

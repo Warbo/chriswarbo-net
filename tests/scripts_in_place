@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -e
+
+# Check whether script tags appear properly in various pages
+
+function countScripts {
+    F="$rendered/$1"
+    [[ -e "$F" ]] || fail "No such file '$F'"
+
+    OUTPUT=$(xidel -q - -e '//script/name()' < "$rendered/$1")
+     COUNT=$(echo "$OUTPUT" | wc -l)
+
+    [[ "$COUNT" -eq "$2" ]] ||
+        fail "Found '$COUNT' scripts in '$F', not '$2': $OUTPUT"
+}
+
+countScripts projects/optimisation/enumeration.html       4
+countScripts projects/optimisation/randomwalk.html        4
+countScripts projects/optimisation/selfavoidingwalk.html  4
+countScripts projects/optimisation/tabu.html              4
+countScripts projects/optimisation/levy.html              4
+countScripts projects/optimisation/hillclimbing.html      4
+countScripts projects/optimisation/levyclimbing.html      4
+countScripts projects/optimisation/levin.html             5
+countScripts projects/optimisation/mutation.html          4
+countScripts projects/optimisation/crossover.html         4
+countScripts projects/optimisation/mutatingcrossover.html 4

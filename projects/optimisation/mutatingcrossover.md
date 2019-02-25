@@ -11,7 +11,9 @@ In a genetic algorithm, these ideas are implemented literally in the code: full 
 
 In the genetic algorithm on this page, I've included the two commonly used solution generators: "mutation" and "crossover". Mutation randomly changes some of the genes, and is a good source of diversity for the algorithm. Crossover chops up two solutions and swaps sections between them, which allows new solutions to be formed without throwing away the genes that have evolved so far (they just get recombined in different patterns). Together these rules make a more sophisticated model of sexual reproduction than crossover alone. To start the simulation, click on the playfield (the box showing the greyscale fitness function).
 
-<div id="mutatecross_playfield" style="width: 500px; height: 500px;"></div>
+<div id="mutatecross_playfield" style="width: 500px; height: 500px;">
+</div>
+
 <form action="#" method="get">
  <div>
   <input type="range" min="1" max="100" value="20" id="mutatecross_population" style="width: 500px;" />
@@ -32,10 +34,18 @@ In the genetic algorithm on this page, I've included the two commonly used solut
   <input type="checkbox" id="mutatecross_stable" value="0" /><label for="mutatecross_stable">Stable sort. Slower, but stops the green blob jumping between equal-fitness solutions.</label>
  </div>
 </form>
-<script src="/js/jquery.js"></script>
-<script src="/js/jquery_svg.js"></script>
-<script src="/js/underscore.js"></script>
-<script src="/js/optimisation/mutatecross.js"></script>
+
+<script src="/js/jquery.js">
+</script>
+
+<script src="/js/jquery_svg.js">
+</script>
+
+<script src="/js/underscore.js">
+</script>
+
+<script src="/js/optimisation/mutatecross.js">
+</script>
 
 In the example above, the same greyscale fitness landscape is used as in the individual (ie. non-population-based) search algorithms. Since our genetic algorithm contains a population of many competing solutions, there's no advantage to running multiple instances at the same time. Instead, we have a population slider which tells us how many solutions are kept in the population at any one time.
 
