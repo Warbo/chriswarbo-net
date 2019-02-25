@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Wed, 02 May 2018 12:39:05 +0100
-State: new
+State: resolved
 Subject: Keep import from derivation to a minimum
 Message-Id: <8807d3acba24c747-0-artemis@nixos>
+resolution: fixed
 
 Where possible, we should try to accumulate dependencies on to our
 resulting derivations. We *can* import from derivations, but that will

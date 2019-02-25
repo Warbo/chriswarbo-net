@@ -1,0 +1,9 @@
+From: Chris Warburton
+Date: Mon, 25 Feb 2019 15:47:42 +0000
+Subject: Re: Pipefail for PanPipe
+Message-Id: <f95cabf6e138386f-deefd2bc8d61c22a-artemis@nixos>
+References: <f95cabf6e138386f-0-artemis@nixos>
+In-Reply-To: <f95cabf6e138386f-0-artemis@nixos>
+
+Closing since we should probably have our defaults use the shell
+defaults.

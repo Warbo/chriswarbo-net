@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Thu, 16 Nov 2017 15:23:42 +0000
-State: new
+State: resolved
 Subject: Pipefail for PanPipe
 Message-Id: <f95cabf6e138386f-0-artemis@nixos>
+resolution: fixed
 
 In repos.md, there's a script like this:
 

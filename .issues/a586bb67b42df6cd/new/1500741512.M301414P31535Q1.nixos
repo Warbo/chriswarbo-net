@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Sat, 22 Jul 2017 17:37:25 +0100
-State: new
+State: resolved
 Subject: "View Source" for IPFS
 Message-Id: <a586bb67b42df6cd-0-artemis@nixos>
+resolution: fixed
 
 The "view source" links are relative to the site URL, which means they
 don't work on the IPFS version.
