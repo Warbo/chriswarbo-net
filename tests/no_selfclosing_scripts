@@ -7,7 +7,7 @@ do
     GOT=$(xidel - -q -e '//script[@src]/@src' < "$F")
     [[ -n "$GOT" ]] || continue
 
-    if grep '<script *src="[^"]*" */>' < "$F"
+    if grep '<script *[^>]*/>' < "$F"
     then
         BROKEN=$(echo "$BROKEN $F")
     fi

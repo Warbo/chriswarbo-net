@@ -32,7 +32,7 @@ to this function, and the return value will appear in the bottom box.
 printf '<script type="text/javascript" '
 printf 'src="data:text/javascript;charset=utf-8;base64,'
 base64 -w 0 < js/js-plumb/plumb.js
-printf '"></script>'
+printf '">\n</script>'
 ```
 
 <script type="text/javascript">// <![CDATA[
