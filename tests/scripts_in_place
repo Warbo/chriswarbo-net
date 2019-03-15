@@ -4,6 +4,7 @@ set -e
 # Check whether script tags appear properly in various pages
 
 function countScripts {
+    # shellcheck disable=SC2154
     F="$rendered/$1"
     [[ -e "$F" ]] || fail "No such file '$F'"
 
