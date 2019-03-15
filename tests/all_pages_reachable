@@ -37,8 +37,6 @@ function cleanup {
     kill -9 "$SERVER_PID" || true
 }
 
-BASE="$PWD"
-
 # shellcheck disable=SC2154
 pushd "$rendered" > /dev/null
 
