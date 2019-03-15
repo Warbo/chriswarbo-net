@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
+function pages {
+    # shellcheck disable=SC2154
+    find -L "$rendered" -iname '*.html'
+}
+
 BROKEN=""
 while read -r F
 do
@@ -9,16 +14,17 @@ do
 
     if grep '<script *[^>]*/>' < "$F"
     then
-        BROKEN=$(echo "$BROKEN $F")
+        BROKEN="$BROKEN $F"
     fi
-done < <(find -L "$rendered" -iname '*.html')
+done < <(pages)
 
 [[ -z "$BROKEN" ]] && exit 0
 
-echo "Self-closing script tags found. This is invalid HTML, and messes up" 1>&2
-echo "any content which follows. This is probably caused by putting"       1>&2
-echo "'<script src="..."></script>' all on one line, which Pandoc shrinks" 1>&2
-echo "down to '<script src="..."/>'. If so, put a newline between the"     1>&2
-echo "open and close tags; that should be enough for Pandoc to leave it."  1>&2
+echo "Self-closing script tags found. This is invalid HTML, and messes up"  1>&2
+echo "any content which follows. This is probably caused by putting"        1>&2
+echo "'<script src=\"...\"></script>' all on one line, which Pandoc shrinks"1>&2
+echo "shrinks down to '<script src=\"...\"/>'. If so, put a newline between"1>&2
+echo "the open and close tags; that should be enough for Pandoc to leave"   1>&2
+echo "it."                                                                  1>&2
 
 fail "These pages contain self-closing script tags (invalid HTML): $BROKEN"
