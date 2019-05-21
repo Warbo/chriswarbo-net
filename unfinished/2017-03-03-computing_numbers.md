@@ -1,12 +1,16 @@
 ---
 title: Computing Numbers
+packages: [ "nix-shell" ]
 ---
 
-Personally, I much prefer language/algebraic approaches to computability. Here's
-how I'd go about it:
+This is a sequel to [an earlier blog post about computable numbers](
+/blog/2017-02-27-listing_things.html). In that post I gave a simple suggestion
+for computing numbers to unlimited precision using a Turing machine. Personally,
+I much prefer language/algebraic approaches to computability, so I also wrote up
+an alternative language-based approach that I find cleaner:
 
- - Similar to above, we will represent a number as two never-ending "streams" of
-   bits, one on each side of the radix point.
+ - Similar to before, we will represent a number as two never-ending "streams"
+   of bits, one on each side of the radix point.
  - Rather than fiddling around with binary tapes, interleaving, etc. we will
    keep everything abstract by data using [free variables](
    https://en.wikipedia.org/wiki/Free_variables_and_bound_variables). We will
@@ -69,68 +73,84 @@ t  l0
 I've made a quick implementation of this in Haskell; here's the beginning of the
 list:
 
+```{pipe="cat > runner"}
+#!/usr/bin/env bash
+nix-shell --run runhaskell \
+          -p '(haskellPackages.ghcWithPackages (h: [ h.control-monad-omega ]))'
 ```
-{pipe="nix-shell -p '(haskellPackages.ghcWithPackages (h: [ h.control-monad-omega ]))' --run runhaskell"}
-{-# LANGUAGE MonadComprehensions #-}
+
+```{.haskell pipe="sh ./runner"}
+{-# LANGUAGE BangPatterns, MonadComprehensions #-}
 module X where
 
 import Control.Monad
 import Control.Monad.Omega
+import Data.List
+import Data.Maybe
 
-data Comb = S | K | Node Comb Comb | V Var deriving (Show, Eq)
+data Comb = S | K | Node Comb Comb | V Var deriving (Eq, Show)
 
-data Var = L0 | L1 | R0 | R1 deriving (Eq, Show)
+data Var = Pair | Zero | One deriving (Eq, Show)
 
--- Tells us whether or not an expression *could* be reduced, but doesn't
--- actually do it; this function always halts
-reducible x = redex x || case x of
-  K                          -> False
-  S                          -> False
-  V _                        -> False
-  Node x y                   -> reducible x || reducible y
+step (Node (Node K x) y)          = (True, x)
+step (Node (Node (Node S x) y) z) = (True, Node (Node x z) (Node y z))
+step (Node x y)                   = case step x of
+                                         (True, x') -> (True, Node x' y)
+                                         (False, _) -> Node x <$> step y
+step x                            = (False, x)
 
-redex (Node (Node K a) b)          = True
-redex (Node (Node (Node S a) b) c) = True
-redex _                            = False
-
-reduce 0 x |      reducible x     = Nothing
-reduce n x | not (reducible x)    = Just x
-reduce n x |      redex     x     = reduce (n-1) (step x)
-reduce n (Node x y) | reducible x = do x' <- reduce n x
-                                       return (reduce (n-1) (Node x' y))
-reduce n (Node x y) | reducible y = do y' <- reduce n y
-                                       return (reduce (n-1) (Node x y'))
-
-step (Node (Node K x) y)          = x
-step (Node (Node (Node S x) y) z) = Node (Node x z) (Node y z)
-step _ = error "Can't step"
-
-whnf _ S                       = Just S
-whnf _ K                       = Just K
-whnf _ (V v)                   = Just (V v)
-whnf 0 (Node x y) | reducible x = Nothing
-whnf n (Node x y) | reducible x = do x' <- reduce n x
-                                     if redex (Node x' y)
-                                        then whnf (n-1) (step (Node x' y))
-                                        else Just (Node x' y)
-whnf n (Node x y) | otherwise   = Just (Node x y)
-
-spine n S = []
-spine n K = []
-spine n (Node x y) = x : case whnf n y of
-                              Nothing -> []
-                              Just y' -> spine (n-1) y'
-
-readNum n (left, right) []        = (left, right)
-readNum n (left, right) (V L0:xs) = readNum (n-1) (0:left, right) xs
-readNum n (left, right) (V L1:xs) = readNum (n-1) (1:left, right) xs
-readNum n (left, right) (V R0:xs) = readNum (n-1) (left, 0:right) xs
-readNum n (left, right) (V R1:xs) = readNum (n-1) (left, 1:right) xs
-readNum n (left, right) (_:xs)    = readNum (n-1) (left, right)   xs
+reduce 0 x = Nothing
+reduce n x = case step x of
+                 (True, x') -> reduce (n-1) x'
+                 (False, _) -> Just x
 
 trees = S : K : runOmega [Node x y | x <- each trees, y <- each trees]
 
-applied = [Node (Node (Node (Node t (V L0)) (V L1)) (V R0)) R1 | t <- trees]
+readTree n t = do t' <- reduce n (Node t (V Pair))
+                  case t' of
+                       Node (Node (V Pair) l) r -> readStreams n l r
+                       _                        -> Nothing
 
-evaledTrees = map (reduce 1000) applied
+readStreams n l r = do l' <- readStream n l
+                       r' <- readStream n r
+                       pure (l', r')
+
+readStream n = go [] 8
+  where go !acc 0 _ = Just acc
+        go !acc m x = do t' <- reduce n (Node (Node x (V Zero)) (V One))
+                         case t' of
+                              Node (V Zero) rest -> go (acc ++ [0]) (m-1) rest
+                              Node (V One)  rest -> go (acc ++ [1]) (m-1) rest
+                              _                  -> Just acc
+
+evaledTrees = map (readTree 10) trees
+
+bitsToNum :: ([Int], [Int]) -> Double
+bitsToNum (l, r) = parseWhole 0 1 (reverse l) + parseFrac 0 0.5 r
+  where parseWhole !n !power []     = n
+        parseWhole !n !power (0:xs) = parseWhole  n          (power * 2) xs
+        parseWhole !n !power (1:xs) = parseWhole (n + power) (power * 2) xs
+
+        parseFrac  !n !power []     = n
+        parseFrac  !n !power (0:xs) = parseFrac   n          (power / 2) xs
+        parseFrac  !n !power (1:xs) = parseFrac  (n + power) (power / 2) xs
+
+nubble = go []
+  where go seen []     = []
+        go seen (x:xs) = if x `elem` seen
+                            then     go    seen  xs
+                            else x : go (x:seen) xs
+
+-- FIXME: We're only taking 1 since even taking 5 ends up blowing the memory
+-- after a while. The problem is that we're throwing away so many programs; I'd
+-- like to think of a more direct encoding, but haven't come up with one that's
+-- functional (e.g. we could read the S and K occurrences in post-order, but
+-- that violates things like beta-equality).
+render = intercalate ", " . take 1 . nubble .
+         -- Turn into a list of strings of numbers
+         map (show . bitsToNum) .
+         -- Discard anything that failed to normalise
+         catMaybes
+
+main = putStr . render $ evaledTrees
 ```
