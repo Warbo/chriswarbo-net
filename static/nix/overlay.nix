@@ -67,7 +67,7 @@ assert super ? nix-helpers || abort (toJSON {
         blog        = self.topLevel."blog.html";
         buildInputs = [ self.hfeed2atom ];
       }
-      ''"${../mkAtom}"'';
+      ../mkAtom;
 
     rss  = self.runCommand "blog.rss"
       {
