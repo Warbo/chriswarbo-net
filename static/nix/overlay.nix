@@ -62,7 +62,7 @@ assert super ? nix-helpers || abort (toJSON {
   };
 
   inherit (self.callPackage ./resources.nix {}) resources;
-  inherit (self.callPackage  ./redirect.nix {}) redirects;
+  inherit (self.callPackage ./redirects.nix {}) redirects;
 
   allPages = self.topLevel // self.redirects // self.resources // {
     blog        = self.blogPages;
