@@ -20,7 +20,7 @@ with rec {
   overlayed = repo: import repo {
     config   = {};
     overlays = [
-      (import "${helpers}/overlay.nix")
+      (import "${nix-helpers}/overlay.nix")
       (import "${packages}/overlay.nix")
       (import ./overlay.nix)
       (self: super: {
@@ -35,23 +35,14 @@ with rec {
   # Pin to a particular version of nixpkgs, to avoid updates breaking things.
   pinnedNixpkgs = overlayed (overlayed <nixpkgs>).repo1803;
 
-  fetch   = args: (import <nixpkgs> {
-                    config   = {};
-                    overlays = [];
-                  }).fetchgit (args // {
-                    url = "${repoSource}/${args.url}";
-                  });
+  inherit (import <nixpkgs> { config   = {}; overlays = []; }) fetchgit;
 
-  helpers = fetch {
-    url    = "nix-helpers.git";
-    rev    = "72d9d88";
-    sha256 = "1kggqr07dz2widv895wp8g1x314lqg19p67nzr3b97pg97amhjsi";
-  };
+  inherit (import "${packages}/helpers.nix" { inherit fetchgit; }) nix-helpers;
 
-  packages = fetch {
-    url    = "warbo-packages.git";
-    rev    = "9f129aa";
-    sha256 = "1v35m8xxqav8cq4g1hjn8yhzhaf9g4jyrmz9a26g7hk04ybjwc7k";
+  packages = fetchgit {
+    url    = "${repoSource}/warbo-packages.git";
+    rev    = "1d9ce7d";
+    sha256 = "0viz492xf45md0wchfs82a5y8v5kx903b4yvi9lzdqpfdy4qg9qr";
   };
 };
 
