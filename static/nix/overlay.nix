@@ -61,30 +61,8 @@ assert super ? nix-helpers || abort (toJSON {
     "unfinished.md" = { vars = { inherit (self) unfinishedPages; }; };
   };
 
-  resources = with rec {
-    atom = self.runCommand "blog.atom"
-      {
-        blog        = self.topLevel."blog.html";
-        buildInputs = [ self.hfeed2atom ];
-      }
-      ../mkAtom;
-
-    rss = self.runCommand "blog.rss"
-      {
-        inherit atom;
-        XSL         = ../atom2rss.xsl;
-        buildInputs = [ self.fail self.libxslt.bin ];
-      }
-      ../mkRss;
-  };
-  {
-    "blog.atom" = atom;
-    "blog.rss"  = rss;
-    css         = ../../css;
-    js          = ../../js;
-  };
-
-  inherit (self.callPackage ./redirect.nix {}) redirects;
+  inherit (self.callPackage ./resources.nix {}) resources;
+  inherit (self.callPackage  ./redirect.nix {}) redirects;
 
   allPages = self.topLevel // self.redirects // self.resources // {
     blog        = self.blogPages;
