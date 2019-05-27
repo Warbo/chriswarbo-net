@@ -40,7 +40,7 @@ assert super ? nix-helpers || abort (toJSON {
                                          x
                           else x;
 
-      go = prefix: x: self.mdToHtmlRec (mapAttrs
+      go = prefix: x: mdToHtmlRec (mapAttrs
         (n: v: if isDerivation v || self.isPath v
                   then self.render {
                          file        = v;
