@@ -66,11 +66,6 @@ extras // mapAttrs wrapScript {
     vars = { TEMPLATE = ../redirectTemplate.html; };
   };
 
-  mkRss = {
-    paths = [ libxslt ];
-    vars  = { XSL = ../atom2rss.xsl; };
-  };
-
   relativise = {
     paths = [ xmlstarlet ];
   };

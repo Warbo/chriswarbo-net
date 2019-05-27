@@ -1,2 +1,5 @@
 #!/usr/bin/env bash
-xsltproc "$XSL" -
+set -e
+[[ -n "$atom" ]] || fail "mkRss: No 'atom' given, aborting"
+[[ -n "$out"  ]] || fail "mkRss: No 'out' given, aborting"
+xsltproc "$XSL" - < "$atom" > "$out"

@@ -69,14 +69,13 @@ assert super ? nix-helpers || abort (toJSON {
       }
       ../mkAtom;
 
-    rss  = self.runCommand "blog.rss"
+    rss = self.runCommand "blog.rss"
       {
         inherit atom;
-        buildInputs = [ self.commands.mkRss ];
+        XSL         = ../atom2rss.xsl;
+        buildInputs = [ self.fail self.libxslt.bin ];
       }
-      ''
-        mkRss < "$atom" > "$out"
-      '';
+      ../mkRss;
   };
   {
     "blog.atom" = atom;
