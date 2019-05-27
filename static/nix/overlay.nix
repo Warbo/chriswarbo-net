@@ -10,12 +10,10 @@ assert super ? nix-helpers || abort (toJSON {
   render   = self.callPackage ./render.nix   { inherit self; };
   relTo    = self.callPackage ./relTo.nix    {};
 
-  # Turn ".md" names in to ".html"
   mdToHtml    = n: if hasSuffix ".md" n
                       then "${removeSuffix ".md" n}.html"
                       else n;
 
-  # Turn ".html" into ".md"
   htmlToMd = n: if hasSuffix ".html" n
                    then "${removeSuffix ".html" n}.md"
                    else n;
