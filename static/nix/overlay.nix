@@ -18,7 +18,7 @@ assert super ? nix-helpers || abort (toJSON {
                    then "${removeSuffix ".html" n}.md"
                    else n;
 
-  renderAll =
+  renderAll = dir:
     with rec {
       renderGo = prefix: n: v: rec {
         name  = self.mdToHtml n;
@@ -37,12 +37,11 @@ assert super ? nix-helpers || abort (toJSON {
 
       go = prefix: mapAttrs' (renderGo prefix);
     };
-    go;
+    go [ dir ] (self.dirsToAttrs (../.. + "/${dir}"));
 
-  blog         = self.renderAll ["blog"      ] (self.dirsToAttrs ../../blog);
-  projects     = self.renderAll ["projects"  ] (self.dirsToAttrs ../../projects) //
-                 { repos = self.projectRepos; };
-  unfinished   = self.renderAll ["unfinished"] (self.dirsToAttrs ../../unfinished);
+  blog         = self.renderAll "blog";
+  projects     = self.renderAll "projects" // { repos = self.projectRepos; };
+  unfinished   = self.renderAll "unfinished";
 
   # Derivations which build entire sub-directories
   blogPages       = self.attrsToDirs' "blog"       self.blog;
