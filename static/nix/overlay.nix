@@ -11,10 +11,14 @@ assert super ? nix-helpers || abort (toJSON {
   relTo    = self.callPackage ./relTo.nix    {};
 
   # Turn ".md" names in to ".html"
-  mdToHtml    = n: (removeSuffix ".html" (removeSuffix ".md" n)) + ".html";
+  mdToHtml    = n: if hasSuffix ".md" n
+                      then "${removeSuffix ".md" n}.html"
+                      else n;
 
   # Turn ".html" into ".md"
-  htmlToMd = name: (removeSuffix ".html" (removeSuffix ".html" name)) + ".md";
+  htmlToMd = n: if hasSuffix ".html" n
+                   then "${removeSuffix ".html" n}.md"
+                   else n;
 
   # Read filenames from ./blog and append to the path './blog', so that each
   # is a standalone path. This way each post only depends on its own source,
