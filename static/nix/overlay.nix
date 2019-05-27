@@ -96,53 +96,7 @@ assert super ? nix-helpers || abort (toJSON {
   };
 
   redirects =
-    with rec {
-      go = paths: entry: content:
-        if self.isPath content || isDerivation content
-           then self.relTo
-                  (concatStringsSep "/" (["."] ++ map (_: "..") paths))
-                  (mkRedirectTo {
-                    from = self.sanitiseName entry;
-                    to   = concatStringsSep "/" ([""] ++ paths ++ [entry]);
-                  })
-           else mapAttrs (go (paths ++ [entry])) content;
-
-      essays = mapAttrs (go ["projects"]) self.projects;
-
-      # These pages now live in projects/ but there are links in the wild
-      # without that prefix. We single them out here to avoid proliferating new
-      # redirects for new pages which don't have this compatibility issue.
-      toplevelRedirects = [
-        "activecode" "arduino" "maze" "nixos" "optimisation" "plumb" "powerplay"
-        "procedural" "turtleview"
-      ];
-
-      projectDirs = filterAttrs (name: val: isAttrs val           &&
-                                            (!(isDerivation val)) &&
-                                            elem name toplevelRedirects)
-                                self.projects;
-
-      redirectDir = entry: {
-        "index.html" = self.relTo "." (mkRedirectTo {
-          from = "redirect-${self.sanitiseName entry}";
-          to   = "/projects/${entry}/index.html";
-        });
-      };
-
-      oldLinks = mapAttrs (name: _: redirectDir name) projectDirs;
-
-      mkRedirectTo = { from, to }: self.runCommand from
-        {
-          inherit to;
-          buildInputs = [ self.commands.mkRedirectTo ];
-        }
-        ''
-          # We make sure the redirection succeeds before we do anything to $out,
-          # to avoid creating empty or partial files
-          RESULT=$(mkRedirectTo "$to")
-          echo "$RESULT" > "$out"
-        '';
-    };
+    with self.callPackage ./redirect.nix {};
     oldLinks // {
       inherit essays;
       data_custom = {
@@ -152,11 +106,9 @@ assert super ? nix-helpers || abort (toJSON {
         };
       };
 
-
-
       "essays.html" = self.relTo "." (mkRedirectTo {
-        from    = "essays.html";
-        to      = "projects.html";
+        from = "essays.html";
+        to   = "projects.html";
       });
     };
 
