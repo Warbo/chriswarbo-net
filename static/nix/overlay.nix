@@ -84,22 +84,7 @@ assert super ? nix-helpers || abort (toJSON {
     js          = ../../js;
   };
 
-  redirects =
-    with self.callPackage ./redirect.nix {};
-    oldLinks // {
-      inherit essays;
-      data_custom = {
-        "prelude.txt" = mkRedirectTo {
-          from = "prelude.txt";
-          to   = "/git/php-prelude";
-        };
-      };
-
-      "essays.html" = self.relTo "." (mkRedirectTo {
-        from = "essays.html";
-        to   = "projects.html";
-      });
-    };
+  inherit (self.callPackage ./redirect.nix {}) redirects;
 
   allPages = self.topLevel // self.redirects // self.resources // {
     blog        = self.blogPages;

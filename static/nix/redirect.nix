@@ -24,9 +24,7 @@ with rec {
       RESULT=$(mkRedirectTo "$to")
       echo "$RESULT" > "$out"
     '';
-};
-rec {
-  inherit mkRedirectTo;
+
   essays = mapAttrs (go ["projects"]) projects;
 
   # These pages now live in projects/ but there are links in the wild
@@ -50,4 +48,20 @@ rec {
   };
 
   oldLinks = mapAttrs (name: _: redirectDir name) projectDirs;
+};
+{
+  redirects = oldLinks // {
+    inherit essays;
+    data_custom = {
+      "prelude.txt" = mkRedirectTo {
+        from = "prelude.txt";
+        to   = "/git/php-prelude";
+      };
+    };
+
+    "essays.html" = relTo "." (mkRedirectTo {
+      from = "essays.html";
+      to   = "projects.html";
+    });
+  };
 }
