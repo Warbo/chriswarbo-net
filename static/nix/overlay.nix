@@ -42,7 +42,9 @@ assert super ? nix-helpers || abort (toJSON {
                           else x;
 
       renderGo = prefix: n: v: {
-        name = n;
+        name  = if hasSuffix ".md" n
+                   then self.mdToHtml n
+                   else n;
         value = if isDerivation v || self.isPath v
                    then self.render {
                      file        = v;
@@ -56,7 +58,7 @@ assert super ? nix-helpers || abort (toJSON {
                            else abort "Can't render ${toJSON { inherit n v; }}";
       };
 
-      go = prefix: x: mapAttrs' mdGo (mapAttrs' (renderGo prefix) x);
+      go = prefix: mapAttrs' (renderGo prefix);
     };
     go;
 
