@@ -117,11 +117,10 @@ assert super ? nix-helpers || abort (toJSON {
         "procedural" "turtleview"
       ];
 
-      projectDirs = attrNames
-        (filterAttrs (name: val: isAttrs val           &&
-                                 (!(isDerivation val)) &&
-                                 elem name toplevelRedirects)
-                     self.projects);
+      projectDirs = filterAttrs (name: val: isAttrs val           &&
+                                            (!(isDerivation val)) &&
+                                            elem name toplevelRedirects)
+                                self.projects;
 
       redirectDir = entry: {
         "index.html" = self.relTo "." (mkRedirectTo {
@@ -130,9 +129,7 @@ assert super ? nix-helpers || abort (toJSON {
         });
       };
 
-      oldLinks = listToAttrs (map (name: { inherit name;
-                                           value = redirectDir name; })
-                                  projectDirs);
+      oldLinks = mapAttrs (name: _: redirectDir name) projectDirs;
 
       mkRedirectTo = { from, to }: self.runCommand from
         {
@@ -177,9 +174,9 @@ assert super ? nix-helpers || abort (toJSON {
 
   tests        = self.callPackage ./tests.nix {};
 
-  wholeSite    = self.withDeps (self.allDrvsIn self.tests) self.untestedSite;
-
   untestedSite = self.attrsToDirs' "untestedSite" self.allPages;
+
+  wholeSite    = self.withDeps (self.allDrvsIn self.tests) self.untestedSite;
 
   inherit (self.callPackage ./repos.nix {})
     projectRepos repoName repoPages;
