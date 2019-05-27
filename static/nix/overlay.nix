@@ -10,14 +10,14 @@ assert super ? nix-helpers || abort (toJSON {
   render   = self.callPackage ./render.nix   { inherit self; };
   relTo    = self.callPackage ./relTo.nix    {};
 
-  mdToHtml    = n: if hasSuffix ".md" n
-                      then "${removeSuffix ".md" n}.html"
-                      else n;
-
   renderAll = dir:
     with rec {
+      mdToHtml = n: if hasSuffix ".md" n
+                       then "${removeSuffix ".md" n}.html"
+                       else n;
+
       renderGo = prefix: n: v: rec {
-        name  = self.mdToHtml n;
+        name  = mdToHtml n;
         value = if isDerivation v || self.isPath v
                    then self.render {
                      inherit name;
