@@ -35,9 +35,7 @@ assert super ? nix-helpers || abort (toJSON {
   renderAll =
     with rec {
       renderGo = prefix: n: v: {
-        name  = if hasSuffix ".md" n
-                   then self.mdToHtml n
-                   else n;
+        name  = self.mdToHtml n;
         value = if isDerivation v || self.isPath v
                    then self.render {
                      file        = v;
