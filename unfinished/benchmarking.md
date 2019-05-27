@@ -74,12 +74,19 @@ measurement tool, gives us some nice benefits:
  - HTML reports graphing results over time
  - Step detection for finding regressions
 
-To integrate ASV more smoothly with my workflow, I've written [a tool to make it
-easier to invoke ASV benchmarks]() from the [Hydra build server]() (in
-particular, allowing an impure cache to store past results).
+One difficulty is to ensure that we don't run multiple benchmark suites at once.
+I use [Laminar](https://laminar.ohwg.net) for continuous integration, and use
+Nix to define [my Laminar configuration
+](http://chriswarbo.net/git/laminar-config). To prevent benchmarks running
+concurrently, I've used
+[`flock`](http://man7.org/linux/man-pages/man1/flock.1.html) in two ways:
 
-At some point I'll probably add the HTML reports to
-[the Web pages auto-generated from each project's git
-repository](http://chriswarbo.net/projects/repos/index.html).
+ - Non-benchmark jobs (i.e. builds and tests) are guarded with a "read lock"
+   (or "shared lock", via `flock -s`). Multiple such jobs can run concurrently.
+ - Benchmark jobs are guarded with the same lock file, but as a "write lock"
+   (AKA "non-shared"). Such jobs will not run concurrently with any other
+   benchmark *or* any non-benchmark job.
 
-## ##
+It is important that we use `flock` on *all* jobs, not just benchmarks, to avoid
+concurrency. I use git hooks to trigger each repo's build/test Laminar job; and
+those jobs, if they succeed, trigger the associated benchmark (if one exists).
