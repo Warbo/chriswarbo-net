@@ -32,12 +32,13 @@ assert super ? nix-helpers || abort (toJSON {
 
   renderAll =
     with rec {
+      mdGo = n: v: { name  = if hasSuffix ".md" n
+                                then self.mdToHtml n
+                                else n;
+                     value = mdToHtmlRec v; };
+
       mdToHtmlRec = x: if isAttrs x
-                          then mapAttrs' (n: v: { name  = if hasSuffix ".md" n
-                                                             then self.mdToHtml n
-                                                             else n;
-                                                  value = mdToHtmlRec v; })
-                                         x
+                          then mapAttrs' mdGo x
                           else x;
 
       go = prefix: x: mdToHtmlRec (mapAttrs
