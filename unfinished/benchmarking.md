@@ -88,5 +88,9 @@ concurrently, I've used
    benchmark *or* any non-benchmark job.
 
 It is important that we use `flock` on *all* jobs, not just benchmarks, to avoid
-concurrency. I use git hooks to trigger each repo's build/test Laminar job; and
-those jobs, if they succeed, trigger the associated benchmark (if one exists).
+concurrency *during a benchmark*. I use git hooks to trigger each repo's
+build/test Laminar job; but not for the benchmarks, since there's little point
+benchmarking a project which doesn't build or whose test suite fails. Instead,
+the benchmark jobs are triggered by the build/test jobs, iff the build/test
+succeeds. We can do this thanks to the simplicity of Laminar, which is designed
+to be easily scripted.
