@@ -18,20 +18,6 @@ assert super ? nix-helpers || abort (toJSON {
                    then "${removeSuffix ".html" n}.md"
                    else n;
 
-  # Read filenames from ./blog and append to the path './blog', so that each
-  # is a standalone path. This way each post only depends on its own source,
-  # and won't get rebuilt if e.g. a new post is added to ./blog.
-  blog = mapAttrs' (p: _: with { name  = self.mdToHtml p; }; {
-                     inherit name;
-                     value = self.render {
-                       file        = ../../blog + "/${p}";
-                       name        = "blog-${name}";
-                       SOURCE_PATH = "blog/${p}";
-                       TO_ROOT     = "./..";
-                     };
-                   })
-                   (readDir ../../blog);
-
   renderAll =
     with rec {
       renderGo = prefix: n: v: rec {
@@ -53,9 +39,9 @@ assert super ? nix-helpers || abort (toJSON {
     };
     go;
 
-  projects     = self.renderAll ["projects"] (self.dirsToAttrs ../../projects) //
+  blog         = self.renderAll ["blog"      ] (self.dirsToAttrs ../../blog);
+  projects     = self.renderAll ["projects"  ] (self.dirsToAttrs ../../projects) //
                  { repos = self.projectRepos; };
-
   unfinished   = self.renderAll ["unfinished"] (self.dirsToAttrs ../../unfinished);
 
   # Derivations which build entire sub-directories
