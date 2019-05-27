@@ -44,37 +44,20 @@ assert super ? nix-helpers || abort (toJSON {
   projectPages    = self.attrsToDirs' "projects"   self.projects;
   unfinishedPages = self.attrsToDirs' "unfinished" self.unfinished;
 
-  topLevel     = mapAttrs' (name: val: {
-                             inherit name;
+  topLevel     = mapAttrs' (n: val: rec {
+                             name  = "${removeSuffix ".md" n}.html";
                              value = self.render (val // {
                                inherit name;
-                               TO_ROOT = ".";
+                               file        = ../.. + "/${n}";
+                               TO_ROOT     = ".";
+                               SOURCE_PATH = n;
                              });
                            }) {
-    "index.html"      = {
-      vars        = { inherit (self) blogPages; };
-      file        = ../../index.md;
-      SOURCE_PATH = "index.md";
-    };
-    "blog.html"       = {
-      vars        = { inherit (self) blogPages; };
-      file        = ../../blog.md;
-      SOURCE_PATH = "blog.md";
-    };
-    "contact.html"    = {
-      file        = ../../contact.md;
-      SOURCE_PATH = "contact.md";
-    };
-    "projects.html"   = {
-      vars        = { projects = self.projectPages; };
-      file        = ../../projects.md;
-      SOURCE_PATH = "projects.md";
-    };
-    "unfinished.html" = {
-      vars        = { inherit (self) unfinishedPages; };
-      file        = ../../unfinished.md;
-      SOURCE_PATH = "unfinished.md";
-    };
+    "index.md"      = { vars = { inherit (self) blogPages;       }; };
+    "blog.md"       = { vars = { inherit (self) blogPages;       }; };
+    "contact.md"    = {                                             };
+    "projects.md"   = { vars = { projects = self.projectPages;   }; };
+    "unfinished.md" = { vars = { inherit (self) unfinishedPages; }; };
   };
 
   resources = with rec {
