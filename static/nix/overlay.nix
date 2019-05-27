@@ -99,12 +99,15 @@ assert super ? nix-helpers || abort (toJSON {
     with rec {
       go = paths: entry: content:
         if self.isPath content || isDerivation content
-           then self.relTo (concatStringsSep "/" (["."] ++ map (_: "..") paths))
-                      (mkRedirectTo {
-                        from = self.sanitiseName entry;
-                        to   = concatStringsSep "/" ([""] ++ paths ++ [entry]);
-                      })
+           then self.relTo
+                  (concatStringsSep "/" (["."] ++ map (_: "..") paths))
+                  (mkRedirectTo {
+                    from = self.sanitiseName entry;
+                    to   = concatStringsSep "/" ([""] ++ paths ++ [entry]);
+                  })
            else mapAttrs (go (paths ++ [entry])) content;
+
+      essays = mapAttrs (go ["projects"]) self.projects;
 
       # These pages now live in projects/ but there are links in the wild
       # without that prefix. We single them out here to avoid proliferating new
@@ -114,11 +117,11 @@ assert super ? nix-helpers || abort (toJSON {
         "procedural" "turtleview"
       ];
 
-      projectDirs = filter (name: let val = getAttr name self.projects;
-                                   in isAttrs val &&
-                                      (!(isDerivation val)) &&
-                                      elem name toplevelRedirects)
-                           (attrNames self.projects);
+      projectDirs = attrNames
+        (filterAttrs (name: val: isAttrs val           &&
+                                 (!(isDerivation val)) &&
+                                 elem name toplevelRedirects)
+                     self.projects);
 
       redirectDir = entry: {
         "index.html" = self.relTo "." (mkRedirectTo {
@@ -144,6 +147,7 @@ assert super ? nix-helpers || abort (toJSON {
         '';
     };
     oldLinks // {
+      inherit essays;
       data_custom = {
         "prelude.txt" = mkRedirectTo {
           from = "prelude.txt";
@@ -151,7 +155,7 @@ assert super ? nix-helpers || abort (toJSON {
         };
       };
 
-      essays = mapAttrs (go ["projects"]) self.projects;
+
 
       "essays.html" = self.relTo "." (mkRedirectTo {
         from    = "essays.html";
