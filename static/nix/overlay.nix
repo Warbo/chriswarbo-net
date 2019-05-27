@@ -34,12 +34,12 @@ assert super ? nix-helpers || abort (toJSON {
 
   renderAll =
     with rec {
-      renderGo = prefix: n: v: {
+      renderGo = prefix: n: v: rec {
         name  = self.mdToHtml n;
         value = if isDerivation v || self.isPath v
                    then self.render {
+                     inherit name;
                      file        = v;
-                     name        = self.mdToHtml n;
                      SOURCE_PATH = concatStringsSep "/" (prefix ++ [n]);
                      TO_ROOT     = concatStringsSep "/" (["."] ++ map (_: "..")
                                                                       prefix);
