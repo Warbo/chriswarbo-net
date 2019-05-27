@@ -14,10 +14,6 @@ assert super ? nix-helpers || abort (toJSON {
                       then "${removeSuffix ".md" n}.html"
                       else n;
 
-  htmlToMd = n: if hasSuffix ".html" n
-                   then "${removeSuffix ".html" n}.md"
-                   else n;
-
   renderAll = dir:
     with rec {
       renderGo = prefix: n: v: rec {
