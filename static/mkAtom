@@ -2,9 +2,28 @@
 
 from bs4        import BeautifulSoup
 from hfeed2atom import hfeed2atom
-from sys        import stdin
+from os         import getenv
+from sys        import exit, stderr, stdin
 
-feeds = hfeed2atom(doc = BeautifulSoup(stdin.read(), 'html5lib'),
-                   url = 'http://chriswarbo.net/blog.html')
+get = lambda f: hfeed2atom(doc = BeautifulSoup(f.read(), 'html5lib'),
+                           url = 'http://chriswarbo.net/blog.html')
 
-print(feeds[0])
+blog = getenv('blog')
+
+if blog is None:
+    feeds = get(stdin)
+else:
+    with open(blog, 'r') as f:
+        feeds = get(f)
+
+if feeds[0] is None:
+    stderr.write('mkAtom result is None\n')
+    stderr.flush()
+    sys.exit(1)
+
+output = getenv('out')
+if output is None:
+    print(feeds[0])
+else:
+    with open(output, 'w') as f:
+        f.write(feeds[0])

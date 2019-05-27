@@ -67,17 +67,7 @@ assert super ? nix-helpers || abort (toJSON {
         blog        = self.topLevel."blog.html";
         buildInputs = [ self.hfeed2atom ];
       }
-      ''
-        ATOM=$("${../mkAtom}" < "$blog")
-
-        if [[ "x$ATOM" = "xNone" ]]
-        then
-          echo "Failed to produce blog.atom. Output: $ATOM" 1>&2
-          exit 1
-        fi
-
-        echo "$ATOM" > "$out"
-      '';
+      ''"${../mkAtom}"'';
 
     rss  = self.runCommand "blog.rss"
       {
