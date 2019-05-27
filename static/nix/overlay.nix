@@ -35,9 +35,9 @@ assert super ? nix-helpers || abort (toJSON {
     };
     go [ dir ] (self.dirsToAttrs (../.. + "/${dir}"));
 
-  blog         = self.renderAll "blog";
-  projects     = self.renderAll "projects" // { repos = self.projectRepos; };
-  unfinished   = self.renderAll "unfinished";
+  blog       = self.renderAll "blog";
+  unfinished = self.renderAll "unfinished";
+  projects   = self.renderAll "projects" // { repos = self.projectRepos; };
 
   # Derivations which build entire sub-directories
   blogPages       = self.attrsToDirs' "blog"       self.blog;
