@@ -7,36 +7,11 @@ assert super ? nix-helpers || abort (toJSON {
 });
 {
   commands = self.callPackage ./commands.nix {};
-  render   = self.callPackage ./render.nix   { inherit self; };
   relTo    = self.callPackage ./relTo.nix    {};
 
-  inherit (self.callPackage ./resources.nix {}) resources;
-  inherit (self.callPackage ./redirects.nix {}) redirects;
-
-  renderAll = dir:
-    with rec {
-      mdToHtml = n: if hasSuffix ".md" n
-                       then "${removeSuffix ".md" n}.html"
-                       else n;
-
-      renderGo = prefix: n: v: rec {
-        name  = mdToHtml n;
-        value = if isDerivation v || self.isPath v
-                   then self.render {
-                     inherit name;
-                     file        = v;
-                     SOURCE_PATH = concatStringsSep "/" (prefix ++ [n]);
-                     TO_ROOT     = concatStringsSep "/" (["."] ++ map (_: "..")
-                                                                      prefix);
-                   }
-                   else if isAttrs v
-                           then go (prefix ++ [n]) v
-                           else abort "Can't render ${toJSON { inherit n v; }}";
-      };
-
-      go = prefix: mapAttrs' (renderGo prefix);
-    };
-    go [ dir ] (self.dirsToAttrs (../.. + "/${dir}"));
+  inherit (self.callPackage ./resources.nix {               }) resources;
+  inherit (self.callPackage ./redirects.nix {               }) redirects;
+  inherit (self.callPackage ./render.nix    { inherit self; }) render renderAll;
 
   # Attrsets of rendered sub-directory pages
   blog       = self.renderAll "blog";
