@@ -10,6 +10,9 @@ assert super ? nix-helpers || abort (toJSON {
   render   = self.callPackage ./render.nix   { inherit self; };
   relTo    = self.callPackage ./relTo.nix    {};
 
+  inherit (self.callPackage ./resources.nix {}) resources;
+  inherit (self.callPackage ./redirects.nix {}) redirects;
+
   renderAll = dir:
     with rec {
       mdToHtml = n: if hasSuffix ".md" n
@@ -60,9 +63,6 @@ assert super ? nix-helpers || abort (toJSON {
     "projects.md"   = { vars = { projects = self.projectPages;   }; };
     "unfinished.md" = { vars = { inherit (self) unfinishedPages; }; };
   };
-
-  inherit (self.callPackage ./resources.nix {}) resources;
-  inherit (self.callPackage ./redirects.nix {}) redirects;
 
   allPages = self.topLevel // self.redirects // self.resources // {
     blog        = self.blogPages;
