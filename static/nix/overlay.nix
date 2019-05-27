@@ -1,10 +1,10 @@
 self: super:
 
 with builtins;
+with super.lib;
 assert super ? nix-helpers || abort (toJSON {
   error = "'nix-helpers' not found; has nix-helpers overlay been included?";
 });
-with super.lib;
 {
   commands = self.callPackage ./commands.nix {};
   render   = self.callPackage ./render.nix   { inherit self; };
@@ -12,17 +12,6 @@ with super.lib;
 
   # Turn ".md" names in to ".html"
   mdToHtml    = n: (removeSuffix ".html" (removeSuffix ".md" n)) + ".html";
-  mdToHtmlRec =
-    with rec {
-      go = x: if isAttrs x
-                 then mapAttrs' (n: v: { name  = if hasSuffix ".md" n
-                                                    then self.mdToHtml n
-                                                    else n;
-                                         value = go v; })
-                                x
-                 else x;
-    };
-    go;
 
   # Turn ".html" into ".md"
   htmlToMd = name: (removeSuffix ".html" (removeSuffix ".html" name)) + ".md";
@@ -43,6 +32,14 @@ with super.lib;
 
   renderAll =
     with rec {
+      mdToHtmlRec = x: if isAttrs x
+                          then mapAttrs' (n: v: { name  = if hasSuffix ".md" n
+                                                             then self.mdToHtml n
+                                                             else n;
+                                                  value = mdToHtmlRec v; })
+                                         x
+                          else x;
+
       go = prefix: x: self.mdToHtmlRec (mapAttrs
         (n: v: if isDerivation v || self.isPath v
                   then self.render {
