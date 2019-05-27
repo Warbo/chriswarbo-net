@@ -62,6 +62,7 @@ mapAttrs testScript {
     buildInputs = [ pythonPackages.python mf2py ];
   };
   imagesWontCompressFurther     = { includeSite = false; };
+  index_pages                   = {};
   no_absolutes                  = { buildInputs = [ xidel ]; };
   no_blogspot                   = { buildInputs = [ xidel ]; };
   no_cruft                      = {};

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+ERR=0
+# shellcheck disable=SC2154
+for D in blog projects unfinished
+do
+    [[ -e "$rendered/$D/index.html" ]] || {
+        ERR=1
+        echo "No index.html found in '$D'" 1>&2
+    }
+done
+
+exit "$ERR"
