@@ -41,19 +41,20 @@ assert super ? nix-helpers || abort (toJSON {
                           then mapAttrs' mdGo x
                           else x;
 
-      go = prefix: x: mapAttrs' mdGo (mapAttrs
-        (n: v: if isDerivation v || self.isPath v
-                  then self.render {
-                         file        = v;
-                         name        = self.mdToHtml n;
-                         SOURCE_PATH = concatStringsSep "/" (prefix ++ [n]);
-                         TO_ROOT     = concatStringsSep "/" (["."] ++ map (_: "..")
-                                                                          prefix);
-                       }
-                  else if isAttrs v
-                          then go (prefix ++ [n]) v
-                          else abort "Can't render ${toJSON { inherit n v; }}")
-        x);
+      renderGo = prefix: n: v:
+        if isDerivation v || self.isPath v
+           then self.render {
+             file        = v;
+             name        = self.mdToHtml n;
+             SOURCE_PATH = concatStringsSep "/" (prefix ++ [n]);
+             TO_ROOT     = concatStringsSep "/" (["."] ++ map (_: "..")
+                                                              prefix);
+           }
+           else if isAttrs v
+                   then go (prefix ++ [n]) v
+                   else abort "Can't render ${toJSON { inherit n v; }}";
+
+      go = prefix: x: mapAttrs' mdGo (mapAttrs (renderGo prefix) x);
     };
     go;
 
