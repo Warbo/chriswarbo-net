@@ -1,6 +1,6 @@
 { attrsToDirs, commands, darkhttpd, fail, git, haskell, haskellPackages, lib,
   linkchecker, mf2py, procps, pythonPackages, repoPages, runCommand, tidy-html5,
-  untestedSite, utillinux, wget, writeScript, xidel }:
+  untestedSite, utillinux, wget, wrap, xidel }:
 
 with builtins;
 with lib;
@@ -12,7 +12,10 @@ with rec {
       {
         inherit buildInputs;
         rendered = if includeSite then untestedSite else "";
-        script   = base + "/tests/${name}";
+        script   = wrap {
+          inherit name;
+          file = base + "/tests/${name}";
+        };
         # Files which tests might need
         static = attrsToDirs {
           linkcheckerrc = base + "/static/linkcheckerrc";
