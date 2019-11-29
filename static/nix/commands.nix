@@ -27,7 +27,7 @@ with rec {
       paths  = [ bash ] ++ (withNix {}).buildInputs;
       vars   = nixVars;
       script = ''
-        #!/usr/bin/env bash
+        #!${bash}/bin/bash
         exec nix-instantiate "$@"
       '';
     };
@@ -37,7 +37,7 @@ with rec {
       paths  = [ bash ] ++ (withNix {}).buildInputs;
       vars   = nixVars;
       script = ''
-        #!/usr/bin/env bash
+        #!${bash}/bin/bash
         exec nix-shell "$@"
       '';
     };
