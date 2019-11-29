@@ -1,6 +1,6 @@
 ---
 title: Useful Nix Hacks
-dependencies: [ 'static/nix/default.nix', 'static/nix/overlay.nix' ]
+dependencies: [ 'static/nix/default.nix', 'static/nix/overlay.nix', 'static/nix/packages.nix' ]
 packages: [ 'jq', 'nix-instantiate', 'nix-shell', 'timeout' ]
 ---
 
