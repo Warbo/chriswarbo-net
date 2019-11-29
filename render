@@ -9,6 +9,9 @@ then
     exit 0
 fi
 
+# We use a lot of recursion, which can overflow the stack, so try increasing it
+ulimit -s 100000 || true
+
 # Set default parameter, if none supplied
 [[ -n "$GIT_REPO_DIR" ]] || export GIT_REPO_DIR=/home/chris/Programming/repos
 
