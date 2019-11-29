@@ -1,4 +1,4 @@
-{ attrsToDirs, bash, commands, coq, fail, git, glibcLocales, lib, libxslt,
+{ attrsToDirs, bash, coq, fail, git, glibcLocales, lib, libxslt,
   mkBin, pandocPkgs, python, replace, wget, withNix, xidel, xmlstarlet }:
 
 with builtins;
@@ -49,62 +49,63 @@ with rec {
     file  = ./.. + "/${name}";
     paths = includingDeps (vals.paths or []);
   });
-};
 
-extras // mapAttrs wrapScript {
-  cleanup = {
-    paths = [ commands.stripEmptyPreCode commands.summariseTables ];
-  };
-
-  file2img = {};
-
-  git2md = {
-    paths = [ git wget ];
-  };
-
-  mkRedirectTo = {
-    vars = { TEMPLATE = ../redirectTemplate.html; };
-  };
-
-  relativise = {
-    paths = [ xmlstarlet ];
-  };
-
-  relTo = {
-    paths = [ python ];
-  };
-
-  render_page = {
-    paths = [ commands.cleanup fail pandocPkgs ];
-    vars  = {
-      defaultTemplate = ../../templates/default.html;
-      LANG            = "en_US.UTF-8";
-      LOCALE_ARCHIVE  = "${glibcLocales}/lib/locale/locale-archive";
+  wrapped = extras // mapAttrs wrapScript {
+    cleanup = {
+      paths = [ wrapped.stripEmptyPreCode wrapped.summariseTables ];
     };
+
+    file2img = {};
+
+    git2md = {
+      paths = [ git wget ];
+    };
+
+    mkRedirectTo = {
+      vars = { TEMPLATE = ../redirectTemplate.html; };
+    };
+
+    relativise = {
+      paths = [ xmlstarlet ];
+    };
+
+    relTo = {
+      paths = [ python ];
+    };
+
+    render_page = {
+      paths = [ wrapped.cleanup fail pandocPkgs ];
+      vars  = {
+        defaultTemplate = ../../templates/default.html;
+        LANG            = "en_US.UTF-8";
+        LOCALE_ARCHIVE  = "${glibcLocales}/lib/locale/locale-archive";
+      };
+    };
+
+    renderHcard = {};
+
+    showPost = {
+      paths = [ replace xidel ];
+      vars  = { RANTS = ../rants; };
+    };
+
+    showPosts = {
+      paths = [ wrapped.showPost ];
+    };
+
+    stripEmptyPreCode = {
+      paths = [ bs ];
+    };
+
+    stripTitle = {
+      paths = [ bs ];
+    };
+
+    summariseTables = {
+      paths = [ bs ];
+    };
+
+    wrapCode = {};
   };
-
-  renderHcard = {};
-
-  showPost = {
-    paths = [ replace xidel ];
-    vars  = { RANTS = ../rants; };
-  };
-
-  showPosts = {
-    paths = [ commands.showPost ];
-  };
-
-  stripEmptyPreCode = {
-    paths = [ bs ];
-  };
-
-  stripTitle = {
-    paths = [ bs ];
-  };
-
-  summariseTables = {
-    paths = [ bs ];
-  };
-
-  wrapCode = {};
-}
+};
+wrapped
