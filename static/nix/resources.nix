@@ -1,20 +1,22 @@
-{ fail, hfeed2atom, libxslt, runCommand, topLevel }:
+{ fail, hfeed2atom, libxslt, run, topLevel }:
 
 with rec {
-  atom = runCommand "blog.atom"
-    {
-      blog        = topLevel."blog.html";
-      buildInputs = [ hfeed2atom ];
-    }
-    ../mkAtom;
+  atom = run {
+    name  = "blog.atom";
+    file  = ../mkAtom;
+    paths = [ hfeed2atom ];
+    vars  = { blog = topLevel."blog.html"; };
+  };
 
-  rss = runCommand "blog.rss"
-    {
+  rss = run {
+    name  = "blog.rss";
+    file  = ../mkRss;
+    paths = [ fail libxslt.bin ];
+    vars  = {
       inherit atom;
-      XSL         = ../atom2rss.xsl;
-      buildInputs = [ fail libxslt.bin ];
-    }
-    ../mkRss;
+      XSL = ../atom2rss.xsl;
+    };
+  };
 };
 {
   resources = {
