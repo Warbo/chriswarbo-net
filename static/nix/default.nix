@@ -32,18 +32,14 @@ with rec {
     ];
   };
 
+  packages = import ./packages.nix { inherit fetchgit repoSource; };
+
   # Pin to a particular version of nixpkgs, to avoid updates breaking things.
   pinnedNixpkgs = overlayed (overlayed <nixpkgs>).repo1803;
 
   inherit (import <nixpkgs> { config   = {}; overlays = []; }) fetchgit;
 
   inherit (import "${packages}/helpers.nix" { inherit fetchgit; }) nix-helpers;
-
-  packages = fetchgit {
-    url    = "${repoSource}/warbo-packages.git";
-    rev    = "1d9ce7d";
-    sha256 = "0viz492xf45md0wchfs82a5y8v5kx903b4yvi9lzdqpfdy4qg9qr";
-  };
 };
 
 pinnedNixpkgs
