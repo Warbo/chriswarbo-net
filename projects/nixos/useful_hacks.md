@@ -97,6 +97,9 @@ fetchGitHashless = args: stdenv.lib.overrideDerivation
 latestGitCommit = { url, ref ? "HEAD" }:
   runCommand "repo-${sanitiseName ref}-${sanitiseName url}"
     {
+      # Avoid Nix sandbox, which prevents network access
+      __noChroot = true;
+
       # Avoids caching. This is a cheap operation and needs to be up-to-date
       version = toString currentTime;
 
@@ -653,7 +656,7 @@ with rec {
   myNixpkgs = attrsToDirs {
     "default.nix" = writeScript "default.nix" ''
       args: (import <nixpkgs> args) // {
-        foo = runCommand "foo" '''
+        foo = runCommand "foo" {} '''
           mkdir -p "$out/bin"
           printf '#!/usr/bin/env bash\necho "foo"' > "$out/bin/foo"
         ''';
@@ -692,7 +695,7 @@ with rec {
         path = if success then <real> else <nixpkgs>;
       };
       args: (import path args) // {
-        foo = runCommand "foo" '''
+        foo = runCommand "foo" {} '''
           mkdir -p "$out/bin"
           printf '#!/usr/bin/env bash\necho "foo"' > "$out/bin/foo"
         ''';
@@ -979,6 +982,7 @@ repo:
     converted = runCommand "convert-npm"
       {
         inherit repo;
+        __noChroot  = true;
         buildInputs = [ nodePackages.node2nix ];
       }
       ''
@@ -1096,10 +1100,15 @@ stdenv.mkDerivation {
 We can use this to generate a canonical Hackage DB via the following:
 
 ```
-runCommand "stable-hackage-db" { buildInputs = [ stableHackage ]; } ''
-  mkdir -p "$out"
-  HOME="$out" makeCabalConfig
-''
+runCommand "stable-hackage-db"
+  {
+    __noChroot  = true;
+    buildInputs = [ stableHackage ];
+  }
+  ''
+    mkdir -p "$out"
+    HOME="$out" makeCabalConfig
+  ''
 ```
 
 ### Resolving with Tinc ###
@@ -1226,7 +1235,8 @@ with rec {
     # nix-shell invocation uses the derivation we built. Phew!
     env = runCommand "tinc-env"
       {
-        expr = writeScript "force-tinc-env.nix" ''
+        __noChroot = true;
+        expr       = writeScript "force-tinc-env.nix" ''
           _:
             import <real> {} // {
             haskellPackages = {
@@ -1246,8 +1256,8 @@ with rec {
     tincified = runCommand "tinc-of-${name}"
       (newNixpkgsEnv env (withNix {
         inherit hackageContents;
-
-        src = unpack src;
+        __noChroot = true;
+        src        = unpack src;
 
         buildInputs = [
           cabal2nix
