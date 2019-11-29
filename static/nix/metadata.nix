@@ -24,6 +24,7 @@ with rec {
 
   metadataMap = import (runCommand "metadata-map"
                          {
+                           __noChroot  = true;  # Allow access to filesystem
                            buildInputs = [ haskellPackages.yaml ];
                            cacheBust   = toString currentTime;
                            default     = writeScript "metadata.nix" ''
