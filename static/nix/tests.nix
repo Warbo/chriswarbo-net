@@ -11,8 +11,9 @@ with rec {
     runCommand "test-script-${name}"
       {
         inherit buildInputs;
-        rendered = if includeSite then untestedSite else "";
-        script   = wrap {
+        __noChroot = true;
+        rendered   = if includeSite then untestedSite else "";
+        script     = wrap {
           inherit name;
           file = base + "/tests/${name}";
         };

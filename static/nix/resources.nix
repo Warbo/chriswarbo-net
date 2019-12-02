@@ -1,10 +1,15 @@
-{ fail, hfeed2atom, libxslt, run, topLevel }:
+{ beautifulsoup-custom, fail, hfeed2atom, libxslt, python, run, topLevel }:
 
 with rec {
+  py = python.withPackages (p: [
+    hfeed2atom
+    beautifulsoup-custom
+  ]);
+
   atom = run {
     name  = "blog.atom";
     file  = ../mkAtom;
-    paths = [ hfeed2atom ];
+    paths = [ hfeed2atom py ];
     vars  = { blog = topLevel."blog.html"; };
   };
 
