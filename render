@@ -61,12 +61,12 @@ function checkSource() {
     if REV=$(git ls-remote "http://chriswarbo.net/git/$REPO.git" |
                  grep HEAD | cut -d ' ' -f1 | cut -c1-7)
     then
-        grep "$REV" < "$DEF" || {
+        grep "$REV" < "$DEF" > /dev/null || {
             echo "Didn't find $REPO rev '$REV' in $DEF" 1>&2
             exit 1
         }
         echo "Checking $REPO in $DEF builds (e.g. for SHA256)" 1>&2
-        nix-build --no-out-link "$DEF" || exit 1
+        nix-build --no-out-link "$DEF" 1>&2 || exit 1
     fi
 }
 
