@@ -2,21 +2,60 @@
 title: Embedded Domain-Specific Languages in PHP (AKA Scrap Your Dependency Injection)
 ---
 
-There are few programming constructs as useful as the function; we can define all kinds of useful functions to make our code simpler, shorter, safer and easier to test (most of the functions in this tutorial are one-liners!). Unfortunately some languages, notably Java, don't have any support for functions (until Java 8, at least). This has lead to hacks and workarounds, known as "design patterns", proliferating through the world of software development, infecting all manner of codebases.
+There are few programming constructs as useful as the function; we can define
+all kinds of useful functions to make our code simpler, shorter, safer and
+easier to test (most of the functions in this tutorial are
+one-liners!). Unfortunately some languages, notably Java, don't have any support
+for functions (until Java 8, at least). This has lead to hacks and workarounds,
+known as "design patterns", proliferating through the world of software
+development, infecting all manner of codebases.
 
-The problem with design patterns is that they're 'opt-in', ie. they usually require programmers to sprinkle repeated bits of code ('patterns') throughout their project in order to get any benefit. It's easy to omit a pattern by mistake, especially when inheriting someone else's code. This not only makes the pattern less powerful, but it can also bring down the whole house of cards (if we're relying on the pattern to patch-up some problem with the straightforward, non-pattern approach).
+The problem with design patterns is that they're 'opt-in', ie. they usually
+require programmers to sprinkle repeated bits of code ('patterns') throughout
+their project in order to get any benefit. It's easy to omit a pattern by
+mistake, especially when inheriting someone else's code. This not only makes the
+pattern less powerful, but it can also bring down the whole house of cards (if
+we're relying on the pattern to patch-up some problem with the straightforward,
+non-pattern approach).
 
-Functions, on the other hand, are designed precisely to *get rid* of repeated patterns in code (for example, we can handle null checking automatically by using [maybe](/blog/2012-09-11-perhaps__perhaps__perhaps.html)). Also, since functions are black-box entities, we can use them to encapsulate anything we don't want the rest of the project to see, making it impossible to accidentally bypass the architecture (classes try to do this, but if you've ever used Python or Javascript you'll know that classes are just a limited kind of function).
+Functions, on the other hand, are designed precisely to *get rid* of repeated
+patterns in code (for example, we can handle null checking automatically by
+using [maybe](/blog/2012-09-11-perhaps__perhaps__perhaps.html)). Also, since
+functions are black-box entities, we can use them to encapsulate anything we
+don't want the rest of the project to see, making it impossible to accidentally
+bypass the architecture (classes try to do this, but if you've ever used Python
+or Javascript you'll know that classes are just a limited kind of function).
 
-Thankfully, most scripting languages have pretty good support for functions, but nevertheless seem to have caught a bad case of design pattern. To put this right, and hopefully save some codebases from ruthless obfuscation, I thought I'd write a tutorial on some useful functions within the context of the widely (ab)used language PHP. The motivating use-case for this tutorial will be to separate our business logic from potentially-dangerous procedure calls, so that our codebase is easier to test and debug.
+Thankfully, most scripting languages have pretty good support for functions, but
+nevertheless seem to have caught a bad case of design pattern. To put this
+right, and hopefully save some codebases from ruthless obfuscation, I thought
+I'd write a tutorial on some useful functions within the context of the widely
+(ab)used language PHP. The motivating use-case for this tutorial will be to
+separate our business logic from potentially-dangerous procedure calls, so that
+our codebase is easier to test and debug.
 
-The approach we'll take, which is common in functional programming, is to define *values* which *represent actions*. Rather than, for example, performing an SQL query, instead we'll return a *request to perform an SQL query*. How might we represent such requests? Well, the most general-purpose approach is to represent them as *programs* in a *domain-specific language* (DSL). There are two kinds of DSL: some are standalone, for example SQL, which are very limited in what they can do (which is why we have stored procedures, for example); others, known as embedded domain-specific languages (EDSLs) live inside another 'host' language, which we can use for anything the DSL can't handle.
+The approach we'll take, which is common in functional programming, is to define
+*values* which *represent actions*. Rather than, for example, performing an SQL
+query, instead we'll return a *request to perform an SQL query*. How might we
+represent such requests? Well, the most general-purpose approach is to represent
+them as *programs* in a *domain-specific language* (DSL). There are two kinds of
+DSL: some are standalone, for example SQL, which are very limited in what they
+can do (which is why we have stored procedures, for example); others, known as
+embedded domain-specific languages (EDSLs) live inside another 'host' language,
+which we can use for anything the DSL can't handle.
 
-We'll write our business logic in some EDSLs hosted by PHP. We can then interpret these languages however we like; crucially we will define *multiple interpreters* and give ourselves the choice of which one to use. One may perform the requested action (eg. querying a database), another might just check the actions as part of a test ("was our SQL injection attempt foiled?"), yet another might log the actions (for example, to profile which data is the hottest), and so on.
+We'll write our business logic in some EDSLs hosted by PHP. We can then
+interpret these languages however we like; crucially we will define *multiple
+interpreters* and give ourselves the choice of which one to use. One may perform
+the requested action (eg. querying a database), another might just check the
+actions as part of a test ("was our SQL injection attempt foiled?"), yet another
+might log the actions (for example, to profile which data is the hottest), and
+so on.
 
 ## Some Utilities ##
 
-Before we begin, I want to use the following functions. They're all generic and useful, it's just unfortunate that PHP doesn't have them built-in:
+Before we begin, I want to use the following functions. They're all generic and
+useful, it's just unfortunate that PHP doesn't have them built-in:
 
 ```{pipe="tee tag > /dev/null"}
 echo "<?"
@@ -60,7 +99,12 @@ function apply($f) {
 
 ## Mapping ##
 
-If we're going to make some languages, the first thing to consider is the *tokens*, ie. the individual commands of the language. Tokens form a structure known as a *functor*, which we can think of as a 'box'. The defining feature of a functor is a *map* function which applies a given function to the contents of a box (if any). This is a bit abstract, but some concrete examples will show you how trivial this is:
+If we're going to make some languages, the first thing to consider is the
+*tokens*, ie. the individual commands of the language. Tokens form a structure
+known as a *functor*, which we can think of as a 'box'. The defining feature of
+a functor is a *map* function which applies a given function to the contents of
+a box (if any). This is a bit abstract, but some concrete examples will show you
+how trivial this is:
 
 ### Arrays ###
 
@@ -82,7 +126,8 @@ function map_array($f, $x) {
 
   <div id="sma_box">
 
-PHP already has this function built in, called [`array_map`](). I swapped the name around to prevent conflicts, but we can simply do this:
+PHP already has this function built in, called [`array_map`](). I swapped the
+name around to prevent conflicts, but we can simply do this:
 
 ```{.php pipe="./tag"}
 function map_array($f, $x) { return array_map($f, $x); }
@@ -99,7 +144,8 @@ $map_array = 'array_map';
 
 ### Objects ###
 
-If we ignore their class, objects are 'boxes' too, so we can apply a function to their properties:
+If we ignore their class, objects are 'boxes' too, so we can apply a function to
+their properties:
 
 ```{.php pipe="./append"}
 function map_object($f, $x) {
@@ -117,7 +163,10 @@ function map_object($f, $x) {
 
   <div id="smo_box">
 
-Objects bloat our code considerably, since we're often forced to write statements instead of expressions. We can avoid this in `map_object`, since `object_get_vars` gives us an array, which we already know how to map a function over:
+Objects bloat our code considerably, since we're often forced to write
+statements instead of expressions. We can avoid this in `map_object`, since
+`object_get_vars` gives us an array, which we already know how to map a function
+over:
 
 ```{.php pipe="./tag"}
 function map_object($f, $x) {
@@ -129,7 +178,13 @@ function map_object($f, $x) {
 
 ### Functions ###
 
-A function is like a 'box' too, but it may be harder to see why. We can think of a function as a huge [lookup table](http://en.wikipedia.org/wiki/Lookup_table), where the argument is looked up in the table to find the return value. In other words, functions are like (associative) arrays! We can make a map function by applying one function to *the return values* of another. This is just *[function composition](http://en.wikipedia.org/wiki/Function_composition)* which I defined at the beginning:
+A function is like a 'box' too, but it may be harder to see why. We can think of
+a function as a huge [lookup table](http://en.wikipedia.org/wiki/Lookup_table),
+where the argument is looked up in the table to find the return value. In other
+words, functions are like (associative) arrays! We can make a map function by
+applying one function to *the return values* of another. This is just *[function
+composition](http://en.wikipedia.org/wiki/Function_composition)* which I defined
+at the beginning:
 
 ```{.php pipe="./append"}
 function map_function($f, $g) { return compose($f, $g); }
@@ -137,7 +192,8 @@ function map_function($f, $g) { return compose($f, $g); }
 
 ### Functor Rules ###
 
-Now, these map functions aren't completely arbitrary; they must obey a couple of rules. They are:
+Now, these map functions aren't completely arbitrary; they must obey a couple of
+rules. They are:
 
 ```{.php pipe="./tag"}
 // Mapping an identity function cannot change the contents of a box
@@ -147,74 +203,68 @@ map('id', $x) == $x
 map($f, map($g, $x)) == map(compose($f, $g), $x)
 ```
 
-These rules might look confusing, but in practice it's easy to obey them (all of the definitions we've seen so far do).
+These rules might look confusing, but in practice it's easy to obey them (all of
+the definitions we've seen so far do).
 
 ### Tokens ###
 
-Now, how does this relate to the tokens of an EDSL? How are tokens like boxes? We can split our tokens into two groups: 'results' and 'commands'. Results are like arrays, they contain a value we can map a function over. Commands are like functions, running them will produce a value we can map a function over.
+Now, how does this relate to the tokens of an EDSL? We can think of the
+"commands" of our EDSL as being a bit like functions, and we know how to map
+over functions: we modify their return value (ie. composition). To have our
+embedded languages interact with our "host" language (PHP) we'll use a little
+trick: each command will also contain a piece of PHP code which we'll call a
+"handler", which represents what to do *after* interpreting that command (this
+terminology should be familiar from using "callbacks", eg. in AJAX; more
+academic-minded people might call them "continuations"). This makes mapping
+trivial: we simply compose on to the handler.
 
-Let's make a few languages to see how this works. We will represent all of our tokens as arrays where the first element is the token's name and the rest are either command arguments or result values. We'll only use one kind of result, which we'll call `VAL`, but we'll implement a few different commands. Here are the example languages we'll implement:
+Let's make a few languages to see how this works. We will represent all of our
+tokens as arrays where the first element is the token's name, the second is the
+handler and the rest are arguments to the command (if any). Here are the example
+languages we'll implement:
 
 #### EDSL for database programming ####
 
 Token                          Meaning
 ------------------------------ -------
-`ERR`                          Error
-`SQL  $query         $handler` A raw SQL query
-`SQLS $query $params $handler` An SQL query containing sequential parameters (`?`)
-`SQLN $query $params $handler` An SQL query containing named parameters (`:foo`)
-
+`SQL  $handler $query`         A raw SQL query
+`SQLS $handler $query $params` A query containing sequential parameters (`?`)
+`SQLN $handler $query $params` A query containing named parameters (`:foo`)
 
 #### EDSL for common HTTP requests ####
 
 Token                      Meaning
 -------------------------- -------
-`ERR`                      Error
-`GET  $url $handler`       A GET request
-`POST $url $data $handler` A POST request
+`GET  $handler $url`       A GET request
+`POST $handler $url $data` A POST request
 `EOF`                      Done
 
 #### EDSL for reading files ####
 
 Token                     Meaning
 ------------------------- -------
-`ERR`                     Error
-`SEEK $position $handler` Move our cursor to some position
-`READ $length $handler`   Read some data, beginning at the cursor
-`CLOSE`                   Close the file
+`SEEK  $handler $position` Move our cursor to some position
+`READ  $handler $length`   Read some data, beginning at the cursor
+`CLOSE $handler`           Close the file
 
-We don't want to expose our implementation, so we'll encapsulate these in functions:
+We don't want users of our API to be fiddling with arrays themselves, so we'll
+provide functions to create these commands. Each command's handler is
+initialised to the identity function:
 
 ```{.php pipe="./append"}
 // Database functions
-function db_sql($sql) {
-  return ['SQL', $sql];
-}
-function db_sql_seq($sql, $params) {
-  return ['SQLS', $sql, $params];
-}
-function db_sql_named($sql, $params) {
-  return ['SQLN', $sql, $params];
-}
+function db_sql(      $sql         ) { return ['SQL' , 'id', $sql         ]; }
+function db_sql_seq(  $sql, $params) { return ['SQLS', 'id', $sql, $params]; }
+function db_sql_named($sql, $params) { return ['SQLN', 'id', $sql, $params]; }
 
 // HTTP functions
-function http_get($url) {
-  return ['GET', $url];
-}
-function http_post($url, $data) {
-  return ['POST', $url];
-}
+function http_get( $url       ) { return ['GET' , 'id', $url       ]; }
+function http_post($url, $data) { return ['POST', 'id', $url, $data]; }
 
 // File functions
-function file_close($file) {
-  return ['CLOSE', $file];
-}
-function file_seek($file, $position) {
-  return ['SEEK', $file, $position];
-}
-function file_read($file, $length) {
-  return ['READ', $file, $length];
-}
+function file_close($file         ) { return ['CLOSE', 'id', $file         ]; }
+function file_seek( $file, $pos   ) { return ['SEEK' , 'id', $file, $pos   ]; }
+function file_read( $file, $length) { return ['READ' , 'id', $file, $length]; }
 ```
 
 <div id="red" class="hide odd">
@@ -222,22 +272,31 @@ function file_read($file, $length) {
 
   <div id="red_box">
 
-You may think the above definitions look rather like a design pattern, and you'd be right. The reason I've left so much redundancy in that code is to make its purpose clearer for the tutorial. If this were a serious project I'd remove this redundancy using functions.
+You may think the above definitions look rather like a design pattern, and you'd
+be right. The reason I've left so much redundancy in that code is to make its
+purpose clearer for the tutorial. If this were a serious project I'd remove this
+redundancy using functions.
 
-The most obvious redundancy is that all these functions have the same structure: accept some arguments and return them in an array, prefixed by some string. Well, it's easy to return an array of our arguments (see `array_`), but that won't handle the strings. However, it's easy to prepend an argument using `apply`. Let's see what happens:
+The most obvious redundancy is that all these functions have the same structure:
+accept some arguments and return them in an array, prefixed by some
+string and `'id'`. Well, it's easy to return an array of our arguments (see
+`array_`), but that won't handle the strings. However, it's easy to prepend some
+arguments using `apply`. Let's see what happens:
 
 ```{.php pipe="./tag"}
-$db_sql         = apply('array_', 'SQL');
-$db_sql_seq     = apply('array_', 'SQLS');
-$db_sql_named   = apply('array_', 'SQLN');
-$http_get($url) = apply('array_', 'GET');
-$http_post      = apply('array_', 'POST');
-$file_close     = apply('array_', 'CLOSE');
-$file_seek      = apply('array_', 'SEEK');
-$file_read      = apply('array_', 'READ');
+$db_sql         = apply('array_', 'SQL'  , 'id');
+$db_sql_seq     = apply('array_', 'SQLS' , 'id');
+$db_sql_named   = apply('array_', 'SQLN' , 'id');
+$http_get($url) = apply('array_', 'GET'  , 'id');
+$http_post      = apply('array_', 'POST' , 'id');
+$file_close     = apply('array_', 'CLOSE', 'id');
+$file_seek      = apply('array_', 'SEEK' , 'id');
+$file_read      = apply('array_', 'READ' , 'id');
 ```
 
-Well that's brought down the amount of code quite considerably, however there's still some clear redundancy in this code; namely that we keep calling `apply` just with different arguments:
+Well that's brought down the amount of code quite considerably, however there's
+still some clear redundancy in this code; namely that we keep calling `apply`
+just with different arguments:
 
 ```{.php pipe="./tag"}
 foreach (['db_sql'       => 'SQL',
@@ -251,25 +310,43 @@ foreach (['db_sql'       => 'SQL',
           'file_read'  => 'READ',
           'file_close' => 'CLOSE',
          ]) as $n => $t) {
-  $$n = apply('array_', $t);
+  $$n = apply('array_', $t, 'id');
 }
 ```
 
-That's better: we've removed redundancy and made it easier to add new functions in the future (just add a `'name' => 'token'` pair to the array). In the process we've switched from globals to locals; I think this is a GoodThing(TM), but if you insist on your functions being global you can use [this function]()
+That's better: we've removed redundancy and made it easier to add new functions
+in the future (just add a `'name' => 'token'` pair to the array). In the process
+we've switched from globals to locals; I think this is a GoodThing(TM), but if
+you insist on your functions being global you can use the `defun` function from
+[php-core](/git/php-core).
 
   </div>
 </div>
 
-Now we know what all of our tokens look like, we can implement our map functions. Here I'll use functions called `do_...` to indicate a side-effecting procedure:
+Now we know what all of our tokens look like, we can implement our map
+functions, by composing on to the handlers:
 
 ```{.php pipe="./tag"}
-map_db($f, (Output x next) = Output x (f next)
-map_db($f, (Bell     next) = Bell     (f next)
-map_db($f,  Done           = Done
+// Compose $f on to the handler $x[1]
+function map_edsl($f, $x) {
+    $result    = $x;
+    $result[1] = compose($f, $x[1]);
+    return $result;
+}
 
+// Give meaningful names
+function map_db(  $f, $x) { return map_edsl($f, $x); }
+function map_http($f, $x) { return map_edsl($f, $x); }
+function map_file($f, $x) { return map_edsl($f, $x); }
+```
+
+<div style="display:none;">
+```php
 // We use a wrapper function to encapsulate our DB connection details
-$map_db = call_user_func(
-  function($username, $password, $host, $database) {
+$map_db = call_user_func(function($username='my_user',
+                                  $password='my_pass',
+                                  $host    ='my_host',
+                                  $database='my_db') {
     $db = db_connect($username, $password, $host, $database);
 
     // Our map function itself
@@ -292,11 +369,7 @@ $map_db = call_user_func(
           return ['ERR'];
       }
     };
-  },
-  'my_user',
-  'my_pass',
-  'my_host',
-  'my_db');
+  });
 
 // We use a wrapper function to encapsulate our cURL client
 $map_http = call_user_func(
@@ -355,12 +428,17 @@ $map_file = call_user_func(
   },
   '/home/me/foo');
 ```
+</div>
 
-That's all we need for our tokens. The next thing we need is a way to combine these into actual programs.
+That's all we need for our tokens. The next thing we need is a way to combine
+these into actual programs.
 
 ## Wrap and Join ##
 
-Now we'll introduce a couple of other functions known as `wrap` and `join`. If we have a map function, a wrap function and a join function then we have a *monad*. Monads are special functors which are very useful for representing arbitrary single-threaded computations.
+Now we'll introduce a couple of other functions known as `wrap` and `join`. If
+we have a `map` function, a `wrap` function and a `join` function then we have a
+*monad*. Monads are special functors which are very useful for representing
+arbitrary single-threaded computations.
 
 <div class="odd hide" id="conv">
 
@@ -368,35 +446,24 @@ Now we'll introduce a couple of other functions known as `wrap` and `join`. If w
 
   <div id="conv_box">
 
-The function I'm calling `wrap` here is usually called `return`; I've used a non-standard name to prevent confusion with PHP's `return` keyword, which means something different.
+The function I'm calling `wrap` here is usually called `return`; I've used a
+non-standard name to prevent confusion with PHP's `return` keyword, which means
+something different.
 
-Also, it might be useful to know that [many other monad tutorials](http://www.haskell.org/haskellwiki/Monad_tutorials_timeline) don't talk about `join` at all; instead they talk about a different function called `bind` (often written as an operator `>>=`). This actually makes no difference; we can define bind in terms of join and we can define join in terms of bind, so either will suffice. We'll see what bind does later on.
-
-  </div>
-</div>
-
-The wrap function is pretty straightforward; it takes a value and returns a 'box' containing that value. For our languages that means prefixing the value with `'VAL'`:
-
-```{.php pipe="./append"}
-function wrap_val($x) { return ['VAL', $x]; }
-```
-
-<div class="hide odd" id="swv">
-
-#### A simpler wrap_val ####
-
-  <div id="swv_box">
-
-Of course, we could also define `wrap_val` this way:
-
-```{.php pipe="./tag"}
-$wrap_val = apply('array_', 'VAL');
-```
+Also, it might be useful to know that [many other monad
+tutorials](http://www.haskell.org/haskellwiki/Monad_tutorials_timeline) don't
+talk about `join` at all; instead they talk about a different function called
+`bind` (often written as an operator `>>=`). This actually makes no difference;
+we can define bind in terms of join and we can define join in terms of bind, so
+either will suffice. We'll see what bind does later on.
 
   </div>
 </div>
 
-Here are some wrap functions we can use for arrays, objects and functions (notice that functions are the most awkward, since PHP forces us to use statements):
+The `wrap` function is pretty straightforward: it takes a value and returns a
+'box' containing that value. Here are some wrap functions we can use for arrays,
+objects and functions (notice that objects are the most awkward, since PHP
+forces us to use statements):
 
 ```{.php pipe="./append"}
 function wrap_array($x) { return array_($x); }
@@ -425,12 +492,18 @@ $wrap_array = 'array_';
 ```
 
 This transformation is known as *eta-reduction*.
-```
 
   </div>
 </div>
 
-The `join` function is a bit harder to explain; it takes a box containing boxes (what we might call a '2D box') and collapses it down a level. A '2D box' becomes a '1D box', a '5D box' becomes a '4D box', and so on. Here are some examples for arrays, objects and functions:
+The `join` function takes a 'box of boxes', which we might call a '2D box', and
+'removes a layer of packaging' so we get a '1D box'. Only one 'layer' is
+removed, so a '2D box' becomes a '1D box', a '5D box' would become a '4D box',
+and so on. Importantly, `join` cannot remove the 'outer layer', eg. it can turn
+a box of lobster boxes into a box of lobsters, but it can't turn a box of
+lobsters into a lobster.
+
+Here are some examples for arrays, objects and functions:
 
 ```{.php pipe="./tag"}
 function join_array($x) {
@@ -454,7 +527,12 @@ function join_function($x) {
 }
 ```
 
-So, what does `join` mean in the context of our EDSLs? It turns out that join is our interpreter: we can join commands by executing them in sequence. Executing a command gives us a result, which we can then pass to another command. Here are some interpreters for our EDSLs:
+FIXME: We need to introduce `Free`, since that provides the recursive structure.
+
+So, what does `join` mean in the context of our EDSLs? It turns out that join is
+our interpreter: we can join commands by executing them in sequence. Executing a
+command gives us a result, which we can then pass to another command. Here are
+some interpreters for our EDSLs:
 
 ```{.php pipe="./append"}
 /*
@@ -485,7 +563,8 @@ To have a monad, our wrap functions need to obey the following rule:
 wrap($f($x)) == map($f, wrap($x))
 ```
 
-Join functions can perform arbitrary work, such as calling databases or opening files, as long as they obey the following rules:
+Join functions can perform arbitrary work, such as calling databases or opening
+files, as long as they obey the following rules:
 
 ```{.php pipe="./tag"}
 // Joining twice can be done 'outside-in' or 'inside-out'
@@ -499,13 +578,21 @@ join(map('wrap', $x)) == join(wrap($x)) == $x
 join(map(apply('map', $f), $x)) == map($f, join($x))
 ```
 
-Since we want to pick an choose our implementation, we don't want our join function to actually perform any actions. Instead, we'll just have it accumulate tokens for later processing.
+Since we want to pick an choose our implementation, we don't want our join
+function to actually perform any actions. Instead, we'll just have it accumulate
+tokens for later processing.
 
 ## Free Monads ##
 
-A monad which just accumulates values is known as a *free monad*. Specifically, if `F` is a functor then there is a unique *free monad of `F`*. We'll use this to accumulate our tokens.
+A monad which just accumulates values is known as a *free monad*. Specifically,
+if `F` is a functor then there is a unique *free monad of `F`*. We'll use this
+to accumulate our tokens.
 
-Free monads are usually described using an analogy to *free monoids*. Let's say we want to combine a bunch of numbers using a binary function, eg. `+`, `*` or `max`. However, we want the ability to pick and choose the function *after we've already combined the numbers*. How can we combine numbers if we don't know how what our combining function will be? The answer is to combine them into arrays:
+Free monads are usually described using an analogy to *free monoids*. Let's say
+we want to combine a bunch of numbers using a binary function, eg. `+`, `*` or
+`max`. However, we want the ability to pick and choose the function *after we've
+already combined the numbers*. How can we combine numbers if we don't know
+what our combining function will be? The answer is to combine them into arrays:
 
 ```{.php pipe="./tag"}
 // Our interpreter is just array_reduce
@@ -541,15 +628,34 @@ $max  ($array($data)) == 897
 $array($array($data)) == [50, -45, 7.9, 897]
 ```
 
-These binary functions are known as *monoids* and `$array` is known as a *free monoid*. specifically We aren't going to implement for example the maybe monad projoins its contents after scan collapse its argument in arbitrary ways, a sequencing
+These binary functions are known as *monoids* and `$array` is known as a *free
+monoid*. specifically We aren't going to implement for example the maybe monad
+projoins its contents after scan collapse its argument in arbitrary ways, a
+sequencing
 
 #### Free Monads ####
 
-However, if we use functors to represent know that functors let us allow us to can see that functors allowwe can use `map` to   have two more functions letting us map functions over their contents, also let us combine those function calls in useful ways. Such function combination is very powerful: we can use it to implement programming languages. However, as I mentioned above, we don't want to use just one implementation; we want the option of several, so we can run, test, inspect, etc.
+However, if we use functors to represent know that functors let us allow us to
+can see that functors allowwe can use `map` to have two more functions letting
+us map functions over their contents, also let us combine those function calls
+in useful ways. Such function combination is very powerful: we can use it to
+implement programming languages. However, as I mentioned above, we don't want to
+use just one implementation; we want the option of several, so we can run, test,
+inspect, etc.
 
-As an analogy, think about how we might combine two numbers. We might add them, subtract them, multiply them, etc. How might we combine them in a way that lets us pick an choose the operation [i]after[/i] we've combined them? The answer is that we put them in an array! We can then apply any operation we like to the elements.
+As an analogy, think about how we might combine two numbers. We might add them,
+subtract them, multiply them, etc. How might we combine them in a way that lets
+us pick an choose the operation [i]after[/i] we've combined them? The answer is
+that we put them in an array! We can then apply any operation we like to the
+elements.
 
-The corresponding object for combining our functions is known as a 'free monad'. Now, I said above that monads are a kind of functor; in which case, the free monad of a functor is itself a functor. Rather than defining a single map function, we'll define a 'map function generator': this will take the map function from an existing functor, say "F", and return the map function for a new functor, the free monad of F. This is where things get a bit confusing, but since it works for all functors, it only needs to be written once:
+The corresponding object for combining our functions is known as a 'free
+monad'. Now, I said above that monads are a kind of functor; in which case, the
+free monad of a functor is itself a functor. Rather than defining a single map
+function, we'll define a 'map function generator': this will take the map
+function from an existing functor, say "F", and return the map function for a
+new functor, the free monad of F. This is where things get a bit confusing, but
+since it works for all functors, it only needs to be written once:
 
 ```{.php pipe="./append"}
 // We take a map function, so we know what functor (language) to use
@@ -571,7 +677,8 @@ function make_functor_free($map) {
 }
 ```
 
-Now that we've defined free monads as functors, we can define them as monads. To define a monad we need a wrap function and a join function:
+Now that we've defined free monads as functors, we can define them as monads. To
+define a monad we need a wrap function and a join function:
 
 ```{.php tag="./append"}
 // A helper function
@@ -633,9 +740,14 @@ function bl1() {
 
 ```
 
-Notice that we haven't specified a way to *unwrap* our values, and there's a very good reason: we want functors to be one-way, just like calling a procedure which has side-effects, eg. deleting a file: once we've run it, there's no way to go back.
+Notice that we haven't specified a way to *unwrap* our values, and there's a
+very good reason: we want functors to be one-way, just like calling a procedure
+which has side-effects, eg. deleting a file: once we've run it, there's no way
+to go back.
 
-similarity  at least, that a funct If our we're going to treat functors as use functors as an interface for side-effecting procedures. This is a much cleaner alternative to dependency injection.
+similarity at least, that a funct If our we're going to treat functors as use
+functors as an interface for side-effecting procedures. This is a much cleaner
+alternative to dependency injection.
 
 <div>
 <script type="text/javascript">//<![CDATA[

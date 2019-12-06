@@ -1,9 +1,13 @@
-tl;dr: Haskell's packaging workflow is overly complicated. GHC tries to be
-clever about where it looks for dependencies, how it orders their compilation,
-etc.; then we have ghc-pkg which *also* tries to make dependency lookups more
-clever; then we have cabal and stack which *also* try to make dependency lookups
-more clever (as well as fetching). Each tool has its own options, and options
-for passing along other tools' options, and so on.
+Haskell's packaging workflow is overly complicated. GHC tries to be clever about
+where it looks for dependencies, how it orders their compilation, etc.. This is
+usually not enough, so we have `ghc-pkg` which tries to make dependency lookups
+smarter. This is usually not enough *either*, so we have `cabal` to make
+dependency lookup smarter. Some find this to not be enough either, and use
+`stack` to try and make dependency lookup even smarter. This is *still* not
+enough for some, who use Nix, Docker, Puppet, Chef, Ansible, etc. to make their
+dependency lookup *even smarter*.
+
+This is a mess; not because there's a lot of tools, but because th
 
 My thoughts:
 
@@ -19,6 +23,14 @@ My thoughts:
    over or scripted by some future program. Cabal, etc. do this to some extent
    by providing the `Cabal` library, but
 
-The default/de-facto Haskell setup of GHC + Hackage/Stackage + Cabal/Stack is enormously complicated, and only seems to be getting worse as more options and tweaks are added.
+The default/de-facto Haskell setup of GHC + Hackage/Stackage + Cabal/Stack is
+enormously complicated, and only seems to be getting worse as more options and
+tweaks are added.
 
-I think the main problem is that there are far too many tools involved, which each expect their own databases, search directories, etc. `ghc` itself will search for modules in particular locations, e.g. the current working directory and paths given in the arguments. GHC also calls out to `ghc-pkg`, which adds a layer of indirection, letting us set up a database of packages for GHC to use. `cabal` and `stack` provide another layer of indirection on top of that, with their own config files which detach some of the functionality from the
+I think the main problem is that there are far too many tools involved, which
+each expect their own databases, search directories, etc. `ghc` itself will
+search for modules in particular locations, e.g. the current working directory
+and paths given in the arguments. GHC also calls out to `ghc-pkg`, which adds a
+layer of indirection, letting us set up a database of packages for GHC to
+use. `cabal` and `stack` provide another layer of indirection on top of that,
+with their own config files which detach some of the functionality from the
