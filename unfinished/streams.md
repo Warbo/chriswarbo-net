@@ -34,27 +34,24 @@ CoInductive ProblemStream {D : Domain} : Type
    | probNone : ProblemStream -> ProblemStream.
 
 (* An infinite stream containing Solutions to a given ProblemStream *)
-CoInductive SolutionStream {D : Domain} (ps : ProblemStream) : Type :=
-  := (* Prepend a Solution to a Problem *)
-     solCons : forall {p ps'},
-                      (* If ps is made out of p and ps' *)
-                      ps = probCons p ps' ->
-                      (* and we have a Solution for p *)
+CoInductive SolutionStream {D : Domain} : ProblemStream -> Type :=
+  := (* Prepend a Solution to a SolutionStream *)
+     solCons : forall {p ps},
+                      (* If we have a Solution for p *)
                       Solution p                 ->
-                      (* and we have a SolutionStream for ps' *)
+                      (* and we have a SolutionStream for ps *)
                       SolutionStream ps'         ->
-                      (* then we can make a SolutionStream for ps *)
-                      SolutionStream ps
+                      (* then we can make a SolutionStream for probCons p ps *)
+                      SolutionStream (probCons p ps)
 
      (* Don't prepend anything, equivalent to prepending None *)
-   | solNone : SolutionStream ps -> SolutionStream ps.
+   | solNone : forall ps, SolutionStream ps -> SolutionStream ps.
 
 (* Combines a NoWorseStream and a SolutionStream *)
 CoInductive NWSolStream {D  : Domain}
-                        (ps : ProblemStream)
                         (s  : Solver)
                             : Type
-     (* We have an  *)
+     (* Prepend a Problem that s can solve *)
   := nwsolCons
 
 
