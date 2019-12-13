@@ -2,13 +2,47 @@
 title: Successful Testing with QuickCheck (and Similar Property Checkers)
 ---
 
-Unit testing is existential
+*Unit testing* is a common form of automated testing, where we try to find
+problems with a program's behaviour using small snippets of code to check if it
+does what we expect. For example:
 
-Property checking is universal
+```haskell
+test_reverse = reverse [1, 2, 3] == [3, 2, 1]
+```
 
-QuickCheck uses random generators
+One important aspect of unit testing is that it's *existential*: we are stating
+the expected behaviour as a proposition about *some* data (e.g. the lists
+`[1, 2, 3]` and `[3, 2, 1]` above). This is easy to *prove*, since we can just
+execute the code like normal to see if we get `True` or `False`.
 
-SmallCheck enumerates, LazySmallCheck searches, etc.
+*Property checking* is similar, but makes *universal* statements: our
+propositions apply for *all* data (which we represent using a variable). For
+example:
+
+```haskell
+prop_reverse x = reverse (reverse x) == x
+```
+
+It is a much stronger statement to say that `prop_reverse` gives `True` for
+*every* input list `x`, which makes property checking more expressive and
+powerful than unit testing (note that we can think of unit tests as rather
+trivial properties that don't bother using any variables). Unfortunately it's
+also much harder to *prove* such strong properties. For example, if we try to
+run the above code it will get stuck trying to branch on `x`.
+
+There are ways to prove such properties (e.g. using a system like Agda, Idris or
+Coq), but we don't always *need* to do a full-blown proof. If we're looking for
+errors in our code, it's often sufficient to just try loads of different values
+for `x` and see if any of them fail. That doesn't prove our code is correct, but
+it gives us confidence (often much more than a unit test is able to!).
+
+There are many property testing frameworks, which mostly differ in how they
+choose which data to test with; for example:
+
+ - QuickCheck generates data randomly, and makes it easy to define our own
+   generators.
+ - SmallCheck enumerates data from small to large.
+ - LazySmallCheck performs a search akin to logic programming.
 
 I was inspired to write this post when optimising some data analysis code.
 After waiting a couple of days for it to finish, I decided to revisit the code
