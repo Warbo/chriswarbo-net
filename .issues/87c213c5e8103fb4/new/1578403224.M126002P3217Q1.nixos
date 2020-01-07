@@ -1,0 +1,41 @@
+From: Chris Warburton
+Date: Tue, 07 Jan 2020 13:15:36 +0000
+State: new
+Subject: Make 'details' tags work
+Message-Id: <87c213c5e8103fb4-0-artemis@nixos>
+
+The <details> element lets us hide extraneous detail, which I could make
+a lot of use of. However, the current Pandoc version doesn't like it. If
+I write something like:
+
+    Foo
+
+    <details>
+      <summary>Bar</summary>
+
+    Baz
+
+    </details>
+
+    Quux
+
+We end up with HTML like this:
+
+    <p>Foo</p>
+
+    <p><details><summary>Bar</summary></p>
+
+    <p>Baz</p>
+
+    <p></details></p>
+
+    <p>Quux</p>
+
+Notice that the opening and closing details tags are wrapped in p tags,
+which is not valid HTML. Thankfully our test suite catches this and
+aborts the rendering. Note that it doesn't seem to do this with div
+tags, which I've used before to do collapsible content (using jQuery).
+
+There seem to be two ways forwards: try upgrading Pandoc to see if this
+is fixed, or add a post-processing step to the 'cleanup' script to find
+these broken tags and strip off the 'p' wrappers.

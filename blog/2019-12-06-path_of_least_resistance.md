@@ -23,11 +23,11 @@ Like many things in life, everything in programming has problems; that *doesn't*
 mean everything is equally problematic! In particular, I've become wary of
 approaches which are fraught with:
 
- - Gotchas: These are known breakages in functionality of abstraction (which
-   everyone agrees are bad), which seemingly come out of nowhere for the
-   uninitiated (violating the principle of least surprise). Those with more
-   experience tend to instinctively code defensively to avoid them, obfuscating
-   otherwise-good code for the fear of triggering one of these situations.
+ - Gotchas: These are known, acknowledged breakages in functionality or
+   abstraction, which seemingly come out of nowhere for the uninitiated
+   (violating the principle of least surprise). Those with more experience tend
+   to instinctively code defensively to avoid them, obfuscating otherwise-good
+   code for the fear of triggering one of these situations.
  - Misaligned Incentives: Where following the "correct" practice is directly in
    conflict with some other objective. For example, if the "correct" solution is
    more verbose, slower, harder to debug, harder to read, less modular, etc.
