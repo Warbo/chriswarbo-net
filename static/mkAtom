@@ -26,4 +26,4 @@ if output is None:
     print(feeds[0])
 else:
     with open(output, 'w') as f:
-        f.write(feeds[0])
+        f.write(feeds[0].encode('utf-8'))
