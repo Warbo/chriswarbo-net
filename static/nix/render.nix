@@ -63,15 +63,14 @@ rec {
         name  = mdToHtml n;
         value = if isDerivation v || self.isPath v
           then self.render {
-          inherit name;
-          file        = v;
-          SOURCE_PATH = concatStringsSep "/" (prefix ++ [n]);
-          TO_ROOT     = concatStringsSep "/" (["."] ++ map (_: "..")
-            prefix);
-        }
-        else if isAttrs v
-          then go (prefix ++ [n]) v
-          else abort "Can't render ${toJSON { inherit n v; }}";
+            inherit name;
+            file        = v;
+            SOURCE_PATH = concatStringsSep "/" (prefix ++ [n]);
+            TO_ROOT     = concatStringsSep "/" (["."] ++ map (_: "..") prefix);
+          }
+          else if isAttrs v
+                  then go (prefix ++ [n]) v
+                  else abort "Can't render ${toJSON { inherit n v; }}";
       };
 
       go = prefix: mapAttrs' (renderGo prefix);
