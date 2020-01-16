@@ -1,47 +1,37 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python
 
 # Update a HTML file to use relative links, e.g. '../css/foo.css' rather than
 # '//chriswarbo.net/css/foo.css' or '/css/foo.css'
 
-set -e
+import sys
+err = sys.stderr.write
 
-if [[ -z "$TO_ROOT" ]]
-then
-    echo "No TO_ROOT given, not relativising" 1>&2
-    cat
-    exit 0
-fi
+import os
+to_root = os.getenv('TO_ROOT')
+del(os)
 
-INPUT=$(cat)
+if to_root is None:
+    sys.stderr.write('No TO_ROOT given, not relativising\n')
+    sys.exit(0)
 
-# If the document specifies a default namespace, we must prefix all of our
-# queries with it
-NAMESPACE=""
-if echo "$INPUT" | grep -o 'xmlns="[^"]*"' > /dev/null
-then
-    NAMESPACE=$(echo "$INPUT" | grep -o 'xmlns="[^"]*"' |
-                                head -n1                |
-                                grep -o '".*'           |
-                                grep -o '[^"]*')
+import fileinput
+stdin = reduce(lambda content, line: content + line, fileinput.input(), "")
+del(fileinput)
 
-    # These arguments should be spliced into any xmlstarlet commandline we run
-    NAMESPACEARGS=( -N "ns=$NAMESPACE" )
+from bs4 import BeautifulSoup
+doc = BeautifulSoup(stdin, 'html.parser')
+del(BeautifulSoup, stdin)
 
-    # This prefix should be spliced before any identifier in our queries
-    NS="ns:"
-fi
+def prefix(attr):
+    def f(e):
+        if attr in e.attrs and e[attr].startswith(u'/'):
+            e[attr] = to_root + e[attr]
+    return f
 
-function prefix() {
-    # $1 is an element name (which we prefix with a namespace if needed)
-    # $2 is an attribute name
-    # We prefix any matching attributes of matching elements given on stdin,
-    # with the value of $TO_BASE
-    xmlstarlet ed -P "${NAMESPACEARGS[@]}" \
-               -u "//${NS}${1}[starts-with(@${2}, '/')]/@${2}" \
-               -x "concat('$TO_ROOT', .)"
-}
+map(lambda (tag, attr): map(prefix(attr), doc.find_all(tag)),
+    [('a'     , 'href'),
+     ('link'  , 'href'),
+     ('img'   , 'src' ),
+     ('script', 'src' )])
 
-echo "$INPUT" | prefix a      href |
-                prefix link   href |
-                prefix script src  |
-                prefix img    src
+print(doc)

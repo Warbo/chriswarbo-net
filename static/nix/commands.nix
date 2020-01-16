@@ -66,7 +66,7 @@ with rec {
     };
 
     relativise = {
-      paths = [ xmlstarlet ];
+      paths = [ bs ];
     };
 
     relTo = {
