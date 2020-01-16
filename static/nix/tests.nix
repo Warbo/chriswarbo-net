@@ -97,7 +97,7 @@ mapAttrs testScript {
       ];
     };
   posts_have_titles = { buildInputs = [ fail xidel ]; };
-  redirect_posts    = {};
+  redirect_posts    = {                               };
   scripts_in_place  = { buildInputs = [ fail xidel ]; };
   tidy_html5        = { buildInputs = [ tidy-html5 ]; };
   xidel_args        = { buildInputs = [ xidel      ]; };
