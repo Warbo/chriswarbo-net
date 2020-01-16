@@ -38,7 +38,7 @@ let key   = "hello"
  in assert (contains value found)
 ```
 
-<details class="odd"><summary>Code notes<>/summary>
+<details class="odd"><summary>Code notes</summary>
 
 This code defines a single value: that of `assert (...)`, given all of the
 bindings specified by the equations. We're assuming that `newDB` is an empty
@@ -86,15 +86,14 @@ restricting our tests.
 In this example we're using `newDB`, presumably to avoid collision with an
 existing key, which would cause multiple matches to be returned. However, that
 constraint is unnecessarily restrictive; we only care whether or not `found`
-contains `value`; we don't care whether or not it contain anything else, so we
-might as well generalise `newDB` to a free variable as well, to get a stronger
-test that may uncover more errors:
+contains `value`; we don't care whether or not it `contain`s anything else, so
+we might as well generalise `newDB` to a free variable as well, to get a
+stronger test that may uncover more errors:
 
 ```haskell
 test key value initialDB =
   let db    = addValue key value initialDB
       found = lookup (keyQuery key) db
-
    in assert (contains value found)
 ```
 
@@ -102,7 +101,9 @@ test key value initialDB =
 
 Many people would stop here, since all of the *explicit* constraints have been
 removed (i.e. all of our hard-coded values are now replaced by free variables).
-However, there are still more unnecessary constraints that are *implicit*.
+Its simplicity is certainly nice, so I might keep it around as a way to document
+the system's behaviour. However it still contains more unnecessary constraints
+which are *implicit*, which artificially limit the sorts of bugs it can find.
 
 Firstly, our query is overly restricted: our `value` should be found by all
 queries *containing* our `key`, not just queries for *only* our `key`, so we
@@ -111,52 +112,68 @@ disjunction, AKA "OR", since there's no way it could accidentally filter out the
 `key` lookup we care about):
 
 ```haskell
--- `extraQs` is a list of queries we'll combine with our `key` lookup
 test key value initialDB extraQs =
-  let db = addValue key value initialDB
-
-      -- Disjunction (OR) should only ever add to the result
+  let db    = addValue key value initialDB
       query = reduce orQuery (keyQuery key) extraQs
       found = lookup query db
    in assert (contains value found)
 ```
 
-This is stronger than before, but we've introduced an asymmetry: we allow
-extensions to our `keyQuery`, but we don't allow our `keyQuery` to extend
-anything else! We can fix this by demoting our `keyQuery` from being the
-starting point of our `reduce`, to being treated like any other element of
-`extraQs`. The starting point can then be any query we like, so we can introduce
-*another* free variable. We'll call this new variable `preQ` to indicate that it
-comes "before" our `keyQuery`, and rename our `extraQs` variable to `postQs` for
-symmetry:
+<details class="odd"><summary>Code notes</summary>
+
+The `extraQs` argument is a list of queries which we'll combine with our
+`key` lookup.
+
+We're assuming that a call like `orQuery q1 q2` produces a query that's the
+disjunction of the given queries (`q1` and `q2`, in this case). In other words,
+we will get results from both (if some value satisfies both queries, it would
+only appear once in the result).
+
+The `reduce` function, also known as "`fold`", uses a given function (in this
+case `orQuery`) to combine together the elements of a list (`extraQs`). It also
+takes an "initial value", which in our case might as well be `keyQuery key`;
+this is a separate argument to ensure we can always return *something*, even if
+the list is empty.
+
+</details>
+
+This is stronger than before, since it will exercise more of the query building
+and execution logic. Yet we've introduced an asymmetry: we allow extensions to
+our `keyQuery`, but we don't allow our `keyQuery` to extend anything else! We
+can fix this by demoting our `keyQuery` from being the initial value of our
+`reduce` call, to being treated like any other element of `extraQs`. The
+initial value can then be any query we like, so we can introduce *another* free
+variable. We'll call this new variable `preQ` to indicate that it comes "before"
+our `keyQuery`, and rename our `extraQs` variable to `postQs` for symmetry:
 
 ```haskell
 test key value initialDB preQ postQs =
-  let db = addValue key value initialDB
-
-      -- Disjunction (OR) should only ever add to the result
+  let db    = addValue key value initialDB
       query = reduce orQuery preQ (cons (keyQuery key) postQs)
       found = lookup query db
    in assert (contains value found)
 ```
 
+<details class="odd"><summary>Code notes</summary>
+
+The `cons` function puts an extra element on to the start of a list. The weird
+name comes from Lisp!
+
+</details>
+
 This is a pattern I run into *a lot* when property testing: generalising a value
 by sandwiching it between two free variables and reducing (AKA "folding") them
-all together. Note that we could have used a list `preQs` instead of a single
-`preQ`, and `reduce`d them all with "OR" in the same way. Both are equivalent,
-since such a `preQs` list could contain a single query equivalent to `preQ`; and
-inversely our `preQ` value could be a chain of "OR" queries like we'd expect
-such a `preQs` list to `reduce` to. I went with `preQ` here since it avoids the
-need for a separate starting point (e.g. `nullQuery`) and would presumably have
-less bias towards chains of "OR", which we have no reason to prefer to anything
-else.
+all together. Note that we could have used a list instead of a single `preQ`
+value, and appended them all together before reducing. That would actually be
+redundant, since `preQ` already represents *any* possible query, including
+whatever intermediate value we would get from reducing a list of queries
+together.
 
 If we want to avoid repeating ourselves when generating such queries, or simply
 want to de-clutter this test, we might choose to abstract out the details into
 a reusable "query generator", like this:
 
 ```haskell
--- queryWith contains an arbitrary OR query which it will plug its argument into
 test key value initialDB queryWith =
   let db = addValue key value initialDB
 
@@ -165,6 +182,39 @@ test key value initialDB queryWith =
       found = lookup query db
    in assert (contains value found)
 ```
+
+<details class="odd"><summary>Code notes</summary>
+
+The `queryWith` argument will contain a function which inserts its argument into
+an arbitrary `OR` query. If we use the same idea as before, we might get:
+
+```haskell
+genQueryWith preQ postQs =
+  let f q = reduce orQuery preQ (cons q postQs)
+   in f
+```
+
+Here the `genQueryWith` function returns another function `f`, and it's those
+`f` values which can be used for the `queryWith` argument of our `test`
+function.
+
+Note that `genQueryWith` still takes `preQ` and `postQs` as arguments, rather
+than generating them internally somehow. That way, `genQueryWith`, and the
+resulting `queryWith` functions, all remain pure. We might instead choose to
+generate the queries inside `genQueryWith`; the details of which vary depending
+on the property checker being used. Still, it is important that it takes place
+outside of the resulting `queryWith` function, i.e. at the level of the `let`
+rather than the `reduce`; otherwise calling `queryWith` would be impure, which
+would make our property impure and hence hard to reproduce.
+
+</details>
+
+This is another common situation: the tradeoff between complicating our tests,
+or complicating our data generators. If a specialised data generator would have
+some relevant semantic meaning (in this case "generate queries whose results are
+a superset of another"), it's probably worth defining it that way; even if it's
+a local definition for one test. If it's useful for other tests too, pull it out
+into a standalone generator.
 
 ## Generalising Actions Too ##
 
@@ -176,7 +226,7 @@ between actions and values is blurry. In fact, we can use this to our advantage
 by thinking of actions *as* values, then generalising those values like we did
 before.
 
-In this test, the key relationship is that `addValue` occurs before `lookup`,
+In this test, the important sequencing is that `addValue` occurs before `lookup`,
 which is enforced via the data dependency `db`. We can make this dependency more
 direct by inlining the value of `db`, as a stepping stone to our generalisation:
 
@@ -226,6 +276,8 @@ test key value initialDB queryWith =
    in assert (contains value found)
 ```
 
+<details class="odd"><summary>Code notes</summary>
+
 Notice that the actions have different types: the `addValue` action turns one
 database into another (it is a "database endomorphism"), whilst the `lookup`
 action turns a database into a query result. Our choice of left-to-right
@@ -239,6 +291,8 @@ composition helps us handle this in a few ways:
  - Our list doesn't need to handle different element types (i.e. it is
    "homogeneous")
  - The list can be easily extended with more transformations.
+
+</details>
 
 If we squint, this reduction of a list of actions looks a bit like the situation
 we had with our `query`. We can generalise it in the same way, by introducing a
