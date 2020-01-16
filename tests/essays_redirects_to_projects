@@ -29,14 +29,18 @@ do
         then
             FOUND=1
         fi
-    done < <(grep -o '<link rel="canonical" href="[^"]*' < "$ESSAY_FILE" |
-             grep -o 'href=".*' | grep -o '".*' | tr -d '"' | sed -e 's@^./@@g')
+    done < <(grep '<link ' < "$ESSAY_FILE" |
+             grep 'rel=.canonical.'        |
+             grep -o 'href="[^"]*'         |
+             grep -o '".*'                 |
+             tr -d '"'                     |
+             sed -e 's@^./@@g'             )
 
     if [[ "$FOUND" -eq 0 ]]
     then
         ERR=1
         echo "'$ESSAY_FILE' doesn't redirect to '$PRJ_URL'" 1>&2
-        grep '<link rel="canonical"' < "$ESSAY_FILE"
+        grep '<link ' < "$ESSAY_FILE" | grep 'rel=.canonical.' 1>&2
     fi
 done < <(getProjects)
 
