@@ -181,11 +181,7 @@ f = drawCircle
 ./root/static/procedural/includePic circ
 ```
 
-<div class="togglable odd" style="cursor: pointer;">
-
-#### Aside ####
-
-<div class="toggled">
+<details class="odd"><summary>Aside</summary>
 
 Another thing we can do with `circle`{.haskell} is to approximate pi:
 
@@ -204,18 +200,7 @@ Another thing we can do with `circle`{.haskell} is to approximate pi:
  - Plugging these values into our definition of pi gives `cat code.hs; echo ""; echo "main = print pi"`{.haskell pipe="bash | ./haskell"}
     - Increasing the radius decreases the error, since the sampling gives a less 'jagged' approximation of our circle
 
-  </div>
-</div>
-
-<script src="/js/jquery.js">
-</script>
-
-<script type="text/javascript">
-$('.togglable').click(function() {
-                        $('.toggled', $(this)).toggle();
-                      })
-               .click();
-</script>
+</details>
 
 ### An Unbounded Example ###
 
