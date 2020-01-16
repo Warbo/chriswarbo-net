@@ -1,5 +1,5 @@
-{ attrsToDirs, bash, coq, fail, git, glibcLocales, lib, libxslt,
-  mkBin, pandocPkgs, python, replace, wget, withNix, xidel, xmlstarlet }:
+{ attrsToDirs, bash, coq, fail, git, glibcLocales, haskellPackages, lib,
+  libxslt, mkBin, pandocPkgs, python, replace, wget, withNix, xidel }:
 
 with builtins;
 with lib;
@@ -21,6 +21,11 @@ with rec {
   extras = {
     # Avoids depending on GTK, Gnome, etc.
     coqNoIde = coq.override { buildIde = false; };
+
+    ghcWithQuickCheck = haskellPackages.ghcWithPackages (h: [
+      h.QuickCheck
+      h.tasty-quickcheck
+    ]);
 
     nix-instantiate = mkBin {
       name   = "nix-instantiate";
