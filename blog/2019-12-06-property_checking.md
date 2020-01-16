@@ -1,6 +1,14 @@
 ---
 title: Effective Property Checking
+packages: [ "ghcWithQuickCheck" ]
 ---
+
+```{pipe="cat > test.hs"}
+import Test.QuickCheck
+import Test.Tasty            (defaultMain, testGroup)
+import Test.Tasty.QuickCheck
+
+```
 
 Most of the testing I do is integration testing, using property checkers like
 QuickCheck. It's remarkable how well this exposes problems I would never have
@@ -536,3 +544,57 @@ link, and so on. This gives uniform weighting to each link, and nicely avoids
 false positives (e.g. passing the test despite broken paths, if we forgot to add
 new links to hard-coded tests) and false negatives (e.g. tests which fail, but
 only because the hard-coded paths they're trying to test don't exist anymore).
+
+```{pipe="cat >> test.hs"}
+
+main = defaultMain $ testGroup "All tests" [
+    composeTests
+  ,  insertTests
+  , permuteTests
+  ]
+
+composeTests = testGroup "Compose tests" [
+      testProperty "Compose once" t1
+    , testProperty "Compose many" t2
+    ]
+  where t1 x y = compose (const (x :: Int)) show (y :: String) === show x
+
+        t2 ys  = let fs :: [(String -> String)]
+                     fs = map (:) ys
+
+                     want = 'X':ys
+
+                  in reduce compose ('X':) fs "" === want
+
+insertTests = testGroup "Insert tests" [
+      testProperty "Insert start" t1
+    , testProperty "Insert end"   t2
+    , testProperty "Insert index" t3
+    ]
+  where t1   x xs = insert (0        , x) xs === ((x : xs :: String))
+        t2   x xs = insert (length xs, x) xs === ((xs ++ [x]) :: String)
+        t3 n x xs = let ys = insert (n, x) xs
+                        i  = n `mod` length ys
+                     in ys !! i === (x :: Char)
+
+permuteTests = testGroup "Permute tests" [
+      testProperty "Permute reversal" t1
+    , testProperty "Permute identity" t2
+    ]
+  where t1 xs = mkPermuter [0]            xs === ((reverse xs) :: String)
+        t2 xs = mkPermuter [0..length xs] xs === (xs :: String)
+
+compose :: (a -> b) -> (b -> c) -> a -> c
+compose f g x = g (f x)
+
+reduce :: (a -> b -> b) -> b -> [a] -> b
+reduce f = foldl (flip f)
+
+insert :: (Int, a) -> [a] -> [a]
+
+```
+
+```{pipe="sh > /dev/null"}
+ghc test.hs || exit 1
+./test      || exit 1
+```
