@@ -6,6 +6,7 @@ assert super ? nix-helpers || abort (toJSON {
   error = "'nix-helpers' not found; has nix-helpers overlay been included?";
 });
 {
+  blog     = self.callPackage ./blog.nix     {};
   commands = self.callPackage ./commands.nix {};
   projects = self.callPackage ./projects.nix {};
   relTo    = self.callPackage ./relTo.nix    {};
@@ -15,11 +16,9 @@ assert super ? nix-helpers || abort (toJSON {
   inherit (self.callPackage ./render.nix    { inherit self; }) render renderAll;
 
   # Attrsets of rendered sub-directory pages
-  blog       = self.renderAll "blog";
   unfinished = self.renderAll "unfinished";
 
   # Derivations for whole sub-directories
-  blogPages       = self.attrsToDirs' "blog"       self.blog;
   unfinishedPages = self.attrsToDirs' "unfinished" self.unfinished;
 
   topLevel     = mapAttrs' (n: val: rec {
@@ -31,24 +30,16 @@ assert super ? nix-helpers || abort (toJSON {
                                SOURCE_PATH = n;
                              });
                            }) {
-    "index.md"      = { vars = { inherit (self) blogPages;       }; };
-    "blog.md"       = { vars = { inherit (self) blogPages;       }; };
     "contact.md"    = {                                             };
     "unfinished.md" = { vars = { inherit (self) unfinishedPages; }; };
   };
 
-  allPages = self.projects  //
+  allPages = self.blog      //
+             self.projects  //
              self.redirects //
              self.resources //
              self.topLevel  // {
-    blog        = self.blogPages;
     unfinished  = self.unfinishedPages;
-    "index.php" = self.render {
-      vars        = { inherit (self) blogPages; };
-      file        = ../../redirect.md;
-      name        = "index.php";
-      SOURCE_PATH = "redirect.md";
-    };
   };
 
   tests        = self.callPackage ./tests.nix {};
