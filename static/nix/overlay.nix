@@ -37,9 +37,11 @@ assert super ? nix-helpers || abort (toJSON {
     "unfinished.md" = { vars = { inherit (self) unfinishedPages; }; };
   };
 
-  allPages = self.topLevel // self.redirects // self.resources // {
+  allPages = self.projectPages //
+             self.redirects    //
+             self.resources    //
+             self.topLevel     // {
     blog        = self.blogPages;
-    projects    = self.projectPages;
     unfinished  = self.unfinishedPages;
     "index.php" = self.render {
       vars        = { inherit (self) blogPages; };

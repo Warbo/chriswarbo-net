@@ -17,5 +17,5 @@ with rec {
 };
 {
   inherit projects;
-  projectPages = attrsToDirs' "projects" projects;
+  projectPages = attrsToDirs' "projects" { inherit projects; };
 }
