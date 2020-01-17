@@ -15,12 +15,6 @@ assert super ? nix-helpers || abort (toJSON {
   inherit (self.callPackage ./redirects.nix {               }) redirects mkRedirectTo;
   inherit (self.callPackage ./render.nix    { inherit self; }) render renderAll;
 
-  # Attrsets of rendered sub-directory pages
-  unfinished = self.renderAll "unfinished";
-
-  # Derivations for whole sub-directories
-  unfinishedPages = self.attrsToDirs' "unfinished" self.unfinished;
-
   topLevel     = mapAttrs' (n: val: rec {
                              name  = "${removeSuffix ".md" n}.html";
                              value = self.render (val // {
@@ -31,16 +25,14 @@ assert super ? nix-helpers || abort (toJSON {
                              });
                            }) {
     "contact.md"    = {                                             };
-    "unfinished.md" = { vars = { inherit (self) unfinishedPages; }; };
   };
 
   allPages = self.blog      //
              self.projects  //
              self.redirects //
              self.resources //
-             self.topLevel  // {
-    unfinished  = self.unfinishedPages;
-  };
+             self.topLevel  //
+             self.unfinished;
 
   tests        = self.callPackage ./tests.nix {};
 
