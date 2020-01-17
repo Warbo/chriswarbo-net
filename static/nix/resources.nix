@@ -1,4 +1,4 @@
-{ beautifulsoup-custom, fail, hfeed2atom, libxslt, python, run, topLevel }:
+{ beautifulsoup-custom, blog, fail, hfeed2atom, libxslt, python, render, run }:
 
 with rec {
   py = python.withPackages (p: [
@@ -10,7 +10,7 @@ with rec {
     name  = "blog.atom";
     file  = ../mkAtom;
     paths = [ hfeed2atom py ];
-    vars  = { blog = topLevel."blog.html"; };
+    vars  = { inherit blog; };
   };
 
   rss = run {
@@ -25,9 +25,15 @@ with rec {
 };
 {
   resources = {
-    "blog.atom" = atom;
-    "blog.rss"  = rss;
-    css         = ../../css;
-    js          = ../../js;
+    "blog.atom"    = atom;
+    "blog.rss"     = rss;
+    css            = ../../css;
+    js             = ../../js;
+    "contact.html" = render {
+      name        = "contact.html";
+      file        = ../../contact.md;
+      TO_ROOT     = ".";
+      SOURCE_PATH = "contact.md";
+    };
   };
 }
