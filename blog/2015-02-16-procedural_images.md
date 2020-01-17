@@ -9,5 +9,5 @@ out a decent workflow, rather than to provide a deep treatment of the algorithms
 involved.
 
 They've now done their job, but in case anyone finds them interesting I've moved
-them out of my playground and into the [projects](/projects.html) section:
+them out of my playground and into the [projects](/projects/) section:
 [Procedural Pictures](/projects/procedural/)

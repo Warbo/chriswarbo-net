@@ -9,6 +9,7 @@ assert super ? nix-helpers || abort (toJSON {
   commands = self.callPackage ./commands.nix {};
   relTo    = self.callPackage ./relTo.nix    {};
 
+  inherit (self.callPackage ./projects.nix  {               }) projectPages projects;
   inherit (self.callPackage ./resources.nix {               }) resources;
   inherit (self.callPackage ./redirects.nix {               }) redirects;
   inherit (self.callPackage ./render.nix    { inherit self; }) render renderAll;
@@ -16,11 +17,9 @@ assert super ? nix-helpers || abort (toJSON {
   # Attrsets of rendered sub-directory pages
   blog       = self.renderAll "blog";
   unfinished = self.renderAll "unfinished";
-  projects   = self.renderAll "projects" // { repos = self.projectRepos; };
 
   # Derivations for whole sub-directories
   blogPages       = self.attrsToDirs' "blog"       self.blog;
-  projectPages    = self.attrsToDirs' "projects"   self.projects;
   unfinishedPages = self.attrsToDirs' "unfinished" self.unfinished;
 
   topLevel     = mapAttrs' (n: val: rec {
@@ -35,7 +34,6 @@ assert super ? nix-helpers || abort (toJSON {
     "index.md"      = { vars = { inherit (self) blogPages;       }; };
     "blog.md"       = { vars = { inherit (self) blogPages;       }; };
     "contact.md"    = {                                             };
-    "projects.md"   = { vars = { projects = self.projectPages;   }; };
     "unfinished.md" = { vars = { inherit (self) unfinishedPages; }; };
   };
 
@@ -58,5 +56,5 @@ assert super ? nix-helpers || abort (toJSON {
   wholeSite    = self.withDeps (self.allDrvsIn self.tests) self.untestedSite;
 
   inherit (self.callPackage ./repos.nix {})
-    projectRepos repoName repoPages;
+    projectRepos repoPages;
 }

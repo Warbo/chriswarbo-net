@@ -61,7 +61,12 @@ with rec {
 
     "essays.html" = relTo "." (mkRedirectTo {
       from = "essays.html";
-      to   = "projects.html";
+      to   = "/projects";
+    });
+
+    "projects.html" = relTo "." (mkRedirectTo {
+      from = "projects.html";
+      to   = "/projects/";
     });
   };
 }

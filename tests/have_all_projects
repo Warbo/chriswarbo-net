@@ -18,10 +18,10 @@ do
         ERR=1
     fi
     LINK=$(xidel - -q --extract \
-                 "//a[@href='$DEST']/@href" < "$rendered/projects.html")
+                 "//a[@href='$DEST']/@href" < "$rendered/projects/index.html")
     if ! echo "$LINK" | grep "$DEST" > /dev/null
     then
-        echo "$NAME ($DEST) doesn't appear in projects.html" 1>&2
+        echo "$NAME ($DEST) doesn't appear in projects/index.html" 1>&2
         ERR=1
     fi
 done < <(indices)

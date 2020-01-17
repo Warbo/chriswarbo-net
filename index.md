@@ -46,9 +46,9 @@ find "$blogPages" -type f -o -type l |
 
 [More...](/blog.html)
 
-## [Projects](/projects.html)
+## [Projects](/projects/)
 
 A collection of thought-out, carefully managed articles and demos.
 Infrequently updated, but hopefully accurate.
 
-[More...](/projects.html)
+[More...](/projects/)
