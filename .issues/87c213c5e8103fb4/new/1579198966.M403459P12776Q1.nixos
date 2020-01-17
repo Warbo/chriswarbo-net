@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Thu, 16 Jan 2020 18:22:32 +0000
+Subject: Re: Make 'details' tags work
+Message-Id: <87c213c5e8103fb4-c82cf0972d7432ba-artemis@nixos>
+References: <87c213c5e8103fb4-0-artemis@nixos>
+In-Reply-To: <87c213c5e8103fb4-0-artemis@nixos>
+
+Upgrading pandoc fixed this
