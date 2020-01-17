@@ -11,7 +11,7 @@ assert super ? nix-helpers || abort (toJSON {
 
   inherit (self.callPackage ./projects.nix  {               }) projectPages projects;
   inherit (self.callPackage ./resources.nix {               }) resources;
-  inherit (self.callPackage ./redirects.nix {               }) redirects;
+  inherit (self.callPackage ./redirects.nix {               }) redirects mkRedirectTo;
   inherit (self.callPackage ./render.nix    { inherit self; }) render renderAll;
 
   # Attrsets of rendered sub-directory pages
