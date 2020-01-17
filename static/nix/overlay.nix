@@ -6,10 +6,11 @@ assert super ? nix-helpers || abort (toJSON {
   error = "'nix-helpers' not found; has nix-helpers overlay been included?";
 });
 {
-  blog     = self.callPackage ./blog.nix     {};
-  commands = self.callPackage ./commands.nix {};
-  projects = self.callPackage ./projects.nix {};
-  relTo    = self.callPackage ./relTo.nix    {};
+  blog       = self.callPackage ./blog.nix       {};
+  commands   = self.callPackage ./commands.nix   {};
+  projects   = self.callPackage ./projects.nix   {};
+  relTo      = self.callPackage ./relTo.nix      {};
+  unfinished = self.callPackage ./unfinished.nix {};
 
   inherit (self.callPackage ./resources.nix {               }) resources;
   inherit (self.callPackage ./redirects.nix {               }) redirects mkRedirectTo;
