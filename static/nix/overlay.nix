@@ -16,16 +16,13 @@ assert super ? nix-helpers || abort (toJSON {
   inherit (self.callPackage ./redirects.nix {               }) redirects mkRedirectTo;
   inherit (self.callPackage ./render.nix    { inherit self; }) render renderAll;
 
-  topLevel     = mapAttrs' (n: val: rec {
-                             name  = "${removeSuffix ".md" n}.html";
-                             value = self.render (val // {
-                               inherit name;
-                               file        = ../.. + "/${n}";
-                               TO_ROOT     = ".";
-                               SOURCE_PATH = n;
-                             });
-                           }) {
-    "contact.md"    = {                                             };
+  topLevel = {
+    "contact.md" = render {
+      name        = "contact.html";
+      file        = ../../contact.md;
+      TO_ROOT     = ".";
+      SOURCE_PATH = "contact.md";
+    };
   };
 
   allPages = self.blog      //
