@@ -59,17 +59,12 @@ with rec {
     };
   };
 };
-oldLinks // essays // {
+attrsToDirs' "projects" (oldLinks // essays // {
   inherit projects;
-  projectPages = attrsToDirs' "projects" {
-    inherit projects;
 
-
-
-    "projects.html" = mkRedirectTo {
-      from = "projects.html";
-      to   = "/projects/";
-      rel  = ".";
-    };
+  "projects.html" = mkRedirectTo {
+    from = "projects.html";
+    to   = "/projects/";
+    rel  = ".";
   };
-}
+})

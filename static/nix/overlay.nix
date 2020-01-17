@@ -7,9 +7,9 @@ assert super ? nix-helpers || abort (toJSON {
 });
 {
   commands = self.callPackage ./commands.nix {};
+  projects = self.callPackage ./projects.nix {};
   relTo    = self.callPackage ./relTo.nix    {};
 
-  inherit (self.callPackage ./projects.nix  {               }) projectPages projects;
   inherit (self.callPackage ./resources.nix {               }) resources;
   inherit (self.callPackage ./redirects.nix {               }) redirects mkRedirectTo;
   inherit (self.callPackage ./render.nix    { inherit self; }) render renderAll;
@@ -37,10 +37,10 @@ assert super ? nix-helpers || abort (toJSON {
     "unfinished.md" = { vars = { inherit (self) unfinishedPages; }; };
   };
 
-  allPages = self.projectPages //
-             self.redirects    //
-             self.resources    //
-             self.topLevel     // {
+  allPages = self.projects  //
+             self.redirects //
+             self.resources //
+             self.topLevel  // {
     blog        = self.blogPages;
     unfinished  = self.unfinishedPages;
     "index.php" = self.render {

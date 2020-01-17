@@ -1,4 +1,4 @@
-{ commands, isPath, lib, projects, relTo, runCommand, sanitiseName }:
+{ commands, isPath, lib, relTo, runCommand, sanitiseName }:
 
 with builtins;
 with lib;
