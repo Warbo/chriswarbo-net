@@ -20,4 +20,11 @@ then
     INPUT="$OUTPUT"
 fi
 
+if echo "$INPUT" | grep "<summary" > /dev/null
+then
+    echo "Unwrapping paragraphs from summaries" 1>&2
+    OUTPUT=$(echo "$INPUT" | unwrapSummaries)
+    INPUT="$OUTPUT"
+fi
+
 echo "$INPUT"

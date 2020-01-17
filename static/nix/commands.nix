@@ -57,7 +57,11 @@ with rec {
 
   wrapped = extras // mapAttrs wrapScript {
     cleanup = {
-      paths = [ wrapped.stripEmptyPreCode wrapped.summariseTables ];
+      paths = with wrapped; [
+        stripEmptyPreCode
+        summariseTables
+        unwrapSummaries
+      ];
     };
 
     file2img = {};
@@ -107,6 +111,10 @@ with rec {
     };
 
     summariseTables = {
+      paths = [ bs ];
+    };
+
+    unwrapSummaries = {
       paths = [ bs ];
     };
 
