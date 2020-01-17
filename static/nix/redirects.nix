@@ -5,25 +5,25 @@ with lib;
 with rec {
   go = paths: entry: content:
     if isPath content || isDerivation content
-       then relTo
-              (concatStringsSep "/" (["."] ++ map (_: "..") paths))
-              (mkRedirectTo {
-                from = sanitiseName entry;
-                to   = concatStringsSep "/" ([""] ++ paths ++ [entry]);
-              })
+       then mkRedirectTo {
+              from = sanitiseName entry;
+              to   = concatStringsSep "/" ([""] ++ paths ++ [entry]);
+              rel  = concatStringsSep "/" (["."] ++ map (_: "..") paths);
+            }
        else mapAttrs (go (paths ++ [entry])) content;
 
-  mkRedirectTo = { from, to }: runCommand from
-    {
-      inherit to;
-      buildInputs = [ commands.mkRedirectTo ];
-    }
-    ''
-      # We make sure the redirection succeeds before we do anything to $out,
-      # to avoid creating empty or partial files
-      RESULT=$(mkRedirectTo "$to")
-      echo "$RESULT" > "$out"
-    '';
+  mkRedirectTo = { from, to, rel ? null }:
+    (if rel == null then (x: x) else relTo rel) (runCommand from
+      {
+        inherit to;
+        buildInputs = [ commands.mkRedirectTo ];
+      }
+      ''
+        # We make sure the redirection succeeds before we do anything to $out,
+        # to avoid creating empty or partial files
+        RESULT=$(mkRedirectTo "$to")
+        echo "$RESULT" > "$out"
+      '');
 
   essays = mapAttrs (go ["projects"]) projects;
 
@@ -41,10 +41,11 @@ with rec {
                             projects;
 
   redirectDir = entry: {
-    "index.html" = relTo "." (mkRedirectTo {
+    "index.html" = mkRedirectTo {
       from = "redirect-${sanitiseName entry}";
       to   = "/projects/${entry}/index.html";
-    });
+      rel  = ".";
+    };
   };
 
   oldLinks = mapAttrs (name: _: redirectDir name) projectDirs;
@@ -59,14 +60,16 @@ with rec {
       };
     };
 
-    "essays.html" = relTo "." (mkRedirectTo {
+    "essays.html" = mkRedirectTo {
       from = "essays.html";
       to   = "/projects";
-    });
+      rel  = ".";
+    };
 
-    "projects.html" = relTo "." (mkRedirectTo {
+    "projects.html" = mkRedirectTo {
       from = "projects.html";
       to   = "/projects/";
-    });
+      rel  = ".";
+    };
   };
 }
