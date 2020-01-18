@@ -12,36 +12,6 @@ fi
 # We use a lot of recursion, which can overflow the stack, so try increasing it
 ulimit -s 100000 || true
 
-# Set default parameter, if none supplied
-[[ -n "$GIT_REPO_DIR" ]] || export GIT_REPO_DIR=/home/chris/Programming/repos
-
-function gitVersions() {
-    echo "{"
-    for D in "$GIT_REPO_DIR"/*.git
-    do
-        NAME=$(basename "$D" .git)
-        REV=$(git ls-remote "$D" HEAD | cut -f1)
-        printf '"%s":"%s" ' "$NAME" "$REV"
-    done | sed -e 's/ *$//g' -e 's/ /, /g'
-    echo "}"
-}
-
-function cacheGit() {
-    [[ -z "$REPO_REFS" ]] || return 0
-    printf "Getting git HEADs..." 1>&2
-    REPO_REFS=$(gitVersions)
-    export REPO_REFS
-
-    # Speeds up latestGit
-    while read -r VAR
-    do
-        N=$(echo "$VAR" | cut -f1)
-        V=$(echo "$VAR" | cut -f2)
-        export "$N"="$V"
-    done < <(gitRevEnvVars)
-    echo "Done" 1>&2
-}
-
 function checkSource() {
     # Look for problems in this working copy
 
@@ -71,7 +41,6 @@ function checkSource() {
 }
 
 function build() {
-    cacheGit
     echo "Building '$1'" 1>&2
     BASE=$(dirname "$(readlink -f "$0")")
     nix-build --show-trace -A "$1" "$BASE/static/nix"

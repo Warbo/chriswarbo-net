@@ -6,9 +6,6 @@ with lib;
 with rec {
   nixVars = withNix {
     CALLING_NIX_RECURSIVELY = "1";
-    REPO_REFS               = if getEnv "REPO_REFS" == ""
-                                 then "{}"
-                                 else getEnv "REPO_REFS";
   };
 
   includingDeps = xs:
