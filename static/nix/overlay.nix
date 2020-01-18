@@ -2,9 +2,9 @@ self: super:
 
 with builtins;
 with super.lib;
-assert super ? nix-helpers || abort (toJSON {
-  error = "'nix-helpers' not found; has nix-helpers overlay been included?";
-});
+(if super ? nix-helpers then (x: x) else trace (toJSON {
+  warning = "'nix-helpers' not found; has nix-helpers overlay been included?";
+}))
 {
   blog       = self.callPackage ./blog.nix       {};
   commands   = self.callPackage ./commands.nix   {};
