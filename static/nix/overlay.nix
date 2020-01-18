@@ -11,21 +11,21 @@ with super.lib;
   projects   = self.callPackage ./projects.nix   {};
   redirect   = self.callPackage ./redirect.nix   {};
   relTo      = self.callPackage ./relTo.nix      {};
+  render     = self.callPackage ./render.nix     {};
+  renderAll  = self.callPackage ./renderAll.nix  {};
   repos      = self.callPackage ./repos.nix      {};
   resources  = self.callPackage ./resources.nix  {};
   tests      = self.callPackage ./tests.nix      {};
   unfinished = self.callPackage ./unfinished.nix {};
 
-  inherit (self.callPackage ./render.nix    { inherit self; }) render renderAll;
+  untestedSite = self.attrsToDirs' "untestedSite"
+    (self.stripOverrides (self.merge [
+      self.blog
+      self.projects
+      self.resources
+      self.unfinished
+    ]));
 
-  allPages = self.stripOverrides (self.merge [
-    self.blog
-    self.projects
-    self.resources
-    self.unfinished
-  ]);
-
-  untestedSite = self.attrsToDirs' "untestedSite" self.allPages;
-  wholeSite    = self.withDeps' "site" (self.allDrvsIn self.tests)
-                                       self.untestedSite;
+  wholeSite = self.withDeps' "site" (self.allDrvsIn self.tests)
+                                    self.untestedSite;
 }
