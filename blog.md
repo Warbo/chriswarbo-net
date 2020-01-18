@@ -3,9 +3,9 @@ title: Blog
 packages: [ 'showPosts' ]
 content_classes: h-feed
 extra_head: |
-  <link rel="alternate" type="application/rss+xml" href="blog.rss"
+  <link rel="alternate" type="application/rss+xml" href="/blog.rss"
         title="ChrisWarbo.net RSS feed"/>
-  <link rel="alternate" type="application/atom+xml" href="blog.atom"
+  <link rel="alternate" type="application/atom+xml" href="/blog.atom"
         title="ChrisWarbo.net Atom feed"/>
   <style type="text/css">
     .rant-toggler {

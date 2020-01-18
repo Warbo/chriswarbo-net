@@ -6,7 +6,7 @@ with rec {
 };
 
 # Posts, redirects, index pages and other things which need a list of blog posts
-attrsToDirs' "blog" {
+{
   blog = contents // {
     "index.html" = render {
       name        = "index.html";

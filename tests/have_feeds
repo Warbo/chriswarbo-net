@@ -11,7 +11,7 @@ function fail() {
 
 for FEED in blog.atom blog.rss
 do
-  for PAGE in index.html blog.html
+  for PAGE in index.html blog/index.html
   do
     grep "$FEED" < "$rendered/$PAGE" > /dev/null || fail "$FEED isn't in $PAGE"
   done

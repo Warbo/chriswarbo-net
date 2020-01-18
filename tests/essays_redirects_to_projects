@@ -4,8 +4,11 @@ set -e
 ERR=0
 
 function getProjects {
+    # The condition matches when the path is not .../projects/repos/... AND when
+    # we have EITHER a file OR a symlink
     # shellcheck disable=SC2154
-    find -L "$rendered/projects" -type f -o -type l
+    find -L "$rendered/projects" -not -path '*/projects/repos/*' -a \
+                                 \( -type f -o -type l \)
 }
 
 while read -r PRJ_FILE_OR_LINK

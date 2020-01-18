@@ -1,10 +1,10 @@
-{ attrsToDirs', lib, mkRedirectTo, projectRepos, render, renderAll,
+{ attrsToDirs', isPath, lib, mkRedirectTo, render, renderAll, repos,
   sanitiseName }:
 
 with lib;
 with rec {
   # The content that will be linked to from index.html
-  contents = renderAll "projects" // { repos = projectRepos; };
+  contents = renderAll "projects" // { inherit repos; };
 
   # All of the contents, including index.html
   projects = contents // {
@@ -59,7 +59,7 @@ with rec {
     };
   };
 };
-attrsToDirs' "projects" (oldLinks // essays // {
+oldLinks // essays // {
   inherit projects;
 
   "projects.html" = mkRedirectTo {
@@ -67,4 +67,4 @@ attrsToDirs' "projects" (oldLinks // essays // {
     to   = "/projects/";
     rel  = ".";
   };
-})
+}

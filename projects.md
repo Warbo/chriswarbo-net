@@ -13,16 +13,16 @@ function show {
 }
 
 echo '<ul>'
-for ENTRY in "$projects"/*
-do
-    [[ "x$(basename "$ENTRY")" = "xindex.html" ]] && continue
+    for ENTRY in "$projects"/*
+    do
+        [[ "x$(basename "$ENTRY")" = "xindex.html" ]] && continue
 
-    if [[ -d "$ENTRY" ]]
-    then
-        show "$ENTRY"/index.*
-    else
-        show "$ENTRY"
-    fi
-done
+        if [[ -d "$ENTRY" ]]
+        then
+            show "$ENTRY"/index.*
+        else
+            show "$ENTRY"
+        fi
+    done
 echo '</ul>'
 ```

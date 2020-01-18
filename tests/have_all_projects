@@ -11,8 +11,8 @@ do
     [[ "x$NAME" = "x$rendered/projects/index.html" ]] && continue
 
     NOREND=$(echo "$NAME" | sed -e 's@^/nix/store/[^/]*/@@g')
-    DEST="./$NOREND"
-    if [[ ! -e "$rendered/$DEST" ]]
+    DEST="../$NOREND"
+    if [[ ! -e "$rendered/$NOREND" ]]
     then
         echo "Can't find $rendered/$DEST" 1>&2
         ERR=1

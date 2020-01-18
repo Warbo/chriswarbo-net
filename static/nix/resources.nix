@@ -1,4 +1,5 @@
-{ beautifulsoup-custom, blog, fail, hfeed2atom, libxslt, python, render, run }:
+{ beautifulsoup-custom, blog, fail, hfeed2atom, libxslt, mkRedirectTo, python,
+  render, run }:
 
 with rec {
   py = python.withPackages (p: [
@@ -10,7 +11,7 @@ with rec {
     name  = "blog.atom";
     file  = ../mkAtom;
     paths = [ hfeed2atom py ];
-    vars  = { inherit blog; };
+    vars  = { blog = blog.blog."index.html"; };
   };
 
   rss = run {
@@ -24,16 +25,22 @@ with rec {
   };
 };
 {
-  resources = {
-    "blog.atom"    = atom;
-    "blog.rss"     = rss;
-    css            = ../../css;
-    js             = ../../js;
-    "contact.html" = render {
-      name        = "contact.html";
-      file        = ../../contact.md;
-      TO_ROOT     = ".";
-      SOURCE_PATH = "contact.md";
+  "blog.atom"    = atom;
+  "blog.rss"     = rss;
+  css            = ../../css;
+  js             = ../../js;
+  data_custom    = {
+    # There are links to this in the wild, but data_custom itself is left over
+    # from when the site used ocPortal
+    "prelude.txt" = mkRedirectTo {
+      from = "prelude.txt";
+      to   = "/git/php-prelude";
     };
+  };
+  "contact.html" = render {
+    name        = "contact.html";
+    file        = ../../contact.md;
+    TO_ROOT     = ".";
+    SOURCE_PATH = "contact.md";
   };
 }

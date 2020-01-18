@@ -1,5 +1,5 @@
-{ attrsToDirs, commands, darkhttpd, fail, git, haskell, haskellPackages, lib,
-  linkchecker, mf2py, procps, pythonPackages, repoPages, runCommand, tidy-html5,
+{ attrsToDirs', commands, darkhttpd, fail, git, haskell, haskellPackages, lib,
+  linkchecker, mf2py, procps, pythonPackages, repos, runCommand, tidy-html5,
   untestedSite, utillinux, wget, wrap, xidel }:
 
 with builtins;
@@ -18,7 +18,7 @@ with rec {
           file = base + "/tests/${name}";
         };
         # Files which tests might need
-        static = attrsToDirs {
+        static = attrsToDirs' "test-script-resources" {
           linkcheckerrc = base + "/static/linkcheckerrc";
         };
       }
@@ -103,9 +103,7 @@ mapAttrs testScript {
   xidel_args        = { buildInputs = [ xidel      ]; };
 } // {
   reposRedirect = runCommand "reposRedirect"
-    {
-      pages = attrsToDirs repoPages;
-    }
+    { pages = attrsToDirs' "repos" repos; }
     ''
       FOUND=0
       for page in "$pages"/*

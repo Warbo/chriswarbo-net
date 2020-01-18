@@ -4,7 +4,7 @@ with rec {
   contents        = renderAll "unfinished";
   unfinishedPages = attrsToDirs' "unfinishedPages" contents;
 };
-attrsToDirs' "unfinished" {
+{
   unfinished = contents // {
     "index.html" = render {
       name        = "index.html";

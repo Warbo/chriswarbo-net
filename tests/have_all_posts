@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # shellcheck disable=SC2154
-LINKS=$(xidel - -q --extract "//a/@href" < "$rendered/blog.html")
+LINKS=$(xidel - -q --extract "//a/@href" < "$rendered/blog/index.html")
 
 function getBlogs {
     # shellcheck disable=SC2154
@@ -24,7 +24,7 @@ do
     fi
     if ! echo "$LINKS" | grep "$NAME" > /dev/null
     then
-        echo "blog/$NAME.html doesn't appear in blog.html" 1>&2
+        echo "blog/$NAME.html doesn't appear in blog/index.html" 1>&2
         exit 1
     fi
 done < <(getBlogs)

@@ -15,7 +15,7 @@ find . 1>&2
 
 function genEntry {
   echo "<li>"
-    echo "<a href=\"${1}.html\">"
+    echo "<a href=\"/projects/repos/${1}.html\">"
       echo "$1"
     echo '</a>'
   echo '</li>'
