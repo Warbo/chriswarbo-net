@@ -68,7 +68,6 @@ function pushToWeb() {
     #   --progress tells us what it's up to
     #   --copy-unsafe-links causes absolute symlinks (or relative ones pointing
     #     outside the source tree) to be dereferenced and copied as files/dirs
-    #   --exclude tells rsync to ignore a path, so it won't copy or delete it
     #   --archive causes directories and (safe) symlinks to be copied, and
     #     permissions, etc. to be preserved
     #   -e forces SSH to use a TTY, so sudo will work
@@ -76,8 +75,12 @@ function pushToWeb() {
     #     sudo so we've got permission to write to /var/www. NOTE: If you use an
     #     SSH passphrase, this might cause it to be sent in the clear! We use
     #     keys so it's not an issue.
-    copyToWeb --exclude /git --exclude /essays --exclude /repos \
-              "$DIR/" chriswarbo.net:/var/www/html
+    #   --exclude tells rsync to ignore a path, so it won't copy or delete it
+    # Note that the trailing / after $DIR will cause its contents to be copied
+    rsync --ignore-times --checksum --delete --progress --copy-unsafe-links \
+          --archive --compress -e "ssh -t" --rsync-path="sudo rsync"        \
+          --exclude /git --exclude /essays --exclude /repos                 \
+          "$DIR/" chriswarbo.net:/var/www/html
 
     # Ensure symlinks are in place
     for PAIR in '/opt/git	/var/www/html/git'            \
