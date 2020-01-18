@@ -181,7 +181,8 @@ f = drawCircle
 ./root/static/procedural/includePic circ
 ```
 
-<details class="odd"><summary>Aside</summary>
+<details class="odd">
+<summary>Aside</summary>
 
 Another thing we can do with `circle`{.haskell} is to approximate pi:
 

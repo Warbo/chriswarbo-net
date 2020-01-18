@@ -38,7 +38,8 @@ let key   = "hello"
  in assert (contains value found)
 ```
 
-<details class="odd"><summary>Code notes</summary>
+<details class="odd">
+<summary>Code notes</summary>
 
 This code defines a single value: that of `assert (...)`, given all of the
 bindings specified by the equations. We're assuming that `newDB` is an empty
@@ -66,7 +67,8 @@ test key value =
    in assert (contains value found)
 ```
 
-<details class="odd"><summary>Code notes</summary>
+<details class="odd">
+<summary>Code notes</summary>
 
 We're now defining a function called `test`, which takes two arguments (`key`
 and `value`); these represent our free variables. In principle, we can think of
@@ -119,7 +121,8 @@ test key value initialDB extraQs =
    in assert (contains value found)
 ```
 
-<details class="odd"><summary>Code notes</summary>
+<details class="odd">
+<summary>Code notes</summary>
 
 The `extraQs` argument is a list of queries which we'll combine with our
 `key` lookup.
@@ -154,7 +157,8 @@ test key value initialDB preQ postQs =
    in assert (contains value found)
 ```
 
-<details class="odd"><summary>Code notes</summary>
+<details class="odd">
+<summary>Code notes</summary>
 
 The `cons` function puts an extra element on to the start of a list. The weird
 name comes from Lisp!
@@ -183,7 +187,8 @@ test key value initialDB queryWith =
    in assert (contains value found)
 ```
 
-<details class="odd"><summary>Code notes</summary>
+<details class="odd">
+<summary>Code notes</summary>
 
 The `queryWith` argument will contain a function which inserts its argument into
 an arbitrary `OR` query. If we use the same idea as before, we might get:
@@ -276,7 +281,8 @@ test key value initialDB queryWith =
    in assert (contains value found)
 ```
 
-<details class="odd"><summary>Code notes</summary>
+<details class="odd">
+<summary>Code notes</summary>
 
 Notice that the actions have different types: the `addValue` action turns one
 database into another (it is a "database endomorphism"), whilst the `lookup`
@@ -437,7 +443,8 @@ test key value initialDB queryWith changes =
    in assert (contains value found)
 ```
 
-<details class="odd"><summary>Side note about sum types</summary>
+<details class="odd">
+<summary>Side note about sum types</summary>
 
 Many programming languages don't support sum types, so briefly: they let us give
 values a "tag", which subsequent code can branch on. If we only need two tags,
