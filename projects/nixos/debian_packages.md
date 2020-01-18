@@ -141,7 +141,7 @@ overly restrictive (what about non-privileged accounts?), too much hassle
 system access).
 
 I'll make use of the `wrap` helper function defined in
-[my nix config](http://chriswarbo.net/git/nix-config). Again, save this to a
+[my nix config](/git/nix-config). Again, save this to a
 file like `debian-chromium.nix`, in the same directory as
 `debian-with-chromium.nix` (or adjust paths appropriately):
 

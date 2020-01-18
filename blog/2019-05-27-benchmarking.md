@@ -50,7 +50,7 @@ organise and track things like which machine was used, etc.
 The best approach to running and tracking benchmarks that I've seen is
 [Airspeed Velocity](http://asv.readthedocs.io/en/latest) (ASV). Out of the box
 it is designed for benchmarking Python packages, but
-[my Nix plugin](http://chriswarbo.net/projects/nixos/asv_benchmarking.html) lets
+[my Nix plugin](/projects/nixos/asv_benchmarking.html) lets
 us use it for any language or system.
 
 Each ASV benchmark is a Python function (or, if you must, a method in a class).
@@ -77,7 +77,7 @@ measurement tool, gives us some nice benefits:
 One difficulty is to ensure that we don't run multiple benchmark suites at once.
 I use [Laminar](https://laminar.ohwg.net) for continuous integration, and use
 Nix to define [my Laminar configuration
-](http://chriswarbo.net/git/laminar-config). To prevent benchmarks running
+](/git/laminar-config). To prevent benchmarks running
 concurrently, I've used
 [`flock`](http://man7.org/linux/man-pages/man1/flock.1.html) in two ways:
 

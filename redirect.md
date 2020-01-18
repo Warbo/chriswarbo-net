@@ -1,11 +1,11 @@
 ---
 extra_head:
-  <meta http-equiv="refresh" content="1;url=./blog.html" />
+  <meta http-equiv="refresh" content="1;url=./blog/" />
 
 title: Blog moved
 ---
 
-This blog has moved. If you're not redirected, check the [archive](./blog.html).
+This blog has moved. If you're not redirected, check the [archive](./blog/).
 
 <!-- TODO:
 

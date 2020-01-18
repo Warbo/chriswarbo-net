@@ -29,7 +29,7 @@ programming languages and artificial intelligence.
 
 Pages are organised into the following overlapping categories:
 
-## [Blog](/blog.html)
+## [Blog](/blog/)
 
 A [FINO](http://en.wikipedia.org/wiki/FINO) stack of rants, hacks, opinions,
 etc. Updated frequently but rarely revised.
@@ -44,7 +44,7 @@ find "$blogPages" -type f -o -type l |
   showPosts
 ```
 
-[More...](/blog.html)
+[More...](/blog/)
 
 ## [Projects](/projects/)
 

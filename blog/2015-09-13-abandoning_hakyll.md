@@ -16,7 +16,7 @@ Hakyll's use of Pandoc with a shell invocation. Likewise, every other feature of
 Hakyll I was using turns out to be a boilerplate-heavy reimplementation of tasks
 which are trivial to perform with shell commands; especially so considering that
 I can use [PanPipe](/git/panpipe) to run shell commands during rendering (that's
-how pages like my [blog post listing](/blog.html) are now implemented).
+how pages like my [blog post listing](/blog/) are now implemented).
 
 The only feature that's non-trivial is the cache used for deciding when to
 build/rebuild something. However, there's already a widely used, dedicated tool

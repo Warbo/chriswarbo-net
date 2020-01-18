@@ -35,7 +35,8 @@ computing.
 
 Plus, I'd also point out that AFAIK there's no proof that quantum computers are
 faster than classical computers at any task (the
-["quantum supremancy" problem]()).
+["quantum supremancy" problem](
+https://en.wikipedia.org/wiki/Quantum_supremacy)).
 We know that prime factorisation is easy for quantum computers (using
 [Shor's algorithm](https://en.wikipedia.org/wiki/Shor%27s_algorithm)); but we
 don't know whether it's actually hard for a classical computer, or if we just
