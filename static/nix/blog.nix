@@ -1,4 +1,4 @@
-{ attrsToDirs', mkRedirectTo, render, renderAll }:
+{ attrsToDirs', redirect, render, renderAll }:
 
 with rec {
   contents  = renderAll "blog";
@@ -17,7 +17,7 @@ with rec {
     };
   };
 
-  "blog.html" = mkRedirectTo {
+  "blog.html" = redirect {
     from = "blog.html";
     to   = "/blog/";
     rel  = ".";

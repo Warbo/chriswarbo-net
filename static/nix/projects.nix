@@ -1,4 +1,4 @@
-{ attrsToDirs', isPath, lib, mkRedirectTo, render, renderAll, repos,
+{ attrsToDirs', isPath, lib, redirect, render, renderAll, repos,
   sanitiseName }:
 
 with lib;
@@ -20,7 +20,7 @@ with rec {
   # This section used to be called "essays", so we maintain redirects from those
   # URLs to these.
   essays = {
-    "essays.html" = mkRedirectTo {
+    "essays.html" = redirect {
       from = "essays.html";
       to   = "/projects";
       rel  = ".";
@@ -31,7 +31,7 @@ with rec {
 
   essayLink = paths: entry: content:
     if isPath content || isDerivation content
-       then mkRedirectTo {
+       then redirect {
               from = sanitiseName entry;
               to   = concatStringsSep "/" ([""] ++ paths ++ [entry]);
               rel  = concatStringsSep "/" (["."] ++ map (_: "..") paths);
@@ -52,7 +52,7 @@ with rec {
     projects;
 
   redirectDir = entry: {
-    "index.html" = mkRedirectTo {
+    "index.html" = redirect {
       from = "redirect-${sanitiseName entry}";
       to   = "/projects/${entry}/index.html";
       rel  = ".";
@@ -62,7 +62,7 @@ with rec {
 oldLinks // essays // {
   inherit projects;
 
-  "projects.html" = mkRedirectTo {
+  "projects.html" = redirect {
     from = "projects.html";
     to   = "/projects/";
     rel  = ".";

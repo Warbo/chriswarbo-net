@@ -1,5 +1,5 @@
 # Give each git repo a page which redirects to the repo's own site
-{ attrsToDirs', isPath, jq, lib, mkRedirectTo, render, repoSource, runCommand,
+{ attrsToDirs', isPath, jq, lib, redirect, render, repoSource, runCommand,
   wget, xidel }:
 
 with builtins;
@@ -33,7 +33,7 @@ with rec {
 
   contents = listToAttrs (map (repo: rec {
                                 name  = repo + ".html";
-                                value = mkRedirectTo {
+                                value = redirect {
                                   from = name;
                                   to   = "../../git/" + repo;
                                 };

@@ -1,4 +1,4 @@
-{ beautifulsoup-custom, blog, fail, hfeed2atom, libxslt, mkRedirectTo, python,
+{ beautifulsoup-custom, blog, fail, hfeed2atom, libxslt, redirect, python,
   render, run }:
 
 with rec {
@@ -32,7 +32,7 @@ with rec {
   data_custom    = {
     # There are links to this in the wild, but data_custom itself is left over
     # from when the site used ocPortal
-    "prelude.txt" = mkRedirectTo {
+    "prelude.txt" = redirect {
       from = "prelude.txt";
       to   = "/git/php-prelude";
     };
