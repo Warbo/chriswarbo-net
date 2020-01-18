@@ -9,25 +9,28 @@ fi
 
 function ignoreInSource {
     # Things we don't expect to be reachable; mostly redirects from old URLs
-    grep -v "./redirect.html"       |
-    grep -v "./projects/repos"      |
-    grep -v "./projects/index.html" |
+    grep -v "./activecode"          |
+    grep -v "./archive.html"        |
+    grep -v "./arduino"             |
+    grep -v "./blog.html"           |
     grep -v "./blog/index.html"     |
     grep -v "./data_custom"         |
     grep -v "./essays"              |
-    grep -v "./posts"               |
-    grep -v "./archive.html"        |
     grep -v "./index.php"           |
-    grep -v "./activecode"          |
-    grep -v "./arduino"             |
     grep -v "./maze"                |
     grep -v "./nixos"               |
     grep -v "./optimisation"        |
     grep -v "./plumb"               |
+    grep -v "./posts"               |
     grep -v "./powerplay"           |
     grep -v "./procedural"          |
+    grep -v "./projects.html"       |
+    grep -v "./projects/index.html" |
+    grep -v "./projects/repos"      |
+    grep -v "./redirect.html"       |
     grep -v "./repos"               |
     grep -v "./turtleview"
+
 }
 
 function cleanup {
@@ -42,14 +45,11 @@ pushd "$rendered" > /dev/null
 
     SOURCE_CONTENT=$(find . | ignoreInSource | sort)
 
-    # Use 'script' to fake a tty and get a "Serving HTTP..." message. Send all
-    # output to ../msgs, and wait until we see the "Serving HTTP..." message
-    # before continuing
     darkhttpd "$PWD" --port 8666 > /dev/null &
     SERVER_PID="$!"
     sleep 2
 
-    # Delete the directory *and* kill the server when we exit
+    # Kill the server when we exit
     trap cleanup EXIT
 
 popd > /dev/null
@@ -59,7 +59,7 @@ popd > /dev/null
 # Exclude /git since it's added in during deployment, and repos/ since the
 # content may not be under our control.
 OUTPUT=$(wget --page-requisites --mirror --no-parent --content-on-error \
-              --exclude-directories="/git,/projects/repos"              \
+              -X "/git,/projects/repos"              \
               "http://localhost:8666"                                   \
               "http://localhost:8666/unfinished.html" 2>&1) || {
     echo "FIXME: wget exited with error code" 1>&2
@@ -104,6 +104,11 @@ do
     }
 done < <(echo "$SOURCE_CONTENT")
 
-[[ "$ERR" -eq 0 ]] || echo "$OUTPUT" 1>&2
+[[ "$ERR" -eq 0 ]] || {
+    echo "wget output follows: " 1>&2
+    echo "$OUTPUT" 1>&2
+    echo
+    echo "End wget output (look before it to see the specific error)" 1>&2
+}
 
 exit "$ERR"
