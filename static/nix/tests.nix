@@ -1,6 +1,6 @@
 { attrsToDirs', commands, darkhttpd, fail, git, haskell, haskellPackages, lib,
-  linkchecker, mf2py, procps, pythonPackages, repos, runCommand, tidy-html5,
-  untestedSite, utillinux, wget, wrap, xidel }:
+  linkchecker, mf2py, pandocPkgs, procps, pythonPackages, repos, runCommand,
+  tidy-html5, untestedSite, utillinux, wget, wrap, xidel }:
 
 with builtins;
 with lib;
@@ -82,7 +82,7 @@ mapAttrs testScript {
           (self: super: {
             # Avoid doctest failure:
             #   expected: [("a",Number 4.0),("b",Number 7.0)]
-            #   but got: [("b",Number 7.0),("a",Number 4.0)]
+            #   but got:  [("b",Number 7.0),("a",Number 4.0)]
             lens-aeson = haskell.lib.dontCheck super.lens-aeson;
           });
       });
@@ -96,11 +96,12 @@ mapAttrs testScript {
         ]))
       ];
     };
-  posts_have_titles = { buildInputs = [ fail xidel ]; };
-  redirect_posts    = {                               };
-  scripts_in_place  = { buildInputs = [ fail xidel ]; };
-  tidy_html5        = { buildInputs = [ tidy-html5 ]; };
-  xidel_args        = { buildInputs = [ xidel      ]; };
+  posts_have_titles  = { buildInputs = [ fail xidel                  ]; };
+  redirect_posts     = {                                                };
+  scripts_in_place   = { buildInputs = [ fail xidel                  ]; };
+  summariesUnwrapped = { buildInputs = [ commands.cleanup pandocPkgs ]; };
+  tidy_html5         = { buildInputs = [ tidy-html5                  ]; };
+  xidel_args         = { buildInputs = [ xidel                       ]; };
 } // {
   reposRedirect = runCommand "reposRedirect"
     { pages = attrsToDirs' "repos" repos; }
