@@ -1,11 +1,13 @@
 with builtins;
 with rec {
+  inherit (import <nixpkgs> { config = {}; overlays = []; }) fetchgit;
+
   # We host a bunch of git repos; look up their location from the environment
   repoSource =
     with {
-      env    = getEnv "GIT_REPO_DIR";
-      local  = "/home/chris/Programming/repos";
-      remote = "http://chriswarbo.net/git";
+      env    = getEnv "GIT_REPO_DIR";            # User-provided override
+      local  = "/home/chris/Programming/repos";  # My local copy; fast
+      remote = "http://chriswarbo.net/git";      # "Official" remote; default
     };
     if env != ""
        then env
@@ -17,6 +19,14 @@ with rec {
                             GIT_REPO_DIR.
                     '' remote;
 
+  # Load our custom packages from repoSource
+  packages = import ./packages.nix { inherit fetchgit repoSource; };
+
+  # Load our Nix helper functions from the packages repo
+  inherit (import "${packages}/helpers.nix" { inherit fetchgit; }) nix-helpers;
+
+  # Add this site's package overlay, along with the above packages and helpers,
+  # to a given Nixpkgs repo
   overlayed = repo: import repo {
     config   = {};
     overlays = [
@@ -31,15 +41,8 @@ with rec {
       })
     ];
   };
-
-  packages = import ./packages.nix { inherit fetchgit repoSource; };
-
-  # Pin to a particular version of nixpkgs, to avoid updates breaking things.
-  pinnedNixpkgs = overlayed (overlayed <nixpkgs>).repo1803;
-
-  inherit (import <nixpkgs> { config   = {}; overlays = []; }) fetchgit;
-
-  inherit (import "${packages}/helpers.nix" { inherit fetchgit; }) nix-helpers;
 };
 
-pinnedNixpkgs
+# Apply our overlays to <nixpkgs>, pick our a pinned nixpkgs revision from that
+# (defined by our Nix helpers) apply our overlays to that
+overlayed (overlayed <nixpkgs>).repo1803

@@ -6,6 +6,7 @@ with super.lib;
   warning = "'nix-helpers' not found; has nix-helpers overlay been included?";
 }))
 {
+  # Load our components
   blog       = self.callPackage ./blog.nix       {};
   commands   = self.callPackage ./commands.nix   {};
   projects   = self.callPackage ./projects.nix   {};
@@ -18,14 +19,16 @@ with super.lib;
   tests      = self.callPackage ./tests.nix      {};
   unfinished = self.callPackage ./unfinished.nix {};
 
-  untestedSite = self.attrsToDirs' "untestedSite"
-    (self.stripOverrides (self.merge [
-      self.blog
-      self.projects
-      self.resources
-      self.unfinished
-    ]));
+  # Combine all pages together into a directory
+  untestedSite = with self; attrsToDirs' "untestedSite" (stripOverrides (merge [
+    blog
+    projects
+    resources
+    unfinished
+  ]));
 
-  wholeSite = self.withDeps' "site" (self.allDrvsIn self.tests)
-                                    self.untestedSite;
+
+  # Provide all pages, with all of our tests as dependencies
+  wholeSite = self.withDeps' "chriswarbo.net" (self.allDrvsIn self.tests)
+                                              self.untestedSite;
 }
