@@ -680,7 +680,7 @@ function make_functor_free($map) {
 Now that we've defined free monads as functors, we can define them as monads. To
 define a monad we need a wrap function and a join function:
 
-```{.php tag="./append"}
+```{.php pipe="./append"}
 // A helper function
 function concat_free($map) {
   return function($x) use ($map) {
