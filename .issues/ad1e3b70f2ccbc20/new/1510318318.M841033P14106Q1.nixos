@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Fri, 10 Nov 2017 12:48:13 +0000
-State: new
+State: resolved
 Subject: Move top-level pages into dirs
 Message-Id: <ad1e3b70f2ccbc20-0-artemis@nixos>
+resolution: fixed
 
 Currently, /projects.html comes from /projects.md and
 /projects/index.html is a redirect to /projects.html. The same is

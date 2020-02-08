@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Sun, 19 Jan 2020 10:05:26 +0000
+Subject: Re: Make foo/index.html work
+Message-Id: <a2d23f655feaaba6-9a644b44c7af75fc-artemis@nixos>
+References: <a2d23f655feaaba6-0-artemis@nixos>
+In-Reply-To: <a2d23f655feaaba6-0-artemis@nixos>
+
+These pages now work, and are the new defaults
