@@ -1,3 +1,13 @@
+---
+title: Clever Code
+---
+
+Here's another post taken from [a comment of mine on Hacker
+News](https://news.ycombinator.com/item?id=16223583), reproduced for posterity.
+
+The discussion was about code review, and trying to avoid (overly) "clever"
+solutions:
+
 > I look for code that is well-documented (both inline and externally), and code
 > that is clear rather than clever. I’d rather read ten lines of
 > verbose-but-understandable code than someone’s ninja-tastic one-liner that
