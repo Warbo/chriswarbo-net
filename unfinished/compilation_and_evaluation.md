@@ -24,7 +24,7 @@ Hutter search is an evaluation strategy which concurrently runs a program and
 a few search procedures. If the searchers discover an equivalent, faster
 alternative expression, the interpreter is aborted and the evaluation is
 restarted with the new expression. This seems related to JIT, e.g. we can keep a
-priority queue of search states for various expressions; to evaluate an
+priority queue of search states for various sub-expressions; to evaluate an
 expression we use Hutter search, restoring the proof search from the priority
 queue if found. This concentrates the search time on long-running sections of
 code.
