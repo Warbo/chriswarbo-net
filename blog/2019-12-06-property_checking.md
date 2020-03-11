@@ -79,18 +79,12 @@ found.
 
 </details>
 
-This version is certainly better, since we've removed some irrelevant
-constraints from the test (the particular choice of `key` and `value`). However,
-we can go so much further when we think about all of the *implicit*
-actions/values that are involved; or which irrelevant constraints are implicitly
-restricting our tests.
-
-In this example we're using `newDB`, presumably to avoid collision with an
-existing key, which would cause multiple matches to be returned. However, that
-constraint is unnecessarily restrictive; we only care whether or not `found`
-contains `value`; we don't care whether or not it `contain`s anything else, so
-we might as well generalise `newDB` to a free variable as well, to get a
-stronger test that may uncover more errors:
+This test also uses a value `newDB`, presumably to avoid collision with an
+existing key, which would cause multiple matches to be returned. This is an
+example of an unnecessarily restrictive constraint: we only care whether or not
+`found` contains `value`; we don't care whether or not it contains anything
+else, so we might as well generalise `newDB` to a free variable as well, to get
+a stronger test that may uncover more errors:
 
 ```haskell
 test key value initialDB =
@@ -98,6 +92,12 @@ test key value initialDB =
       found = lookup (keyQuery key) db
    in assert (contains value found)
 ```
+
+This version is certainly better than we started with, since we've removed some
+irrelevant constraints from the test (that the database starts off empty, and
+the particular choice of `key` and `value`). However, we can go so much further
+when we think about all of the *implicit* actions/values that are involved; or
+which irrelevant constraints are implicitly restricting our tests.
 
 ## Beyond Abstracting Values ##
 
@@ -181,7 +181,6 @@ a reusable "query generator", like this:
 test key value initialDB queryWith =
   let db = addValue key value initialDB
 
-      -- Generalise our `keyQuery` using `queryWith`
       query = queryWith (keyQuery key)
       found = lookup query db
    in assert (contains value found)
@@ -190,8 +189,11 @@ test key value initialDB queryWith =
 <details class="odd">
 <summary>Code notes</summary>
 
-The `queryWith` argument will contain a function which inserts its argument into
-an arbitrary `OR` query. If we use the same idea as before, we might get:
+We've generalised `keyQuery key` using a new argument `queryWith`, which is a
+function that inserts its argument into an arbitrary `OR` query. It might seem
+strange to generate arbitrary functions as inputs to a test, but functions are
+ordinary values like anything else; and we can use the same code as before to do
+the query manipulation, e.g.:
 
 ```haskell
 genQueryWith preQ postQs =
@@ -318,23 +320,36 @@ the same logic any additions made *after* our `value` shouldn't make a
 difference either (regardless of what key they use).
 
 We can check this by introducing a free variable `extra`, containing a list of
-key/value pairs. Note that we can use `uncurry` to apply a function to a pair of
-arguments at once:
+key/value pairs:
 
 ```haskell
 -- `extra` is a list of key/value pairs to add
 test key value initialDB queryWith extra =
   let query = queryWith (keyQuery key)
 
-      -- Actions to add all of the key/value pairs, including `key`/`value`
-      adds = map (uncurry addValue) (append extra [(key, value)])
+      -- List of actions to add all of the key/value pairs
+      adds = map (uncurry addValue)
+                 (append extra [(key, value)])
 
-      -- Combine all additions into one action
+      -- Combine elements of adds into one action
       action = reduce compose (lookup query) adds
 
-      found  = action initialDB
+      -- Add our initial
+      found = action initialDB
    in assert (contains value found)
 ```
+
+<details class="odd">
+<summary>Code notes</summary>
+
+We can use `uncurry` to apply a function to a pair of arguments at once, such
+that `uncurry f (x, y)` is the same as `f x y`.
+
+Notice that our use of left-to-right composition requires the pair
+`(key, value)` to come at the *end* of the list `adds`, in order for it to be
+applied to the database *first*.
+
+</details>
 
 Removing keys shouldn't alter our result either, *unless* they happen to match
 `key`. We can check this by using introducing another free variable for a list
@@ -343,7 +358,8 @@ of keys, and use `filter` to avoid accidental matches:
 ```haskell
 test key value initialDB queryWith extra removals =
   let query = queryWith (keyQuery key)
-      adds  = map (uncurry addValue) (append extra [(key, value)])
+      adds  = map (uncurry addValue)
+                  (append extra [(key, value)])
 
       -- Apply `removeKey` to all `removals` unless they equal `key`
       removes = map removeKey (filter (notEqual key) removals)
@@ -351,7 +367,7 @@ test key value initialDB queryWith extra removals =
       -- Compose all additions with all removals
       action = reduce compose (lookup query) (append removes adds)
 
-      found  = action initialDB
+      found = action initialDB
    in assert (contains value found)
 ```
 
@@ -400,25 +416,29 @@ test key value initialDB queryWith addRuns removeRuns =
       -- Apply `removeKey` to all `removals` unless they equal `key`
       removes = map (compose (map removeKey) (filter (notEqual key))) removeRuns
 
-      -- Combine all actions together, ending with our main `addKey` action
-      actions = append (concat (interleave adds removes)) [addKey key value]
+      -- Combine all actions together
+      actions = concat (interleave adds removes)
 
       -- Compose all actions together, beginning with the `lookup`
       action = reduce compose (lookup query) actions
 
-      found  = action initialDB
+      -- Add our key before applying the other actions
+      found = action (addKey key value initialDB)
    in assert (contains value found)
 ```
 
-This is perfectly generic, but has a few code smells:
+This is perfectly generic, but the extra verbosity has introduced a few code
+smells:
 
  - We have an extra level of `map` in the definitions of `adds` and `removes`,
    which adds a little to our cognitive load.
  - In order to re-use the `filter` over and over for each sub-list, we need an
    extra `compose` (since we have no concrete value to apply it to anymore).
- - We need an extra call to `addKey`, for `key`/`value`, since we can't just
-   append them to `addRuns` (if there are fewer `addRuns` than `removeRuns`, the
-   actions for those excess removals will take place before `addKey`).
+ - We need an extra call to `addKey`, for `key`/`value`, since it needs to come
+   after everything in the `actions` list. Applying it directly to `initialDB`
+   avoids the need for other complications; e.g. putting it on the end of
+   `actions` would need an `append` call; prepending it to `adds` would require
+   `reverse` on the `actions`; etc.
 
 ### Sum Types ###
 
@@ -430,16 +450,15 @@ distinguish between them:
 test key value initialDB queryWith changes =
   let query = queryWith (keyQuery key)
 
-      -- Append our `key`/`value` pair and discard any removals of `key`
-      params = append (filter (notEqual (right key)) changes)
-                      [left (key, value)]
+      -- Discard any removals of `key`
+      params = filter (notEqual (right key)) changes
 
       -- Turn parameters into actions, depending on their tag
       actions = map (either (uncurry addValue) removeKey) params
 
-      -- Compose all actions together, beginning with the `lookup`
+      -- Compose all actions together and apply them, as before
       action = reduce compose (lookup query) actions
-      found  = action initialDB
+      found  = action (addValue key value initialDB)
    in assert (contains value found)
 ```
 
@@ -488,123 +507,171 @@ being more direct about what we want. In particular:
  - We only need one free variable, `changes`, rather than two.
  - Interleaving of actions is implicit to the free variable, rather than needing
    any intervention from us.
- - We don't have any two-dimensional lists, and hence no `map (map ...)` or
+ - We don't have any two-dimensional lists, ¯and hence no `map (map ...)` or
    extra `compose` calls.
  - We can treat both actions uniformly, with one `map` call; although we need to
    sprinkle a few `either`, `left` and `right` calls around.
- - We can append `(key, value)` to the list (albeit wrapped in `left`), rather
-   than needing an extra call to `addValue`.
+
+### Parameterising Choices ###
+
+Another possible approach is to have our `interleave` function take an arbitrary
+number of elements each time. To remain deterministic, the choice of how many
+elements to take needs to come from elsewhere, and be passed in as an extra
+argument. We can call such a function an "interleaver", and provide a generator
+which "seeds" an interleaver with arbitrary choices:
+
+```haskell
+interleaveN ns [] ys = ys
+interleaveN ns xs ys = let (pre, post) = splitAt (head ns) xs
+                        in append pre (interleaveN (tail ns) ys post)
+
+mkInterleaver choices = interleaveN (cycle choices)
+```
+
+<details class="odd">
+<summary>Code notes</summary>
+
+The `cycle` function repeats a list over and over, so as long as `choices` is
+non-empty, the list `ns` will never run out.
+
+A call to `splitAt n l` returns a pair, containing the first `n` elements of the
+list `l`, and the rest of the elements (if any).
+
+</details>
+
+A test taking such an "interleaver" as a parameter would look like this:
+
+```haskell
+test key value initialDB queryWith extra removals interleaver =
+  let query   = queryWith (keyQuery key)
+      adds    = map (uncurry addValue) extra
+      removes = map removeKey (filter (notEqual key) removals)
+
+      -- Use interleaver to avoid patterns when appending adds and removes
+      actions = interleaver adds removes
+
+      -- Compose and apply as before
+      action = reduce compose (lookup query) actions
+      found  = action (addValue key value initialDB)
+   in assert (contains value found)
+```
+
+I don't think this is as nice as the sum-type approach, since we still have to
+process the additions separately from the removals. Still, I think it is quite
+reasonable, and it demonstrates another common pattern in property checking:
+writing data generators can often be made easier by giving them a source of
+"choices" to draw from when a decision needs to be made. These choices can
+usually be a simple list of booleans or integers, which is trivial to plug in to
+complete the generator.
 
 ### Permuting ###
 
-Finally, we could instead stick with the original `append` of additions and
-removals, then remove the bias by *permuting* the result. This isn't the same as
-interleaving, since the order will change, but that doesn't matter in this case.
-To remain deterministic (and hence reproducible), we need to tell the permuting
-function which choices to make. An easy way to do this is with a non-empty list
-of natural numbers (which I'll call `seeds`), which can easily be turned into
-list indices using `mod`:
+Finally, we could use our original `append` of additions with removals, but use
+a similar approach to the "interleaver" to *permute* the result. Rather than
+ensuring the behaviour we want "by construction" (i.e. building our list of
+`actions` such that additions and removals can occur in any order), we're
+instead going to *impose* that behaviour after-the-fact. Note that this isn't
+quite the same as interleaving, since elements may get rearranged as well, but
+that doesn't matter in this ezmple.
+
+To remain deterministic (and hence reproducible), we seed our "permuter" with
+arbitrary choices, like we did for the "interleaver":
 
 ```{.haskell pipe="tee -a test.hs"}
 -- Inserts value `x` into list `ys` at index `n` (modulo the list length)
-insert (n, x) ys = let i           = mod n (length ys + 1)
-                       (pre, post) = splitAt i ys
-                    in concat [pre, [x], post]
+insert (choice, x) ys = let i           = mod choice (length ys + 1)
+                            (pre, post) = splitAt i ys
+                         in concat [pre, [x], post]
 
-mkPermuter seeds values = reduce insert [] (zip (cycle seeds) values)
+mkPermuter choices values = reduce insert [] (zip (cycle choices) values)
 
 ```
 
-Alternatively we could use a single list, whose elements are of a
- of either additions or
-removals. This keeps the looping easy, but complicates how we call `addValue`
-and `removeKey` (since we'd need to branch on the tag).
+<details class="odd">
+<summary>Code notes</summary>
 
-My preferred method is to randomly permute the resulting list of actions, which
-also demonstrates a pattern I use a lot in property checking: when the data we
-*want* is tricky to has preconditions which are tricky to satisfy *up-front*, it's often
-simpler to generate it *on-demand*, using inputs make it dynamically rather than dynamically making
-"dynamic" choices ()
-reproducible way to do this is to pick elements using a list of indices using a list of indicestake a do this easily if we're given a list of arbitrary numbers, which we can use as
-indices (modulo the list length):
+Like before, we use `cycle` to ensure we never run out of `choices`. Each
+`choice` needs to be adjusted before we can use it, since arbitrary numbers
+might not be valid indices into our lists. We use `length ys + 1` so that even
+an empty list `ys` will still give us an index: `0`, in that case.
 
+The `zip` function pairs up the elements of two lists, so
+`zip [a, b, c] [x, y, z]` would give `[(a, x), (b, y), (c, z)]`. We use this to
+pair up each `choice` with a list element, for use as the first argument of
+`insert`.
+
+Notice that our adjustment of `choice` is dynamic: each time `insert` is called
+(as `reduce` works its way through the list produced by `zip`), the list `ys`
+gets longer and longer. This causes the `mod` calculation to change, allowing
+larger and larger indices. Trying to generate a list of arbitrary indices
+up-front would be tricky, but relying on `mod` to cut them down once we know the
+length is much easier.
+
+</details>
+
+We can use `mkPermuter` to generate values for a `permuter` argument, like this:
 
 ```haskell
-test key value initialDB queryWith extras removals =
-  -- Rather than having one list of additions and one of removals, they are both
-  -- lists-of-lists. This allows arbitrary interleaving.
-  let db       = addValue key value initialDB
-      chunks   = interleave extras
-                            -- Remove `key` from any removal chunk
-                            (map (filter (notEqual key)) removals)
+test key value initialDB queryWith extras removals permuter =
+  let query   = queryWith (keyQuery key)
+      adds    = map (curry addValue) extras
+      removes = filter (notEqual key)) removals
 
-      -- Apply the adds/removes one "chunk" at a time; `mode` toggles between
-      -- add and remove; `first` discards the final mode
-      modified = first (reduce (\chunk (mode, db) ->(
-                                   not mode
-                                 , reduce (if mode
-                                              then addValue
-                                              else removeKey)
-                                          db
-                                          chunk
-                                 ))
-`                               db
-                               chunks)
-      query    = queryWith (keyQuery key)
-      found    = lookup query modified
+      -- Arbitrarily permute the list of adds and removals
+      actions = permuter (append adds removes)
+
+      -- Compose and apply as before
+      action = reduce compose (lookup query) actions
+      found  = lookup query (addValue key value initialDB)
    in assert (contains value found)
 ```
 
-This test is far stronger than the unit test we began with, since it generalises
-a lot of things we might have missed if we didn't think carefully. This is more
-likely to find problems caused by weird sequences and interleavings of actions,
-which we probably wouldn't think to test in isolation.
+This looks about as reasonable as the "interleaver", but both require extra
+definitions that the sum-type implementation doesn't. The "permuter" approach is
+also less applicable to other situations, e.g. if we need to ensure that some
+values occur before others, even if we don't care whether others occur in
+between.
 
-In this case I think the interleaving of arbitrarily-many rounds of insertion
-and deletion isn't really worth the extra complexity. I would either pull the
-interleaving logic out into a library function (if it's sufficiently
-general/useful), or otherwise I'd just do a couple of rounds each (so we have
-adds sandwiched between removes, and vice versa), to get a nice compromise like:
+## Conclusion ##
 
-```haskell
-test key value initialDB queryWith extra1 extra2 remove1 remove2 =
-  let db    = addValue key value initialDB
+Regardless of which approach we take, our resulting test is far stronger than
+the unit test we began with, since it generalises a lot of things we might have
+missed if we didn't think carefully. This is more likely to find problems caused
+by weird sequences and interleavings of actions, which we probably wouldn't
+think to test in isolation. Such sequences can also be useful for [finding
+concurrency issues](
+https://github.com/typelevel/scalacheck/blob/master/doc/UserGuide.md#stateful-testing)
 
-      db2   = reduce addValue  db  extra1
-      db3   = reduce removeKey db2 (filter (notEqual key) remove1)
-      db4   = reduce addValue  db3 extra2
-      db5   = reduce removeKey db4 (filter (notEqual key) remove2)
-
-      query = queryWith (keyQuery key)
-      found = lookup query modified
-   in assert (contains value found)
-```
-
-I certainly make heavy use of the idiom of embedding the feature under test
-within a bunch of irrelevant values, like sticking our query between the `preQ`
-and `postQs` parameters. The same pattern comes up whenever we're free to perform
-a *sequence* of actions which ostensibly shouldn't impact our result.
+I certainly make heavy use of the idiom of burying the required data/action
+within a bunch of irrelevant values (like
+`preQ`/`postQs`/`changes`/`extra`/etc.) The same pattern comes up whenever we're
+free to perform a *sequence* of actions which ostensibly shouldn't impact our
+result.
 
 Another nice trick, which is obvious in hindsight but not necessarily easy to
-think up, is making dynamic choices using numbers modulo the possibilities. For
-example, we might have a Web app and want to ensure that no sequence of clicks
-can result in some behaviour. The question is, how might we generate those
-clicks? Pages are presumably generated dynamically, and links from one page to
-another depend on layers of indirection like routing, so how on earth might we
-generate a valid sequence of clicks, e.g.
+think up, is making dynamic choices by taking an easily-generated "seed" and
+altering it in context; like picking a list element using an arbitrary number
+modulo how many possibilities there are.
+
+As a more complex example, we might have a Web app and want to ensure that no
+sequence of clicks can result in some unwanted behaviour. The question is, how
+might we generate those clicks? Pages are presumably generated dynamically, and
+links from one page to another depend on layers of indirection like routing, so
+how on earth might we generate a valid sequence of clicks, like
 `["profile", "about", "contact", "email"]`, if we don't know that clicking on
 `"profile"` will take us to a page with an `"about"` link, and so on?
 
-The easy answer is that we simply generate a list of random numbers: to pick a
-link we just count all those on the page, take the next random number modulo
-that count, and use that as the index for which link to click. For example, we
-might generate a list like `[308, 1006, 248264, 7]`; if the first page contains
-100 links then `mod 308 100 = 8` so we click the 8th link; if that happens to
-take us to a page with 250 links, then `mod 1006 250 == 6` so we click the 6th
-link, and so on. This gives uniform weighting to each link, and nicely avoids
-false positives (e.g. passing the test despite broken paths, if we forgot to add
-new links to hard-coded tests) and false negatives (e.g. tests which fail, but
-only because the hard-coded paths they're trying to test don't exist anymore).
+If we use our "parameterised choices" trick, we simply generate a list of random
+numbers: to pick a link we just count all those on the page, take the next
+random number modulo that count, and use that as the index for which link to
+click. For example, we might generate a list like `[308, 1006, 248264, 7]`; if
+the first page contains 100 links then `mod 308 100 = 8` so we click the 8th
+link; if that happens to take us to a page with 250 links, then
+`mod 1006 250 == 6` so we click the 6th link, and so on. This gives uniform
+weighting to each link, and nicely avoids false positives (e.g. passing the test
+despite broken paths, if we forgot to add new links to hard-coded tests) and
+false negatives (e.g. tests which fail, but only because the hard-coded paths
+they're trying to test don't exist anymore).
 
 ```{pipe="cat >> test.hs"}
 
