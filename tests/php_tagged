@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+while read -r F
+do
+    xidel -e '//code[contains(@class, "php")]' < "$F"
+done < <(find "$rendered" -iname '*.html')
