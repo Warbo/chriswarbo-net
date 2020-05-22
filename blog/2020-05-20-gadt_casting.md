@@ -207,7 +207,7 @@ reason I count such boilerplate as a failure is that it isn't constant: every
 time we want to solve this problem, we have to do it all again (it's also worth
 noting that my actual GADT currently has nine constructors, rather than three!).
 
-### A Solution: Casting ###
+## A Solution: Casting ##
 
 The solution I came up with still involves pattern-matching boilerplate, but we
 abstract it out into a reusable function (as any good programmer should!). We
