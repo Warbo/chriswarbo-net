@@ -73,6 +73,11 @@ These 'derived units' will be some multiple of the 'normal' units for that
 dimension, requiring a conversion factor if we want to convert a number between
 the two forms. Here are some conversion factors for common imperial units:
 
+<div class="summarise">
+ <span class="summary">
+  Conversion factors between various imperial distance units.
+ </span>
+
 Quantity            Inches  Feet     Miles    Calories per pound Calories per ounce
 ------------------- ------  -------  -------  ------------------ ------------------
 1 inch              1       0.083    2x10^-5^ 0.03               0.43
@@ -80,6 +85,8 @@ Quantity            Inches  Feet     Miles    Calories per pound Calories per ou
 1 mile              6x10^4^ 5280     1        1711               3x10^4^
 1 calorie per pound 37.03   3.09     6x10^-4^ 1                  16
 1 calorie per ounce 2.31    0.19     4x10^-5^ 0.06               1
+
+</div>
 
 There are conversion tables like this for many other combinations of units, e.g.
 to find how many slug feet per square hour are in a stone. If the order of the
@@ -93,10 +100,17 @@ like I did, rather than cluttering your brain with obsolete junk!)
 The metric equivalent doesn't have the inch/foot/mile or ounce/pound
 redundancies, so the table is much smaller, and hence easier to memorise:
 
+<div class="summarise">
+ <span class="summary">
+  Conversion factors between metric distance units.
+ </span>
+
 Quantity           Metres Joules per Newton
 ------------------ ------ -----------------
 1 metre            1      1
 1 joule per newton 1      1
+
+</div>
 
 The conversion factors here are all 1. This is not a coincidence, it is *by
 design*! [1 Joule is *defined as* 1 Newton
