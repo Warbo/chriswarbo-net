@@ -117,10 +117,16 @@ design*! [1 Joule is *defined as* 1 Newton
 metre.](https://www.bipm.org/utils/common/pdf/si_brochure_8_en.pdf) Likewise:
 
 ```
-1 Watt = 1 Volt Amp
-       = 1 Joule per second
-       = 1 Newton metre per second
-       = etc.
+1 Watt = 1 Joule per second
+       = 1 Hertz Joule
+       = 1 Hertz Newton metre
+       = 1 Hertz Pascal cubic metre
+       = 1 Hertz square Coulomb per Farad
+       = 1 Newton Coulomb per Tesla Farad metre
+       = 1 Newton Joule per Tesla Coulomb metre
+       = 1 Newton Volt per Tesla metre
+       = 1 Amp Volt
+       = 1 Watt
 ```
 
 This is a huge advantage to using metric, which I rarely/never see brought up in
