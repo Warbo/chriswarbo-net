@@ -9,7 +9,9 @@ specific aspect of metric: that units are related by powers of 10. For example:
  - 10mm = 1cm
  - 1kN = 1000N
 
-However, this is a red herring!
+However, this is a red herring! Here are the "proper" reasons why metric is a
+better system (although not perfect; see the "remaining problems" section for
+ways it can be improved, and why some of my claims are technically wrong!).
 
 ## Metric Isn't Powers-of-Ten ##
 
@@ -18,15 +20,6 @@ wanted to, we could use them with imperial units too. For example it's perfectly
 correct (if a little unorthodox) to say that there are 100 centifeet in 1 foot
 and 1000 pounds in 1 kilopound. A listener might find it strange, but they could
 figure out what you meant.
-
-"centi", "milli", "femto", "kilo", "giga", etc. are just generic ways to
-abbreviate large and small numbers. If we say "two dozen metres", we haven't
-invented a new base-12 system of units, since "dozen" is a generic multiplier.
-Compare this to a foot containing a dozen inches: if we ask a baker for a dozen
-buns we'll get 12 buns; if we ask for a foot of buns we'll a line of buns about
-a third of a metre long. This is because "foot" is a specific unit of distance,
-not a linguistic device to indicate a multiple; hence "inches" and "feet" are
-separate units, whilst "metres" and "dozen metres" aren't.
 
 The "powers of 10" in metric come solely from the common usage of these
 prefices. There are equivalent prefices for powers of 2, where "kibi" is 2^10^
@@ -47,7 +40,23 @@ Quantities 'expressed in kilometres' are still expressed in metres, since
 kilometres are just multiples of metres. A distance like "5m" is expressed in
 metres (five of them, since there's a "5" which means five). A distance like
 "7km" is *also* expressed in metres (seven thousand of them, since there's a "7"
-which means seven and a "k" which means thousand).
+which means seven and a "k" which means thousand). "centi", "milli", "femto",
+"kilo", "giga", etc. are just generic ways to abbreviate large and small
+numbers.
+
+If we use a multiple which isn't base 10, like "two dozen metres", that's still
+a metric distance; we haven't invented a new system of units with base 12;
+"dozen" is just a generic linguistic device meaning "twelves". Compare this to a
+foot containing a dozen inches: if we ask a baker for a dozen buns we'll get 12
+buns; if we ask for a foot of buns we'll a line of buns about a third of a metre
+long. This is because "foot" is *not* a generic multiplier: it is specific to
+distance, and it is independent of other distance units (e.g. we don't need to
+say "a foot of inches"). The same applies to "inch", "mile", etc. hence they are
+all separate units, not just multipliers. In contrast, "metres" and "dozen
+metres" are not separate units, and neither are "metres" and "centimetres".
+(There is a slight wrinkle here, since "kilo" on its own is taken to mean
+"kilograms"; see the "Problems with SI" section below).
+
 
 I think this is such a profound advantage that many (most?) people, even those
 born and raised with metric, never grasp it explicitly. After all, why argue
@@ -178,6 +187,8 @@ it in favour of something else.
 The actual metric system, as it's used in day-to-day life, has a few problems.
 The following problems are solved by sticking to SI units:
 
+ - The "tonne" is just a megagram.
+
  - The litre is a stupid unit: it's 1 milli-cubic-metre. The only reason to
    avoid cubic metres seems to be the unwieldy name, but other languages have
    solved this with names like "stere" and "kuub". The kuub might seem rather
@@ -209,7 +220,7 @@ The following problems are solved by sticking to SI units:
    choosing absolute zero as our starting point. If we count "degrees Celsius
    starting from absolute zero", we get the Kelvin scale, which SI uses.
 
-### Problems with SI ###
+### Problems with SI ### {#si-problems}
 
 The SI system avoids the extraneous units of metric like litres and km/h, and
 unnecessary degrees of freedom like the zero-point of Celsius. The most obvious
