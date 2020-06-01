@@ -2,6 +2,14 @@
 title: The Metric Red Herring
 ---
 
+This is a companion to my post about
+[improving our units](2020-05-22-improving_our_units.html). That post discusses
+some problems with the metric system, SI and related ideas. This post is a
+stand-alone argument that advocates of metric are often doing it for the wrong
+reasons.
+
+## The Powers-of-Ten Red-Herring ##
+
 Most discussions about metric versus imperial units seem to dwell on one
 specific aspect of metric: that units are related by powers of 10. For example:
 
@@ -9,20 +17,15 @@ specific aspect of metric: that units are related by powers of 10. For example:
  - 10mm = 1cm
  - 1kN = 1000N
 
-However, this is a red herring! Here are the "proper" reasons why metric is a
-better system (although not perfect; see the "remaining problems" section for
-ways it can be improved, and why some of my claims are technically wrong!).
-
-## Metric Isn't Powers-of-Ten ##
-
-The qualifiers "centi", "kilo", "milli", etc. are not unique to metric. If we
-wanted to, we could use them with imperial units too. For example it's perfectly
-correct (if a little unorthodox) to say that there are 100 centifeet in 1 foot
-and 1000 pounds in 1 kilopound. A listener might find it strange, but they could
-figure out what you meant.
+However, this is a red herring! The qualifiers "centi", "kilo", "milli", etc.
+are not unique to metric. If we wanted to, we could use them with imperial units
+too. For example it's perfectly correct (if a little unorthodox) to say that
+there are 100 centifeet in 1 foot and 1000 pounds in 1 kilopound. A listener
+might find it strange, but they could figure out what you meant.
 
 The "powers of 10" in metric come solely from the common usage of these
-prefices. There are equivalent prefices for powers of 2, where "kibi" is 2^10^
+prefices. There are equivalent [prefices for powers of
+2](https://en.wikipedia.org/wiki/Binary_prefix), where "kibi" is 2^10^
 (symbol "Ki"; roughly a thousand), "mibi" is 2^20^ (symbol "Mi"; roughly a
 million), etc. These are used almost exclusively for data sizes and rates, like
 an SSD with a 1TiB capacity (one tibibyte, or 2^40^ bytes). Yet it's perfectly
@@ -54,9 +57,11 @@ distance, and it is independent of other distance units (e.g. we don't need to
 say "a foot of inches"). The same applies to "inch", "mile", etc. hence they are
 all separate units, not just multipliers. In contrast, "metres" and "dozen
 metres" are not separate units, and neither are "metres" and "centimetres".
-(There is a slight wrinkle here, since "kilo" on its own is taken to mean
-"kilograms"; see the "Problems with SI" section below).
 
+(Note that there is a slight wrinkle here, since "kilo" on its own is taken to
+mean "kilograms"; this is not too important for this claim, but I explain why
+the kilogram is problematic in the "Problems with SI" section of
+[the companion post](2020-05-22-improving_our_units.html)!)
 
 I think this is such a profound advantage that many (most?) people, even those
 born and raised with metric, never grasp it explicitly. After all, why argue
@@ -138,11 +143,11 @@ metre.](https://www.bipm.org/utils/common/pdf/si_brochure_8_en.pdf) Likewise:
        = 1 Watt
 ```
 
-This is a huge advantage to using metric, which I rarely/never see brought up in
-discussions. I'm not sure whether this is because it's subconsciously taken for
-granted (like the one-unit-per-dimension feature) or whether it's just used less
-frequently in "real life" (e.g. day-to-day estimating, rather than explicit
-engineering calculations). Either way, I think this should be celebrated more.
+This is a *huge* advantage to using metric, which I rarely/never see brought up
+in discussions. I'm not sure whether this is because it's subconsciously taken
+for granted (like the one-unit-per-dimension feature) or whether it's just used
+less frequently in "real life" (e.g. day-to-day estimating, rather than explicit
+engineering calculations). Either way, I think this should be celebrated more!
 
 In particular, these conversions are based off known scientific laws. For
 example Newton's second law of motion, usually written `F = ma`, tells us that
@@ -150,21 +155,20 @@ multiplying a mass by an acceleration results in a force. This is actually a
 statement of *proportionality*, e.g. doubling the mass will double the force; to
 get an equation we need a "constant of proportionality", which is an arbitrary
 scaling factor which we usually write as `k`, so the general form of Newton's
-second law should really be expressed as `F = kma`. Metric units are defined
-such that these scaling factors are 1, which gives us simple equations without
+second law should really be expressed as `F = kma`. Metric units are *defined
+such that* these scaling factors are 1, which gives us simple equations without
 having to remember a bunch of proportionality constants (i.e. those shown in the
 tables above).
 
-## Remaining Problems ##
+## Exposing My Lies ##
 
-There are some problems with what I've said above, with the metric system itself
-and with how it's used.
-
-### Exposing My Lies ###
-
-The first major point to clarify is that when I say "metric" I'm actually
-referring mostly to the SI system, which differs a little from the metric units
-that are commonly used day-to-day (more details below).
+I have to admit that the above is slightly inaccurate, for the purposes of
+getting across my way of thinking. The first major point to clarify is that when
+I say "metric" I'm actually referring mostly to
+[the SI system](https://en.wikipedia.org/wiki/International_System_of_Units),
+which differs a little from the metric units that are commonly used day-to-day.
+In particular, metric often uses extra, redundant units which are not part of
+SI, including the litre, tonne and hour.
 
 Next, I claimed above that prefixing a unit changes the associated number rather
 than the unit, e.g. "2km" is 2000 in the unit of metres, rather than 2 in the
@@ -176,185 +180,37 @@ ambiguous quantities like "3cm^3^": according to SI, this is 3(cm)^3^ =
 0.000003m^3^, whereas treating prefices in the way I describe would give
 3c(m^3^) = 0.03m^3^. Similar problems arise when dividing, e.g. "per kilometre".
 
-I think the best thing to do is stick to the appropriate base unit (e.g. "cubic
-metre" or "per metre"), then choose whichever multipliers make life easier. If
-the base units are annoyingly big or small, try sticking a prefix on the front;
-if a prefix makes things look ambiguous (e.g. like the cm^3^ example) then drop
-it in favour of something else.
+Whilst the SI method is well-defined, it still places a mental burden on the
+user. What's especially annoying is that the SI rules for units are opposite to
+the usual algebraic rules for multiplication and exponentiation, where
+ab^3^ = a(b^3^)
 
-### Problems with Metric ###
+I cover these in more depth in
+[the companion post](2020-05-22-improving_our_units.html), but I think the best
+thing to do in these situations is stick to the base unit for that dimension
+(e.g. "cubic metre" or "per metre"), apply prefix multipliers if they are
+unambiguous; or otherwise add
+[explicit parentheses](https://en.wikipedia.org/wiki/S-expression).
 
-The actual metric system, as it's used in day-to-day life, has a few problems.
-The following problems are solved by sticking to SI units:
+## Take Aways ##
 
- - The "tonne" is just a megagram.
-
- - The litre is a stupid unit: it's 1 milli-cubic-metre. The only reason to
-   avoid cubic metres seems to be the unwieldy name, but other languages have
-   solved this with names like "stere" and "kuub". The kuub might seem rather
-   large for everyday quantities like drinks, but it's already common to use
-   phrases like "700 mill bottle" (700ml = 0.7l). The same works with kuubs,
-   with a litre bottle becoming "one mill" and 0.7l becoming 700 microkuub (a
-   "700 micro" bottle).
-
- - It's common for metric to use hours (1 hour = 3600 seconds), e.g. km/h or
-   "kilometres per hour". This gives us two units of time, when it would be
-   better to use a prefix multiplier. Note that I'm not claiming that [decimal
-   time](https://en.wikipedia.org/wiki/Decimal_time) would be better; simply
-   that it would be better to use a multiple of seconds rather than a whole
-   different unit. Such a system would actually be the inverse of the [current
-   system of
-   hours/minutes/seconds](https://en.wikipedia.org/wiki/Minute#History); where
-   the hour is the base unit, a
-   [sixtieth](https://en.wikipedia.org/wiki/Sexagesimal) of an hour is a "pars
-   minuta prima" (AKA "minute", but should really be "prime"), a sixtieth of
-   that is a "pars minuta secunda" (AKA "second"), etc. Perhaps the unit
-   "second" could also be renamed when used as a base unit, to avoid the
-   implication that it is derived.
-
- - Metric temperatures are usually given in Celsius or Centigrade (those are the
-   same thing!), which can be positive or negative. Since there is an
-   ["absolute zero"](https://en.wikipedia.org/wiki/Absolute_zero) temperature,
-   we can avoid
-   [false numbers](https://en.wikipedia.org/wiki/Negative_number#History) by
-   choosing absolute zero as our starting point. If we count "degrees Celsius
-   starting from absolute zero", we get the Kelvin scale, which SI uses.
-
-### Problems with SI ### {#si-problems}
-
-The SI system avoids the extraneous units of metric like litres and km/h, and
-unnecessary degrees of freedom like the zero-point of Celsius. The most obvious
-problem remaining with SI is that its base unit of mass is the "kilogram".
-Whilst a kilogram equals one thousand grams, as we would hope, the *definition*
-is backwards: the gram is defined as one thousandth of a kilogram, AKA a
-millikilogram.
-
-Within the dimension of mass this is merely silly; the real problem arises when
-we start combining dimensions. In the example of Newton's second law above, it
-is true that in SI units the equation `F = ma` holds, i.e. the constant of
-proportionality is 1. However, the `m` must be in the base unit of *kilograms*;
-if we want to use grams we need a constant of proportionality of 1/1000. This is
-why I strategically chose to avoid using mass in most of the examples above!
-This is purely a naming issue, since we can just rename the "kilogram" to
-something without an ambiguous prefix; for example, it used to be called the
-["grave"](https://en.wikipedia.org/wiki/Kilogram#Name_and_terminology). This
-would replace the gram with the milligrave, which explains where the 1/1000
-factor comes from.
-
-Note that there's an alternative approach, where we treat the gram as the base
-unit and hence the kilogram's prefix works properly. Such a system *was* widely
-used, and is now know as the ["CGS"
-system](https://en.wikipedia.org/wiki/Centimetre%E2%80%93gram%E2%80%93second_system_of_units).
-Unfortunately that system uses the "centimetre" as its base unit of length, and
-hence suffers the same problem, except in the length dimension rather than mass.
-
-The problem I mentioned above, where units like "cm^3^" may be misinterpreted,
-is resolved in SI by giving prefices higher precedence than exponents (e.g. the
-"c" applies first, then the "^3^" is applied after). This allows derived units
-to creep into our calculations, and is also opposite to the usual rules of
-multiplication and exponents, e.g. algebraically we would say that
-ab^c^ = a(b^c^). My preferred solution to any potential ambiguity is to [use
-parentheses](https://en.wikipedia.org/wiki/S-expression); I would try to avoid
-writing something like "3cm^3^", in favour of "3c(m^3^)" or "3(cm)^3^"; and I
-would also avoid the latter, since it's in derived units.
-
-### Problems with Units ###
-
-There are alternatives to SI called ["natural
-units"](https://en.wikipedia.org/wiki/Natural_units). Whilst the metric and SI
-systems take their derived units from physical equations like `F = ma`, natural
-units go one step further and take their base units from physical constants like
-the speed of light (in a vacuum). Using natural units can make physical
-calculations much easier, for example the equation E=mc^2^ becomes E=m if the
-speed of light is a base unit.
-
-There are three problems with switching to natural units:
-
- - There isn't just one set of natural units, so we would need to pick one to
-   standardise on. This isn't insurmountable.
-
- - Natural units can choose different dimensions for familiar quantities. For
-   example, some set the speed of light to be dimensionless (rather than "length
-   over time"). This requires changing other dimensions to maintain consistency,
-   which could make for a confusing system. This might not be too bad, but is
-   important to keep in mind.
-
- - These units are very far removed from everyday scales, so would need some
-   pretty powerful prefices (both big and small) to make them usable.
-
-### Problems with Prefices ###
-
-10 isn't a particularly good base for a number system. It's only divisible by 1,
-2, 5 and 10, which obscures many patterns (i.e. those which don't have period 2
-or 5) and overly-complicates the representation of otherwise 'simple' numbers
-(like the 1Mim example above). The binary prefices ("kibi", "mibi", etc.) are
-preferable in this regard, although their exponents (10, 20, ...) are rather
-arbitrary; we only use them since they're close to more familiar powers of 10.
-
-Commonly proposed alternatives to base 10 are
-[base 2 (binary)](https://en.wikipedia.org/wiki/Binary_number),
-[base 12 (dozenal)](https://en.wikipedia.org/wiki/Duodecimal) and
-[base 60 (sexagesimal)](https://en.wikipedia.org/wiki/Sexagesimal). These are
-[superior highly composite
-numbers](https://en.wikipedia.org/wiki/Superior_highly_composite_number) (i.e.
-they have many factors), and hence they can show patterns with more periods. For
-example, sequences differing by 2, 3, 4 and 6 will show a pattern in their
-digits ("dozits"?) when written in dozenal. Dozenal also makes it easy to
-[count using one's fingers](https://en.wikipedia.org/wiki/Duodecimal#Origin).
-Binary is also easy to [count on one's
-fingers](https://en.wikipedia.org/wiki/Finger_binary), but the dearth of digits
-("bits") can lead to very long, unwieldy numbers.
-[Hexadecimal (base 16)](https://en.wikipedia.org/wiki/Hexadecimal) is a common
-way to avoid this problem of binary, whilst still following similar patterns.
-
-Another problem with [current unit
-prefices](https://en.wikipedia.org/wiki/Metric_prefix#List_of_SI_prefixes) is
-that they only increase in fixed multiples (of 1000), e.g.
-1Gm = 1000Mm = 1000000km = 1000000000m. Such prefices act in a similar way to
-[unary](https://en.wikipedia.org/wiki/Unary_numeral_system) (or perhaps
-[Roman numerals](https://en.wikipedia.org/wiki/Roman_numerals)). This doesn't
-scale, requiring the rapid invention of
-[new names](https://en.wikipedia.org/wiki/Unit_prefix#Unofficial_prefixes).
-
-This problem is likely inherited from the [naming system used for large
-numbers](https://en.wikipedia.org/wiki/Names_of_large_numbers), where "million"
-is a thousand thousands, "billion" is a thousand millions, "trillion" is a
-thousand billions, etc. Just like place-value numerals make more efficient use
-of digits than unary, we can make more efficient use of names by introducing
-them logarithmically. In base ten we invent a new name for ten tens: the
-"hundred". With this new name we can count up to 99,9,9 ("ninety nine hundred
-and ninety nine"), but our next name (the "thousand") appears after only 9,9,9;
-far too early! If the thousand were a hundred hundreds, we could then count up
-to 9999,99,9,9 ("ninety nine hundred and ninety nine thousand, ninety nine
-hundred and ninety nine") before needing a new name (e.g. the "million"); the
-million currently appears after 99,99,9,9. The next name ("billion") currently
-appears after 9,9999,99,9,9, but we only need it once we reach
-99999999,9999,99,9,9 (a million millions, using our redefinition of million);
-the trillion would only be needed once we reach a billion billions, and so on.
-Note that each name doubles the number of digits we can reach, rather than
-merely adding three ([or
-six](https://en.wikipedia.org/wiki/Long_and_short_scales)). Such names have a
-clear relation to binary (powers of two), and also remind me of [factoradic
-numbers](https://en.wikipedia.org/wiki/Factorial_number_system). If this were to
-be adopted, it would be a much better idea to invent new names rather than
-trying to redefine the current terms!
-
-## Closing Thoughts ##
-
-Some of the above is fanciful, and other parts are purposefully provocative.
-The most obvious argument against imperial units is that [there are so many,
-related in arbitrary ways](https://www.youtube.com/watch?v=r7x-RGfd0Yk); but
+Whilst the metric (or SI) system
+[isn't perfect](2020-05-22-improving_our_units.html), it's also much better than
+those hodge-podges of historical baggage known as imperial units. The most
+obvious argument against imperial units is that [there are so many, related in
+arbitrary ways](https://www.youtube.com/watch?v=r7x-RGfd0Yk); but
 that's a bit of a cheap shot, since few people make regular use of barleycorns,
-fathoms or leagues. The two *real* advantages of metric (or SI) are having one
-unit per dimension, and requiring no conversion factor when combining
-dimensions.
+fathoms or leagues. Likewise the common argument *against* imperial, that powers
+of ten make arithmetic easier, is shallow at best, and irrelevant at worst.
+Instead, the two *real* advantages of metric (or SI) are having one unit per
+dimension, and requiring no conversion factor when combining dimensions.
 
 I'm a firm believer that seemingly-innocuous complications, like those found in
 imperial units of measurement, are in fact significant risks; they impede
 learning, potentially turning people away from areas like maths and science; and
-their [compounding, confounding
-behaviour](https://en.wikipedia.org/wiki/Mars_Climate_Orbiter) on the large
-scale constrains what we're capable of achieving as a species.
+their [compounding, confounding behaviour on the large
+scale](https://en.wikipedia.org/wiki/Mars_Climate_Orbiter) constrains what we're
+capable of achieving as a species.
 
 Every small "gotcha" can be pre-empted on its own, but it takes knowledge and
 experience to do so, and some small effort every time. As such "minor" issues
@@ -366,47 +222,25 @@ hold in general. (As a programmer, such
 [problems](https://en.wikipedia.org/wiki/Code_injection) are quite widespread,
 and even skilled experts often slip up now and then!)
 
-Whilst I don't think we'll see speedometers denoting logarithmically-scaled
-dozenal divisions of lightspeed any time soon, I think there are some definite
-steps we can take to improve our use of units.
+The only way to combat such unnecessary complication is by an aggressive pursuit
+of simplicity. Irrelevant details, unwanted degrees of freedom and unnecessary
+asymmetries only act to slow us down and trip us up. Imperial units have
+infected our collective mind for so long that we're often unable to see the
+simplicity that metric provides: we used to waste so much effort converting
+between redundant imperial units that, when confronted with a single metric
+equivalent, we started treating multiples as if they were different units, just
+to make it more familiar.
 
- - Switching to metric would be the easiest first step, and would bring the
-   two main benefits: one unit per dimension (modulo the litre and hour
-   inconsistencies), and trivial conversion between dimensions (modulo the
-   kilogram inconsistency). Most of the world is here already, although the UK
-   needs to sort out its road network (one way to do this would be replacing all
-   car usage with public transport and bicycles, but that's a whole other
-   issue!). Pro tip for those not used to metric distances: whenever you see
-   "metre", just think "yard" and you're basically done!
+The other advantage, of combining dimensions, is alien to many, despite the
+prevalence of examples like "miles per hour" and "pounds per square inch".
+Presumably this is due to how horrible it is to convert between imperial units
+in this way. It might even be the case that quantities like "miles per hour" and
+"pounds per square inch" are acceptable precisely because there's no expectation
+that they be convertible to any existing units (other than their constituents,
+like "miles" and "hours" for "miles per hour"). This mentality might explain why
+someone thought it was a good idea to invent monstrosities like "kilowatthours",
+rather than just sticking a "mega" prefix on to the Joule!
 
- - Kelvin is a well-known and widely-used unit. Whilst day-to-day usage might be
-   a bit unfamiliar, there's no major problem with using it in this way right
-   now.
-
- - We can avoid two more inconsistencies with metric by renaming the litre to a
-   cubic-metre equivalent like the millikuub, and renaming the kilogram, e.g.
-   back to the grave. This is quite low-effort, since the quantities would
-   remain the same, only the terminology would change. Anyone can start doing
-   this today (accompanied by old-style conversions, until they catch on).
-   There's little risk of unaccompanied quantities becoming unfathomable, since
-   the names "kuub" and "grave" are pre-existing (albeit foreign and archaic,
-   respectively).
-
- - The time inconsistency can be avoided by using new names for "minutes" and
-   "hours", as sexagesimal multiples of seconds (although this may annoy
-   etymologists!). Again, since the quantities remain the same, we can start
-   doing this right now; although some agreement on what to call these  prefices
-   would be useful.
-
- - More speculatively, we can switch from base-10 prefices "kilo", "mega", etc.
-   to base-2 "kibi", "mibi", etc. since they're close enough, and the base is
-   more sensible. Again, we can do this today, and the meaning would be mostly
-   clear (perhaps listeners would think we have a speech impediment, but they'd
-   get the right order of magnitude).
-
-More long-term it would be nice to switch to dozenal and/or hexadecimal, but
-that has a big chicken-and-egg problem. In particular, re-using the digits 0-9
-would make existing decimal representations ambiguous. It might be easier to
-learn and teach mathematics in these systems, due to more patterns being
-present, but those skills would be harder to apply in the "real world" where
-base 10 is prevalent.
+In any case, we need to embrace the simplicity of metric; grok what it tells us
+about the nature of measure and dimension; and use the saved mental effort to
+tackle bigger, harder problems.
