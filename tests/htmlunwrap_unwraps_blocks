@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -e
+
+function wrapDoc {
+    printf '<html><head></head><body>'
+    cat
+    echo '</body></html>'
+}
+
+function wrapCode {
+    printf '<pre class="htmlunwrap"><code>'
+    sed -e 's/&/\&amp;/g' | sed -e 's/</\&lt;/g' | sed -e 's/>/\&gt;/g'
+    echo '</code></pre>'
+}
+
+
+function wrap {
+    wrapCode | wrapDoc
+}
+
+  WRAPPED=$(echo '<iframe src="http://example.org"></iframe>' | wrap)
+UNWRAPPED=$(echo "$WRAPPED" | htmlUnwrap)
+
+echo "$WRAPPED" | grep '<pre class=.htmlunwrap.><code' > /dev/null ||
+    fail "Expected input to contain <pre><code>, got: $WRAPPED"
+
+WANT='<html><head></head><body><iframesrc="http://example.org"></iframe></body></html>'
+TRIMMED=$(echo "$UNWRAPPED" | tr -d ' \t\n\r')
+[[ "x$TRIMMED" = "x$WANT" ]] ||
+    fail "Unwrapping didn't work as expected, got: $UNWRAPPED ($TRIMMED)"

@@ -67,6 +67,10 @@ with rec {
       paths = [ git wget ];
     };
 
+    htmlUnwrap = {
+      paths = [ bs ];
+    };
+
     mkRedirectTo = {
       vars = { TEMPLATE = ../redirectTemplate.html; };
     };

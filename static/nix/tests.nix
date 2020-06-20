@@ -34,47 +34,48 @@ with rec {
       '';
 };
 mapAttrs testScript {
-  all_pages_reachable           = {
+  all_pages_reachable            = {
     buildInputs = [ darkhttpd procps utillinux wget ];
   };
-  archive_is_hfeed              = {
+  archive_is_hfeed               = {
     buildInputs = [ pythonPackages.python mf2py ];
   };
-  broken_links                  = { buildInputs = [ linkchecker ]; };
-  cleanupTables                 = {
+  broken_links                   = { buildInputs = [ linkchecker ]; };
+  cleanupTables                  = {
     buildInputs = [ commands.cleanup ];
     includeSite = false;
   };
-  code_not_indented             = { buildInputs = [ fail ]; };
-  dirs_have_indices             = {};
-  empty_panpipe_blocks_stripped = {
+  code_not_indented              = { buildInputs = [ fail ]; };
+  dirs_have_indices              = {};
+  empty_panpipe_blocks_stripped  = {
     buildInputs = [ commands.render_page ];
     includeSite = false;
   };
-  essays_redirects_to_projects  = { buildInputs = [ commands.relTo ]; };
-  everything_suffixed           = {};
-  have_all_posts                = { buildInputs = [ utillinux xidel ]; };
-  have_all_projects             = { buildInputs = [ utillinux xidel ]; };
-  have_all_repos                = {};
-  have_feeds                    = {};
-  have_readmes                  = { buildInputs = [ git ]; };
-  hcard_test                    = {
+  essays_redirects_to_projects   = { buildInputs = [ commands.relTo ]; };
+  everything_suffixed            = {};
+  have_all_posts                 = { buildInputs = [ utillinux xidel ]; };
+  have_all_projects              = { buildInputs = [ utillinux xidel ]; };
+  have_all_repos                 = {};
+  have_feeds                     = {};
+  have_readmes                   = { buildInputs = [ git ]; };
+  hcard_test                     = {
     buildInputs = [ pythonPackages.python mf2py commands.renderHcard ];
     includeSite = false;
   };
-  homepage_has_hcard            = {
+  homepage_has_hcard             = {
     buildInputs = [ pythonPackages.python mf2py ];
   };
-  imagesWontCompressFurther     = { includeSite = false; };
-  index_pages                   = {};
-  no_absolutes                  = { buildInputs = [ xidel ]; };
-  no_blogspot                   = { buildInputs = [ xidel ]; };
-  no_cruft                      = {};
-  no_empty_files                = {};
-  no_essays_links               = {};
-  no_gitorious                  = {};
-  no_selfclosing_scripts        = { buildInputs = [ fail xidel ]; };
-  posts_are_hentries            =
+  htmlunwrap_unwraps_blocks = { buildInputs = [ commands.htmlUnwrap fail ]; };
+  imagesWontCompressFurther      = { includeSite = false; };
+  index_pages                    = {};
+  no_absolutes                   = { buildInputs = [ xidel ]; };
+  no_blogspot                    = { buildInputs = [ xidel ]; };
+  no_cruft                       = {};
+  no_empty_files                 = {};
+  no_essays_links                = {};
+  no_gitorious                   = {};
+  no_selfclosing_scripts         = { buildInputs = [ fail xidel ]; };
+  posts_are_hentries             =
     with {
       hsPkgs = haskellPackages.override (old: {
         overrides = lib.composeExtensions
