@@ -40,6 +40,30 @@ function checkSource() {
     fi
 }
 
+function copyToWeb() {
+    # Some explanation of these options:
+    #   --ignore-times because Nix sets them all to 1970
+    #   --checksum uses file content to determine what's changed, in lieu of the
+    #     timestamp
+    #   --delete removes any files on the destination which aren't in the source
+    #   --progress tells us what it's up to
+    #   --copy-unsafe-links causes absolute symlinks (or relative ones pointing
+    #     outside the source tree) to be dereferenced and copied as files/dirs
+    #   --archive causes directories and (safe) symlinks to be copied, and
+    #     permissions, etc. to be preserved
+    #   -e forces SSH to use a TTY, so sudo will work
+    #   --rsync-path tells us what to run on the remote end, in this case we use
+    #     sudo so we've got permission to write to /var/www. NOTE: If you use an
+    #     SSH passphrase, this might cause it to be sent in the clear! We use
+    #     keys so it's not an issue.
+    #   --exclude tells rsync to ignore a path, so it won't copy or delete it
+    # Note that the trailing / after $DIR will cause its contents to be copied
+    rsync --ignore-times --checksum --delete --progress --copy-unsafe-links \
+          --archive --compress -e "ssh -t" --rsync-path="sudo rsync"        \
+          --exclude /git --exclude /essays --exclude /repos "$@"            \
+          "$DIR/" chriswarbo.net:/var/www/html
+}
+
 function build() {
     echo "Building '$1'" 1>&2
     BASE=$(dirname "$(readlink -f "$0")")
@@ -60,27 +84,7 @@ function pushToWeb() {
 
     echo "Pushing '$DIR' to Web root" 1>&2
 
-    # Some explanation of these options:
-    #   --ignore-times because Nix sets them all to 1970
-    #   --checksum uses file content to determine what's changed, in lieu of the
-    #     timestamp
-    #   --delete removes any files on the destination which aren't in the source
-    #   --progress tells us what it's up to
-    #   --copy-unsafe-links causes absolute symlinks (or relative ones pointing
-    #     outside the source tree) to be dereferenced and copied as files/dirs
-    #   --archive causes directories and (safe) symlinks to be copied, and
-    #     permissions, etc. to be preserved
-    #   -e forces SSH to use a TTY, so sudo will work
-    #   --rsync-path tells us what to run on the remote end, in this case we use
-    #     sudo so we've got permission to write to /var/www. NOTE: If you use an
-    #     SSH passphrase, this might cause it to be sent in the clear! We use
-    #     keys so it's not an issue.
-    #   --exclude tells rsync to ignore a path, so it won't copy or delete it
-    # Note that the trailing / after $DIR will cause its contents to be copied
-    rsync --ignore-times --checksum --delete --progress --copy-unsafe-links \
-          --archive --compress -e "ssh -t" --rsync-path="sudo rsync"        \
-          --exclude /git --exclude /essays --exclude /repos                 \
-          "$DIR/" chriswarbo.net:/var/www/html
+    copyToWeb
 
     # Ensure symlinks are in place
     for PAIR in '/opt/git	/var/www/html/git'            \
