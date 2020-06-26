@@ -57,19 +57,14 @@ so on.
 Before we begin, I want to use the following functions. They're all generic and
 useful, it's just unfortunate that PHP doesn't have them built-in:
 
-```{pipe="tee tag > /dev/null"}
-echo "<?"
-cat
-```
-
 ```{pipe="tee append > /dev/null"}
 #!/bin/sh
 echo "" >> f.php
-tee -a f.php | ./tag
+tee -a f.php
 ```
 
 ```{pipe="sh > /dev/null"}
-chmod +x tag append
+chmod +x append
 ```
 
 ```{.php pipe="./append"}
@@ -129,13 +124,13 @@ function map_array($f, $x) {
 PHP already has this function built in, called [`array_map`](). I swapped the
 name around to prevent conflicts, but we can simply do this:
 
-```{.php pipe="./tag"}
+```{.php}
 function map_array($f, $x) { return array_map($f, $x); }
 ```
 
 Or even:
 
-```{.php pipe="./tag"}
+```{.php}
 $map_array = 'array_map';
 ```
 
@@ -168,7 +163,7 @@ statements instead of expressions. We can avoid this in `map_object`, since
 `object_get_vars` gives us an array, which we already know how to map a function
 over:
 
-```{.php pipe="./tag"}
+```{.php}
 function map_object($f, $x) {
   return (object) map_array($f, get_object_vars($x));
 }
@@ -195,7 +190,7 @@ function map_function($f, $g) { return compose($f, $g); }
 Now, these map functions aren't completely arbitrary; they must obey a couple of
 rules. They are:
 
-```{.php pipe="./tag"}
+```{.php}
 // Mapping an identity function cannot change the contents of a box
 map('id', $x) == $x
 
@@ -283,7 +278,7 @@ string and `'id'`. Well, it's easy to return an array of our arguments (see
 `array_`), but that won't handle the strings. However, it's easy to prepend some
 arguments using `apply`. Let's see what happens:
 
-```{.php pipe="./tag"}
+```{.php}
 $db_sql         = apply('array_', 'SQL'  , 'id');
 $db_sql_seq     = apply('array_', 'SQLS' , 'id');
 $db_sql_named   = apply('array_', 'SQLN' , 'id');
@@ -298,7 +293,7 @@ Well that's brought down the amount of code quite considerably, however there's
 still some clear redundancy in this code; namely that we keep calling `apply`
 just with different arguments:
 
-```{.php pipe="./tag"}
+```{.php}
 foreach (['db_sql'       => 'SQL',
           'db_sql_seq'   => 'SQLS',
           'db_sql_named' => 'SQLN',
@@ -326,7 +321,7 @@ you insist on your functions being global you can use the `defun` function from
 Now we know what all of our tokens look like, we can implement our map
 functions, by composing on to the handlers:
 
-```{.php pipe="./tag"}
+```{.php}
 // Compose $f on to the handler $x[1]
 function map_edsl($f, $x) {
     $result    = $x;
@@ -487,7 +482,7 @@ function wrap_function($x) {
 
 Of course 'wrap_array' is equivalent to the following:
 
-```{.php pipe="./tag"}
+```{.php}
 $wrap_array = 'array_';
 ```
 
@@ -505,7 +500,7 @@ lobsters into a lobster.
 
 Here are some examples for arrays, objects and functions:
 
-```{.php pipe="./tag"}
+```{.php}
 function join_array($x) {
   return call_user_func_array('array_merge', $x);
 }
@@ -558,7 +553,7 @@ function join_db($x) {
 
 To have a monad, our wrap functions need to obey the following rule:
 
-```{.php pipe="./tag"}
+```{.php}
 // Applying $f then wrapping is the same as wrapping then mapping $f
 wrap($f($x)) == map($f, wrap($x))
 ```
@@ -566,7 +561,7 @@ wrap($f($x)) == map($f, wrap($x))
 Join functions can perform arbitrary work, such as calling databases or opening
 files, as long as they obey the following rules:
 
-```{.php pipe="./tag"}
+```{.php}
 // Joining twice can be done 'outside-in' or 'inside-out'
 join(join($x)) == join(map('join', $x))
 
@@ -594,7 +589,7 @@ we want to combine a bunch of numbers using a binary function, eg. `+`, `*` or
 already combined the numbers*. How can we combine numbers if we don't know
 what our combining function will be? The answer is to combine them into arrays:
 
-```{.php pipe="./tag"}
+```{.php}
 // Our interpreter is just array_reduce
 function interpret($function, $identity, $array) {
   return array_reduce($array, $function, $identity);
@@ -714,7 +709,7 @@ instance Functor f => Monad (Free f) where
 --this is the same thing as (++) basically
 
 
-```{.php pipe="./tag"}
+```{.php}
 // Some procedures with side-effects
 function connect() {
   // ...

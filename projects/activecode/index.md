@@ -570,7 +570,7 @@ ls /
 We can use `tee` to save a copy of our code into a file, then run it in another
 code block:
 
-````{.markdown .fullphp pipe="tee both.php"}
+````{.markdown .php pipe="tee both.php"}
 ```{.php pipe="tee script.php"}
 <?php
 echo 10 + 20;
@@ -585,7 +585,7 @@ php script.php
 
 This results in:
 
-<div class="fullphp">
+<div class="php">
 
 ```{.unwrap pipe="sh | pandoc -t json --filter panpipe"}
 cat both.php
@@ -659,7 +659,7 @@ cat order.sh
 We can generate content using PanPipe, send it through Pandoc to get JSON, then
 use PanHandle to splice it into the document. For example:
 
-````{.markdown .fullphp pipe="tee proc.md"}
+````{.markdown .php pipe="tee proc.md"}
 ```{.unwrap pipe="php | pandoc -t json"}
 <?php
 foreach (range(1, 10) as $x) {
@@ -694,7 +694,7 @@ pandoc -t json footer.md
 We can obtain image files using PanPipe, then encode them in data URIs.
 PanHandle will splice these into the document:
 
-````{.markdown .fullphp pipe="tee image_php.md"}
+````{.markdown .php pipe="tee image_php.md"}
 ```{pipe="php > carpet.pbm"}
 <?php
 $scale = 5;

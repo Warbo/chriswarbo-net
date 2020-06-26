@@ -78,7 +78,6 @@ non-functional thing to do. Instead of choosing which *action* to perform, try
 using ternary operators to choose between different *values*:
 
 ```php
-<?
 // Imperative
 if (valid($x)) return $x;
 return $default;
@@ -91,7 +90,6 @@ return valid($x)? $x : $default;
 sense from a value-oriented perspective. Ternaries define a value for each case:
 
 ```php
-<?
 // Imperative thinking
 if ($condition) {
     $x = foo();
@@ -113,7 +111,6 @@ equivalent of `if`{.python} statements, then `case`{.ruby} expressions are the
 functional equivalent to `switch`{.c} statements:
 
 ```php
-<?
 // Imperative
 switch ($x) {
   case 1:
@@ -261,7 +258,6 @@ functionalMap = map
 We can use recursion to set default values, rather than re-assigning variables:
 
 ```php
-<?
 function imperativeDefault($x, $y = null) {
   if (is_null($y)) $y = makeY($x);
   return process($x + $y);
@@ -277,7 +273,6 @@ Of course, There's More Than One Way To Do It. In this case, Static Single
 Assignment works just as well:
 
 ```php
-<?
 function functionalDefault2($x, $y_arg = null) {
   $y = is_null($y_arg)? makeY($x) : $y_arg;
   return process($x + $y);

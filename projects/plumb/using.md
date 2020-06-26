@@ -14,13 +14,11 @@ Plumb exists to make function definition easy: just use [square brackets]. Funct
 
 +-------------------------------------------------------+------------+
 | ```php                                                |            |
-| <?                                                    |            |
 | $id = plumb([]);                                      | **PHP**    |
 | echo "Called {$id(__FUNCTION__)} at  {$id(time())}";  |            |
 | ```                                                   |            |
 +-------------------------------------------------------+------------+
 | ```php                                                |            |
-| <?                                                    |            |
 | $compose_all = function() {                           |            |
 |                  return array_reduce(func_get_args(), | **PHP**    |
 |                                      'compose',       |            |
@@ -53,7 +51,6 @@ To return a value explicitly, just write it inside the brackets. Plumb will try 
 | ```                                            |                |
 +------------------------------------------------+----------------+
 | ```php                                         |                |
-| <?                                             |                |
 | public function testInvalidThrowsException() { |                |
 |   try {                                        |                |
 |     $this->handler                             |                |
@@ -90,7 +87,6 @@ Notice that `[0]`{.python} is an identity function, just like `[]`{.python}.
 
 +------------------------------+----------------+
 | ```php                       |                |
-| <?                           |                |
 | $f = plumb([0]);             | **PHP**        |
 |                              |                |
 | $f("baz") === "baz";         |                |
@@ -109,7 +105,6 @@ Notice that `[0]`{.python} is an identity function, just like `[]`{.python}.
 | ```                          |                |
 +------------------------------+----------------+
 | ```php                       |                |
-| <?                           |                |
 | $f = plumb([[1]])            | **PHP**        |
 |                              |                |
 | $f("baz", "quux") === "baz"  |                |
@@ -129,7 +124,6 @@ We can call a function using the infix "`,`{.python}" operator, with the functio
 
 +-------------------------------------+------------+
 | ```php                              |            |
-| <?                                  |            |
 | $count = plumb(["strlen" , "baz"]); | **PHP**    |
 |                                     |            |
 | $count(null) === 3;                 |            |
@@ -164,7 +158,6 @@ Is equivalent to:
 
 +----------------------------------------+------------+
 | ```php                                 |            |
-| <?                                     |            |
 | $f = plumb([['strlen' , 0] , "quux"]); | **PHP**    |
 |                                        |            |
 | $f(null) === 4                         |            |
@@ -187,7 +180,7 @@ Chained commas cannot implement right-associative nesting patterns, like:
 0 , (1 , 2)
 ```
 
-To define these, Plumb provides *grouping syntax*, which is equivalent to writing the parentheses above. We use the name "grouping syntax" since some host languages don't allow us to use parentheses in this way. For example, the PHP implementation uses `<? __(`{.php} instead of an opening parenthesis.
+To define these, Plumb provides *grouping syntax*, which is equivalent to writing the parentheses above. We use the name "grouping syntax" since some host languages don't allow us to use parentheses in this way. For example, the PHP implementation uses `__(`{.php} instead of an opening parenthesis.
 
 <div class="summarise">
  <span class="summary">
@@ -196,7 +189,6 @@ To define these, Plumb provides *grouping syntax*, which is equivalent to writin
 
 +----------------------------------------+------------+
 | ```php                                 |            |
-| <?                                     |            |
 | $f = plumb(['strlen' __([] , "foo")]); |            |
 |                                        | **PHP**    |
 | $f(null) === 3                         |            |
