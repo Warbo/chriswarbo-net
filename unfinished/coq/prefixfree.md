@@ -1,3 +1,8 @@
+---
+title: Prefix-Free Program Codes
+---
+
+```coq
 (*
 In this post I'll look at programming languages from a
 formal point of view. I want to highlight the connection
@@ -63,7 +68,7 @@ alphabet 3 = {FS (FS F1), FS F1, F1}
 When we're proving things about languages, we'll often have
 to prove the case for alphabet 0. Coq isn't smart enough to
 notice that it's an empty type, so we define this absurdity
-to fulfil whatever impossible goal Coq has set us. 
+to fulfil whatever impossible goal Coq has set us.
 *)
 Definition absurd : forall (a : Set)
                            (s : alphabet 0),
@@ -218,7 +223,7 @@ Definition unary_encoding (a b : nat)
                                               (S b)
                                                  e
                                                  d
-                             
+
         := encoding (unary_enc' (S a)    b)
                     (unary_dec'    a  (S b))
                     (unary_inv     a     b).
@@ -629,7 +634,7 @@ ne : S n0 <> 0
         assert (to_list v0 = p).
           dependent destruction v0.
             compute.
-          
+
 
 (*
 The first result we'll show is that the binary alphabet is
@@ -669,3 +674,4 @@ Theorem bit_bool_iso : forall b : bit,
     | assert (H : t 0 -> FS F1 = FS (FS b));
       apply case0; exact b]].
 Qed.
+```
