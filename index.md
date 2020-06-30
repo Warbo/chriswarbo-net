@@ -20,9 +20,8 @@ file2img "Code" < root/static/code.png
 
 </div>
 
-I'm a Free Software advocate, Physicist, Computer Scientist and metal head. I'm
-currently a PhD student in Computer Science at the
-[University of Dundee](https://www.computing.dundee.ac.uk/about/staff/124).
+I'm a Free Software advocate, Physicist, Computer Scientist and metal head. I
+currently live in Birmingham, UK.
 
 This is a place for me to collect thoughts and experiments, mostly around
 programming languages and artificial intelligence.
