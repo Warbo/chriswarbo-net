@@ -2,8 +2,9 @@ window.gradient = [];
 
 $(function() {
 	$('#enum_playfield').svg({onLoad: enum_init});
-	$('#enum_playfield').click(function(){
+	$('#enum_playfield').off('click').click(function(){
 		var self = jQuery(this);
+		self.off('click');
 		var fittest = -1;
 		var green = false;
 		var blobs = [];
