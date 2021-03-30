@@ -27,7 +27,6 @@ with super.lib;
     unfinished
   ]));
 
-
   # Provide all pages, with all of our tests as dependencies
   wholeSite = self.withDeps' "chriswarbo.net" (self.allDrvsIn self.tests)
                                               self.untestedSite;
