@@ -6,6 +6,7 @@ import sys
 msg = lambda s: sys.stderr.write(s + "\n")
 
 def summariseTables(data):
+    msg("Summarising tables")
     doc = BeautifulSoup(data, 'html.parser')
 
     for summarise in doc.find_all(class_='summarise'):
@@ -38,6 +39,7 @@ def unwrapSummary(e):
 def unwrapSummaries(data):
     doc = BeautifulSoup(data, 'html.parser')
 
+    msg("Unwrapping paragraphs from summaries")
     map(unwrapSummary, doc.find_all('summary'))
 
     return str(doc)
@@ -45,21 +47,23 @@ def unwrapSummaries(data):
 def stripEmptyPreCode(data):
     doc   = BeautifulSoup(data, 'html.parser')
 
-    def remove_if_empty(tag):
-        def f(e):
-            if repr(e) == '<' + tag + '></' + tag + '>':
-                msg('Removing empty element "' + repr(e) + '"\n')
-                e.extract()
-        return f
-
-    remove_empty = lambda tag: map(remove_if_empty(tag), doc.find_all(tag))
-
-    # Empty <code> elements are left over from running commands with PanPipe. Tidy
-    # complains about them, so we might as well remove them.
+    # Empty <code> elements are left over from running commands with PanPipe.
+    # Tidy complains about them, so we might as well remove them.
     # Remove <code> elements first, then remove any containers (<span>, <p> and
     # <pre> elements) which might have contained those <code> elements and are
     # subsequently empty.
-    map(remove_empty, ['code', 'pre', 'span', 'p'])
+    map(
+        lambda tag: map(
+            lambda e: (
+                (
+                    msg('Removing empty element "' + repr(e) + '"\n'),
+                    e.extract()
+                ) if repr(e) == '<' + tag + '></' + tag + '>' else None
+            ),
+            doc.find_all(tag)
+        ),
+        ['code', 'pre', 'span', 'p']
+    )
 
     return str(doc)
 
@@ -67,16 +71,13 @@ data = sys.stdin.read()
 
 # Tables should be given summaries, specified by a sibling with class "summary"
 if "<table" in data:
-    msg("Summarising tables")
     data = summariseTables(data)
 
 # Any empty <code> elements left from PanPipe should be stripped
 if "<code></code>" in data:
-    msg("Stripping left-over <pre> and <code> elements")
     data = stripEmptyPreCode(data)
 
 if "<summary" in data:
-    msg("Unwrapping paragraphs from summaries")
-    data = unwrapSummaries(data)
+   data = unwrapSummaries(data)
 
 print(data)
