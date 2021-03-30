@@ -1,30 +1,82 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python
 
-# Clean up common detritus from HTML given on stdin
+from bs4 import BeautifulSoup
+import sys
 
-INPUT=$(cat)
+msg = lambda s: sys.stderr.write(s + "\n")
+
+def summariseTables(data):
+    doc = BeautifulSoup(data, 'html.parser')
+
+    for summarise in doc.find_all(class_='summarise'):
+        for summary in summarise.find_all(class_='summary'):
+            summarise.table['summary'] = reduce(
+                lambda ttl, txt: ttl + txt,
+                summary.strings,
+                "").strip()
+            highest = summary
+            drop = True
+            for parent in summary.parents:
+                if drop:
+                    if parent == summarise:
+                        drop = False
+                    else:
+                        highest = parent
+            highest.extract()
+
+    return str(doc)
+
+def unwrapSummary(e):
+    """Matches '<p><summary>foo</summary></p>' and replaces it with
+    '<summary>foo</summary>'"""
+    p = e.parent
+
+    # Only unwrap paragraphs if this summary is the only thing in it
+    if p.name == u'p' and [c.name for c in p.contents] == [u'summary']:
+        p.replace_with(e)
+
+def unwrapSummaries(data):
+    doc = BeautifulSoup(data, 'html.parser')
+
+    map(unwrapSummary, doc.find_all('summary'))
+
+    return str(doc)
+
+def stripEmptyPreCode(data):
+    doc   = BeautifulSoup(data, 'html.parser')
+
+    def remove_if_empty(tag):
+        def f(e):
+            if repr(e) == '<' + tag + '></' + tag + '>':
+                msg('Removing empty element "' + repr(e) + '"\n')
+                e.extract()
+        return f
+
+    remove_empty = lambda tag: map(remove_if_empty(tag), doc.find_all(tag))
+
+    # Empty <code> elements are left over from running commands with PanPipe. Tidy
+    # complains about them, so we might as well remove them.
+    # Remove <code> elements first, then remove any containers (<span>, <p> and
+    # <pre> elements) which might have contained those <code> elements and are
+    # subsequently empty.
+    map(remove_empty, ['code', 'pre', 'span', 'p'])
+
+    return str(doc)
+
+data = sys.stdin.read()
 
 # Tables should be given summaries, specified by a sibling with class "summary"
-if echo "$INPUT" | grep "<table" > /dev/null
-then
-    echo "Summarising tables" 1>&2
-    OUTPUT=$(echo "$INPUT" | summariseTables)
-    INPUT="$OUTPUT"
-fi
+if "<table" in data:
+    msg("Summarising tables")
+    data = summariseTables(data)
 
 # Any empty <code> elements left from PanPipe should be stripped
-if echo "$INPUT" | grep "<code></code>" > /dev/null
-then
-    echo "Stripping left-over <pre> and <code> elements" 1>&2
-    OUTPUT=$(echo "$INPUT" | stripEmptyPreCode)
-    INPUT="$OUTPUT"
-fi
+if "<code></code>" in data:
+    msg("Stripping left-over <pre> and <code> elements")
+    data = stripEmptyPreCode(data)
 
-if echo "$INPUT" | grep "<summary" > /dev/null
-then
-    echo "Unwrapping paragraphs from summaries" 1>&2
-    OUTPUT=$(echo "$INPUT" | unwrapSummaries)
-    INPUT="$OUTPUT"
-fi
+if "<summary" in data:
+    msg("Unwrapping paragraphs from summaries")
+    data = unwrapSummaries(data)
 
-echo "$INPUT"
+print(data)

@@ -51,6 +51,7 @@ with rec {
   });
 
   pythonScripts = genAttrs [
+    "cleanup"
     "htmlUnwrap"
     "relativise"
     "stripEmptyPreCode"
@@ -63,11 +64,6 @@ with rec {
   });
 
   wrapped = extras // pythonScripts // mapAttrs wrapScript {
-    cleanup = {
-      paths = with wrapped;
-        [ stripEmptyPreCode summariseTables unwrapSummaries ];
-    };
-
     file2img = {};
 
     git2md = { paths = [ git wget ]; };
