@@ -18,47 +18,33 @@ data = sys.stdin.read()
 doc  = BeautifulSoup(data, 'html.parser')
 
 # Tables should be given summaries, specified by a sibling with class "summary"
-if "<table" in data:
-    msg("Summarising tables")
+for summarise in doc.find_all(class_='summarise'):
+    for summary in summarise.find_all(class_='summary'):
+        summarise.table['summary'] = ''.join(summary.strings).strip()
+        highest = summary
+        drop    = True
+        for parent in summary.parents:
+            if drop:
+                if parent == summarise:
+                    drop = False
+                else:
+                    highest = parent
+        highest.extract()
 
-    for summarise in doc.find_all(class_='summarise'):
-        for summary in summarise.find_all(class_='summary'):
-            summarise.table['summary'] = reduce(
-                lambda ttl, txt: ttl + txt,
-                summary.strings,
-                "").strip()
-            highest = summary
-            drop = True
-            for parent in summary.parents:
-                if drop:
-                    if parent == summarise:
-                        drop = False
-                    else:
-                        highest = parent
-            highest.extract()
+# Empty <code> elements are left over from running commands with PanPipe.
+# Tidy complains about them, so we might as well remove them.
+# Remove <code> elements first, then remove any containers (<span>, <p> and
+# <pre> elements) which might have contained those <code> elements and are
+# subsequently empty.
+map(
+    lambda tag: map(
+        lambda e: e.extract() if repr(e) == '<' + tag + '></' + tag + '>' \
+                              else None,
+        doc.find_all(tag)
+    ),
+    ['code', 'pre', 'span', 'p']
+)
 
-# Any empty <code> elements left from PanPipe should be stripped
-if "<code></code>" in data:
-    # Empty <code> elements are left over from running commands with PanPipe.
-    # Tidy complains about them, so we might as well remove them.
-    # Remove <code> elements first, then remove any containers (<span>, <p> and
-    # <pre> elements) which might have contained those <code> elements and are
-    # subsequently empty.
-    map(
-        lambda tag: map(
-            lambda e: (
-                (
-                    msg('Removing empty element "' + repr(e) + '"\n'),
-                    e.extract()
-                ) if repr(e) == '<' + tag + '></' + tag + '>' else None
-            ),
-            doc.find_all(tag)
-        ),
-        ['code', 'pre', 'span', 'p']
-    )
-
-if "<summary" in data:
-    msg("Unwrapping paragraphs from summaries")
-    map(unwrapSummary, doc.find_all('summary'))
+map(unwrapSummary, doc.find_all('summary'))
 
 print(str(doc))
