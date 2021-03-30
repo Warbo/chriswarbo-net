@@ -50,18 +50,11 @@ with rec {
     paths = includingDeps (vals.paths or []);
   });
 
-  pythonScripts = genAttrs [
-    "cleanup"
-    "htmlUnwrap"
-    "relativise"
-    "stripEmptyPreCode"
-    "stripTitle"
-    "summariseTables"
-    "unwrapSummaries"
-  ]
-  (name: wrapScript name {
-    paths = [ (python.withPackages (p: [ p.python p.beautifulsoup4 ])) ];
-  });
+  pythonScripts = genAttrs
+    [ "cleanup" "htmlUnwrap" "relativise" "stripTitle" ]
+    (name: wrapScript name {
+      paths = [ (python.withPackages (p: [ p.python p.beautifulsoup4 ])) ];
+    });
 
   wrapped = extras // pythonScripts // mapAttrs wrapScript {
     file2img = {};
