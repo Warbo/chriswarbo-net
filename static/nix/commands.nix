@@ -1,12 +1,10 @@
 { attrsToDirs, bash, coq, fail, git, glibcLocales, haskellPackages, lib,
-  libxslt, mkBin, pandocPkgs, python, replace, wget, withNix, xidel }:
+  mkBin, pandocPkgs, python, replace, wget, withNix, xidel }:
 
 with builtins;
 with lib;
 with rec {
-  nixVars = withNix {
-    CALLING_NIX_RECURSIVELY = "1";
-  };
+  nixVars = withNix { CALLING_NIX_RECURSIVELY = "1"; };
 
   includingDeps = xs:
     filter (x: x != null)
@@ -41,7 +39,6 @@ with rec {
         exec nix-shell "$@"
       '';
     };
-
   };
 
   wrapScript = name: vals: mkBin (vals // {
@@ -51,21 +48,18 @@ with rec {
   });
 
   pythonScripts = genAttrs
-    [ "cleanup" "htmlUnwrap" "relativise" "stripTitle" ]
+    [ "cleanup" "htmlUnwrap" "relativise" "relTo" "stripTitle" ]
     (name: wrapScript name {
       paths = [ (python.withPackages (p: [ p.python p.beautifulsoup4 ])) ];
     });
 
   wrapped = extras // pythonScripts // mapAttrs wrapScript {
-    file2img = {};
-
-    git2md = { paths = [ git wget ]; };
-
-    mkRedirectTo = {
-      vars = { TEMPLATE = ../redirectTemplate.html; };
-    };
-
-    relTo = { paths = [ python ]; };
+    file2img     = {};
+    git2md       = { paths = [ git wget ]; };
+    mkRedirectTo = { vars = { TEMPLATE = ../redirectTemplate.html; }; };
+    renderHcard  = {};
+    showPosts    = { paths = [ wrapped.showPost ]; };
+    wrapCode     = {};
 
     render_page = {
       paths = [ wrapped.cleanup fail pandocPkgs ];
@@ -76,15 +70,10 @@ with rec {
       };
     };
 
-    renderHcard = {};
-
     showPost = {
       paths = [ replace xidel ];
       vars  = { RANTS = ../rants; };
     };
-
-    showPosts = { paths = [ wrapped.showPost ]; };
-    wrapCode = {};
   };
 };
 wrapped
