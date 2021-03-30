@@ -15,11 +15,11 @@ def unwrapSummary(e):
         p.replace_with(e)
 
 data = sys.stdin.read()
+doc  = BeautifulSoup(data, 'html.parser')
 
 # Tables should be given summaries, specified by a sibling with class "summary"
 if "<table" in data:
     msg("Summarising tables")
-    doc = BeautifulSoup(data, 'html.parser')
 
     for summarise in doc.find_all(class_='summarise'):
         for summary in summarise.find_all(class_='summary'):
@@ -37,12 +37,8 @@ if "<table" in data:
                         highest = parent
             highest.extract()
 
-    data = str(doc)
-
 # Any empty <code> elements left from PanPipe should be stripped
 if "<code></code>" in data:
-    doc   = BeautifulSoup(data, 'html.parser')
-
     # Empty <code> elements are left over from running commands with PanPipe.
     # Tidy complains about them, so we might as well remove them.
     # Remove <code> elements first, then remove any containers (<span>, <p> and
@@ -61,14 +57,8 @@ if "<code></code>" in data:
         ['code', 'pre', 'span', 'p']
     )
 
-    data = str(doc)
-
 if "<summary" in data:
-    doc = BeautifulSoup(data, 'html.parser')
-
     msg("Unwrapping paragraphs from summaries")
     map(unwrapSummary, doc.find_all('summary'))
 
-    data = str(doc)
-
-print(data)
+print(str(doc))
