@@ -24,40 +24,49 @@ with rec {
     };
     go { path = ../..; type = "directory"; } [];
 
-  metadataMap = import (runCommand "metadata-map"
-                         {
-                           __noChroot  = true;  # Allow access to filesystem
-                           buildInputs = [ haskellPackages.yaml ];
-                           cacheBust   = toString currentTime;
-                           default     = writeScript "metadata.nix" ''
-                             with builtins;
-                             fromJSON (readFile ./metadata.json)
-                           '';
-                           paths = writeScript "markdown-paths"
-                                     (concatStringsSep "\n" markdownPaths);
-                         }
-                         ''
-                           mkdir "$out"
-                           cp "$default" "$out/default.nix"
+  metadataMapYaml = runCommand "metadata-map.yaml"
+    {
+      __noChroot  = true;  # Allow access to filesystem
+      cacheBust   = toString currentTime;
+      paths       = writeScript "markdown-paths"
+        (concatStringsSep "\n" markdownPaths);
+    }
+    ''
+      printf 'Looking for YAML metadata' 1>&2
+      PAT='^----*'
+      while read -r P
+      do
+        printf '.' 1>&2
+        YAML=$(grep -B 99999 -m 2 "$PAT" < "$P" |
+               grep -v "$PAT") || true
+        if [[ -z "$YAML" ]]
+        then
+          YAML='{}'
+        fi
+        INDENTED=$(echo "$YAML" | sed -e 's/^/  /')
 
-                           printf 'Looking for YAML metadata' 1>&2
-                           PAT='^----*'
-                           while read -r P
-                           do
-                             printf '.' 1>&2
-                             YAML=$(grep -B 99999 -m 2 "$PAT" < "$P" |
-                                    grep -v "$PAT") || true
-                             if [[ -z "$YAML" ]]
-                             then
-                               YAML='{}'
-                             fi
-                             INDENTED=$(echo "$YAML" | sed -e 's/^/  /')
+        printf '"%s":\n%s\n' "$P" "$INDENTED" >> "$out"
+      done < "$paths"
+    '';
 
-                             printf '"%s":\n%s\n' "$P" "$INDENTED" >> yaml.yaml
-                           done < "$paths"
+  metadataMapFile = runCommand "metadata-map"
+    {
+      inherit metadataMapYaml;
+      __noChroot  = true;  # Allow access to filesystem
+      buildInputs = [ haskellPackages.yaml ];
+      default     = writeScript "metadata.nix" ''
+        with builtins;
+        fromJSON (readFile ./metadata.json)
+      '';
+    }
+    ''
+      mkdir "$out"
+      cp "$default" "$out/default.nix"
 
-                           echo "Converting to JSON" 1>&2
-                           yaml2json - < yaml.yaml > "$out/metadata.json"
-                         '');
+      echo "Converting to JSON" 1>&2
+      yaml2json - < "$metadataMapYaml" > "$out/metadata.json"
+    '';
+
+  metadataMap = import metadataMapFile;
 };
 path: metadataMap."${toString path}" or {}
