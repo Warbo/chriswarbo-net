@@ -23,14 +23,14 @@ with rec {
   packages = import ./packages.nix { inherit fetchgit repoSource; };
 
   # Load our Nix helper functions from the packages repo
-  inherit (import "${packages}/helpers.nix" { inherit fetchgit; }) nix-helpers;
+  inherit (import "${packages}/nix/sources.nix") nix-helpers;
 
   # Add this site's package overlay, along with the above packages and helpers,
   # to a given Nixpkgs repo
   overlayed = repo: import repo {
     config   = {};
     overlays = [
-      (import "${nix-helpers}/overlay.nix")
+      (import "${nix-helpers.outPath}/overlay.nix")
       (import "${packages}/overlay.nix")
       (import ./overlay.nix)
       (self: super: {
