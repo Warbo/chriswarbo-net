@@ -11,7 +11,9 @@ with rec {
               path = dir + "/${entry}";
               type = getAttr entry entries;
             })
-            (attrNames entries);
+            # Avoid hidden files like .asv
+            (filter (n: !(hasPrefix "." n))
+                    (attrNames entries));
 
       go = { path, type }: rest:
         if type == "directory"
