@@ -69,4 +69,7 @@ with rec {
 
   metadataMap = import metadataMapFile;
 };
-path: metadataMap."${toString path}" or {}
+{
+  inherit markdownPaths metadataMapFile metadataMap;
+  of = path: metadataMap."${toString path}" or {};
+}

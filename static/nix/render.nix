@@ -18,7 +18,7 @@ with {
 };
 { file, inputs ? [], name, SOURCE_PATH, TO_ROOT ? "", vars ? {} }:
   with rec {
-    md        = metadata file;
+    md        = metadata.of file;
     extraPkgs = map (n: if hasAttr n commands
                            then getAttr n commands
                            else callPackage (withArgs [ n ] (getAttr n)) {})
