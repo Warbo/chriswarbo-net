@@ -69,4 +69,4 @@ with rec {
 
 # Apply our overlays to <nixpkgs>, pick our a pinned nixpkgs revision from that
 # (defined by our Nix helpers) apply our overlays to that
-overlayed (overlayed <nixpkgs>).repo1803
+overlayed (overlayed <nixpkgs>).repo2009

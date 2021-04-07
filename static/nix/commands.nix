@@ -1,5 +1,5 @@
 { attrsToDirs, bash, coq, fail, git, glibcLocales, haskellPackages, lib,
-  mkBin, pandocPkgs, python, replace, wget, withNix, xidel }:
+  mkBin, nixpkgs1803, pandocPkgs, python, replace, wget, withNix, xidel }:
 
 with builtins;
 with lib;
@@ -12,6 +12,9 @@ with rec {
                ++ concatMap (x: x.propagatedBuildInputs)       xs);
 
   extras = {
+    # Not present in 20.03 or later
+    inherit (nixpkgs1803) php56;
+
     # Avoids depending on GTK, Gnome, etc.
     coqNoIde = coq.override { buildIde = false; };
 
