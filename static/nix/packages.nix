@@ -5,6 +5,6 @@
 
 fetchgit {
   url    = "${repoSource}/warbo-packages.git";
-  rev    = "0399585";
-  sha256 = "1ijpnk3fx8cd527idv1hjf3na873hyqwsr6jbr2fr94zqr3v0q14";
+  rev    = "b8f0069";
+  sha256 = "1bbs7zy68sdr1d6di5rlzjkh3zj6da97sa0yi03plwmp289sqp6d";
 }
