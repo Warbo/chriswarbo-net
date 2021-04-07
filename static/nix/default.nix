@@ -50,6 +50,10 @@ with rec {
                 #   expected: [("a",Number 4.0),("b",Number 7.0)]
                 #   but got:  [("b",Number 7.0),("a",Number 4.0)]
                 lens-aeson = lib.dontCheck huper.lens-aeson;
+                aeson      = lib.dontCheck huper.aeson;
+
+                # Avoid out-of-memory when building SHA on x86
+                SHA = lib.dontCheck huper.SHA;
               });
           };
           { inherit overrides; } // (if old ? haskellOverride
