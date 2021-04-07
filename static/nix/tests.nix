@@ -65,11 +65,13 @@ mapAttrs testScript {
   homepage_has_hcard             = {
     buildInputs = [ pythonPackages.python mf2py ];
   };
-  htmlunwrap_unwraps_blocks = { buildInputs = [ commands.htmlUnwrap fail ]; };
-  imagesWontCompressFurther      = { includeSite = false; };
+  htmlunwrap_unwraps_blocks      = {
+    buildInputs = [ commands.htmlUnwrap fail ];
+  };
+  imagesWontCompressFurther      = { includeSite = false;          };
   index_pages                    = {};
-  no_absolutes                   = { buildInputs = [ xidel ]; };
-  no_blogspot                    = { buildInputs = [ xidel ]; };
+  no_absolutes                   = { buildInputs = [      xidel ]; };
+  no_blogspot                    = { buildInputs = [      xidel ]; };
   no_cruft                       = {};
   no_empty_files                 = {};
   no_essays_links                = {};
@@ -83,7 +85,7 @@ mapAttrs testScript {
     ])) ];
   };
   posts_have_titles  = { buildInputs = [ fail xidel                  ]; };
-  redirect_posts     = {                                                };
+  redirect_posts     = {};
   scripts_in_place   = { buildInputs = [ fail xidel                  ]; };
   summariesUnwrapped = { buildInputs = [ commands.cleanup pandocPkgs ]; };
   tidy_html5         = { buildInputs = [ tidy-html5                  ]; };
