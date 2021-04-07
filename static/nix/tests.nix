@@ -1,6 +1,6 @@
 { attrsToDirs', commands, darkhttpd, fail, git, haskell, haskellPackages, lib,
-  linkchecker, mf2py, pandocPkgs, procps, pythonPackages, repos, runCommand,
-  tidy-html5, untestedSite, utillinux, wget, wrap, xidel }:
+  linkchecker, mf2py, nixpkgs1803, pandocPkgs, procps, pythonPackages, repos,
+  runCommand, tidy-html5, untestedSite, utillinux, wget, wrap, xidel }:
 
 with builtins;
 with lib;
@@ -75,28 +75,13 @@ mapAttrs testScript {
   no_essays_links                = {};
   no_gitorious                   = {};
   no_selfclosing_scripts         = { buildInputs = [ fail xidel ]; };
-  posts_are_hentries             =
-    with {
-      hsPkgs = haskellPackages.override (old: {
-        overrides = lib.composeExtensions
-          (old.overrides or (_: _: {}))
-          (self: super: {
-            # Avoid doctest failure:
-            #   expected: [("a",Number 4.0),("b",Number 7.0)]
-            #   but got:  [("b",Number 7.0),("a",Number 4.0)]
-            lens-aeson = haskell.lib.dontCheck super.lens-aeson;
-          });
-      });
-    };
-    {
-      buildInputs = [
-        (hsPkgs.ghcWithPackages (h: [
-          h.microformats2-parser
-          h.directory
-          h.bytestring
-        ]))
-      ];
-    };
+  posts_are_hentries             = {
+    buildInputs = [ (nixpkgs1803.haskellPackages.ghcWithPackages (h: [
+      h.microformats2-parser
+      h.directory
+      h.bytestring
+    ])) ];
+  };
   posts_have_titles  = { buildInputs = [ fail xidel                  ]; };
   redirect_posts     = {                                                };
   scripts_in_place   = { buildInputs = [ fail xidel                  ]; };

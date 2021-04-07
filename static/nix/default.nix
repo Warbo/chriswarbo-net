@@ -38,6 +38,26 @@ with rec {
 
         # To force -q instead of -s
         inherit (self.nixpkgs1709) xidel;
+
+        haskellPackages = super.haskellPackages.override (old:
+          with rec {
+            inherit (self.haskell) lib;
+
+            overrides = self.lib.composeExtensions
+              (old.overrides or (_: _: {}))
+              (helf: huper: {
+                # Avoid doctest failure:
+                #   expected: [("a",Number 4.0),("b",Number 7.0)]
+                #   but got:  [("b",Number 7.0),("a",Number 4.0)]
+                lens-aeson = lib.dontCheck huper.lens-aeson;
+              });
+          };
+          { inherit overrides; } // (if old ? haskellOverride
+                                        then { haskellOverrideArgs = {
+                                          inherit (super) haskellPackages;
+                                          extra = [ overrides  ];
+                                        }; }
+                                        else {}));
       })
     ];
   };
