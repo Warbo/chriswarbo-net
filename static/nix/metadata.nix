@@ -1,4 +1,4 @@
-{ haskellPackages, lib, runCommand, writeScript }:
+{ haskell, haskellPackages, lib, runCommand, writeScript }:
 
 with builtins;
 with lib;
@@ -53,7 +53,9 @@ with rec {
     {
       inherit metadataMapYaml;
       __noChroot  = true;  # Allow access to filesystem
-      buildInputs = [ haskellPackages.yaml ];
+      buildInputs = [
+        (haskell.lib.disableCabalFlag haskellPackages.yaml "no-exe")
+      ];
       default     = writeScript "metadata.nix" ''
         with builtins;
         fromJSON (readFile ./metadata.json)
