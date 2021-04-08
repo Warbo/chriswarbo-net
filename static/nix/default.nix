@@ -39,7 +39,7 @@ with rec {
         # To force -q instead of -s
         inherit (self.nixpkgs1709) xidel;
 
-        haskellPackages = super.haskellPackages.override (old:
+        haskellPackages = self.nixpkgs1803.haskellPackages.override (old:
           with rec {
             inherit (self.haskell) lib;
 

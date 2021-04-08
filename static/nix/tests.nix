@@ -1,6 +1,6 @@
 { attrsToDirs', commands, darkhttpd, fail, git, haskell, haskellPackages, lib,
-  linkchecker, mf2py, nixpkgs1803, pandocPkgs, procps, pythonPackages, repos,
-  runCommand, tidy-html5, untestedSite, utillinux, wget, wrap, xidel }:
+  linkchecker, mf2py, pandocPkgs, procps, pythonPackages, repos, runCommand,
+  tidy-html5, untestedSite, utillinux, wget, wrap, xidel }:
 
 with builtins;
 with lib;
@@ -79,7 +79,7 @@ mapAttrs testScript {
   no_gitorious                   = {};
   no_selfclosing_scripts         = { buildInputs = [ fail xidel ]; };
   posts_are_hentries             = {
-    buildInputs = [ (nixpkgs1803.haskellPackages.ghcWithPackages (h: [
+    buildInputs = [ (haskellPackages.ghcWithPackages (h: [
       h.microformats2-parser
       h.directory
       h.bytestring
