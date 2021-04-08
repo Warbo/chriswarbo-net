@@ -67,6 +67,7 @@ mapAttrs testScript {
   };
   htmlunwrap_unwraps_blocks      = {
     buildInputs = [ commands.htmlUnwrap fail ];
+    includeSite = false;
   };
   imagesWontCompressFurther      = { includeSite = false;          };
   index_pages                    = {};
@@ -87,9 +88,15 @@ mapAttrs testScript {
   posts_have_titles  = { buildInputs = [ fail xidel                  ]; };
   redirect_posts     = {};
   scripts_in_place   = { buildInputs = [ fail xidel                  ]; };
-  summariesUnwrapped = { buildInputs = [ commands.cleanup pandocPkgs ]; };
+  summariesUnwrapped = {
+    buildInputs = [ commands.cleanup pandocPkgs ];
+    includeSite = false;
+  };
   tidy_html5         = { buildInputs = [ tidy-html5                  ]; };
-  xidel_args         = { buildInputs = [ xidel                       ]; };
+  xidel_args         = {
+    buildInputs = [ xidel ];
+    includeSite = false;
+  };
 } // {
   reposRedirect = runCommand "reposRedirect"
     { pages = attrsToDirs' "repos" repos; }
