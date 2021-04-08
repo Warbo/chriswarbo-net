@@ -1,5 +1,5 @@
 ---
-title: Env vars, dynamic scope and keyword args
+title: Environment Variables are Dynamically Scoped Keyword Arguments
 ---
 
 Like most of my blog posts, this began as
@@ -35,7 +35,10 @@ print(a);
 ```
 
 Here the call to `foo` binds the variables `x` and `y` (to `1` and `2`); `a` and
-`z` are bound in the block by the `let` statements. The result is `(1 + 2) * 2 = 6`.
+`z` are bound in the block by the `let` statements. Hence the first `print`
+gives out `6` (since it's `(1 + 2) * 2`). In most languages, the second `print`
+will give out `5`, due to the `let a = 5;` line (it would give `1` when using
+global scope).
 
 We need to care about scoping rules when we have *free variables*, whose values
 will be fetched from *somewhere else*; scoping tells us where to get them from.
@@ -69,7 +72,7 @@ line `let a = 5;`. The call `foo(1)` also binds the `a` variable, in the line
  - It could be treated as an error. In this case global variables would be
    *immutable constants*. Such errors could be *static* (spotted by a tool like
    a compiler, before the program is ever run) or *dynamic* (triggered during
-   program execution, if it ever attempts to bind an existing variable.
+   program execution, if it ever attempts to bind an existing variable).
  - Subsequent bindings could replace any existing ones. This is a form of
    *mutation*, and imposes a notion of ordering/time on a program's meaning.
    Hence a result in one part of a program might depend on which order the other
@@ -130,9 +133,10 @@ function foo(x) {
 }
 ```
 
-The `foo` function *does* bind an `a` variable: it's the function's argument.
-Hence this is the variable that will be used in our original line
-`let z = a + y;`, giving `let z = 1 + 2;` and printing `6` like in the global
+The `foo` function *does* bind an `a` variable, in the line `let a = x;` (and
+the `x` variable is also bound, as the function's argument). Hence this is the
+value that will be used in our original line `let z = a + y;`, which (for the
+argument `x = 1`) gives `let z = 1 + 2;` and prints `6` like in the global
 version.
 
 However, unlike the global version, the subsequent `print(a);` line will print
@@ -194,7 +198,7 @@ in context: as a form of inter-process communication. When viewed in this way,
 environment variables are *not* globals, but are instead much closer to
 *dynamic* variables.
 
-### Overriding Environment Variables Without Mutation ###
+### Environment Variables are Locally Overridable ###
 
 We can override environment variables for a particular subprocess without
 affecting anything else. For example, consider the following script:
@@ -207,7 +211,7 @@ echo "AFTER $FOO"
 ```
 
 Let's assume `printFoo` is a script which performs `echo "FOO is $FOO"`, and we
-run our script with an environment containing `FOO=foo`, We will get:
+run our script with an environment containing `FOO=foo`, we will get:
 
 ```
 BEFORE foo
@@ -228,7 +232,7 @@ overwritten).
 The real behaviour of environment variables is that each process gets its own
 'environment' of variable bindings when started, and those environments begin as
 *copies* of the environment that invoked that process; plus any given extras or
-overrides, like in the 'FOO=bar' example above.
+overrides, like in the `FOO=bar` example above.
 
 This explains the behaviour of our example script: the line `FOO=bar printFoo`
 runs the `printFoo` process in a new environment, copied from the script's
@@ -250,12 +254,17 @@ from dynamic variable binding.
 
 ### A Word on Mutation ###
 
-Environment variables *are* mutable, and mutating an environment variable
-acts differently to mutating a dynamic variable. Dynamic variables are found by
-looking further and further up the call stack for a binding, so any mutations
-made to such a binding will be visible to everything below that binding's stack
-frame; even after the code performing the mutation (a function/procedure/etc.)
-has long since finished and had its own stack frame of bindings discarded.
+Some languages don't allow environment variables to be mutated, e.g. Scala's
+`sys.env` is an immutable map (although the JVM has other ways to read and
+write the environment). Many languages *do* permit mutation, and it acts
+differently to mutating a dynamic variable (as far as subprocesses are
+concerned).
+
+Dynamic variables are found by looking further and further up the call stack for
+a binding, so any mutations made to such a binding will be visible to everything
+below that binding's stack frame; even after the code performing the mutation (a
+function/procedure/etc.) has long since finished and had its own stack frame of
+bindings discarded.
 
 On the other hand, since environment variables are *copied* from parent to child
 at each new scope (process), mutations are only made to that process's *own
@@ -277,6 +286,52 @@ fine; it's what they're for!
 
 If we treat environment variables in a sane, immutable way, then they act
 *exactly* like dynamic variables.
+
+### Environment Variables *Within* Processes ###
+
+I can predict an obvious objection to what I've said: aren't environment
+variables mutable globals *within* processes (e.g. in a Python script, or
+whatever)?
+
+No!
+
+Processes are free to do what they like with their given environment variables.
+Many languages, like Python, *choose* to treat their given environment variables
+like mutable globals by default, and we can absolutely criticise them for that
+choice; but it's not the fault of environment variables *themselves*.
+
+Other languages treat environment variables in a saner way. For example, Racket
+puts the whole environment in a dynamic variable called
+`current-environment-variables`, which can be overridden for sub-expressions
+just like we did for sub-processes above. For example:
+
+```scheme
+(define (print-foo)
+  (printf (string-append "FOO is " (getenv "FOO"))))
+
+(print-foo)
+(parameterize ((current-environment-variables
+                (make-environment-variables "FOO" "bar")))
+  (print-foo))
+(print-foo)
+```
+
+With an initial environment of `FOO=foo`, this will print:
+
+```
+FOO is foo
+FOO is bar
+FOO is foo
+```
+
+This keeps the behaviour of environment variables more consistent within and
+between processes (subprocesses invoked by Racket will inherit whichever
+`current-environment-variables` is in scope at the time; this is also true
+for nice libraries like
+[shell-pipeline](https://docs.racket-lang.org/shell-pipeline)).
+
+I hope more languages will adopt this sort of approach, and in the mean time
+we can use libraries to bypass the crappy defaults of common languages.
 
 ## Use-Cases for Dynamic Scope ##
 
@@ -335,7 +390,7 @@ formats, like `:`-separated entries in `PATH`, but that's certainly not unique
 to env vars. Config files and env vars are both strings of bytes, so what works
 for one will usually work for the other. In particular, I have nothing against
 JSON inside environment variables (although judgment needs to be made about when
-to a single variable containing a JSON object, and when to use multiple
+to use a single variable containing a JSON object, and when to use multiple
 variables).
 
 ### Dependency Injection ###
@@ -346,10 +401,11 @@ overriden by callers.
 
 #### Logging ####
 
-A simple example is logging, where a library might choose *when* and *what* to
-log, but the caller decides *how* to handle log messages.
+A simple example of dependency injection is logging, where a library might
+choose *when* and *what* to log, but the caller decides *how* to handle log
+messages.
 
-There are two ways to achieve this purely using lexical scope: we could write
+There are two ways to achieve this purely using lexical scope. We could write
 our entire application inside the body of a function, which accepts a logger as
 argument:
 
@@ -365,12 +421,13 @@ function myLibrary(log) {
 Applications and other libraries can call this function with their desired
 logger, or multiple times if they need to use several implementations (e.g.
 silencing certain actions, accumulating output to various buffers during tests,
-etc. If we *do* call this function multiple times, we'll need to keep track of
+etc.). If we *do* call this function multiple times, we'll need to keep track of
 the different results, calling the correct version when appropriate.
 
-This is clearly impractical, not least because it prevents modularity. A common
-alternative is to have a *single* instance of our library, but allow the logger
-to be passed in as an extra argument wherever it will be used. For example:
+This is clearly impractical, not least because cramming everything into the same
+function body prevents modularity. A common alternative is to have a *single*
+instance of our library, but allow the logger to be passed in as an extra
+argument wherever it will be used. For example:
 
 ```python
 def bill(log, customer):
@@ -388,7 +445,7 @@ def sendBills(log, db):
 This is a reasonable approach, but may become unwieldy as we add more of these
 [cross-cutting concerns](https://en.wikipedia.org/wiki/Aspect-oriented_programming).
 Language features like currying and default arguments can help rein in the
-*external* API, but still don't help with the *internal* implementation (e.g.
+*external* API, but still don't help with the *internal* implementation; e.g.
 we could curry `bill` and `sendBills` with a default `log`, or use a default
 argument to achieve a similar thing; but internal calls (like `sendBills`
 calling `bill`) would still need to pass everything along explicitly, in case
@@ -416,7 +473,7 @@ much/any ceremony, and overridden as needed by callers. For example, in Racket:
 
 (define (sendBills db)
   (log "Sending monthly bills")
-  (map bill, (outstanding db)))
+  (map bill (outstanding db)))
 ```
 
 This defines a dynamic variable `logger` (known as a
@@ -454,6 +511,23 @@ example is a bit redundant! Instead, we could just write our log messages to the
   (log "Finished sending bills"))
 ```
 
+I'm not just being a SmugLispWeenie either, since Scala also uses dynamic
+scope for its stdio, via the
+[`Console` object](https://www.scala-lang.org/api/current/scala/Console$.html).
+For example:
+
+```scala
+def log(msg: String): Unit = Console.err.println(msg)
+
+// billing definitions go here
+
+Console.withErr(myStderrStream) {
+  Console.err.println("About to send bills")
+  sendBills(myDb)
+  Console.err.println("Finished sending bills")
+}
+```
+
 #### Web Services ####
 
 Recently I've been using dynamic variables in Scala for managing connections to
@@ -484,7 +558,7 @@ object KeyValueStore {
   def   put(k: Key, v: Val): Try[Unit       ] = store.value.flatMap(_.put(k, v))
 
   // Create a new scope where 'store' calls out to AWS SSM; evaluate 'x' within
-  // that scope and returns its value ('=> T' indicates that 'x' isn't evaluated yet) a Redis-backed key/value store, e.g. for production */
+  // that scope and returns its value ('=> T' indicates call-by-name)
   def withSSM[T](ssm: Try[AWSSimpleSystemsManagement], x: => T) =
     store.withValue(ssm.map(ssm => new Store {
       def get(k: Key        ) = /* Get using SSM client */
@@ -492,13 +566,12 @@ object KeyValueStore {
     }))(x)
 
   // Create a new scope where 'store' is backed by a HashMap, initialised with
-  // the with given defaults. Useful for testing
-  def withFreshStore[T](init: Map[Key, Val], x: => T) = store.withValue(Success({
-    val store = HashMap.empty
-    init.map({ case (k, v) => store.+=(k, v) })
+  // the given defaults. Useful for testing.
+  def withTempStore[T](init: Map[Key, Val], x: => T) = store.withValue(Success({
+    val store = HashMap.empty ++ init
     new Store {
-      def get(k: Key        ) = Success(store.get(k   ))
-      def put(k: Key, v: Val) = Success(store.+= (k, v))
+      def get(k: Key        ) = Success(store.get(k   )             )
+      def put(k: Key, v: Val) = Success(store.put(k, v).pipe(_ => ())
     }
   }))(x)
 }
@@ -507,10 +580,62 @@ object KeyValueStore {
 #### Environment Variables ####
 
 Interestingly, *the environment itself* is often a good use-case for a dynamic
-variable. Racket accesses env vars via a dynamic variable called
+variable. As shown above, Racket accesses env vars via a dynamic variable called
 `current-environment-variables`, and I've implemented Scala code similar to the
 `KeyValueStore` above for overriding the environment (*without* the `put`, since
 I prefer to keep all env vars immutable, as mentioned above).
+
+Whilst shells don't have an explicit variable for "the current environment",
+they do *mostly* treat env vars in the same way as "normal" dynamic variables
+(AKA "shell variables"); the main difference is that shell variables aren't
+inherited by subprocesses. For example:
+
+```bash
+#!/usr/bin/env bash
+
+myEnv() {
+    env | grep FOO || echo "FOO is not in env"
+}
+
+printFoo() {
+    echo "BEGIN $*"
+    myEnv
+    echo "FOO is $FOO"
+}
+
+FOO=foo
+
+printFoo A
+
+FOO=bar printFoo B
+
+printFoo C
+```
+
+This script outputs:
+
+```
+BEGIN A
+FOO is not in env
+FOO is foo
+BEGIN B
+FOO=bar
+FOO is bar
+BEGIN C
+FOO is not in env
+FOO is foo
+```
+
+The function calls labelled `A` and `C` are using the shell variable `FOO`, which
+has a value of `foo` and doesn't appear in the environment of subprocesses (like
+the `env` command, which prints out its environment). For the call labelled `B`
+we override this shell variable, turning it into an environment variable which
+*is* visible to the `env` command (hence the `FOO=bar` line extracted by
+`grep`). They otherwise look pretty much the same; plus, reading a variable
+which isn't defined *anywhere* in our script will "fall back" to checking the environment (options like `set -u` come in handy for catching failures here!).
+
+**SIDE NOTE:** I didn't realise until I was writing this that overriding
+variables works for function calls in bash as well as "normal" subprocesses!
 
 ## A Word on Threading ##
 
@@ -525,15 +650,18 @@ mutation form `(my-parameter my-new-value)` will have problems across threads
 (yet another reason to avoid mutation and threads!).
 
 The story in Scala is worse, since even *reading* a dynamic variable can break
-in the presence of multithreading. In particular, using a *thread pool* to
-execute concurrent tasks may cause those tasks to be executed by pre-existing
-threads (that's the point of a thread pool!). However, this bypasses the
-"thread-local" implementation of `DynamicVariable`, allowing values from old
-scopes to creep in unexpectedly (and non-deterministically!).
+in the presence of multithreading. In particular, the implementation of `DynamicVariable` only makes new scopes visible to the current thread and its
+descendents. Using a *thread pool* to execute concurrent tasks will send some
+tasks to old threads (to avoid the overhead of spinning up new threads), but
+those might not have the correct dynamic scopes set up for the task. This can
+cause values from incorrect scopes to creep in unexpectedly (and
+non-deterministically!).
 
 This is particularly annoying, since it prevents us using `Future` to wrap up
-our Web services (similar to how I used `Try` in the Scala example above). To
-avoid this, I've come up with the following alternative to `DynamicVariable`,
+our Web services (similar to how I used `Try` in the `KeyValueStore` variable
+above).
+
+To avoid this, I've come up with the following alternative to `DynamicVariable`,
 which forces new threads to be created whenever a dynamic variable gets a new
 scope. This isn't the most efficient thing in the world, but it seems to work
 nicely for my use-case. In particular:
@@ -600,3 +728,15 @@ final object DynamicallyScoped {
   def apply[T](init: T) = new DynamicallyScoped(new DynamicVariable[T](init))
 }
 ```
+
+I was *very* wary when implementing this, so the test suite needed to be
+pretty thorough to convince me that it works. I ended up implementing a toy
+little programming language involving dynamic variables, futures and delays.
+I then wrote two interpreters: a pure, simple, single-threaded interpreter
+which I could be confident was correct; and an interpreter which uses
+`DynamicallyScoped`, real `Future`s and a `StackedExecutionContext`. I used
+ScalaCheck to generate arbitrary programs in this language, and tested whether
+both interpreters gave the same result.
+
+That's actually pretty cool on its own, and probably deserves a standalone
+blog post!
