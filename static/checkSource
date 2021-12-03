@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -e
+
+# Look for problems in this working copy
+[[ -e static/checkSource ]] || {
+    echo "checkSource: Must be run from blog's root" 1>&2
+    exit 1
+}
+
+# Check the syntax of Nix files
+find . -name "*.nix" | grep -v '\.asv' | while read -r F
+do
+    echo "Checking '$F'" 1>&2
+    nix-instantiate --parse "$F" > /dev/null
+done
+
+# Check if the helpers are up to date
+REPO="warbo-packages"
+DEF="static/nix/sources.json"
+echo "Checking $REPO version in $DEF" 1>&2
+
+# Allow failure to get HEAD (e.g. in case we're offline)
+if REV=$(git ls-remote "http://chriswarbo.net/git/$REPO.git" |
+             grep HEAD | cut -d ' ' -f1 | cut -c1-7)
+then
+    grep "$REV" < "$DEF" > /dev/null || {
+        echo "Didn't find $REPO rev '$REV' in $DEF" 1>&2
+        exit 1
+    }
+    echo "Checking $REPO in $DEF builds (e.g. for SHA256)" 1>&2
+    nix-build --no-out-link "$DEF" 1>&2 || exit 1
+fi
