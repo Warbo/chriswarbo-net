@@ -37,17 +37,11 @@ function copyToWeb() {
 }
 
 function build() {
-    echo "Building '$1'" 1>&2
-    BASE=$(dirname "$(readlink -f "$0")")
-    nix-build --show-trace -A "$1" "$BASE/static/nix"
-}
-
-function doBuild() {
-    build untestedSite
+    ./static/build untestedSite
 }
 
 function buildAndTest() {
-    build wholeSite
+    ./static/build wholeSite
 }
 
 function pushToWeb() {
@@ -101,8 +95,13 @@ printf "Waiting for rendering lock..." 1>&2
   echo "lock aquired" 1>&2
 
   case "$1" in
+      page)
+          shift
+          ./static/build "$@"
+          ;;
+
       build)
-          doBuild
+          build
           ;;
 
       test)
