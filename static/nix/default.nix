@@ -1,6 +1,6 @@
 with builtins;
 with rec {
-  inherit (import <nixpkgs> { config = {}; overlays = []; }) fetchgit;
+  sources = import ./sources.nix;
 
   # We host a bunch of git repos; look up their location from the environment
   repoSource =
@@ -20,7 +20,7 @@ with rec {
                     '' remote;
 
   # Load our custom packages from repoSource
-  packages = import ./packages.nix { inherit fetchgit repoSource; };
+  packages = sources.warbo-packages;
 
   # Load our Nix helper functions from the packages repo
   inherit (import "${packages}/nix/sources.nix") nix-helpers;
@@ -30,7 +30,7 @@ with rec {
   overlayed = repo: import repo {
     config   = {};
     overlays = [
-      (import "${nix-helpers.outPath}/overlay.nix")
+      (import "${nix-helpers}/overlay.nix")
       (import "${packages}/overlay.nix")
       (import ./overlay.nix)
       (self: super: {
@@ -67,6 +67,5 @@ with rec {
   };
 };
 
-# Apply our overlays to <nixpkgs>, pick our a pinned nixpkgs revision from that
-# (defined by our Nix helpers) apply our overlays to that
-overlayed (overlayed <nixpkgs>).repo2009
+# Apply our overlays to our pinned nixpkgs
+overlayed sources.nixpkgs
