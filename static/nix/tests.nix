@@ -26,7 +26,7 @@ with rec {
         set -e
 
         # Put config files in place
-        cp -rs "$static" ./static
+        ln -s "$static" ./static
 
         # Run the test
         "$script"

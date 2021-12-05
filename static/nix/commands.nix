@@ -1,5 +1,6 @@
 { attrsToDirs, bash, coq, fail, git, glibcLocales, haskellPackages, lib,
-  mkBin, nixpkgs1803, pandocPkgs, python, replace, wget, withNix, xidel }:
+  mkBin, nixpkgs1803, pandocPkgs, python, python3, replace, wget, withNix,
+  xidel }:
 
 with builtins;
 with lib;
@@ -21,6 +22,10 @@ with rec {
     ghcWithQuickCheck = haskellPackages.ghcWithPackages (h: [
       h.QuickCheck
       h.tasty-quickcheck
+    ]);
+
+    matplotlib = python3.withPackages (p: [
+      p.matplotlib p.numpy
     ]);
 
     nix-instantiate = mkBin {
