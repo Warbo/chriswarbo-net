@@ -16,27 +16,28 @@ leads to many duplicate Strings being created. In fact, the main reason
 and may be scattered around in memory. For example, the `String` `"abc"` will be
 represented something like this:
 
-    +---+---+   +---+---+   +---+---+
-    | * | *---->| * | *---->| * | *---->[]
-    +-|-+---+   +-|-+---+   +-|-+---+
-      |           |           |
-      V           V           V
+    ╔═══╤═══╗   ╔═══╤═══╗   ╔═══╤═══╗
+    ║ * │ *─╫──►║ * │ *─╫──►║ * │ *─╫──►□
+    ╚═╪═╧═══╝   ╚═╪═╧═══╝   ╚═╪═╧═══╝
+      │           │           │
+      ▼           ▼           ▼
      'a'         'b'         'c'
 
-Those arrows are pointers, which can point to locations arbitrarily far
-away. From this we can see that just *storing* a (fully evaluated) `String` is
-expensive, since each character requires a pair of pointers (in addition to the
-unique characters themselves). Processing the contents of this `String` is also
-slow, since we need to dereference two pointers for each character (one to get
-the `Char`, one to get the tail of the `String`). Since the data may not be
-contiguous in memory, this can make poor use of the CPU caches, which might
-otherwise speed up these dereferences.
+The value □ represents the empty list (e.g. a null pointer). Those arrows are
+pointers, which can point to locations arbitrarily far away. From this we can
+see that just *storing* a (fully evaluated) `String` is expensive, since each
+character requires a pair of pointers (in addition to the unique characters
+themselves). Processing the contents of this `String` is also slow, since we
+need to dereference two pointers for each character (one to get the `Char`, one
+to get the tail of the `String`). Since the data may not be contiguous in
+memory, this can make poor use of the CPU caches, which might otherwise speed up
+these dereferences.
 
 Compare this to a C-style string, which would look like this in memory:
 
-    +---+---+---+---+
-    | a | b | c | 0 |
-    +---+---+---+---+
+    ╔═══╤═══╤═══╤═══╗
+    ║ a │ b │ c │ 0 ║
+    ╚═══╧═══╧═══╧═══╝
 
 This "packed" representation requires no long-distance dereferencing, the memory
 is contiguous so it will make good use of the cache, and we can process the
@@ -80,46 +81,45 @@ As an example, let's say we read the `ByteString` `"[\"foo\", \"bar\"]"`
 `["foo", "bar"]`, then we concatenate that list to get the single `ByteString`
 `"foobar"`, here's how it might look in memory:
 
-                         BS--+---+   BS--+---+
-    "foobar":            | * | *---->| * | *---->[]
-                         +-|-+---+   +-|-+---+
-                           |           |
-                      +----+           +----------------+
-                      |                                 |
-                      |  List+---+      List+---+       |
-    ["foo", "bar"]:   |  | * | *------->| * | *---->[]  |
-                      |  +-|-+---+      +-|-+---+       |
-                      |    |              |             |
-                      |    |              |             |
-                      |    |              |             |
-                      |    V              V             |
-                      | BS--+---+       BS--+---+       |
-    "foo" and "bar":  | | * | *---->[]  | * | *---->[]  |
-                      | +-|-+---+       +-|-+---+       |
-                      |   |               |             |
-                      |   |               +---+         |
-                      |   |                   |         |
-                      V   V                   V         V
-                     Chunk---+---+           Chunk---+---+
-    (chunks)         | 3 | 2 | * |           | 3 | 9 | * |
-                     +---+---+-|-+           +---+---+-|-+
-                               |                       |
-           BS--+---+           |                       |
-    Input: | * | *---->[]      |                       |
-           +-|-+---+           |                       |
-             |                 |                       |
-             V                 |                       |
-             Chunk+---+---+    |                       |
-    (chunk)  | 14 | 0 | * |    |                       |
-             +----+---+-|-+    |                       |
-                        |      |                       |
-                        |      |                       |
-                        |      |                       |
-                        V      V                       V
-            Array---+---+---+---+---+---+---+---+---+---+---+---+---+
-    (array) | [ | " | f | o | o | " | , |   | " | b | a | r | " | ] |
-            +---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-
+                    BS══╤═══╗                 BS══╤═══╗
+    "foobar":       ║ * │ *─╫────────────────►║ * │ *─╫──►□
+                    ╚═╪═╧═══╝                 ╚═╪═╧═══╝
+                      │                         │
+                      │                         │
+                      │                         │
+                      │  List╤═══╗   List╤═══╗  │
+    ["foo", "bar"]:   │  ║ * │ *─╫──►║ * │ * ║  │
+                      │  ╚═╪═╧═══╝   ╚═╪═╧═╪═╝  │
+                      │    │           │   │    │
+                      │    │           │   ▼    │
+                      │    │           │   □    │
+                      │    ▼           ▼        │
+                      │  BS══╤═══╗   BS══╤═══╗  │
+    "foo" and "bar":  │  ║ * │ * ║   ║ * │ * ║  │
+                      │  ╚═╪═╧═╪═╝   ╚═╪═╧═╪═╝  │
+                      │    │   │       │   │    │
+                      │    │   ▼       │   ▼    │
+                      │    │   □       │   □    │
+                      ▼    ▼           ▼        ▼
+                     Chunk═══╤═══╗   Chunk═══╤═══╗
+    (chunks)         ║ 3 │ 2 │ * ║   ║ 3 │ 9 │ * ║
+                     ╚═══╧═══╧═╪═╝   ╚═══╧═══╧═╪═╝
+                               │               │
+             BS══╤═══╗         │               │
+    Input:   ║ * │ *─╫──►□     │               │
+             ╚═╪═╧═══╝         │               │
+               │               │               │
+               ▼               │               │
+             Chunk╤═══╤═══╗    │               │
+    (chunk)  ║ 14 │ 0 │ * ║    │               │
+             ╚════╧═══╧═╪═╝    │               │
+                        │      │               │
+                        │      │               │
+                        │      │               │
+                        ▼      ▼               ▼
+            Array═══╤═══╤═══╤═══╤═══╤═══╤═══╤═══╤═══╤═══╤═══╤═══╤═══╗
+    (array) ║ [ │ " │ f │ o │ o │ " │ , │   │ " │ b │ a │ r │ " │ ] ║
+            ╚═══╧═══╧═══╧═══╧═══╧═══╧═══╧═══╧═══╧═══╧═══╧═══╧═══╧═══╝
 
 (Note that the exact position where arrows "land" doesn't matter; they're
 pointing to the entire datastructure they "hit")
