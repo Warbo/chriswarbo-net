@@ -1,0 +1,11 @@
+This is the first entry of a series, based around *halving and doubling*. We'll see how those simple actions are not only useful in everyday life, but can also give surprising insights into cutting-edge research.
+
+We'll begin with a simple rule of thumb, for deciding how often to check whether a task has finished. For example, if our computer is downloading a big file; or we're waiting for some equipment to be available. This is tricky: checking too often is a waste of our effort (which could be spent doing something else); yet if we wait too long between checks, we may not discover the task has finished until much later.
+
+A simple strategy to balance these concerns is to wait for a length of time that's so short we wouldn't mind wasting it. For example, if our first check is after 1sec, we don't mind if the task actually finished earlier. Next: whenever a check fails, we wait for double the time (e.g. 2sec). We keep following this rule until our task has finished.
+
+If we start with 1sec, this strategy will wait for 1, 2, 4, 8, 16, 32, 64, and so on; reaching a minute-long wait after only 7 checks (much less than checking once each sec!). If we started with 1sec, we would wait more than a minute before our seventh check; an hour before our thirteenth check; and a whole year before our twenty fifth check. This doesn't seem like too many checks, but is it too few?
+
+That clearly depends on the situation, but this approach has a very nice property: we will never waste half our time.
+
+Polling is one example of a more general situation, where we want to wait-out a temporary problem. In the case of polling, the "temporary problem" is the task not being finished yet. Another example is a call centre having no operators available, or interference between wireless devices. Exponential-backoff helps us in all these cases. It also helps the processor (server, call centre, etc.), since many of these problems are caused by too many requests; hence our logarithmic number of requests avoids making the problem too much worse.

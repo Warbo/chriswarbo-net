@@ -1,0 +1,8 @@
+Levin search is just exponential restarts applied to a time-division approach. Exponential restarts are generally useful; what about exponential time-division?
+
+There's a link to probability in the sense that the probabilities of a set of mutually exclusive options is one. We can divide up a block of time based on the probability of each choice. This is useful regardless of the scheme we use to assign those probabilities.
+
+Is there an independently-useful reason to assign Zeno-like exponentially-decreasing probabilities to a countably-infinite set? It seems to me like an exponentially-decaying probability distribution is a "boundedly bad" approximation for any computable probability distribution, for two reasons:
+ - The area under any probablity distribution is one, so any difference is bounded by one.
+ - All probability distributions must decay towards zero eventually, so the absolute diffence in their tails will always be below any finite epsilon; although there may be arbitrarily-complicated differences early-on.
+The real utility of an exponentially-decaying probability distribution is as a "default" way to take countably-many values into account.

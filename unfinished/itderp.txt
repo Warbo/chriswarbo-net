@@ -1,0 +1,26 @@
+This is part of a series on "life hacks" based around *halving and doubling*. In the previous post we found a way to take any long-running process, and break it up into 'chunks' which each take a known amount of time.
+We saw that doubling the time allocated to each chunk allowed us to make progress, even if we restart the process 'from scratch' in every chunk. We saw a simple way to compare the speed (and other costs) of different processes, known as *computational complexity*; and we used this to show (perhaps to our surprise!) that such restarting can only cause the running time to double, at most.
+Finally, we suggested a few reasons we might want to split a process into 'chunks' like this; including the ability to switch between multiple alternative approaches to the same task, in case one finishes much sooner than the others.
+In this part we will extend that idea, so we don't have to fix a list of alternatives beforehand. Instead, we will allow new choices to appear *as we go*, and refine our exponential-restarting approach to a more dynamic strategy called "iterative deepening".
+
+Our key insight in this part is the idea of *search trees*: a way to visualise choices, which lead to more choices, and so on. Let's say we've lost our keys somewhere at home, and we need to find them quickly. They might be in any number of places, and we don't want to (a) waste time trying to think of all the possible locations, much less (b) limit ourselves to *only* checking those we initially thought of!
+
+We have to start somewhere, and we know they're in the house, so let's write that down:
+
+    House
+
+This is our first search tree. It only contains one thing, so we call it a "leaf". We can't actually search the whole house at once, so we need to narrow things down a bit. Let's introduce a choice, between looking upstairs or downstairs. We can draw this as a *branch*:
+
+             House
+            /     \
+    Upstairs       Downstairs
+
+Let's start upstairs (e.g. we've just got out of bed); but there are three rooms, so we face another choice:
+
+                     House
+                    /     \
+            Upstairs       Downstairs
+           /   |    \
+    Landing  Office  Bedroom
+
+This branching repeats until we're able to finish a whole leaf; e.g completely searching a particular drawer, or vase, or whatever.
