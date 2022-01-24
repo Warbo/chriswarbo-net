@@ -1,0 +1,13 @@
+From: Chris Warburton
+Date: Wed, 19 Jan 2022 00:15:49 +0000
+State: new
+Subject: Move tests after the rendered
+Message-Id: <8c894b51af91e5a7-0-artemis@nixos>
+
+Running tests standalone on the whole site is slow. Lots of the tests
+are per-page anyway, like no-blogspot, no-gitorious, etc. Those can be
+done once, after a page has rendered, so that subsequent pages don't
+need to retest the whole site.
+
+I think these make sense in separate derivations to the actual rendered
+page, so pages don't need to be rerendered if we add/change tests.
