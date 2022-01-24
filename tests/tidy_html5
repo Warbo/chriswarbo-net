@@ -18,13 +18,6 @@ function check {
         return
     fi
 
-    # Ignore things we don't care too much about (e.g. READMEs)
-    if lax "$1"
-    then
-        echo "Ignored tidy errors for '$1'" 1>&2
-        return
-    fi
-
     # Otherwise, abort
     echo -e "Tidy failed for '$1':\\n\\n$STDERR\\n" 1>&2
     echo -e "---\\nEnd report for '$1'\\n\\n"       1>&2
@@ -69,26 +62,5 @@ function tidyCheck {
     fi
 }
 
-function lax {
-    # Allow warnings/errors for unfinished posts
-    # shellcheck disable=SC2154
-    echo "$1" | grep "$rendered/unfinished/" >/dev/null && return
-
-    # Allow warnings/errors for git READMEs (since they might not be ours)
-    echo "$1" | grep "/repos/" > /dev/null && return
-
-    return 1
-}
-
-function get_files {
-    # shellcheck disable=SC2154
-    find "$rendered" -name "*.html"
-}
-
-ERR=0
-while read -r FILE
-do
-    check "$FILE" || ERR=1
-done < <(get_files)
-
-exit "$ERR"
+check "$1" || exit 1
+exit 0

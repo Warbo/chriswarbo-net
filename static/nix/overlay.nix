@@ -16,7 +16,7 @@ with super.lib;
   renderAll  = self.callPackage ./renderAll.nix  {};
   repos      = self.callPackage ./repos.nix      {};
   resources  = self.callPackage ./resources.nix  {};
-  tests      = self.callPackage ./tests.nix      {};
+  siteTests  = self.callPackage ./siteTests.nix  {};
   unfinished = self.callPackage ./unfinished.nix {};
 
   # Combine all pages together into a directory
@@ -28,6 +28,6 @@ with super.lib;
   ]));
 
   # Provide all pages, with all of our tests as dependencies
-  wholeSite = self.withDeps' "chriswarbo.net" (self.allDrvsIn self.tests)
+  wholeSite = self.withDeps' "chriswarbo.net" (self.allDrvsIn self.siteTests)
                                               self.untestedSite;
 }

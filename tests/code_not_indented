@@ -4,12 +4,7 @@ set -e
 # Indenting HTML is nice, but if we do it on pre/code blocks then the whitespace
 # appears verbatim in the page.
 
-# shellcheck disable=SC2154
-F="$rendered/blog/2017-01-14-rss_to_maildir.html"
-
-[[ -f "$F" ]] || fail "Example file '$F' not found in '$PWD'"
-
-grep ' [ ]*<pre' < "$F" &&
+grep ' [ ]*<pre' < "$1" &&
     fail "Source code is indented; this will be visible on the page"
 
 exit 0

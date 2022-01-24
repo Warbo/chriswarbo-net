@@ -1,6 +1,6 @@
 { attrsToDirs', commands, darkhttpd, fail, git, haskell, haskellPackages, lib,
   linkchecker, mf2py, pandocPkgs, procps, pythonPackages, repos, runCommand,
-  tidy-html5, untestedSite, utillinux, wget, wrap, xidel }:
+  untestedSite, utillinux, wget, wrap, xidel }:
 
 with builtins;
 with lib;
@@ -45,7 +45,6 @@ mapAttrs testScript {
     buildInputs = [ commands.cleanup ];
     includeSite = false;
   };
-  code_not_indented              = { buildInputs = [ fail ]; };
   dirs_have_indices              = {};
   empty_panpipe_blocks_stripped  = {
     buildInputs = [ commands.render_page ];
@@ -71,13 +70,9 @@ mapAttrs testScript {
   };
   imagesWontCompressFurther      = { includeSite = false;          };
   index_pages                    = {};
-  no_absolutes                   = { buildInputs = [      xidel ]; };
-  no_blogspot                    = { buildInputs = [      xidel ]; };
   no_cruft                       = {};
-  no_empty_files                 = {};
   no_essays_links                = {};
-  no_gitorious                   = {};
-  no_selfclosing_scripts         = { buildInputs = [ fail xidel ]; };
+  no_empty_files                 = {};
   posts_are_hentries             = {
     buildInputs = [ (haskellPackages.ghcWithPackages (h: [
       h.microformats2-parser
@@ -92,7 +87,6 @@ mapAttrs testScript {
     buildInputs = [ commands.cleanup pandocPkgs ];
     includeSite = false;
   };
-  tidy_html5         = { buildInputs = [ tidy-html5                  ]; };
   xidel_args         = {
     buildInputs = [ xidel ];
     includeSite = false;

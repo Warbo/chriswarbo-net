@@ -5,14 +5,17 @@ with builtins;
 with lib;
 with {
   metadata = callPackage ./metadata.nix {};
-  nonempty = { file, name ? "nonempty" }: runCommand name
-    {
-      inherit file;
-      buildInputs = [ fail ];
-    }
+  pageTests = callPackage ./pageTests.nix {};
+  test      = { file, name }: runCommand name
+    { inherit file; }
     ''
-      SIZE=$(stat -L --printf="%s" "$file")
-      [[ "$SIZE" -gt 5 ]] || fail "File '$file' has size '$SIZE'"
+      ${concatStringsSep "\n"
+        (attrValues (mapAttrs
+          (testName: t:
+            if elem testName [ "override" "overrideDerivation" ]
+               then ""
+               else ''${t} "$file'')
+          pageTests))}
       ln -s "$file" "$out"
     '';
 };
@@ -24,7 +27,9 @@ with {
                            else callPackage (withArgs [ n ] (getAttr n)) {})
                     (md.packages or []);
     dir       = dirContaining ../.. (md.dependencies or []);
-    rendered  = runCommand name
+    rendered  = test {
+      inherit name;
+      file = runCommand "untested-${name}"
       (vars // {
         inherit dir file SOURCE_PATH TO_ROOT;
         __noChroot    = true;
@@ -44,12 +49,11 @@ with {
 
         relativise < "$DEST" > "$out"
       '';
-
-    output = if hasSuffix ".html" file
-                then with { data = writeScript name (readFile file); };
-                     if TO_ROOT == ""
-                        then data
-                        else relTo TO_ROOT data
-                else rendered;
+    };
   };
-  nonempty { inherit name; file = output; }
+  if hasSuffix ".html" file
+     then with { data = writeScript name (readFile file); };
+          if TO_ROOT == ""
+             then data
+             else relTo TO_ROOT data
+     else rendered
