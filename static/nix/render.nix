@@ -3,8 +3,8 @@
 
 with builtins;
 with lib;
-with {
-  metadata = callPackage ./metadata.nix {};
+with rec {
+  metadata  = callPackage ./metadata.nix  {};
   pageTests = callPackage ./pageTests.nix {};
   test      = { file, name }: runCommand name
     { inherit file; }
