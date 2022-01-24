@@ -32,13 +32,31 @@ with rec {
       file = runCommand "untested-${name}"
       (vars // {
         inherit dir file SOURCE_PATH TO_ROOT;
-        __noChroot    = true;
-        buildInputs   = inputs ++ extraPkgs ++ [
-                          commands.relativise
-                          commands.render_page
-                          fail
-                        ];
+        __noChroot  = true;
+        buildInputs = inputs ++ extraPkgs ++ [
+          commands.relativise
+          commands.render_page
+          fail
+        ];
         postprocessor = md.postprocessor or "";
+      } //
+      optionalAttrs (hasAttr "parseArgs" md) {
+        parseArgF = writeScript "${name}-parseArgs.sh" ''
+          parseArgs=()
+          ${concatMapStringsSep "\n"
+              (arg: "parseArgs+=(${escapeShellArg arg})")
+              md.parseArgs
+          }
+         '';
+      } //
+      optionalAttrs (hasAttr "renderArgs" md) {
+        renderArgF = writeScript "${name}-renderArgs.sh" ''
+          renderArgs=()
+          ${concatMapStringsSep "\n"
+            (arg: "renderArgs+=(${escapeShellArg arg})")
+            md.renderArgs
+          }
+        '';
       })
       ''
         export DEST="$PWD/out.html"
