@@ -14,7 +14,7 @@ with rec {
           (testName: t:
             if elem testName [ "override" "overrideDerivation" ]
                then ""
-               else ''${t} "$file'')
+               else ''${t} "$file"'')
           pageTests))}
       ln -s "$file" "$out"
     '';
