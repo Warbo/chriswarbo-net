@@ -8,18 +8,26 @@ with rec {
   pageTests = callPackage ./pageTests.nix {};
   test      = { file, name }: runCommand name
     { inherit file; }
-    ''
-      ${concatStringsSep "\n"
-        (attrValues (mapAttrs
+    (concatStringsSep "\n"
+      (attrValues
+        (mapAttrs
           (testName: t:
             if elem testName [ "override" "overrideDerivation" ]
                then ""
                else ''${t} "$file"'')
-          pageTests))}
-      ln -s "$file" "$out"
-    '';
+          pageTests) ++
+      [ ''ln -s "$file" "$out"'' ])
+    );
 };
-{ file, inputs ? [], name, SOURCE_PATH, TO_ROOT ? "", vars ? {} }:
+{
+  file,
+  inputs ? [],
+  name,
+  SOURCE_PATH,
+  TO_ROOT ? "",
+  unfinished ? false,
+  vars ? {},
+}:
   with rec {
     md        = metadata.of file;
     extraPkgs = map (n: if hasAttr n commands
@@ -27,9 +35,7 @@ with rec {
                            else callPackage (withArgs [ n ] (getAttr n)) {})
                     (md.packages or []);
     dir       = dirContaining ../.. (md.dependencies or []);
-    rendered  = test {
-      inherit name;
-      file = runCommand "untested-${name}"
+    untested  = runCommand "untested-${name}"
       (vars // {
         inherit dir file SOURCE_PATH TO_ROOT;
         __noChroot  = true;
@@ -67,7 +73,10 @@ with rec {
 
         relativise < "$DEST" > "$out"
       '';
-    };
+
+    rendered = if unfinished
+                  then untested
+                  else test { inherit name; file = untested; };
   };
   if hasSuffix ".html" file
      then with { data = writeScript name (readFile file); };
