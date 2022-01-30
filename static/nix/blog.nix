@@ -35,6 +35,7 @@ with rec {
     name        = "index.php";
     vars        = { inherit blogPages; };
     file        = ../../redirect.md;
+    TO_ROOT     = ".";
     SOURCE_PATH = "redirect.md";
   };
 }
