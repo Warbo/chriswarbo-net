@@ -2,11 +2,14 @@
 title: The Metric Red Herring
 ---
 
-This is a companion to my post about
-[improving our units](2020-05-22-improving_our_units.html). That post discusses
-some problems with the metric system, SI and related ideas. This post is a
-stand-alone argument that advocates of metric are often doing it for the wrong
-reasons.
+This began as a companion to my post about
+[improving our units](../../blog/2020-05-22-improving_our_units.html), which
+discusses some problems with the metric system, SI and related ideas. This post
+was a stand-alone argument that advocates of metric are often doing it for the
+wrong reasons.
+
+Both are now part of a larger [collection of suggestions to improve and simplify
+measurement, notation, numeracy, etc.](./index.html)
 
 ## The Powers-of-Ten Red-Herring ##
 
@@ -61,7 +64,7 @@ metres" are not separate units, and neither are "metres" and "centimetres".
 (Note that there is a slight wrinkle here, since "kilo" on its own is taken to
 mean "kilograms"; this is not too important for this claim, but I explain why
 the kilogram is problematic in the "Problems with SI" section of
-[the companion post](2020-05-22-improving_our_units.html)!)
+[the companion post](improving_our_units.html)!)
 
 I think this is such a profound advantage that many (most?) people, even those
 born and raised with metric, never grasp it explicitly. After all, why argue
@@ -186,7 +189,7 @@ the usual algebraic rules for multiplication and exponentiation, where
 ab^3^ = a(b^3^)
 
 I cover these in more depth in
-[the companion post](2020-05-22-improving_our_units.html), but I think the best
+[the companion post](improving_our_units.html), but I think the best
 thing to do in these situations is stick to the base unit for that dimension
 (e.g. "cubic metre" or "per metre"), apply prefix multipliers if they are
 unambiguous; or otherwise add
@@ -195,7 +198,7 @@ unambiguous; or otherwise add
 ## Take Aways ##
 
 Whilst the metric (or SI) system
-[isn't perfect](2020-05-22-improving_our_units.html), it's also much better than
+[isn't perfect](improving_our_units.html), it's also much better than
 those hodge-podges of historical baggage known as imperial units. The most
 obvious argument against imperial units is that [there are so many, related in
 arbitrary ways](https://www.youtube.com/watch?v=r7x-RGfd0Yk); but

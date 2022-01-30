@@ -116,7 +116,7 @@ things. For example, here's a small times-table:
  padding: 0.2em 0.3em;
 }
 </style>
-<table class="times-table"><thead>
+<table class="times-table" summary="Times table from 2X&#773; to 2"><thead>
  <tr class="even">
   <th>×</th>
   <th scope="col">2&#x305;</th>

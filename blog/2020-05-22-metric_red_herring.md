@@ -6,4 +6,4 @@ title: The Metric Red Herring
 ---
 
 [This page has moved](../projects/units/metric_red_herring.html), to be part of
-my [units project[(../projects/units).
+my [units project](../projects/units).

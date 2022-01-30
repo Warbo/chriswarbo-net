@@ -2,11 +2,11 @@
 title: Improving our Units
 ---
 
-This is a companion to my post about
-[the metric red-herring](2020-05-22-metric_red_herring.html). That post is a
-simple claim that the main benefit of the metric system is not the "multiply by
-10" argument that comes up over and over in 'metric versus imperial'
-discussions. Instead, the two main benefits are that:
+This began as a companion to my post about
+[the metric red-herring](../../blog/2020-05-22-metric_red_herring.html). That
+post was a simple claim that the main benefit of the metric system is not the
+"multiply by 10" argument that comes up over and over in 'metric versus
+imperial' discussions. Instead, the two main benefits are that:
 
  - Each dimension has a single unit, e.g. length in metres, time in seconds,
    force in Newtons, etc.
@@ -18,6 +18,9 @@ discussions. Instead, the two main benefits are that:
 This post discusses some problems with metric, the SI system, and our systems of
 counting more generally; proposes some alternatives; and picks a few of those
 that would be reasonably practical to employ.
+
+Both are now part of a larger [collection of suggestions to improve and simplify
+measurement, notation, numeracy, etc.](./index.html)
 
 ## Problems with Metric ##
 
@@ -53,7 +56,7 @@ millikilogram.
 
 Within the dimension of mass this is merely silly; the real problem arises when
 we start combining dimensions. In
-[the companion post](2020-05-22-metric_red_herring.html) I use the example of
+[the companion post](metric_red_herring.html) I use the example of
 Newton's second law of motion `F = kma` where the constant of proportionality
 `k` is equal to 1 in SI, due to the way its base units are defined. This is true
 and good, but the base unit for `m` (mass) is the *kilogram*. If we want to use
@@ -75,7 +78,7 @@ Unfortunately that system uses the "centimetre" as its base unit of length, and
 hence suffers the same problem, except in the length dimension rather than mass.
 
 There is another problem with SI, that I mention in
-[the companion post](2020-05-22-metric_red_herring.html), which is that units
+[the companion post](metric_red_herring.html), which is that units
 like "cm^3^" may be misinterpreted. SI resolves this by giving prefices higher
 precedence than exponents (e.g. the "c" applies first, then the "^3^" is applied
 after), but this is opposite to the usual rules of multiplication and exponents,
@@ -132,7 +135,7 @@ to use hours, e.g. km/h or "kilometres per hour", where:
 
 One notable attempt at making time metric was the [decimal
 time](https://en.wikipedia.org/wiki/Decimal_time) briefly adopted by France;
-however, as I note in [the companion post](2020-05-22-metric_red_herring.html),
+however, as I note in [the companion post](metric_red_herring.html),
 the main advantages of metric don't come from using base 10. The [base
 60](https://en.wikipedia.org/wiki/Sexagesimal) relationships between hours,
 minutes and seconds are perfectly reasonable, and I would argue *preferable* to
@@ -182,7 +185,7 @@ degrees, give a shallower slope. Sine and cosine are derivatives of each other
 (modulo a minus sign), scaled by this maximum slope; hence this slope acts as a
 constant of proportionality (like those discussed in the section "Metric
 Conversions Multiply By One" of [the companion
-post](2020-05-22-metric_red_herring.html)). Forcing this slope to be 1
+post](metric_red_herring.html)). Forcing this slope to be 1
 gives us the radian as our unit of angle. (Radians can be defined in other ways,
 e.g. the angle subtended by an arc whose length equals its radius; I just think
 this sine/cosine relationship fits the 'constant of proportionality' template
@@ -263,7 +266,7 @@ There are three problems with switching to natural units:
 2, 5 and 10, which obscures many patterns (i.e. those which don't have period 2
 or 5) and overly-complicates the representation of otherwise 'simple' numbers
 (like the 1Mim example in [the companion
-post](2020-05-22-metric_red_herring.html)). The binary prefices ("kibi", "mibi",
+post](metric_red_herring.html)). The binary prefices ("kibi", "mibi",
 etc.) are preferable in this regard, although their exponents (10, 20, ...) are
 rather arbitrary; we only use them since they're close to more familiar powers
 of 10.
@@ -337,7 +340,7 @@ Whilst I don't think we'll see speedometers denoting logarithmically-scaled
 dozenal divisions of lightspeed any time soon, I think there are some definite
 steps we can take to improve our use of units.
 
- - [Switching to metric](2020-05-22-metric_red_herring.html) would give the
+ - [Switching to metric](metric_red_herring.html) would give the
    biggest "bang for buck ratio", since it lets us forget about imperial
    nonsense. Most of the world is here already, although the UK needs to sort
    out its road network (but that's a whole other issue!).
