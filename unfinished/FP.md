@@ -2,9 +2,14 @@
 title: FP
 ---
 
-> Also - OOP languages allow for dynamic dispatch and if I'm not totally mistaken (but I might), Haskell at least doesn't allow that unless you start adding language extensions, so you can't even make something like `Logger` a type class.
+> Also - OOP languages allow for dynamic dispatch and if I'm not totally
+> mistaken (but I might), Haskell at least doesn't allow that unless you start
+> adding language extensions, so you can't even make something like `Logger` a
+> type class.
 
-FP can absolutely do dynamic dispatch, since it's just a really limited form of higher-order function. Languages like Java and C++ made a big deal about dynamic dispatch because they didn't have first-class functions. For example, in Java:
+FP can absolutely do dynamic dispatch, since it's just a really limited form of
+higher-order function. Languages like Java and C++ made a big deal about dynamic
+dispatch because they didn't have first-class functions. For example, in Java:
 
     abstract class Animal {
       private String myName;
@@ -42,9 +47,12 @@ FP can absolutely do dynamic dispatch, since it's just a really limited form of 
       }
     }
 
-The result will be "Woof, hello John, I am Fido! Meow, hello John, I am Mittens!".
+The result will be "Woof, hello John, I am Fido! Meow, hello John, I am
+Mittens!".
 
-This is just a really complicated way of choosing between two particular functions (barking or meowing). When we have first-class functions this sort of thing becomes trival, e.g. here's a simple version in Haskell:
+This is just a really complicated way of choosing between two particular
+functions (barking or meowing). When we have first-class functions this sort of
+thing becomes trival, e.g. here's a simple version in Haskell:
 
     -- Animal's public interface; just a single function in this example
     type Animal = String -> String
@@ -66,9 +74,15 @@ This is just a really complicated way of choosing between two particular functio
                go p = putStrLn (greet p "John")
             in mapM go pets
 
-Here we're just passing around the implementations of 'greet' directly as needed. In OOP terminology: methods are just instance variables. This isn't the case in Java, C++, etc. since they couldn't treat functions/methods as first-class values, so they invented things like vtables, etc. to work around this deficiency.
+Here we're just passing around the implementations of 'greet' directly as
+needed. In OOP terminology: methods are just instance variables. This isn't the
+case in Java, C++, etc. since they couldn't treat functions/methods as
+first-class values, so they invented things like vtables, etc. to work around
+this deficiency.
 
-If you'd rather have implementations looked up based on the type, rather than passed around as a normal argument, then that's what type classes (ad-hoc polymorphism) is for, e.g.
+If you'd rather have implementations looked up based on the type, rather than
+passed around as a normal argument, then that's what type classes (ad-hoc
+polymorphism) is for, e.g.
 
     -- The functionality we want to look up. I've made myName public, so
     -- it's less trivial than just a single function.
@@ -96,9 +110,15 @@ If you'd rather have implementations looked up based on the type, rather than pa
                go p = putStrLn (greet p "John")
             in mapM go pets
 
-Here 'Animal' is analogous to the Java abstract class, 'IsAnimal' is analogous to 'extends Animal' and 'asAnimal' upcasts Dog, Cat, etc. to Animal. Note that we can also make other Animals, by providing an implementation of 'myName' and 'greet' (equivalent to anonymous classes in Java).
+Here 'Animal' is analogous to the Java abstract class, 'IsAnimal' is analogous
+to 'extends Animal' and 'asAnimal' upcasts Dog, Cat, etc. to Animal. Note that
+we can also make other Animals, by providing an implementation of 'myName' and
+'greet' (equivalent to anonymous classes in Java).
 
-There are language extensions which let us combine 'IsAnimal' and 'Animal' into one typeclass, then use fancy types like 'pets :: [forall t. IsAnimal t => t] = [Dog "Fido", Cat "Mittens"]', but that's precisely the same as making a list of the class's methods (i.e. '[Animal]' in the above example).
+There are language extensions which let us combine 'IsAnimal' and 'Animal' into
+one typeclass, then use fancy types like 'pets :: [forall t. IsAnimal t => t] =
+[Dog "Fido", Cat "Mittens"]', but that's precisely the same as making a list of
+the class's methods (i.e. '[Animal]' in the above example).
 
 ---
 
@@ -106,13 +126,19 @@ There are language extensions which let us combine 'IsAnimal' and 'Animal' into 
 
 > ...
 
-> I mean, I guess that works somehow, but now we've made it possible to create user repositories with weird semantics
+> I mean, I guess that works somehow, but now we've made it possible to create
+> user repositories with weird semantics
 
-Yes, that's what they mean by using closures. As for 'weird semantics': there's a question that we need to answer before choosing an approach: should there be a single 'UserRepository', or can we create many? (the "Zero, One, Many" rule). Your remark about 'weird semantics' makes it sound like there should only be one; in which case, we shouldn't be allow
+Yes, that's what they mean by using closures. As for 'weird semantics': there's
+a question that we need to answer before choosing an approach: should there be a
+single 'UserRepository', or can we create many? (the "Zero, One, Many"
+rule). Your remark about 'weird semantics' makes it sound like there should only
+be one; in which case, we shouldn't be allow
 
 ---
 
-The closure approach is to write a function taking the desired arguments, and define everything we need within that function's scope. For example:
+The closure approach is to write a function taking the desired arguments, and
+define everything we need within that function's scope. For example:
 
     -- userRepository is just a function
     userRepository logger baseDir = ...
@@ -126,7 +152,8 @@ The closure approach is to write a function taking the desired arguments, and de
         save :: User -> IO ()
         save = ...
 
-We could put all of our logic in this function, analogous to putting it in the UserRepository class, e.g.
+We could put all of our logic in this function, analogous to putting it in the
+UserRepository class, e.g.
 
     main = do
       let baseDir = File   "/some/Directory"
@@ -150,8 +177,9 @@ Alternatively, we could return some functions to use elsewhere:
       user <- load 1
       ...
 
-Using tuples is a bit naff, since they depend on the order, and their accessors have
-uninformative names like 'fst' and 'snd'. We can use a record datatype instead:
+Using tuples is a bit naff, since they depend on the order, and their accessors
+have uninformative names like 'fst' and 'snd'. We can use a record datatype
+instead:
 
     -- A data type storing two values 'load' and 'save', which happen to be functions.
     data UserRepository = Repo { load :: ID -> IO User, save :: User -> IO () }
@@ -189,11 +217,23 @@ This seems pretty similar to your hypothetical "module" example.
 
 ---
 
-> Still - I don't know whether it's just due to unfamiliarity, but it seems to me that the simplicity and readability of the "OOP" equivalent (not requiring you to understand the semantics of "map" and "join" in the context of Reader), are a bit better.
+> Still - I don't know whether it's just due to unfamiliarity, but it seems to
+> me that the simplicity and readability of the "OOP" equivalent (not requiring
+> you to understand the semantics of "map" and "join" in the context of Reader),
+> are a bit better.
 
-Reader is really just a function, and its 'map' is just function composition, so those are probably quite familiar and the Reader terminology is unnecessary baggage. The real trick to Reader is in 'product' and 'join', where we combine two functions into one by re-using an argument; this is how we send the baseDir and logger around to where they're needed. Again, this is all just normal functions at the end of the day. We could do it in OOP, but it would probably look clunky.
+Reader is really just a function, and its 'map' is just function composition, so
+those are probably quite familiar and the Reader terminology is unnecessary
+baggage. The real trick to Reader is in 'product' and 'join', where we combine
+two functions into one by re-using an argument; this is how we send the baseDir
+and logger around to where they're needed. Again, this is all just normal
+functions at the end of the day. We could do it in OOP, but it would probably
+look clunky.
 
-The main reason to use Reader is so we can use 'do' notation (or for/yield in Scala). I didn't know if that would be too confusing, but since you know it here's what Reader would actually look like ('do' takes care of calling map, join, etc. for us):
+The main reason to use Reader is so we can use 'do' notation (or for/yield in
+Scala). I didn't know if that would be too confusing, but since you know it
+here's what Reader would actually look like ('do' takes care of calling map,
+join, etc. for us):
 
     type App = Reader (Logger, File)
 
@@ -225,7 +265,11 @@ The main reason to use Reader is so we can use 'do' notation (or for/yield in Sc
     -- Use runReader to get a pure result, then use 'return' to make it IO
     main = return (runReader (File "/some/Directory", Logger "/some/Directory/logfile.log"))
 
-I've used App instead of IO above; presumably a real application would need to perform IO as well. That would require a bit more plumbing. If you don't mind getting more complicated, one common approach is to define App as a 'monad transformer stack' containing 'Reader (Logger, File)' and 'IO', which would let us combine Reader actions with IO actions:
+I've used App instead of IO above; presumably a real application would need to
+perform IO as well. That would require a bit more plumbing. If you don't mind
+getting more complicated, one common approach is to define App as a 'monad
+transformer stack' containing 'Reader (Logger, File)' and 'IO', which would let
+us combine Reader actions with IO actions:
 
     do
       d <- baseDir
@@ -234,7 +278,8 @@ I've used App instead of IO above; presumably a real application would need to p
 
 ---
 
-I've never actually used transformer stacks. Instead, I like to use 'free monads', which would look something like this:
+I've never actually used transformer stacks. Instead, I like to use 'free
+monads', which would look something like this:
 
     -- Define a datatype describing the different actions we want
     data App m a where
@@ -280,7 +325,8 @@ I've never actually used transformer stacks. Instead, I like to use 'free monads
       let logger  = Logger "/some/Directory/logfile.log"
       runM (runAppIO baseDir logger app)
 
-The reason I like this approach is that by using a 'set of effects' we can split up our actions into lots of distinct types, e.g. I might do this:
+The reason I like this approach is that by using a 'set of effects' we can split
+up our actions into lots of distinct types, e.g. I might do this:
 
     type Error = String  -- For simplicity
 
@@ -371,19 +417,33 @@ The reason I like this approach is that by using a 'set of effects' we can split
       let logger  = Logger "/some/Directory/logfile.log"
       runM (runLogIO logger (runInIO baseDir (runOutIO baseDir app)))
 
-This takes a bit more effort than just calling IO actions directly. However, we've gained a bunch of nice things:
+This takes a bit more effort than just calling IO actions directly. However,
+we've gained a bunch of nice things:
 
- - Each piece of logic can be constrained to only those effects it needs; e.g. adding debug logging to a tricky calculation doesn't let it overwrite files in the base dir.
+ - Each piece of logic can be constrained to only those effects it needs;
+   e.g. adding debug logging to a tricky calculation doesn't let it overwrite
+   files in the base dir.
 
- - All of the actual IO is in the interpreters; our application logic just describes what it wants to do.
+ - All of the actual IO is in the interpreters; our application logic just
+   describes what it wants to do.
 
- - The dependencies (logger and baseDir) only exist in the interpreters; the application logic doesn't even know they exist.
+ - The dependencies (logger and baseDir) only exist in the interpreters; the
+   application logic doesn't even know they exist.
 
- - In particular, the application can log strings, but has no knowledge of the underlying Logger; hence there's less that can go wrong (e.g. it can't do silly things like switch the logfile, or whatever else Loggers can do).
+ - In particular, the application can log strings, but has no knowledge of the
+   underlying Logger; hence there's less that can go wrong (e.g. it can't do
+   silly things like switch the logfile, or whatever else Loggers can do).
 
- - I've also made the In and Out interpreters prepend the baseDir to all paths. This way, the application logic is restricted to that dir, without having to know or care. (Of course a real implementation would check for things like '..' too).
+ - I've also made the In and Out interpreters prepend the baseDir to all
+   paths. This way, the application logic is restricted to that dir, without
+   having to know or care. (Of course a real implementation would check for
+   things like '..' too).
 
-Having the application logic isolated from underlying details isn't just nice for simplifying and eliminating mistakes in the application. It also lets us write multiple interpreters, which implement the effects in different ways. For example we could make an interpreter for Log which doesn't have a Logger at all, and just writes to stdout instead:
+Having the application logic isolated from underlying details isn't just nice
+for simplifying and eliminating mistakes in the application. It also lets us
+write multiple interpreters, which implement the effects in different ways. For
+example we could make an interpreter for Log which doesn't have a Logger at all,
+and just writes to stdout instead:
 
     runLogStdIO :: Member (Embed IO) r => Sem (Log ': r) a -> Sem r a
     runLogStdIO = interpret (embed . go)
@@ -394,7 +454,8 @@ Having the application logic isolated from underlying details isn't just nice fo
           Debug msg -> putStrLn ("[debug] " ++ msg)
           Warn  msg -> putStrLn ("[warn] "  ++ msg)
 
-Of course, we don't need to go as far as using IO. We can make a StdOut effect instead:
+Of course, we don't need to go as far as using IO. We can make a StdOut effect
+instead:
 
     data StdOut m a where
       Stdout :: String -> StdOut m ()
@@ -406,7 +467,8 @@ Of course, we don't need to go as far as using IO. We can make a StdOut effect i
         go :: StdOut m a -> IO a
         go (Stdout msg) = putStr msg
 
-Now we can write an interpreter which turns Log effects into StdOut effects, without using IO:
+Now we can write an interpreter which turns Log effects into StdOut effects,
+without using IO:
 
     runLogStdOut :: Member StdOut r => Sem (Log ': r) a -> Sem r a
     runLogStdOut = interpret go
@@ -417,7 +479,8 @@ Now we can write an interpreter which turns Log effects into StdOut effects, wit
           Debug str -> Stdout str
           Warn  str -> Stdout str
 
-What if we want to go the other way, and send stdout messages to a log (e.g. when running a CLI app on a server)? We can do that too:
+What if we want to go the other way, and send stdout messages to a log
+(e.g. when running a CLI app on a server)? We can do that too:
 
     runStdOutLog :: Member Log r => Sem (StdOut ': r) a -> Sem r a
     runStdOutLog = interpret go
@@ -425,6 +488,9 @@ What if we want to go the other way, and send stdout messages to a log (e.g. whe
         go :: StdOut m a -> Log m a
         go (Stdout msg) = Log msg  -- StdOut doesn't track severity, so make everything Log
 
-We can also define dummy interpreters for use in tests, e.g. accumulating stdout and log messages to a list; using a HashMap instead of reading and writing files; etc.
+We can also define dummy interpreters for use in tests, e.g. accumulating stdout
+and log messages to a list; using a HashMap instead of reading and writing
+files; etc.
 
-This is obviously a more hardcore approach, but I've found it really useful (e.g. in https://github.com/Warbo/y-monad )
+This is obviously a more hardcore approach, but I've found it really useful
+(e.g. in https://github.com/Warbo/y-monad )
