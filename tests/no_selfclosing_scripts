@@ -1,22 +1,15 @@
 #!/usr/bin/env bash
 set -e
 
-function pages {
-    # shellcheck disable=SC2154
-    find -L "$rendered" -iname '*.html'
-}
-
 BROKEN=""
-while read -r F
-do
-    GOT=$(xidel - -q -e '//script[@src]/@src' < "$F")
-    [[ -n "$GOT" ]] || continue
+F="$1"
+GOT=$(xidel - -q -e '//script[@src]/@src' < "$F")
+[[ -n "$GOT" ]] || exit 0
 
-    if grep '<script *[^>]*/>' < "$F"
-    then
-        BROKEN="$BROKEN $F"
-    fi
-done < <(pages)
+if grep '<script *[^>]*/>' < "$F"
+then
+    BROKEN="$BROKEN $F"
+fi
 
 [[ -z "$BROKEN" ]] && exit 0
 

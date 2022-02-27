@@ -1,0 +1,9 @@
+From: Chris Warburton
+Date: Wed, 19 Jan 2022 00:32:11 +0000
+State: new
+Subject: Faster YAML -> JSON metadata conversion
+Message-Id: <a60cbc7af7da5b61-0-artemis@nixos>
+
+Find a faster tool (maybe Cue?)
+
+Pipe the YAML into it as it's discovered, so it can be converted concurrently.

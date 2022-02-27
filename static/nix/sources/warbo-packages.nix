@@ -1,5 +1,5 @@
 fetchGit {
   url = "http://chriswarbo.net/git/warbo-packages.git";
   ref = "master";
-  rev = "61107623a010219ba7c84cc6a75c7b8e722f2fdb";
+  rev = "6593a308f2b73a8d8856c1bf2311aef5a855bbb4";
 }

@@ -1,6 +1,7 @@
-#!/usr/bin/env bash
+#!/usr/bin/env nix-shell
+#!nix-shell -i bash -p python bash
 set -e
 
 [[ -n "$PORT" ]] || PORT=8888
 DIR=$(./render test)
-nix-shell -p python --run "cd $DIR && python -m SimpleHTTPServer $PORT"
+cd "$DIR" && python -m SimpleHTTPServer "$PORT"

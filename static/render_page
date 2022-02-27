@@ -5,7 +5,21 @@ set -o pipefail
 # Capture and discard stdin, to avoid pandoc waiting on user input
 [ -t 0 ] || cat > /dev/null
 
-OUT_OPTIONS=(-f json -t html -s --mathml --template "$defaultTemplate")
+# Defaults
+IN_OPTIONS=(-t json "$SOURCE")
+OUT_OPTIONS=(-f json -t html -s --template "$defaultTemplate")
+
+# Include any args provided by the file's metadata
+
+parseArgs=()
+[[ -e "$parseArgF"  ]] && source "$parseArgF"
+IN_OPTIONS+=("${parseArgs[@]}")
+unset parseArgs
+
+renderArgs=()
+[[ -e "$renderArgF" ]] && source "$renderArgF"
+OUT_OPTIONS+=("${renderArgs[@]}")
+unset renderArgs
 
 # Provide 'path' arg for our View Source links.
 OUT_OPTIONS+=(-M "path=${SOURCE_PATH:-$SOURCE}")
@@ -18,12 +32,13 @@ fi
 
 # We don't use pandoc's --filter option, as it buffers stderr which makes
 # debugging harder. 'postprocessor' comes from the file's YAML (default: 'cat')
-pandoc -t json "$SOURCE"       |
+pandoc "${IN_OPTIONS[@]}"      |
     panpipe                    |
     panhandle                  |
     pandoc "${OUT_OPTIONS[@]}" |
     cleanup                    |
-    "${postprocessor:-cat}"    > "$DEST" || fail "Rendering pipeline failed"
+    "${postprocessor:-cat}"    > "$DEST" ||
+    fail "Rendering pipeline failed"
 
 # Check output
 

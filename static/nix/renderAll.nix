@@ -1,5 +1,8 @@
 { dirsToAttrs, isPath, lib, render }:
 
+with {
+  inherit (builtins) toJSON;
+};
 with lib;
 with rec {
   mdToHtml = n: if hasSuffix ".md" n
@@ -11,6 +14,7 @@ with rec {
     value = if isDerivation v || isPath v
                then render {
                  inherit name;
+                 unfinished  = take 1 prefix == [ "unfinished" ];
                  file        = v;
                  SOURCE_PATH = concatStringsSep "/" (prefix ++ [n]);
                  TO_ROOT     = concatStringsSep "/" (["."] ++

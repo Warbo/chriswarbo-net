@@ -1,30 +1,6 @@
 #! /usr/bin/env bash
 
-function findLinks {
-    FOUND=1
-    while read -r LINE
-    do
-        [[ -n "$LINE" ]] || continue
-        echo "Found link '$LINE'" 1>&2
-        FOUND=0
-    done < <(mkList "$1")
-    return "$FOUND"
-}
-
-function mkList {
-    # shellcheck disable=SC2154
-    grep -r "$1" "$rendered/" | grep -v "projects/repos/"
-}
-
-function gitorious {
-    findLinks "gitorious.org/"
-}
-
-function freewebs {
-    findLinks "freewebs.com/chriswarbo"
-}
-
 ERR=0
-gitorious && ERR=1
-freewebs  && ERR=1
+grep "gitorious.org/"          < "$1" && ERR=1
+grep "freewebs.com/chriswarbo" < "$1" && ERR=1
 exit "$ERR"

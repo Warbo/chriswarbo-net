@@ -4,19 +4,12 @@ function get_imgs() {
     xidel - -q --extract "//img/@src" < "$1"
 }
 
-function get_html {
-    # shellcheck disable=SC2154
-    find "$rendered" -name "*.html"
-}
-
 ERR=0
-while read -r FILE
-do
-    if get_imgs "$FILE" | grep "blogspot.com"
-    then
-        echo "Found references to blogspot.com in '$FILE'" 1>&2
-        ERR=1
-    fi
-done < <(get_html)
+FILE="$1"
+if get_imgs "$FILE" | grep "blogspot.com"
+then
+    echo "Found references to blogspot.com in '$FILE'" 1>&2
+    ERR=1
+fi
 
 exit "$ERR"
