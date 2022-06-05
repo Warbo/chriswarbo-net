@@ -157,6 +157,9 @@ For example, no pair of digits will ever add up to $10$.
 
 ## Normalising ##
 
+Writing negative numbers with negative digits is fine, but *mixing* positive and
+negative number
+
 ---
 
 When we write down fractions, we usually try to normalise (or "simplify") them
