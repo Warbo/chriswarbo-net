@@ -53,4 +53,4 @@ return a Z, forcing callers to account for the negative case.
     - For example: if Alice has 3 apples and gives 2 to Bob, how many apples
 does Alice have left?
 
-## Problems with Binary Minux ##
+## Problems with Binary Minus ##
