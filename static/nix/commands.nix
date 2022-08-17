@@ -1,6 +1,5 @@
 { attrsToDirs, bash, coq, fail, git, glibcLocales, haskellPackages, lib,
-  mkBin, nixpkgs1803, pandocPkgs, python, python3, replace, wget, withNix,
-  xidel }:
+  mkBin, nixpkgs1803, pandocPkgs, python3, replace, wget, withNix, xidel }:
 
 with builtins;
 with lib;
@@ -58,7 +57,7 @@ with rec {
   pythonScripts = genAttrs
     [ "cleanup" "htmlUnwrap" "relativise" "relTo" "stripTitle" ]
     (name: wrapScript name {
-      paths = [ (python.withPackages (p: [ p.python p.beautifulsoup4 ])) ];
+      paths = [ (python3.withPackages (p: [ p.python p.beautifulsoup4 ])) ];
     });
 
   wrapped = extras // pythonScripts // mapAttrs wrapScript {

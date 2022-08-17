@@ -1,16 +1,15 @@
-{ beautifulsoup-custom, blog, fail, hfeed2atom, libxslt, redirect, python,
-  render, run }:
+{ blog, fail, hfeed2atom, libxslt, redirect, python3, render, run }:
 
 with rec {
-  py = python.withPackages (p: [
+  py = python3.withPackages (p: [
     hfeed2atom
-    beautifulsoup-custom
+    p.beautifulsoup4
   ]);
 
   atom = run {
     name  = "blog.atom";
     file  = ../mkAtom;
-    paths = [ hfeed2atom py ];
+    paths = [ py ];
     vars  = { blog = blog.blog."index.html"; };
   };
 

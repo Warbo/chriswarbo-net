@@ -23,7 +23,9 @@ with rec {
   packages = sources.warbo-packages;
 
   # Load our Nix helper functions from the packages repo
-  inherit (import "${packages}/nix/sources.nix") nix-helpers;
+  #inherit (import "${packages}/nix/sources.nix") nix-helpers;
+
+  nix-helpers = sources.nix-helpers;
 
   # Add this site's package overlay, along with the above packages and helpers,
   # to a given Nixpkgs repo
@@ -36,10 +38,7 @@ with rec {
       (self: super: {
         inherit repoSource;
 
-        # To force -q instead of -s
-        inherit (self.nixpkgs1709) xidel;
-
-        haskellPackages = self.nixpkgs1803.haskellPackages.override (old:
+        haskellPackages = super/*self.nixpkgs1803*/.haskellPackages.override (old:
           with rec {
             inherit (self.haskell) lib;
 
