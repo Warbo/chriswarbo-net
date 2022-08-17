@@ -78,7 +78,7 @@ without access to an interactive terminal (since that would be impure), which is
 why we use `proot` rather than `chroot`:
 
 ```
-{ callPackage, proot, runCommand, writeScript }:
+{ cacert, callPackage, proot, runCommand, writeScript }:
 with rec {
   inherit (callPackage ./debian-rootfs.nix {}) rootfs;
 
@@ -89,7 +89,7 @@ runCommand "debian-with-chromium"
   {
     inherit rootfs PROOT_NO_SECCOMP;
     buildInputs      = [ proot ];
-    SSL_CERT_FILE    = /etc/ssl/certs/ca-bundle.crt;
+    SSL_CERT_FILE    = "${cacert}/etc/ssl/certs/ca-bundle.crt";
     script           = writeScript "setup.sh" ''
       #!/usr/bin/env bash
       set -e
