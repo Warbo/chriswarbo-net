@@ -35,7 +35,7 @@ an SSD with a 1TiB capacity (one tibibyte, or 2^40^ bytes). Yet it's perfectly
 correct (if a little unorthodox) to say that 1Mim = 1,048,576m or that there
 are one thousand and twenty four gallons in one kibigallon.
 
-## Multiples Aren't Units ##
+## Metric is Minimal ##
 
 Focusing on "conversions" like 1km = 1000m obscures a much more important
 feature of metric: there is only *one* unit of distance. Likewise there is
@@ -71,12 +71,12 @@ born and raised with metric, never grasp it explicitly. After all, why argue
 that "power-of-ten conversions are easier" when we could go further and say
 "there's nothing to convert between"; it can't get any easier than that!
 
-## Metric Conversions Multiply By One ##
+## Metric is Coherent ##
 
-Metric only has one unit for each dimension, but some combinations of dimension
-are equivalent to others. The most obvious example is speed, which is the same
-as a distance divided by a time. There are imperial units of speed like the
-knot, but it's more common to use the "distance over time" form like "miles per
+In a 'coherent' system of units, we can combine our units using multiplication
+and division, and alway get another unit of our system. The most obvious example
+is speed, which is the same as a distance divided by a time. There are imperial
+units of speed like the knot, but it's more common to use the "distance over time" form like "miles per
 hour", or "metres per second" in metric. Similarly for pressure, which is often
 measured in "pounds per square inch" or "Newtons per square metre".
 
