@@ -18,6 +18,11 @@ that found
 in
 [Haskell 1.0](http://www.haskell.org/haskellwiki/Language_and_library_specification)).
 
+THOUGHT: LazyK uses monadic IO perfectly well. How? I'm guessing it uses a
+Church-encoding of Haskell's `Monad IO` record; i.e. a pair of functions
+`(pure, >>=)`, AKA `(λx..., λx.λf...)`. Hmm, we need a more direct
+representation of `IO a`, e.g. using a 'real world'...
+
 Since this is just a demonstration, we'll use an incredibly naive implementation
 which works on one `Problem`{.ocaml} at a time until it's solved. First we need
 to define the streams; we currently have a `NoWorseStream`{.ocaml} which

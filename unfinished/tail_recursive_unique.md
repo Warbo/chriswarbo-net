@@ -73,7 +73,6 @@ with import <nixpkgs> {};
 #    provide an expression for `in ...`)
 #  - We can `import` it for testing
 rec {
-
   unique = list:
     if list == []
        then []
