@@ -7,12 +7,18 @@ with lib;
 with rec {
   isAbsPath = p: isString p && p != "" && substring 0 1 p == "/";
 
+  dirIsRepo = n: v:
+    with {
+      isDir = v == "directory";
+      named = hasSuffix ".git" n;
+      hasDotGit = pathExists (repoSource + "/${n}/.git");
+    };
+    isDir && (named || hasDotGit);
+
   # Fetch a list of repos from the online /git page. If we've opted to use a set
   # of local clones, just list their directory (much faster!)
   repoDirs = if isPath repoSource || isAbsPath repoSource
-                then attrNames (filterAttrs (n: v: v == "directory" &&
-                                                   hasSuffix ".git" n)
-                                            (readDir repoSource))
+                then attrNames (filterAttrs dirIsRepo (readDir repoSource))
                 else import (runCommand "repoUrls.nix"
                        {
                          inherit repoSource;

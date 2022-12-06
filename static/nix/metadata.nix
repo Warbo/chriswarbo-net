@@ -1,8 +1,8 @@
-{ haskell, haskellPackages, jq, lib, parallel, runCommand, wrap, writeScript }:
+{ jq, lib, parallel, runCommand, wrap, writeScript, yq }:
 
 with rec {
-  inherit (builtins) attrNames currentTime filter getAttr map readDir toString;
-  inherit (lib) concatStringsSep fold hasPrefix hasSuffix;
+  inherit (builtins) attrNames currentTime filter getAttr map readDir toJSON toString;
+  inherit (lib) concatMapStringsSep concatStringsSep escapeShellArg fold hasPrefix hasSuffix;
 
   markdownPaths =
     with rec {
@@ -27,33 +27,27 @@ with rec {
 
   metadataMapFile = runCommand "metadata-map"
     {
-      __noChroot  = true;  # Allow access to filesystem
-      cacheBust   = toString currentTime;
-      paths       = writeScript "markdown-paths"
-        (concatStringsSep "\n" markdownPaths);
-      default     = writeScript "metadata.nix" ''
+      default = writeScript "metadata.nix" ''
         with builtins;
         fromJSON (readFile ./metadata.json)
       '';
-      buildInputs = [ jq parallel ];
-      convert     = wrap {
-        name   = "yaml-to-json";
-        paths  = [
-          (haskell.lib.disableCabalFlag haskellPackages.yaml "no-exe")
-        ];
+      buildInputs = [ yq ];
+      extract     = wrap {
+        name   = "extract-yaml";
+        #paths  = [ ];
         script = ''
           #!/usr/bin/env bash
           set -e
           PAT='^----*'
-          YAML=$(grep -B 99999 -m 2 "$PAT" < "$1" |
+          YAML=$(grep -B 99999 -m 2 "$PAT" < "$2" |
                grep -v "$PAT") || true
           if [[ -z "$YAML" ]]
           then
-            YAML='{}'
+            echo "$1: {}"
+          else
+            echo "$1:"
+            echo "$YAML" | sed -e 's/^/  /g'
           fi
-          INDENTED=$(echo "$YAML" | sed -e 's/^/  /')
-
-          printf '"%s":\n%s\n' "$1" "$INDENTED" | yaml2json -
         '';
       };
     }
@@ -62,8 +56,13 @@ with rec {
       cp "$default" "$out/default.nix"
 
       printf 'Looking for YAML metadata' 1>&2
-      parallel --will-cite "$convert" < "$paths" |
-        jq -s 'add' > "$out/metadata.json"
+      {
+        ${concatMapStringsSep "\n"
+          (p: ''
+            "$extract" ${escapeShellArg p} ${escapeShellArg "${/. + p}"}
+          '')
+          markdownPaths}
+      } | yq '.' > "$out/metadata.json"
     '';
 
   metadataMap = import metadataMapFile;
