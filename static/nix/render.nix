@@ -1,11 +1,9 @@
-{ callPackage, commands, dirContaining, fail, lib, relTo, runCommand, withArgs
-, writeScript }:
+{ callPackage, commands, dirContaining, fail, lib, metadata, pageTests, relTo
+, runCommand, withArgs, writeScript }:
 
 with builtins;
 with lib;
-with rec {
-  metadata = callPackage ./metadata.nix { };
-  pageTests = callPackage ./pageTests.nix { };
+with {
   test = { file, name }:
     runCommand name { inherit file; } (concatStringsSep "\n" (attrValues
       (mapAttrs (testName: t:
