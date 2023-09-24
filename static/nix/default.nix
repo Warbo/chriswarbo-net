@@ -1,8 +1,8 @@
 { warbo-packages ? import ../../../warbo-packages { }
 , nix-helpers ? warbo-packages.nix-helpers, nixpkgs ? nix-helpers.nixpkgs }:
-with builtins;
 with rec {
-
-  extras = nix-helpers // warbo-packages;
+  defs = builtins.mapAttrs
+    (_: f: nixpkgs.newScope (nix-helpers // warbo-packages // defs) f { })
+    (nix-helpers.nixFilesIn ./.);
 };
-nixpkgs.newScope (extras // { inherit extras; }) ./overlay.nix { }
+defs
