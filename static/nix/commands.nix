@@ -1,5 +1,6 @@
 { attrsToDirs, bash, coq, fail, git, glibcLocales, haskellPackages, lib, mkBin
-, nixpkgs1803, pandocPkgs, python3, replace, wget, withNix, xidel }:
+, nixpkgs1803, pandoc, panhandle, panpipe, python3, replace, wget, withNix
+, xidel }:
 
 with builtins;
 with lib;
@@ -65,7 +66,7 @@ with rec {
     wrapCode = { };
 
     render_page = {
-      paths = [ wrapped.cleanup fail pandocPkgs ];
+      paths = [ wrapped.cleanup fail pandoc panhandle panpipe ];
       vars = {
         defaultTemplate = ../../templates/default.html;
         LANG = "en_US.UTF-8";

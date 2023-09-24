@@ -1,6 +1,6 @@
 { attrsToDirs', commands, darkhttpd, fail, git, haskell, haskellPackages, lib
-, linkchecker, mf2py, pandocPkgs, procps, pythonPackages, repos, runCommand
-, untestedSite, utillinux, wget, wrap, xidel }:
+, linkchecker, mf2py, pandoc, panhandle, panpipe, procps, pythonPackages, repos
+, runCommand, untestedSite, utillinux, wget, wrap, xidel }:
 
 with builtins;
 with lib;
@@ -76,7 +76,7 @@ mapAttrs testScript {
   redirect_posts = { };
   scripts_in_place = { buildInputs = [ fail xidel ]; };
   summariesUnwrapped = {
-    buildInputs = [ commands.cleanup pandocPkgs ];
+    buildInputs = [ commands.cleanup pandoc panhandle panpipe ];
     includeSite = false;
   };
   xidel_args = {
