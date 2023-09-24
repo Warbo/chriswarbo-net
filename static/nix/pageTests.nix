@@ -3,23 +3,25 @@
 with rec {
   base = ../..;
 
-  testScript = testName: { buildInputs ? [] }: wrap {
-    name  = testName;
-    file  = base + "/tests/${testName}";
-    paths = buildInputs;
-  };
+  testScript = testName:
+    { buildInputs ? [ ] }:
+    wrap {
+      name = testName;
+      file = base + "/tests/${testName}";
+      paths = buildInputs;
+    };
 };
 lib.mapAttrs testScript {
-  code_not_indented              = { buildInputs = [ fail ]; };
-  no_absolutes                   = { buildInputs = [      xidel ]; };
-  no_blogspot                    = { buildInputs = [      xidel ]; };
-  no_gitorious                   = {};
-  no_selfclosing_scripts         = { buildInputs = [ fail xidel ]; };
-  tidy_html5         = { buildInputs = [ tidy-html5                  ]; };
+  code_not_indented = { buildInputs = [ fail ]; };
+  no_absolutes = { buildInputs = [ xidel ]; };
+  no_blogspot = { buildInputs = [ xidel ]; };
+  no_gitorious = { };
+  no_selfclosing_scripts = { buildInputs = [ fail xidel ]; };
+  tidy_html5 = { buildInputs = [ tidy-html5 ]; };
 } // {
   nonempty = wrap {
-    name   = "non-empty";
-    paths  = [ fail ];
+    name = "non-empty";
+    paths = [ fail ];
     script = ''
       #!/usr/bin/env bash
       set -e

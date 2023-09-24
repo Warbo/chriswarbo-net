@@ -1,7 +1,7 @@
 { attrsToDirs', redirect, render, renderAll }:
 
 with rec {
-  contents  = renderAll "blog";
+  contents = renderAll "blog";
   blogPages = attrsToDirs' "blogPages" contents;
 };
 
@@ -9,33 +9,33 @@ with rec {
 {
   blog = contents // {
     "index.html" = render {
-      name        = "index.html";
-      vars        = { inherit blogPages; };
-      file        = ../../blog.md;
-      TO_ROOT     = "..";
+      name = "index.html";
+      vars = { inherit blogPages; };
+      file = ../../blog.md;
+      TO_ROOT = "..";
       SOURCE_PATH = "blog.md";
     };
   };
 
   "blog.html" = redirect {
     from = "blog.html";
-    to   = "/blog/";
-    rel  = ".";
+    to = "/blog/";
+    rel = ".";
   };
 
   "index.html" = render {
-    name        = "index.html";
-    vars        = { inherit blogPages; };
-    file        = ../../index.md;
-    TO_ROOT     = ".";
+    name = "index.html";
+    vars = { inherit blogPages; };
+    file = ../../index.md;
+    TO_ROOT = ".";
     SOURCE_PATH = "index.md";
   };
 
   "index.php" = render {
-    name        = "index.php";
-    vars        = { inherit blogPages; };
-    file        = ../../redirect.md;
-    TO_ROOT     = ".";
+    name = "index.php";
+    vars = { inherit blogPages; };
+    file = ../../redirect.md;
+    TO_ROOT = ".";
     SOURCE_PATH = "redirect.md";
   };
 }
