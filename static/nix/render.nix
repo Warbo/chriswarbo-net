@@ -36,7 +36,22 @@ with rec {
   else
     emptyDirectory;
 
-  untested = runCommand "untested-${name}" (vars // {
+  # If the page specifies a 'sha256' in its metadata, its renderer will be a
+  # fixed-output derivation (hence allowing network access)
+  hash = if md ? sha256 then {
+    outputHashMode = "flat";
+    outputHashAlgo = "sha256";
+    outputHash = md.sha256;
+  } else
+    { };
+
+  # If we're using a fixed-output derivation, its hash will be looked up in the
+  # cache, even if we've changed the page. We would prefer such pages to be
+  # rebuilt when changed, just in case their hash is out of date. To make this
+  # happen, we append a hash of the page's content to its derivation name.
+  prefix = if md ? sha256 then hashFile "sha256" file + "-" else "";
+
+  untested = runCommand "untested-${prefix + name}" (vars // hash // {
     inherit dir file SOURCE_PATH TO_ROOT;
     buildInputs = inputs ++ extraPkgs
       ++ [ commands.relativise commands.render_page fail ];
