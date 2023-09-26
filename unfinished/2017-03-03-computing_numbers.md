@@ -1,6 +1,6 @@
 ---
 title: Computing Numbers
-packages: [ "nix-shell" ]
+packages: [ "ghcWithOmega" ]
 ---
 
 This is a sequel to [an earlier blog post about computable numbers](
@@ -73,13 +73,7 @@ t  l0
 I've made a quick implementation of this in Haskell; here's the beginning of the
 list:
 
-```{pipe="cat > runner"}
-#!/usr/bin/env bash
-nix-shell --run runhaskell \
-          -p '(haskellPackages.ghcWithPackages (h: [ h.control-monad-omega ]))'
-```
-
-```{.haskell pipe="sh ./runner"}
+```{.haskell pipe="runhaskell"}
 {-# LANGUAGE BangPatterns, MonadComprehensions #-}
 module X where
 

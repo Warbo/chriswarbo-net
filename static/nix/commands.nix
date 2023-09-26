@@ -21,6 +21,9 @@ with rec {
     ghcWithQuickCheck =
       haskellPackages.ghcWithPackages (h: [ h.QuickCheck h.tasty-quickcheck ]);
 
+    ghcWithOmega =
+      haskellPackages.ghcWithPackages (h: [ h.control-monad-omega ]);
+
     matplotlib = python3.withPackages (p: [ p.matplotlib p.numpy ]);
 
     nix-instantiate = mkBin {
