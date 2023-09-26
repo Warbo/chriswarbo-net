@@ -28,7 +28,7 @@ with rec {
 
     nix-instantiate = mkBin {
       name = "nix-instantiate";
-      paths = [ bash ] ++ (withNix { }).buildInputs;
+      paths = [ bash git ] ++ (withNix { }).buildInputs;
       vars = nixVars;
       script = ''
         #!${bash}/bin/bash
@@ -38,7 +38,7 @@ with rec {
 
     nix-shell = mkBin {
       name = "nix-shell";
-      paths = [ bash ] ++ (withNix { }).buildInputs;
+      paths = [ bash git ] ++ (withNix { }).buildInputs;
       vars = nixVars;
       script = ''
         #!${bash}/bin/bash
