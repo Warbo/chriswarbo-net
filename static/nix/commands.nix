@@ -1,11 +1,16 @@
-{ attrsToDirs, bash, coq, fail, git, glibcLocales, haskellPackages, lib, mkBin
-, nixpkgs1803, pandoc, panhandle, panpipe, python3, replace, wget, withNix
-, xidel }:
+{ attrsToDirs, bash, cacert, coq, fail, git, glibcLocales, haskellPackages, lib
+, mkBin, nixpkgs1803, pandoc, panhandle, panpipe, python3, replace, wget
+, withNix, xidel }:
 
 with builtins;
 with lib;
 with rec {
-  nixVars = withNix { CALLING_NIX_RECURSIVELY = "1"; };
+  nixVars = withNix rec {
+    CALLING_NIX_RECURSIVELY = "1";
+    GIT_SSL_CAINFO = SSL_CERT_FILE;
+    NIX_SSL_CERT_FILE = SSL_CERT_FILE;
+    SSL_CERT_FILE = "${cacert}/etc/ssl/certs/ca-bundle.crt";
+  };
 
   includingDeps = xs:
     filter (x: x != null) (xs ++ concatMap (x: x.propagatedNativeBuildInputs) xs
