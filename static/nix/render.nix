@@ -24,7 +24,15 @@ with rec {
       newScope (nix-helpers // warbo-packages) (withArgs [ n ] (getAttr n)) { })
     (md.packages or [ ]);
 
-  dir = dirContaining ../.. (md.dependencies or [ ]);
+  dir = if md ? dependencies then
+    nixpkgs-lib.fileset.toSource {
+      root = ../..;
+      fileset =
+        nixpkgs-lib.fileset.unions (map (p: ../.. + "/${p}") md.dependencies);
+    }
+  else
+    emptyDirectory;
+
   untested = runCommand "untested-${name}" (vars // {
     inherit dir file SOURCE_PATH TO_ROOT;
     __noChroot = true;
