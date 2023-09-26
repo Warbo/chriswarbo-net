@@ -2,9 +2,12 @@
 , nixpkgs-lib, pageTests, relTo, runCommand, warbo-packages, withArgs
 , writeScript }:
 
-with builtins;
-with lib;
-with {
+with rec {
+  inherit (builtins) attrValues elem getAttr hasAttr hashFile map readFile;
+  inherit (lib)
+    concatMapStringsSep concatStringsSep escapeShell hasSuffix mapAttrs
+    optionalAttrs;
+
   test = { file, name }:
     runCommand name { inherit file; } (concatStringsSep "\n" (attrValues
       (mapAttrs (testName: t:
