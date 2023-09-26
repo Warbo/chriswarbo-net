@@ -35,7 +35,6 @@ with rec {
 
   untested = runCommand "untested-${name}" (vars // {
     inherit dir file SOURCE_PATH TO_ROOT;
-    __noChroot = true;
     buildInputs = inputs ++ extraPkgs
       ++ [ commands.relativise commands.render_page fail ];
     postprocessor = md.postprocessor or "";
