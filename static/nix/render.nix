@@ -1,5 +1,6 @@
-{ callPackage, commands, dirContaining, fail, lib, metadata, pageTests, relTo
-, runCommand, withArgs, writeScript }:
+{ commands, emptyDirectory, fail, lib, metadata, newScope, nix-helpers
+, nixpkgs-lib, pageTests, relTo, runCommand, warbo-packages, withArgs
+, writeScript }:
 
 with builtins;
 with lib;
@@ -20,7 +21,9 @@ with rec {
     if hasAttr n commands then
       getAttr n commands
     else
-      callPackage (withArgs [ n ] (getAttr n)) { }) (md.packages or [ ]);
+      newScope (nix-helpers // warbo-packages) (withArgs [ n ] (getAttr n)) { })
+    (md.packages or [ ]);
+
   dir = dirContaining ../.. (md.dependencies or [ ]);
   untested = runCommand "untested-${name}" (vars // {
     inherit dir file SOURCE_PATH TO_ROOT;
