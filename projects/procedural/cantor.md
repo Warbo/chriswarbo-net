@@ -1,6 +1,6 @@
 ---
 title: Cantor Tuples
-packages: [ 'imagemagick', 'nix-shell', 'wrapCode', 'file2img' ]
+packages: [ 'ghcWithQuickCheck', 'imagemagick', 'wrapCode', 'file2img' ]
 dependencies: [ 'static/procedural/includePic' ,
                 'static/procedural/monoCode'   ,
                 'static/procedural/greyCode'   ,
@@ -31,7 +31,7 @@ echo "" >> code.hs
 
 ```{pipe="cat > haskell"}
 #!/usr/bin/env bash
-nix-shell -E 'with import <nixpkgs> {}; runCommand "dummy" { buildInputs = [ (haskellPackages.ghcWithPackages (p: [p.QuickCheck p.ghc])) ]; } ""' --run "runhaskell -XExistentialQuantification"
+runhaskell -XExistentialQuantification
 ```
 
 ```{pipe="cat > run"}
