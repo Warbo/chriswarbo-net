@@ -471,7 +471,7 @@ For example:
 
 ```{.python pipe="tee actions.py"}
 def imperative(x):
-  if len(x) is 0:
+  if len(x) == 0:
     print("empty")      # Print a value
     return 1
   if len(x) > 10:
@@ -498,7 +498,7 @@ def functional(x):
   strs = big + ["recursing"] + recstrs
 
   # Return both the strings and the value
-  return (["empty"], 1) if len(x) is 0 else (strs, recval)
+  return (["empty"], 1) if len(x) == 0 else (strs, recval)
 
 ```
 
