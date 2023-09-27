@@ -1,8 +1,10 @@
 { dirsToAttrs, isPath, lib, render }:
 
-with { inherit (builtins) toJSON; };
-with lib;
 with rec {
+  inherit (builtins) isAttrs toJSON;
+  inherit (lib)
+    concatStringsSep hasSuffix isDerivation mapAttrs' removeSuffix take;
+
   mdToHtml = n: if hasSuffix ".md" n then "${removeSuffix ".md" n}.html" else n;
 
   renderGo = prefix: n: v: rec {

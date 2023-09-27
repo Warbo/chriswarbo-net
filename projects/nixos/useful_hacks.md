@@ -1,25 +1,30 @@
 ---
 title: Useful Nix Hacks
-dependencies: [ 'static/nix/default.nix', 'static/nix/overlay.nix' ]
+dependencies: [ 'static/nix' ]
 packages: [ 'jq', 'nix-instantiate', 'nix-shell', 'timeout' ]
 ---
 
 Here are a few helpful Nix expressions I've accumulated over the years, in case
-they're useful to anyone else. I'll assume the following stuff is in context:
+they're useful to anyone else. I'll assume the following stuff is in context
+(where `nixpkgs` is some pinned checkout of the Nixpkgs repository; if you don't
+care about reproducibility you can use `nixpkgs = import <nixpkgs> {};`):
 
-```{pipe="tee preamble.nix"}
-with builtins;
-with import <nixpkgs> {};
-with lib;
-```
-
-<!-- Include our custom config -->
+<!-- Start with our custom config, including nixpkgs -->
 
 ```{pipe="cat >> preamble.nix"}
+with (with rec {
+  inherit (import ./root/static/nix {}) forceBuilds nix-helpers;
+  inherit (nix-helpers) nixpkgs;
+}; {
+  inherit forceBuilds;
+  inherit (nix-helpers) nixpkgs;
+});
+```
 
-with {
-  inherit (import ./root/static/nix) forceBuilds;
-};
+```{pipe="tee -a preamble.nix"}
+with builtins;
+with nixpkgs;
+with lib;
 ```
 
 Since some of these things will reference others, let's assume they're all
@@ -176,7 +181,7 @@ attrsToDirs = attrs: runCommand "merged" {}
 withNix = attrs: attrs // {
   buildInputs = (attrs.buildInputs or []) ++ [ nix ];
   NIX_PATH    = if getEnv "NIX_PATH" == ""
-                   then "nixpkgs=${toString <nixpkgs>}"
+                   then "nixpkgs=${toString nixpkgs.path}"
                    else getEnv "NIX_PATH";
   NIX_REMOTE  = if getEnv "NIX_REMOTE" == ""
                    then "daemon"
@@ -655,7 +660,7 @@ say:
 with rec {
   myNixpkgs = attrsToDirs {
     "default.nix" = writeScript "default.nix" ''
-      args: (import <nixpkgs> args) // {
+      args: (import ${toString nixpkgs.path} args) // {
         foo = runCommand "foo" {} '''
           mkdir -p "$out/bin"
           printf '#!/usr/bin/env bash\necho "foo"' > "$out/bin/foo"
@@ -706,7 +711,7 @@ with rec {
 runCommand "bar"
   (withNix {
     # Override NIX_PATH to use our augmented copy
-    NIX_PATH = "nixpkgs=${myNixPkgs}:real=${toString <nixpkgs>}";
+    NIX_PATH = "nixpkgs=${myNixPkgs}:real=${toString nixpkgs.path}";
   })
   ''
     nix-shell -p foo --run foo 1>&2
@@ -869,51 +874,37 @@ Nix lets pick and choose where to get our packages from. Here's a way to define
 multiple `nixpkgs` repos, which minimises boilerplate if we want to add another:
 
 ```
-with builtins;
 with {
-  pkgs = import <nixpkgs> {};
-
-  version = { rev, sha256 }:
+  get = { rev, sha256, version }:
     with {
-      name = replaceStrings ["."] [""] rev;
-      repo = pkgs.fetchFromGitHub {
-        inherit rev sha256;
-        owner = "NixOS";
-        repo  = "nixpkgs";
+      repo = builtins.fetchTarball {
+        inherit sha256;
+        name = "nixpkgs-${version}";
+        url = "https://github.com/nixos/nixpkgs/archive/${rev}.tar.gz";
       };
     };
     {
-      "repo${name}" = repo;
+      "repo${version}" = repo;
 
-      # Explicitly pass an empty config, to avoid infinite loops
-      "nixpkgs${name}" = import repo { config = {}; };
+      # Explicitly pass an empty config, to avoid infinite loops.
+      "nixpkgs${version}" = import repo { config = {}; };
     };
 };
-
-foldl' (x: y: x // y) {} [
-  (version {
-    rev    = "16.03";
-    sha256 = "0m2b5ignccc5i5cyydhgcgbyl8bqip4dz32gw0c6761pd4kgw56v";
-  })
-
-  (version {
-    rev    = "16.09";
-    sha256 = "0m2b5ignccc5i5cyydhgcgbyl8bqip4dz32gw0c6761pd4kgw56v";
-  })
-
-  (version {
-    rev    = "17.03";
-    sha256 = "1fw9ryrz1qzbaxnjqqf91yxk1pb9hgci0z0pzw53f675almmv9q2";
-  })
-
+builtins.foldl' (x: y: x // get y) {} [
   {
-    # We can also use codenames like "stable" (assuming that these definitions
-    # are being added to our Nix overrides, and hence available in pkgs)
-    stableRepo = pkgs.repo1603;
-    stable     = pkgs.nixpkgs1603;
-
-    # Unmodified package set
-    origPkgs = pkgs;
+    rev    = "d231868990f8b2d471648d76f07e747f396b9421";
+    sha256 = "0m2b5ignccc5i5cyydhgcgbyl8bqip4dz32gw0c6761pd4kgw56v";
+    version = "1603";
+  }
+  {
+    rev    = "f22817d8d2bc17d2bcdb8ac4308a4bce6f5d1d2b";
+    sha256 = "1cx5cfsp4iiwq8921c15chn1mhjgzydvhdcmrvjmqzinxyz71bzh";
+    version = "1609"
+  }
+  {
+    rev    = "1849e695b00a54cda86cb75202240d949c10c7ce";
+    sha256 = "1fw9ryrz1qzbaxnjqqf91yxk1pb9hgci0z0pzw53f675almmv9q2";
+    version = "1703";
   }
 ]
 ```
@@ -928,10 +919,6 @@ the one in `nixpkgs` is broken. We can express that using an `isBroken` function
 which builds successfully if a given derivation doesn't, and vice versa:
 
 ```
-with builtins;
-with import <nixpkgs> {};
-with lib;
-
 # Wrap the buildCommand in a script which checks whether it fails. Note that
 # we do this in a crude way by replacing the attribute, rather than using some
 # override function; this is to ensure that buildCommand contains everything
@@ -974,9 +961,6 @@ seem to be used *outside* of Nix itself. I've found the following Nix function
 useful for calling out to these tools automatically:
 
 ```
-with builtins;
-with import <nixpkgs> {};
-with lib;
 repo:
   with rec {
     converted = runCommand "convert-npm"
@@ -1014,9 +998,6 @@ Hackage in a git repository, to emulate the behaviour of `cabal update`, but in
 a deterministic way:
 
 ```
-with builtins;
-with import <nixpkgs> {};
-with lib;
 with rec {
   all-cabal-files = fetchFromGitHub {
     owner  = "commercialhaskell";
@@ -1118,9 +1099,6 @@ does so in a deterministic way. We can call out to tinc from Nix to resolve the
 dependencies of our Haskell packages, given a few hacks:
 
 ```
-with builtins;
-with import <nixpkgs> {};
-with lib;
 with rec {
   defHPkg = haskellPackages;
 
