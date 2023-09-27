@@ -799,7 +799,15 @@ echo "foo" | pipeToNix myFilename
 ```{.bash pipe="sh"}
 printf '$ %s\n' "$(cat pipeToNix.sh)"
 chmod +x pipeToNix.sh
+{
+  echo 'with (import ./result.nix);'
+  echo 'mkShell {'
+  echo '  name = "pipeToNix-shell";'
+  echo '  packages = [ pipeToNix ];'
+  echo '}'
+} > shell.nix
 nix-shell --store "$HOME" --show-trace --run './pipeToNix.sh'
+rm shell.nix
 ```
 
 Note how we get back the Nix store path, which we can use elsewhere in a script,
