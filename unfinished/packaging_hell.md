@@ -7,7 +7,11 @@ dependency lookup smarter. Some find this to not be enough either, and use
 enough for some, who use Nix, Docker, Puppet, Chef, Ansible, etc. to make their
 dependency lookup *even smarter*.
 
-This is a mess; not because there's a lot of tools, but because th
+This is a mess; not because there's a lot of tools, but because many of these
+tools were not designed to be (easily) extensible: they use non-standard config
+formats (like '.cabal' files), they make arbitrary assumptions (e.g. filesystem
+layout, network access, etc.), and don't allow programmatic control over their
+behaviour.
 
 My thoughts:
 
