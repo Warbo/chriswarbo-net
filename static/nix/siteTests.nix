@@ -1,6 +1,7 @@
 { attrsToDirs', commands, darkhttpd, fail, git, haskell, haskellPackages, lib
-, linkchecker, mf2py, pandoc, panhandle, panpipe, procps, pythonPackages, repos
-, runCommand, untestedSite, utillinux, wget, wrap, xidel }:
+, linkchecker, mf2py, pandoc, panhandle, panpipe, procps, python3
+, python3Packages, repos, runCommand, untestedSite, utillinux, wget, wrap, xidel
+}:
 
 with builtins;
 with lib;
@@ -34,7 +35,7 @@ with rec {
 };
 mapAttrs testScript {
   all_pages_reachable = { buildInputs = [ darkhttpd procps utillinux wget ]; };
-  archive_is_hfeed = { buildInputs = [ pythonPackages.python mf2py ]; };
+  archive_is_hfeed = { buildInputs = [ python3 mf2py ]; };
   broken_links = { buildInputs = [ linkchecker ]; };
   cleanupTables = {
     buildInputs = [ commands.cleanup ];
@@ -53,10 +54,10 @@ mapAttrs testScript {
   have_feeds = { };
   have_readmes = { buildInputs = [ git ]; };
   hcard_test = {
-    buildInputs = [ pythonPackages.python mf2py commands.renderHcard ];
+    buildInputs = [ python3 mf2py commands.renderHcard ];
     includeSite = false;
   };
-  homepage_has_hcard = { buildInputs = [ pythonPackages.python mf2py ]; };
+  homepage_has_hcard = { buildInputs = [ python3 mf2py ]; };
   htmlunwrap_unwraps_blocks = {
     buildInputs = [ commands.htmlUnwrap fail ];
     includeSite = false;

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Update a HTML file to use relative links, e.g. '../css/foo.css' rather than
 # '//chriswarbo.net/css/foo.css' or '/css/foo.css'
@@ -11,11 +11,13 @@ to_root = os.getenv('TO_ROOT')
 del(os)
 
 if to_root is None:
-    sys.stderr.write('No TO_ROOT given, not relativising\n')
+    err('No TO_ROOT given, not relativising\n')
     sys.exit(0)
 
 import fileinput
-stdin = reduce(lambda content, line: content + line, fileinput.input(), "")
+stdin = ""
+for line in fileinput.input():
+    stdin += line
 del(fileinput)
 
 from bs4 import BeautifulSoup
@@ -28,10 +30,16 @@ def prefix(attr):
             e[attr] = to_root + e[attr]
     return f
 
-map(lambda (tag, attr): map(prefix(attr), doc.find_all(tag)),
-    [('a'     , 'href'),
-     ('link'  , 'href'),
-     ('img'   , 'src' ),
-     ('script', 'src' )])
+for tag_attr in [
+        ('a'     , 'href'),
+        ('link'  , 'href'),
+        ('img'   , 'src' ),
+        ('script', 'src' )
+]:
+    tag, attr = tag_attr
+    f = prefix(attr)
+    for elem in doc.find_all(tag):
+        err('.')
+        f(elem)
 
 print(doc)

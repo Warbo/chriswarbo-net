@@ -1,6 +1,6 @@
 ---
 title: Nix Shell Shebangs
-packages: [ 'python' ]
+packages: [ 'python3' ]
 ---
 
 # Shebangs #
@@ -12,9 +12,9 @@ echo "hello world!"
 ```
 
 ```{pipe="cat > shebang.py"}
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
-print "hello world!"
+print("hello world!")
 ```
 
 `chmod +x shebang.*`{pipe="sh"}
@@ -39,7 +39,7 @@ Which outputs:
 ```{pipe="./shebang.py"}
 ```
 
-Notice that in the second case we don't call the `python` command directly; instead we call the `env` command, which looks up the `python` command in our `$PATH` variable (in my case, `type -a python`{.unwrap pipe="sh | pandoc -t json"}, which I'd rather not hard-code!).
+Notice that in the second case we don't call the `python3` command directly; instead we call the `env` command, which looks up the `python3` command in our `$PATH` variable (in my case, `type -a python3`{.unwrap pipe="sh | pandoc -t json"}, which I'd rather not hard-code!).
 
 # `nix-shell` #
 
@@ -47,16 +47,16 @@ Since the Nix package manager can install programs "non-destructively" (ie. with
 
 We tell `nix-shell` what software to install by providing either:
 
- - A list of packages with the `-p` flag, eg. `nix-shell -p python pythonPackages.prettytable`{.bash}
- - A Nix expression with the `-E` flag, eg. `nix-shell -E 'with import <nixpkgs> {}; stdenv.mkDerivation { name = "foo"; buildInputs = [ python pythonPackages.prettytable ]; }'`{.bash}
- - A Nix expression in a file, passed as an argument, eg. `echo 'with import <nixpkgs> {}; stdenv.mkDerivation { name = "foo"; buildInputs = [ python pythonPackages.prettytable ]; }' > pkg.nix; nix-shell pkg.nix`{.bash}
- - A Nix expression in a file called `shell.nix`, eg. `echo 'with import <nixpkgs> {}; stdenv.mkDerivation { name = "foo"; buildInputs = [ python pythonPackages.prettytable ]; }' > shell.nix; nix-shell`{.bash}
- - A Nix expression in a file called `default.nix`, eg. `echo 'with import <nixpkgs> {}; stdenv.mkDerivation { name = "foo"; buildInputs = [ python pythonPackages.prettytable ]; }' > default.nix; nix-shell`{.bash}
+ - A list of packages with the `-p` flag, eg. `nix-shell -p python3 python3Packages.prettytable`{.bash}
+ - A Nix expression with the `-E` flag, eg. `nix-shell -E 'with import <nixpkgs> {}; stdenv.mkDerivation { name = "foo"; buildInputs = [ python3 python3Packages.prettytable ]; }'`{.bash}
+ - A Nix expression in a file, passed as an argument, eg. `echo 'with import <nixpkgs> {}; stdenv.mkDerivation { name = "foo"; buildInputs = [ python3 python3Packages.prettytable ]; }' > pkg.nix; nix-shell pkg.nix`{.bash}
+ - A Nix expression in a file called `shell.nix`, eg. `echo 'with import <nixpkgs> {}; stdenv.mkDerivation { name = "foo"; buildInputs = [ python3 python3Packages.prettytable ]; }' > shell.nix; nix-shell`{.bash}
+ - A Nix expression in a file called `default.nix`, eg. `echo 'with import <nixpkgs> {}; stdenv.mkDerivation { name = "foo"; buildInputs = [ python3 python3Packages.prettytable ]; }' > default.nix; nix-shell`{.bash}
 
 Inside this environment we can do a few things:
 
  - Launch an interactive shell, which is the default behaviour: `nix-shell`{.bash}
- - Launch an (interactive or non-interactive) command, using the `--command` or `--run` flags, eg. `nix-shell --command python`{.bash} or `nix-shell --run python`{.bash}
+ - Launch an (interactive or non-interactive) command, using the `--command` or `--run` flags, eg. `nix-shell --command python3`{.bash} or `nix-shell --run python3`{.bash}
 
 For example, we might need to run a Python script, but we either:
 
@@ -68,12 +68,12 @@ If we *do* know that Nix is available, we can do something like the following:
 
 ```bash
 #! /bin/sh
-nix-shell -p python --run python << EOF
-print "Hello world!"
+nix-shell -p python3 --run python3 << EOF
+print("Hello world!")
 EOF
 ```
 
-Running this script will invoke `/bin/sh` as an interpreter (thanks to the shebang), then it will use `nix-shell` to temporarily install the `python` package. With the `python` package available, it will run the `python` command, and pipe in the script `print "Hello world"`{.python} to its stdin. Once that Python script has finished, the `python` interpreter will exit, `nix-shell` will exit, and the environment it created will be available for *garbage collection*.
+Running this script will invoke `/bin/sh` as an interpreter (thanks to the shebang), then it will use `nix-shell` to temporarily install the `python3` package. With the `python3` package available, it will run the `python3` command, and pipe in the script `print("Hello world")`{.python} to its stdin. Once that Python script has finished, the `python3` interpreter will exit, `nix-shell` will exit, and the environment it created will be available for *garbage collection*.
 
 Notice a few things about our throw-away Python environment:
 
@@ -89,9 +89,9 @@ As of Nix 1.9 we can solve this second issue, by writing a regular Python script
 
 ```python
 #! /usr/bin/env nix-shell
-#! nix-shell -i python -p python
+#! nix-shell -i python3 -p python3
 
-print "Hello world!"
+print("Hello world!")
 ```
 
 This shebang has a few parts:
@@ -102,6 +102,6 @@ This shebang has a few parts:
 
 By using `nix-shell` in our shebangs like this, we're going one step further than `/usr/bin/env`:
 
- - When we use a shebang like `#! /usr/bin/python`, we're assuming that Python is installed and available at a particular location
- - When we use a shebang like `#! /usr/bin/env python`, we're assuming Python is installed, but we make no assumption about its location. We *do* add a dependency on `env`, but hope that it's widely available.
+ - When we use a shebang like `#! /usr/bin/python3`, we're assuming that Python is installed and available at a particular location
+ - When we use a shebang like `#! /usr/bin/env python3`, we're assuming Python is installed, but we make no assumption about its location. We *do* add a dependency on `env`, but hope that it's widely available.
  - When we use a shebang like the `nix-shell` one above, we're making no assumption about Python being installed at all. We add another dependency, on `nix-shell`, but hopefully that will become more widespread over time; after all, *by design* it shouldn't interfere with existing software (apart from taking up disk space!)

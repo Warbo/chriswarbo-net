@@ -1,6 +1,6 @@
 ---
 title: Learning Functional Programming
-packages: [ 'python' ]
+packages: [ 'python3' ]
 ---
 
 I've seen a [few][] [questions][] about where to begin learning functional
@@ -472,11 +472,11 @@ For example:
 ```{.python pipe="tee actions.py"}
 def imperative(x):
   if len(x) is 0:
-    print "empty"      # Print a value
+    print("empty")      # Print a value
     return 1
   if len(x) > 10:
-    print str(len(x))  # Print a value
-  print "recursing"    # Print a value
+    print(str(len(x)))  # Print a value
+  print("recursing")    # Print a value
   return sum(map(imperative, x))  # Recurse
 
 ```
@@ -507,7 +507,7 @@ def functional(x):
 map(sys.stdout.write, strs)    # Optionally, run the actions
 ```
 
-```{pipe="python > test.out"}
+```{pipe="python3 > test.out"}
 # Tests
 from actions import imperative, functional
 
@@ -516,13 +516,13 @@ def test(x, y):
     return True
   raise Exception("Not equal: " + repr(x) + " and " + repr(y))
 
-print "Imperative tests"
+print("Imperative tests")
 
 test(imperative([]), 1)
 test(imperative(11 * [[]]), 11)
 test(imperative([20 * [[]], 5 * [[]]]), 25)
 
-print "Functional tests"
+print("Functional tests")
 
 test(functional([]), (["empty"], 1))
 test(functional(11 * [[]]), (["11", "recursing"] + 11 * ["empty"], 11))
@@ -535,7 +535,7 @@ import sys
 sys.stderr.write("Action tests passed\n")
 ```
 
-```{pipe="python 1>&2"}
+```{pipe="python3 1>&2"}
 import sys
 
 imp    = [l.strip() for l in open('test.out').readlines()]

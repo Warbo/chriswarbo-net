@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from bs4 import BeautifulSoup
 import sys
@@ -36,15 +36,12 @@ for summarise in doc.find_all(class_='summarise'):
 # Remove <code> elements first, then remove any containers (<span>, <p> and
 # <pre> elements) which might have contained those <code> elements and are
 # subsequently empty.
-map(
-    lambda tag: map(
-        lambda e: e.extract() if repr(e) == '<' + tag + '></' + tag + '>' \
-                              else None,
-        doc.find_all(tag)
-    ),
-    ['code', 'pre', 'span', 'p']
-)
+for tag in ['code', 'pre', 'span', 'p']:
+    for e in doc.find_all(tag):
+        e.extract() if repr(e) == '<' + tag + '></' + tag + '>' \
+        else None
 
-map(unwrapSummary, doc.find_all('summary'))
+for s in doc.find_all('summary'):
+    unwrapSummary(s)
 
 print(str(doc))
