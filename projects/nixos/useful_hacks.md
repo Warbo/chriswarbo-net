@@ -285,6 +285,9 @@ printf '\n}\n'
 #!/usr/bin/env bash
 set -e
 
+# Prevents trying to create /homeless-shelter
+export HOME="$PWD"
+
 # Tell withTimeout to abort if we use this much RAM
 export MAX_KB=1000000
 
@@ -300,8 +303,12 @@ PREAMBLE="$PREAMBLE with import ./result.nix;"
 # 'toString', or forcing a derivation to be built, etc.
 EXPR="$PREAMBLE $PREFIX $1 $SUFFIX"
 [[ -n "$QUIET" ]] || echo "EVALUATING: ($EXPR)" 1>&2
-RESULT=$(withTimeout nix-instantiate --show-trace --read-write-mode --eval \
-                                     -E "$EXPR")
+RESULT=$(withTimeout nix-instantiate \
+  --show-trace \
+  --read-write-mode \
+  --eval \
+  --store "$HOME" \
+  -E "$EXPR")
 
 # Show some debug/progress info when rendering; set QUIET if you want to use the
 # stderr on the page (e.g. using 2>&1 to show real error messages)
@@ -792,8 +799,7 @@ echo "foo" | pipeToNix myFilename
 ```{.bash pipe="sh"}
 printf '$ %s\n' "$(cat pipeToNix.sh)"
 chmod +x pipeToNix.sh
-nix-shell --show-trace -p '(import ./result.nix).pipeToNix' \
-          --run './pipeToNix.sh'
+nix-shell --store "$HOME" --show-trace --run './pipeToNix.sh'
 ```
 
 Note how we get back the Nix store path, which we can use elsewhere in a script,
