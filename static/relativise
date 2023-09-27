@@ -39,7 +39,6 @@ for tag_attr in [
     tag, attr = tag_attr
     f = prefix(attr)
     for elem in doc.find_all(tag):
-        err('.')
         f(elem)
 
 print(doc)
