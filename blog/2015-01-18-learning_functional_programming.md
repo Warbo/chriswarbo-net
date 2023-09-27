@@ -442,7 +442,7 @@ for elem in collection:
 
 # Functional code separates the two into distinct functions
 process = lambda elem: len(str(elem + 10))
-result  = map(process, collection)
+result  = list(map(process, collection))
 ```
 
 ### Separate Calculating *What* To Do From *Actually Doing It* ###
@@ -488,7 +488,7 @@ val1 = imperative(...) # Run the actions and calculation
 ```{.python pipe="tee -a actions.py"}
 def functional(x):
   # Recurse, to get return values and printable strings
-  rec = map(functional, x)
+  rec = list(map(functional, x))
 
   recstrs =     [s      for val in rec for s in val[0]]
   recval  = sum([val[1] for val in rec])
@@ -503,8 +503,8 @@ def functional(x):
 ```
 
 ```python
-(strs, val2) = functional(...) # Run the calculation
-map(sys.stdout.write, strs)    # Optionally, run the actions
+(strs, val2) = functional(...)    # Run the calculation
+list(map(sys.stdout.write, strs)) # Optionally, run the actions
 ```
 
 ```{pipe="python3 > test.out"}
