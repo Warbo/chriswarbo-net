@@ -12,7 +12,6 @@ with rec {
     { buildInputs ? [ ], includeSite ? true }:
     runCommand "test-script-${name}" {
       inherit buildInputs;
-      __noChroot = true;
       rendered = if includeSite then untestedSite else "";
       script = wrap {
         inherit name;
