@@ -8,7 +8,7 @@ function countScripts {
     F="$rendered/$1"
     [[ -e "$F" ]] || fail "No such file '$F'"
 
-    OUTPUT=$(xidel -q - -e '//script/name()' < "$rendered/$1")
+    OUTPUT=$(xidel -s - -e '//script/name()' < "$rendered/$1")
      COUNT=$(echo "$OUTPUT" | wc -l)
 
     [[ "$COUNT" -eq "$2" ]] ||

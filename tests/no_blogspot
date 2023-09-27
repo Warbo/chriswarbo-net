@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function get_imgs() {
-    xidel - -q --extract "//img/@src" < "$1"
+    xidel - -s --extract "//img/@src" < "$1"
 }
 
 ERR=0

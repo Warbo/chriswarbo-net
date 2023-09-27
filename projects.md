@@ -8,7 +8,7 @@ A curated collection of (hopefully) well-maintained ramblings:
 ```{.unwrap pipe="sh | pandoc -t json"}
 function show {
     URL=$(echo "$1" | replace "$projects/" '/projects/')
-    TITLE=$(xidel - -q --extract '/html/head/title/text()' < "$1")
+    TITLE=$(xidel - -s --extract '/html/head/title/text()' < "$1")
     printf '<li><a href="%s">%s</a></li>' "$URL" "$TITLE"
 }
 

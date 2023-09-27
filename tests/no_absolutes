@@ -7,8 +7,8 @@ function get_urls() {
     P2="not(contains(@rel,   'author'))"
     P3="not(contains(@rel,   'me'))"
     PRED="[$P1 and $P2 and $P3]"
-    xidel - -q --extract "//*$PRED/@href" < "$1"
-    xidel - -q --extract "//*$PRED/@src"  < "$1"
+    xidel - -s --extract "//*$PRED/@href" < "$1"
+    xidel - -s --extract "//*$PRED/@src"  < "$1"
 }
 
 ERR=0

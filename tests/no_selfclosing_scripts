@@ -3,7 +3,7 @@ set -e
 
 BROKEN=""
 F="$1"
-GOT=$(xidel - -q -e '//script[@src]/@src' < "$F")
+GOT=$(xidel - -s -e '//script[@src]/@src' < "$F")
 [[ -n "$GOT" ]] || exit 0
 
 if grep '<script *[^>]*/>' < "$F"

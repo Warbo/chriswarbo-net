@@ -428,7 +428,7 @@ keepassx-community =
       ''
         mkdir "$out"
         wget -q --no-check-certificate -O- "$url" |
-          xidel - -q -e "$pat"                    |
+          xidel - -s -e "$pat"                    |
           grep tag                                |
           rev                                     |
           cut -d / -f1                            |

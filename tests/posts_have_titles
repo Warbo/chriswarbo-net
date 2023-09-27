@@ -2,7 +2,7 @@
 set -e
 
 # shellcheck disable=SC2154
-xidel - -q --extract "//div[@id='content']//ul/li/a" < "$rendered/blog/index.html" |
+xidel - -s --extract "//div[@id='content']//ul/li/a" < "$rendered/blog/index.html" |
     while read -r TITLE
     do
         [[ -n "$TITLE" ]] || fail "Missing title!"

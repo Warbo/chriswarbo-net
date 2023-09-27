@@ -34,7 +34,7 @@ with rec {
     do
       QUERY=$(echo "$PAIR" | cut -f1)
        TYPE=$(echo "$PAIR" | cut -f2)
-      FOUND=$(xidel -q -e "$QUERY" - < "$page")
+      FOUND=$(xidel -s -e "$QUERY" - < "$page")
 
       echo "$FOUND" | grep "^/" || continue
       echo "$FOUND" | grep "=/" || continue
