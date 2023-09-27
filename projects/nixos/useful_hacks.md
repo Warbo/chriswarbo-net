@@ -289,7 +289,7 @@ set -e
 export HOME="$PWD"
 
 # Tell withTimeout to abort if we use this much RAM
-export MAX_KB=1000000
+export MAX_KB=2000000
 
 # $1 is the expression we show
 printf '> %s\n\n' "$1"
