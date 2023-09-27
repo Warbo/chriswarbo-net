@@ -16,7 +16,7 @@ done
 
 # Check if the helpers are up to date
 REPO="warbo-packages"
-DEF="static/nix/sources/warbo-packages.nix"
+DEF="static/nix/warbo-packages.nix"
 echo "Checking $REPO version in $DEF" 1>&2
 
 # Allow failure to get HEAD (e.g. in case we're offline)
