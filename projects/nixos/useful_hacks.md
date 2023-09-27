@@ -378,7 +378,7 @@ EXPR='with nixListToBashArray {
 
 export PREFIX='forceBuilds [('
 export SUFFIX=')]'
-QUIET=1 ./eval "$EXPR" 2> >(tee >(cat 1>&2)) || true
+QUIET=1 bash ./eval "$EXPR" 2> >(tee >(cat 1>&2)) || true
 ```
 
 The `code` snippet turns the variables in `env` into a Bash array with the given
@@ -405,7 +405,7 @@ echo '"string from foo.nix"'              > modules/foo.nix
 echo '["list" "from" "bar.nix"]'          > modules/bar.nix
 echo '{ attrs = { from = "baz.nix"; }; }' > modules/baz.nix
 
-FORMAT=1 UNWRAP=1 PREFIX='toJSON (' SUFFIX=')' ./eval 'nixFilesIn ./modules'
+FORMAT=1 UNWRAP=1 PREFIX='toJSON (' SUFFIX=')' bash ./eval 'nixFilesIn ./modules'
 ```
 
 This can be useful for making modular configurations, without needing to specify
@@ -427,21 +427,21 @@ putting them in derivations, etc. If we give a path value, the files will be
 added to the Nix store (this is good for reproducibility):
 
 ```{pipe="sh"}
-FORMAT=1 UNWRAP=1 ./eval 'toJSON (dirsToAttrs ./modules)'
+FORMAT=1 UNWRAP=1 bash ./eval 'toJSON (dirsToAttrs ./modules)'
 ```
 
 We might prefer the hierarchy to be preserved in the store, which we can do by
 coercing our path to a string:
 
 ```{pipe="sh"}
-FORMAT=1 UNWRAP=1 ./eval 'toJSON (dirsToAttrs "${./modules}")'
+FORMAT=1 UNWRAP=1 bash ./eval 'toJSON (dirsToAttrs "${./modules}")'
 ```
 
 If we convert with `toString`, the path will be used as-is (this is good if we
 have relative paths, symlinks, etc.):
 
 ```{pipe="sh"}
-FORMAT=1 UNWRAP=1 ./eval 'toJSON (dirsToAttrs (toString ./modules))'
+FORMAT=1 UNWRAP=1 bash ./eval 'toJSON (dirsToAttrs (toString ./modules))'
 ```
 
 Likewise, we might have a bunch of derivations or paths neatly arranged in Nix
@@ -458,7 +458,7 @@ resort to bash scripts:
 export PREFIX='toString ('
 export SUFFIX=')'
 export UNWRAP=1
-./eval 'attrsToDirs { bin = { myProg = writeScript "myProg" "echo hello"; }; }'
+bash ./eval 'attrsToDirs { bin = { myProg = writeScript "myProg" "echo hello"; }; }'
 ```
 
 ### Sanitising Names ###
@@ -472,7 +472,7 @@ since it may contain forbidden characters. We can strip them out like this:
 Now we can do, for example:
 
 ```{pipe="sh"}
-UNWRAP=1 ./eval 'toFile (sanitiseName "a/b/c/d") "foo"'
+UNWRAP=1 bash ./eval 'toFile (sanitiseName "a/b/c/d") "foo"'
 ```
 
 Of course, we could just hard-code a particular name when we're generating a
@@ -504,9 +504,9 @@ export SUFFIX='; }; assert forceBuilds [ x ]; toString x'
 PASS='runCommand "passingTest" {} '\'\''echo pass > "$out"'\'\'
 FAIL='runCommand "failingTest" {} "exit 1"'
 
-UNWRAP=1 ./eval "withDeps [ ($PASS) ] hello" > extraDepPass
+UNWRAP=1 bash ./eval "withDeps [ ($PASS) ] hello" > extraDepPass
 
- QUIET=1 ./eval "withDeps [ ($FAIL) ] hello" > extraDepFail 2>&1 || true
+ QUIET=1 bash ./eval "withDeps [ ($FAIL) ] hello" > extraDepFail 2>&1 || true
 ```
 
 This way, we can make a new package which is equivalent to the original when our
@@ -540,7 +540,7 @@ With this, we can specify a git repo without needing a hash:
 export PREFIX='with { x = '
 export SUFFIX='; }; assert forceBuilds [ x ]; toString x'
 
-UNWRAP=1 ./eval 'fetchGitHashless {
+UNWRAP=1 bash ./eval 'fetchGitHashless {
     url = "http://chriswarbo.net/git/chriswarbo-net.git";
     rev = "7a5788e";
   }' || true  # FIXME: Disabled due to error
@@ -565,7 +565,7 @@ stay up to date, e.g.:
 ```{pipe="sh"}
 export PREFIX='toString ('
 export SUFFIX=')'
-UNWRAP=1 ./eval 'import (fetchLatestGit {
+UNWRAP=1 bash ./eval 'import (fetchLatestGit {
            url = "http://chriswarbo.net/git/turtleviewer.git";
          }) {}' || true  # FIXME: Disabled due to error
 ```
@@ -622,7 +622,7 @@ FUNC='runCommand "foo" (withNix { myVar = "hello"; })'
 EXPR="$FUNC $STR"
 export PREFIX='toString ('
 export SUFFIX=')'
-UNWRAP=1 ./eval "$EXPR"
+UNWRAP=1 bash ./eval "$EXPR"
 ```
 
 This uses `nix-store` to add a file to the Nix store, and puts the resulting
@@ -754,7 +754,7 @@ wrap {
 ```
 
 ```{pipe="sh"}
-UNWRAP=1 PREFIX='toString (' SUFFIX=')' ./eval "$(cat wrapScript.nix)"
+UNWRAP=1 PREFIX='toString (' SUFFIX=')' bash ./eval "$(cat wrapScript.nix)"
 ```
 
 Alternatively, we can pass a file instead of a script:
@@ -820,7 +820,7 @@ argument sets, like `{ foo, bar }: ...`. If we use the latter, those names can
 be found by passing the function to `builtins.functionArgs`:
 
 ```{pipe="sh"}
-./eval 'functionArgs ({ foo, bar, baz ? 42 }: 1337)'
+bash ./eval 'functionArgs ({ foo, bar, baz ? 42 }: 1337)'
 ```
 
 This is used by common utility functions like `callPackage` to figure out which
@@ -830,7 +830,7 @@ Unfortunately, this introspection ability is lost if we wrap up a function
 somehow, for example via composition:
 
 ```{pipe="sh"}
-UNWRAP=1 FORMAT=1 ./eval 'with rec {
+UNWRAP=1 FORMAT=1 bash ./eval 'with rec {
     func    = { foo, bar }: 42;
 
     compose = f: g: x: f (g x);
@@ -854,7 +854,7 @@ With this, we can recover the inspection capabilities for our composed function,
 such that it'll work with `callPackage` and the like:
 
 ```{pipe="sh"}
-./eval 'with rec {
+bash ./eval 'with rec {
     func    = { foo, bar }: 42;
 
     compose = f: g: x: f (g x);
