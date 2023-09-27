@@ -5,12 +5,13 @@
 with builtins;
 with lib;
 with rec {
-  nixVars = withNix rec {
-    CALLING_NIX_RECURSIVELY = "1";
+  gitVars = rec {
     GIT_SSL_CAINFO = SSL_CERT_FILE;
     NIX_SSL_CERT_FILE = SSL_CERT_FILE;
     SSL_CERT_FILE = "${cacert}/etc/ssl/certs/ca-bundle.crt";
   };
+
+  nixVars = gitVars // withNix { CALLING_NIX_RECURSIVELY = "1"; };
 
   includingDeps = xs:
     filter (x: x != null) (xs ++ concatMap (x: x.propagatedNativeBuildInputs) xs
@@ -30,6 +31,16 @@ with rec {
       haskellPackages.ghcWithPackages (h: [ h.control-monad-omega ]);
 
     matplotlib = python3.withPackages (p: [ p.matplotlib p.numpy ]);
+
+    git = mkBin {
+      name = "git";
+      paths = [ git ];
+      vars = gitVars;
+      script = ''
+        #!${bash}/bin/bash
+        exec git "$@"
+      '';
+    };
 
     nix-instantiate = mkBin {
       name = "nix-instantiate";
