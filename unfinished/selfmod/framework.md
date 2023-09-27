@@ -1,6 +1,6 @@
 ---
 title: A Framework for Self-Improving Code
-packages: [ 'nix-shell' ]
+packages: [ 'ghcWithQuickCheck' ]
 ---
 
 Since Haskell functions are opaque (we can't pattern-match them), we'll define a
@@ -24,12 +24,12 @@ echo "" >> code.hs
 chmod +x append
 ```
 
-```{pipe="./append > /dev/null"}
+```{pipe="sh append > /dev/null"}
 import Test.QuickCheck
 import Control.Applicative hiding (Const)
 ```
 
-```{.haskell pipe="./append"}
+```{.haskell pipe="sh append"}
 -- Lambda Calculus terms
 data Term a = Var Nat
             | Lam (Term a)
@@ -84,7 +84,7 @@ instance Monad Partial where
   (Later x) >>= f = Later (x >>= f)
 ```
 
-```{pipe="./append"}
+```{pipe="sh append"}
 instance Eq a => Eq (Val a) where
   C x == C y = x == y
   _   == _   = False
@@ -113,12 +113,7 @@ testId n t = not (normalIn n t) ||
              evalFor (n * n) (App (Lam (Var Z)) t) == evalFor n t
 ```
 
-```{pipe="cat > testEnv.nix"}
-with import <nixpkgs> {};
-haskellPackages.ghcWithPackages (h: [ h.QuickCheck ])
-```
-
-```{pipe="nix-shell --show-trace -p 'import ./testEnv.nix' --run 'ghci -v0'"}
+```{pipe="ghci -v0"}
 :load code.hs
 quickCheck testId
 ```
