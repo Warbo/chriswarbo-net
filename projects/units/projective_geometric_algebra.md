@@ -120,13 +120,40 @@ Draw two points and a line between them:
 </svg>
 
 
-Projective geometry can be expressed using cross products (e.g. see https://youtu.be/puMYfJTFdgQ?t=964 )
+Projective geometry can be expressed using cross products
+(e.g. see https://youtu.be/puMYfJTFdgQ?t=964 )
 
 Cross products are icky. Can we use geometric products instead?
 
-Going further: projective geometry involves lines and points, which are dual/symmetric.
-Geometric algebra doesn't involve points or (unbounded) lines; it starts with vectors.
-What's the nicest way to capture these things? Is it by going to a higher dimension, like
-the homogeneous coordinates of projective geometry (e.g. subspaces crossing a "viewing plane"?)?
+Going further: projective geometry involves lines and points, which are
+dual/symmetric.  Geometric algebra doesn't involve points or (unbounded) lines;
+it starts with vectors.  What's the nicest way to capture these things? Is it by
+going to a higher dimension, like the homogeneous coordinates of projective
+geometry (e.g. subspaces crossing a "viewing plane"?)?
 
-(Conformal geometric algebra?)
+ANSWER: Projective Geometric Algebra can define points as the intersection of
+lines. Dually, lines can be defined as the join of points. Likewise for lines
+with planes, planes with volumes, etc. in as many dimensions as we like.
+
+Objects defined via joins have a linear orientation; e.g. the join of points A
+and B is a line through A and B, directed from A to B; the join of lines C and D
+is a plane containing A and B, DIRECTED HOW? DO WE NEED A 'RIGHT-HAND RULE'?
+These objects are invariant in the numberof dimensions.
+
+Objects defined via meets have a rotational orientation; e.g.the meet of planes
+A and B is a line lying in both (their intersection). Treating this line as an
+axis, its orientation is the angle between A and B (maybe better with a dot
+product definition?)
+
+Conformal geometric algebra has objects representing spheres. The projective
+'line at infinity' can be used as a radius, giving planes ('infinite spheres'),
+lines (infinite circles), etc. Points are spheres with zero radius.
+
+The fundamental operation in geometric algebra is reflection. Chaining together
+reflections can implement rotations (of any magnitude, about any axis);
+rotations about a 'point at infinity' are translations. Reflections in conformal
+geometric algebra are inversions.
+
+The inverse of a vector, in geometric algebra, points in the same direction, but
+its magnitude is the reciprocal. Projective GA makes this well-defined for zero,
+by giving the line at infinity (I think?).

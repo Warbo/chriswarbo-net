@@ -27,8 +27,8 @@ e.g. to avoid historical baggage and focus on coherence. Many of these are whole
 subjects which *will not* be described in full detail, or with the level of
 rigour some might desire; this is largely due to my own ignorance, but also to
 focus on equipping individuals (mostly myself!) with a 'core' of good ideas,
-can be taken further if desired. I'll include links to Wikipedia, etc. for those
-who are curious for more!
+which can be taken further if desired. I'll include links to Wikipedia, etc. for
+those who are curious for more!
 
 Each idea should be mostly stand-alone, although they will be *presented* in a
 cohesive way (for example, long-subtraction uses the notation from negatives);
@@ -36,10 +36,11 @@ I'll try to cross-link such cases.
 
 ## Categories ##
 
-[[Quick wins]] lists some ideas which are relatively easy to adopt right now.
-More specific, in-deph pages are collected below, into rough categories.
+[Quick wins](quick_wins.html) lists some ideas which are relatively easy to
+adopt right now.  More specific, in-deph pages are collected below, into rough
+categories.
 
-## Units of Measure ##
+### Units of Measure ###
 
 [The metric system is far better than the various 'imperial'
 systems](metric.html), although
@@ -47,18 +48,21 @@ systems](metric.html), although
 
 We can make life even simpler by limiting ourselves to the SI subset of metric.
 
-## Numbers ##
+### Numbers ###
 
-Negative numbers
-[The minus sign should be avoided](minus.html):
+['Minus' is ambiguous](minus.html) and should be avoided. Instead, I find
+[over-bar notation composes better than minus signs](negatives.html)
 
- - [Negatives are better written negative with a bar](negatives.html)
- - [Subtraction should be avoided](subtraction.html), in favour of adding a
-   negative.
-
-[Place-value](place_value.html)
+Over-bar notation can also be [extended to place-value
+notation](place_value.html), which makes long-subtraction obsolete.
 
 ## Arithmetic ##
+
+Subtraction is ambiguous, conflating multiple distinct ideas:
+
+ - Inverting/undoing addition: in this case, it's simpler to
+   [add a negative](subtraction.html) instead.
+ - Finding [the differece between values](diff.html)
 
 It can be useful to distinguish between *absolute values* and the *relative
 differences between them*. This is pretty straightforward in one dimension, and
