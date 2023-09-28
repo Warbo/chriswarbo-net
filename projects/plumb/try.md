@@ -1,6 +1,7 @@
 ---
 title: Try Plumb
 packages: [ 'git' ]
+sha256: "sha256-0cqEWx8wvp4QQ6Vw2jj1Q5CMbCQfG7wMUDId/+mjK9E="
 ---
 [Plumb](/projects/plumb/index.html) has a Javascript implementation, so we can
 try it right in the browser (as long as it supports Javascript!)
