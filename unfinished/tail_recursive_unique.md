@@ -1,6 +1,8 @@
 ---
 title: Tail-recursive Unique
-packages: [ 'nix-instantiate', 'time' ]
+packages: [ 'nix', 'time' ]
+dependencies: [ 'static/nix' ]
+sha256: "sha256-1vU1orudOrfj4umRfzQ503N2NNX9Y38jSesCgchJiPU="
 ---
 
 ## Intro to Nix
@@ -35,10 +37,11 @@ This simple function takes a list as its argument, and returns a list containing
 the same elements as the input but without any duplicate entries:
 
 ```{pipe="tee unique_example.nix"}
-(import <nixpkgs> {}).lib.unique [ "x" "x" "y" "z" "y" ]
+(import root/static/nix {}).nixpkgs.lib.unique [ "x" "x" "y" "z" "y" ]
 ```
 
-```{.odd pipe="nix-instantiate --read-write-mode --eval unique_example.nix"}
+```
+{.odd pipe="nix eval --impure --eval-store "$HOME" --file unique_example.nix"}
 ```
 
 The duplicate copies of `"x"` and `"y"` have been removed, with only their
@@ -65,7 +68,7 @@ the [lexical scope](https://en.wikipedia.org/wiki/Lexical_scope) where it was
 originally defined:
 
 ```{pipe="tee unique.nix"}
-with import <nixpkgs> {};
+with (import root/static/nix {}).nixpkgs;
 
 # Put our definition in a recursively-defined set, so that:
 #  - `unique` can reference itself
@@ -114,7 +117,7 @@ actually returning its length, to avoid spewing 10,000 numbers into the page if
 it works!):
 
 ```{pipe="tee big_list.nix"}
-with import <nixpkgs> {};
+with (import root/static/nix {}).nixpkgs;
 with builtins;
 
 length (lib.unique (lib.range 1 100))
@@ -124,7 +127,8 @@ length (lib.unique (lib.range 1 100))
 #!/usr/bin/env bash
 set -e
 
-DATA=$(command time -f 'MEM\t%M' nix-instantiate --show-trace --eval "$1" 2>&1)
+export HOME="$PWD"
+DATA=$(command time -f 'MEM\t%M' nix eval --eval-store "$HOME" --impure --file "$1" 2>&1)
 MEM=$(echo "$DATA" | grep '^MEM' | cut -f 2)
 
 [[ -n "$MAXMEM" ]] || MAXMEM=1000
@@ -137,14 +141,15 @@ fi
 exit
 ```
 
-```{.odd pipe="sh"}
+```
+{.odd pipe="sh"}
 chmod +x eval_mem
 (source "$stdenv/setup" && patchShebangs .)
 MAXMEM=1000 ./eval_mem big_list.nix || exit 1
 ```
 
 Uh oh! Not only did we overflow the stack, but [rendering](/projects/activecode)
-this page causes `nix-instantiate` to hit 100% CPU and consume over 1GB of RAM!
+this page causes `nix eval` to hit 100% CPU and consume over 1GB of RAM!
 
 This is exactly the issue I hit when testing that a list of Haskell package
 names I grabbed from [Hackage](http://hackage.haskell.org) didn't contain any
@@ -331,7 +336,7 @@ processing steps to that instead of the return value. Here's a version of
 interface:
 
 ```{pipe="tee unique_acc.nix"}
-with import <nixpkgs> {};
+with (import root/static/nix {}).nixpkgs;
 
 let uniq = acc: list:
       if list == []
@@ -349,12 +354,16 @@ Let's compare the performance of this version with the original:
 
 set -e
 
+export HOME="$PWD"
+
 function mkExpr {
-  echo "with import <nixpkgs> {}; builtins.length ($1 (lib.range 1 $2))"
+  printf "with (import root/static/nix {}).nixpkgs; "
+  echo "builtins.length ($1 (lib.range 1 $2))"
 }
 
 function timeExpr {
-  time nix-instantiate --eval -E "$(mkExpr "$1" "$2")"
+  time nix eval --eval-store "$HOME" --impure \
+    --expr "$(mkExpr "$1" "$2")"
 }
 
 function timeOriginal {
@@ -386,13 +395,14 @@ done
 try this on our original list-length
 
 ```{pipe="tee acc_test.nix"}
-with import <nixpkgs> {};
+with (import root/static/nix {}).nixpkgs;
 with builtins;
 
 length ((import ./unique_acc.nix).unique (lib.range 1 100))
 ```
 
-```{.odd pipe="sh"}
+```
+{.odd pipe="sh"}
 MAXMEM=1000 ./eval_mem acc_test.nix || exit 1
 ```
 
@@ -404,7 +414,7 @@ won't be performed until the result is forced. We can work around this using
 step:
 
 ```{pipe="tee unique_seq.nix"}
-with import <nixpkgs> {};
+with (import root/static/nix {}).nixpkgs;
 with builtins;
 
 let uniq = acc: list:
@@ -417,14 +427,16 @@ let uniq = acc: list:
 ```
 
 ```{pipe="cat > seq_test.nix"}
-with import <nixpkgs> {};
+with (import root/static/nix {}).nixpkgs;
 with builtins;
 
 length ((import ./unique_seq.nix).unique (lib.range 1 100))
 ```
 
-```{.odd pipe="sh"}
-if nix-instantiate --show-trace --eval seq_test.nix 2>&1
+```
+{.odd pipe="sh"}
+export HOME="$PWD"
+if nix eval --eval-store "$HOME" --impure --file seq_test.nix 2>&1
 then
   true
 else
