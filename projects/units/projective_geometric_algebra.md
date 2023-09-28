@@ -28,7 +28,7 @@ Draw two points and a line between them:
 ```
 
 <svg width="300" height="200">
-  <script type="text/javascript">
+  <script>
   function makeDraggable(evt) {
     var svg = evt.target;
 
