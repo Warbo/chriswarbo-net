@@ -1,17 +1,15 @@
 ---
 title: Try Plumb
-packages: [ 'git' ]
-sha256: "sha256-0cqEWx8wvp4QQ6Vw2jj1Q5CMbCQfG7wMUDId/+mjK9E="
+packages: [ "repo-copies" ]
 ---
 [Plumb](/projects/plumb/index.html) has a Javascript implementation, so we can
 try it right in the browser (as long as it supports Javascript!)
 
 ```{pipe="sh > /dev/null"}
-# Check out JS Plumb to js/
+# Copy a checkout of JS Plumb to js/
 mkdir -p js
 cd js
-rm -rf js-plumb
-git clone http://chriswarbo.net/git/js-plumb.git js-plumb
+cp -r "$(repo-copies)/js-plumb" js-plumb
 ```
 
 <form id="plumb" action="#" />

@@ -66,11 +66,12 @@ with rec {
       name = "repo-copies";
       vars = {
         repos = attrsToDirs' "repo-copies"
-          (genAttrs [ "php-core" "php-prelude" "php-easycheck" ] (name:
-            (fetchGit {
-              inherit name;
-              url = "http://chriswarbo.net/git/${name}.git";
-            }).outPath));
+          (genAttrs [ "js-plumb" "php-core" "php-prelude" "php-easycheck" ]
+            (name:
+              (fetchGit {
+                inherit name;
+                url = "http://chriswarbo.net/git/${name}.git";
+              }).outPath));
       };
       script = ''
         #!${bash}/bin/bash
