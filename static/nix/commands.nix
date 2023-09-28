@@ -1,5 +1,5 @@
 { attrsToDirs, bash, cacert, coq, fail, git, glibcLocales, haskellPackages, lib
-, mkBin, nixpkgs1803, pandoc, panhandle, panpipe, python3, replace, wget
+, mkBin, nix, nixpkgs1803, pandoc, panhandle, panpipe, python3, replace, wget
 , withNix, xidel }:
 
 with builtins;
@@ -44,7 +44,7 @@ with rec {
 
     nix-instantiate = mkBin {
       name = "nix-instantiate";
-      paths = [ bash git ] ++ (withNix { }).buildInputs;
+      paths = [ bash git nix ];
       vars = nixVars;
       script = ''
         #!${bash}/bin/bash
@@ -54,7 +54,7 @@ with rec {
 
     nix-shell = mkBin {
       name = "nix-shell";
-      paths = [ bash git ] ++ (withNix { }).buildInputs;
+      paths = [ bash git nix ];
       vars = nixVars;
       script = ''
         #!${bash}/bin/bash

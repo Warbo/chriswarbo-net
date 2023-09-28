@@ -19,7 +19,7 @@ fixed.mkBin {
   vars  = {
     eval_wholeSite = fixed.wrap {
       name   = "eval_wholeSite";
-      paths  = with fixed; [ bash ] ++ (withNix {}).buildInputs;
+      paths = with fixed; [ bash nix ];
       vars   = fixed.withNix { dir = toString "${root}/static/nix"; };
       script = ''
         #!/usr/bin/env bash
