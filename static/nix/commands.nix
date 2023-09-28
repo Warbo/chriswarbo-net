@@ -1,4 +1,4 @@
-{ attrsToDirs, bash, cacert, coq, fail, git, glibcLocales, haskellPackages, lib
+{ attrsToDirs', bash, cacert, coq, fail, git, glibcLocales, haskellPackages, lib
 , mkBin, nix, nixpkgs1803, pandoc, panhandle, panpipe, python3, replace, wget
 , withNix, xidel }:
 
@@ -59,6 +59,22 @@ with rec {
       script = ''
         #!${bash}/bin/bash
         exec nix-shell "$@"
+      '';
+    };
+
+    repo-copies = mkBin {
+      name = "repo-copies";
+      vars = {
+        repos = attrsToDirs' "repo-copies"
+          (genAttrs [ "php-core" "php-prelude" "php-easycheck" ] (name:
+            (fetchGit {
+              inherit name;
+              url = "http://chriswarbo.net/git/${name}.git";
+            }).outPath));
+      };
+      script = ''
+        #!${bash}/bin/bash
+        echo "$repos"
       '';
     };
   };
