@@ -66,7 +66,7 @@ with import nixpkgs1803 {};
 })).ghcWithPackages
 ```
 
-```{pipe="cat > runWithPkgs.sh && chmod +x runWithPkgs.sh"}
+```{pipe="cat > runWithPkgs.sh"}
 #!/usr/bin/env bash
 set -e
 
@@ -83,6 +83,11 @@ command -v nix-shell 1>&2
 CMD=$(nix-shell --show-trace -p which -p "$PKG" --run 'which runhaskell')
 echo "Running '$CMD'" 1>&2
 "$CMD" -XOverloadedStrings
+```
+
+```{pipe="sh > /dev/null"}
+chmod +x runWithPkgs.sh
+(source "$stdenv/setup" && patchShebangs .)
 ```
 
 As tradition dictates, we'll start with `"hello world"`, which is trivial to do

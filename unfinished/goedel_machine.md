@@ -11,6 +11,7 @@ tee -a gm.v
 
 ```{pipe="sh"}
 chmod +x append
+(source "$stdenv/setup" && patchShebangs .)
 ```
 
 ## Specification ##

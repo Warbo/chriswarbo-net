@@ -32,6 +32,7 @@ echo "<img src='data:image/svg+xml;base64,$B64' />" | pandoc -f html -t json
 
 ```{pipe="sh"}
 chmod +x show
+(source "$stdenv/setup" && patchShebangs .)
 ```
 
 ```{.unwrap pipe="./show line"}

@@ -61,12 +61,13 @@ code=$(cat)
 
 ```{pipe="bash > /dev/null"}
 chmod +x code replaceTicks runGrey run runMono runRgb haskell
+(source "$stdenv/setup" && patchShebangs .)
 ln -s ./root/static/procedural/Pic.hs Pic.hs
 ```
 
 <!-- Preamble -->
 
-```{pipe="bash code > /dev/null"}
+```{pipe="./code > /dev/null"}
 import           Prelude hiding (pi)
 import           Pic
 import           Data.List
@@ -86,20 +87,20 @@ Cantor pairs (and triplets, or tuples in general) are way to enumerate multi-dim
 
 The idea is very simple: we trace a curve back and forth across the space until we've covered the whole thing. Here are the definitions we'll be using below:
 
- - `type Dimensions = Int`{.haskell pipe="bash code"}
+ - `type Dimensions = Int`{.haskell pipe="./code"}
     - How many `Dimensions`{.haskell} to work in
- - `type Range = Int`{.haskell pipe="bash code"}
+ - `type Range = Int`{.haskell pipe="./code"}
     - A bounded or unbounded `Range`{.haskell} of coordinates
- - `range n = if n == 0 then [0..] else [0..n]`{.haskell pipe="bash code"}
+ - `range n = if n == 0 then [0..] else [0..n]`{.haskell pipe="./code"}
     - A way to enumerate a `Range`{.haskell}
- - `type Point = [Int]`{.haskell pipe="bash code"}
+ - `type Point = [Int]`{.haskell pipe="./code"}
     - Storing *lists* of coordinates rather than tuples lets us use any number of `Dimensions`{.haskell}
- - `type Curve = [Point]`{.haskell pipe="bash code"}
+ - `type Curve = [Point]`{.haskell pipe="./code"}
     - A `Curve`{.haskell} is a line traced through the space
- - `data Shape = Shape {sDim :: Dimensions, sRange :: Range, sPred :: Point -> Bool}`{.haskell pipe="bash code"}
+ - `data Shape = Shape {sDim :: Dimensions, sRange :: Range, sPred :: Point -> Bool}`{.haskell pipe="./code"}
     - We define a `Shape`{.haskell} using a *predicate*, deciding whether a `Point`{.haskell} is in the `Shape`{.haskell} or not
 
-```{pipe="bash code > /dev/null"}
+```{pipe="./code > /dev/null"}
 cPx = [[x, y] | n <- [0..10], x <- [0..n], y <- [0..n], x + y == n]
 
 instance Show Shape where
@@ -112,7 +113,7 @@ instance Show Shape where
 
 The most obvious way to trace a `Curve`{.haskell} across a `Shape`{.haskell} is to start at `(0, 0)` (which for our purposes will be the *top* left of the images) and increase, say, the `x` coordinate to get `(1, 0)`, then `(2, 0)`, etc. until we exhaust the `Shape`{.haskell}'s `Range`{.haskell}, then jump to `(0, 1)` and do the same thing, and so on:
 
-```{.haskell pipe="bash code"}
+```{.haskell pipe="./code"}
 aaCurve :: Range -> Dimensions -> Curve
 aaCurve r 1 = [[x]  | x <- range r]
 aaCurve r n = [x:xs | x <- range r, xs <- aaCurve r (n - 1)]
@@ -123,7 +124,7 @@ aaShape (Shape d r p) = filter p (aaCurve r d)
 
 If we use this to trace a black-to-white gradient across a square image, we get this:
 
-```{pipe="bash code > /dev/null"}
+```{pipe="./code > /dev/null"}
 img    = Shape 2 dim (const True)
 
 white  = dim
@@ -141,19 +142,19 @@ aaGrad x y = let this   = DM.lookup [x, y] boxPixels
               in maybe (error "Out of range") id this
 ```
 
-```{pipe="bash runGrey > aagrad.ppm"}
+```{pipe="./runGrey > aagrad.ppm"}
 f = aaGrad
 ```
 
 ```{.unwrap pipe="bash"}
-bash root/static/procedural/includePic aagrad | wrapCode .unwrap | pandoc -t json
+bash ./root/static/procedural/includePic aagrad | wrapCode .unwrap | pandoc -t json
 ```
 
 ### A Finite Example ###
 
-Let's say we have a `circle`{.haskell} (where `dim = 2 ^ scale =`{.haskell} `main = print dim`{.haskell pipe="bash run"} is the width and height of the following images):
+Let's say we have a `circle`{.haskell} (where `dim = 2 ^ scale =`{.haskell} `main = print dim`{.haskell pipe="./run"} is the width and height of the following images):
 
-```{.haskell pipe="bash code"}
+```{.haskell pipe="./code"}
 pythagoras' :: Int -> Int -> Int
 pythagoras' a b = a ^ 2 + b ^ 2  -- There's no need to take the square root
 
@@ -165,7 +166,7 @@ circle = let centre = dim `div` 2
 
 Here's what we get when we use an axis-aligned curve to trace a black-to-white gradient through the `circle`{.haskell}:
 
-```{.haskell pipe="bash code"}
+```{.haskell pipe="./code"}
 circlePixels = aaPixels circle
 
 drawCircle x y = let this = DM.lookup [x, y] circlePixels
@@ -173,7 +174,7 @@ drawCircle x y = let this = DM.lookup [x, y] circlePixels
 
 ```
 
-```{pipe="bash runGrey > circ.ppm"}
+```{pipe="./runGrey > circ.ppm"}
 f = drawCircle
 ```
 
@@ -187,18 +188,18 @@ bash root/static/procedural/includePic circ
 Another thing we can do with `circle`{.haskell} is to approximate pi:
 
  - `pi * r^2`{.haskell} is the area of any circle
-    - `r = dim TICKdivTICK 2`{.haskell pipe="bash replaceTicks"} in our example
+    - `r = dim TICKdivTICK 2`{.haskell pipe="./replaceTicks"} in our example
  - `sRange s ^ sDim s`{.haskell} is the area of the bounding box of `s :: Shape`{.haskell}
     - `sRange circle = dim = 2 * r`{.haskell}
     - `sDim   circle = 2`{.haskell}
     - `boxArea = (2 * r)^2 = 4 * r^2`{.haskell} for `circle`{.haskell}
  - `circleArea / boxArea = (pi * r^2) / (4 * r^2) = pi / 4`{.haskell} follows from simple algebra
-    - Therefore `pi = 4 * circleArea / boxArea`{.haskell pipe="bash code"}
+    - Therefore `pi = 4 * circleArea / boxArea`{.haskell pipe="./code"}
  - Since each `Point`{.haskell} is an uniform distance from its neighbours, counting how many are in a `Shape`{.haskell} is a measure of the `Shape`{.haskell}'s area
-    - `aaArea     = length . aaShape`{.haskell pipe="bash code"} gives us the area inside a `Shape`{.haskell}
-    - `circleArea = fromIntegral $ aaArea circle`{.haskell pipe="bash code"}
-    - `boxArea    = fromIntegral $ aaArea (Shape (sDim circle) (sRange circle) (const True))`{.haskell pipe="bash code"}
- - Plugging these values into our definition of pi gives `cat code.hs; echo ""; echo "main = print pi"`{.haskell pipe="bash | bash haskell"}
+    - `aaArea     = length . aaShape`{.haskell pipe="./code"} gives us the area inside a `Shape`{.haskell}
+    - `circleArea = fromIntegral $ aaArea circle`{.haskell pipe="./code"}
+    - `boxArea    = fromIntegral $ aaArea (Shape (sDim circle) (sRange circle) (const True))`{.haskell pipe="./code"}
+ - Plugging these values into our definition of pi gives `cat code.hs; echo ""; echo "main = print pi"`{.haskell pipe="bash | ./haskell"}
     - Increasing the radius decreases the error, since the sampling gives a less 'jagged' approximation of our circle
 
 </details>
@@ -207,7 +208,7 @@ Another thing we can do with `circle`{.haskell} is to approximate pi:
 
 What happens if our `Range`{.haskell} is unbounded (ie. `range 0`{.haskell})? For example, we might define an infinitely-repeating pattern:
 
-```{.haskell pipe="bash code"}
+```{.haskell pipe="./code"}
 checkerboard :: Shape
 checkerboard = let f        = (`mod` 2) . (`div` 8)
                    g [x, y] = f x == f y
@@ -216,11 +217,11 @@ checkerboard = let f        = (`mod` 2) . (`div` 8)
 
 Obviously we can't draw the whole pattern, but we can draw a small section:
 
-```{.haskell pipe="bash code"}
+```{.haskell pipe="./code"}
 drawBoard x y = sPred checkerboard [x, y]
 ```
 
-```{pipe="bash runMono > board.ppm"}
+```{pipe="./runMono > board.ppm"}
 f = drawBoard
 ```
 
@@ -241,7 +242,7 @@ Cantor's approach handles infinite patterns like `checkerboard`{.haskell} by tra
     - If we have more dimensions, we fix the first coordinate (ie. `x`) and recurse using the rest of the dimensions
  - Once the `x` coordinate hits `0`{.haskell}, we jump to the start of the next line
 
-```{.haskell pipe="bash code"}
+```{.haskell pipe="./code"}
 cantorMax [_]    = True
 cantorMax (x:xs) = sum xs == 0
 
@@ -261,7 +262,7 @@ cantorShape :: Shape -> Curve
 cantorShape (Shape d r p) = filter p (cantorCurve r d)
 ```
 
-```{pipe="bash code > /dev/null"}
+```{pipe="./code > /dev/null"}
 -- Sanity checks
 cantorNextIncrements =
   ("cantorNext [0, 0, .., 0, n+1] => [0, 0, .., 1, n]",
@@ -298,7 +299,7 @@ cantorNextLength =
 
 To see how this works, we can trace a black-to-white gradient across a square, following the curve given by `cantorCurve`{.haskell}. Compare it to the axis-aligned version above:
 
-```{pipe="bash code > /dev/null"}
+```{pipe="./code > /dev/null"}
 -- This works for 2D; higher dimensions are more complicated
 
 cantor2DTotal :: Int
@@ -324,7 +325,7 @@ cantorIndex2D [x, y] = sum [1..x + y + 1] + y
 cantorGrad x y = cantor2DPosToGrey (cantorIndex2D [x, y])
 ```
 
-```{pipe="bash runGrey > cantorgrad.ppm"}
+```{pipe="./runGrey > cantorgrad.ppm"}
 f = cantorGrad
 ```
 
@@ -338,7 +339,7 @@ We start in the top left corner and draw a *diagonal* line from the top edge to 
 
 Let's revisit our `circle`{.haskell}. If we trace a gradient across it using Cantor's method, we get the following:
 
-```{pipe="bash code > /dev/null"}
+```{pipe="./code > /dev/null"}
 cantorPixels = pixelsOf cantorShape
 
 circleCantorPixels = cantorPixels circle
@@ -347,7 +348,7 @@ cantorCircle x y = let this = DM.lookup [x, y] circleCantorPixels
                     in maybe 255 id this
 ```
 
-```{pipe="bash runGrey > cantorcircle.ppm"}
+```{pipe="./runGrey > cantorcircle.ppm"}
 f = cantorCircle
 ```
 
@@ -359,14 +360,14 @@ bash root/static/procedural/includePic cantorcircle | wrapCode .unwrap | pandoc 
 
 If we apply this to the checkerboard pattern, we're now guaranteed to reach any finite coordinate in finite time:
 
-```{pipe="bash code > /dev/null"}
+```{pipe="./code > /dev/null"}
 checkerboardCantorPixels = cantorPixels (Shape (sDim checkerboard) (dim) (sPred checkerboard))
 
 cantorCheckerboard x y = let this = DM.lookup [x, y] checkerboardCantorPixels
                           in maybe 255 id this
 ```
 
-```{pipe="bash runGrey > cantorcheckerboard.ppm"}
+```{pipe="./runGrey > cantorcheckerboard.ppm"}
 f = cantorCheckerboard
 ```
 
@@ -378,7 +379,7 @@ bash root/static/procedural/includePic cantorcheckerboard | wrapCode .unwrap | p
 
 The checkerboard example is unbounded on the right and bottom, but *does* have a bound on the top and the left. Cantor's method can exploit this to zig-zag across the pattern, but it doesn't *rely* on there being any bounds. Instead of zig-zagging, we can follow a *spiral*, starting from any point, and be guaranteed to eventually reach all points. For example, if we treat the checkerboard as unbounded in *all* directions:
 
-```{pipe="bash code > /dev/null"}
+```{pipe="./code > /dev/null"}
 allCheckerboardPixels =
   let c    = dim `div` 2
       quad = cantorCurve c (sDim checkerboard)
@@ -392,7 +393,7 @@ allCheckerboard x y = let this = DM.lookup [x, y] allCheckerboardPixels
                        in maybe 255 id this
 ```
 
-```{pipe="bash runGrey > allcheckerboard.ppm"}
+```{pipe="./runGrey > allcheckerboard.ppm"}
 f = allCheckerboard
 ```
 
@@ -407,7 +408,7 @@ bash root/static/procedural/includePic allcheckerboard | wrapCode .unwrap | pand
 We can use Cantor's method to reduce the dimensions of a shape; for example, we can trace a line through the RBG colour cube to go from 3D to 1D, then trace the same line through an image to get a 2D representation:
 
 ```
-{pipe="bash code"}
+{pipe="./code"}
 rgbCube :: Shape
 rgbCube = let pointCount = fromIntegral $ dim * dim
               sideLength = floor $ pointCount ** 1/3
@@ -439,7 +440,7 @@ rgbEmbedding x y = let this = DM.lookup [x, y] rgbPixels
                     in maybe (255,255,255) rgbAdjust this
 ```
 
-```{pipe="bash runRgb > rgb.ppm"}
+```{pipe="./runRgb > rgb.ppm"}
 f = rgbEmbedding
 ```
 
@@ -452,7 +453,7 @@ bash root/static/procedural/includePic rgb | wrapCode .unwrap | pandoc -t json
 
 <!-- Tests -->
 
-```{pipe="bash code > /dev/null"}
+```{pipe="./code > /dev/null"}
 -- allTests can contain different types of tests, if they're wrapped in a T
 allTests = [cantorNextIncrements, cantorNextBumpsUp, cantorNextList,
             cantorNextMonotonic, cantorNextLength {-, rgbIncreasing -}]
@@ -463,7 +464,7 @@ runTests ((name, test):xs) = putStrLn ("Testing " ++ name) >>
                              runTests xs
 ```
 
-```{pipe="bash run > results"}
+```{pipe="./run > results"}
 main = runTests allTests
 ```
 

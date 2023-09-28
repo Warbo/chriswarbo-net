@@ -65,6 +65,7 @@ tee -a f.php
 
 ```{pipe="sh > /dev/null"}
 chmod +x append
+(source "$stdenv/setup" && patchShebangs .)
 ```
 
 ```{.php pipe="./append"}

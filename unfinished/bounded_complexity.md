@@ -15,7 +15,10 @@ func="\$@ -> $prop"
 echo -e "quickCheck ($prop)\n" >> tests.hs
 ```
 
-`chmod +x add*`{pipe="sh > /dev/null"}
+```{pipe="sh > /dev/null"}
+chmod +x add*
+(source "$stdenv/setup" && patchShebangs .)
+```
 
 I've written a lot about search procedures before: programs which generate
 values of some 'universal' format which satisfy some predicate. By 'universal' I

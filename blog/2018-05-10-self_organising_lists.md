@@ -16,7 +16,10 @@ PREFIX=":load code.hs"
 printf "${PREFIX}\n${CODE}" | ghci -v0
 ```
 
-`chmod +x hs ghci`{pipe="sh > /dev/null"}
+```{pipe="sh > /dev/null"}
+chmod +x hs ghci
+(source "$stdenv/setup" && patchShebangs .)
+```
 
 <!-- Content -->
 

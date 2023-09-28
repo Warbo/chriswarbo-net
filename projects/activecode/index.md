@@ -357,6 +357,7 @@ We can turn any Pandoc-supported format into Pandoc JSON by piping it through
 
 ```{pipe="sh > /dev/null"}
 chmod +x json.sh
+(source "$stdenv/setup" && patchShebangs .)
 ```
 
 For example, if we take the JSON for this Markdown table:
@@ -474,7 +475,10 @@ cat
 echo -n '`'
 ```
 
-`chmod +x dash`{pipe="sh > /dev/null"}
+```{pipe="sh > /dev/null"}
+chmod +x dash
+(source "$stdenv/setup" && patchShebangs .)
+```
 
 ```{pipe="sh > inline_hidden"}
 echo 'ls /' | ./dash

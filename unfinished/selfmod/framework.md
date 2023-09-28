@@ -22,14 +22,15 @@ echo "" >> code.hs
 
 ```{pipe="sh"}
 chmod +x append
+(source "$stdenv/setup" && patchShebangs .)
 ```
 
-```{pipe="sh append > /dev/null"}
+```{pipe="./append > /dev/null"}
 import Test.QuickCheck
 import Control.Applicative hiding (Const)
 ```
 
-```{.haskell pipe="sh append"}
+```{.haskell pipe="./append"}
 -- Lambda Calculus terms
 data Term a = Var Nat
             | Lam (Term a)
@@ -84,7 +85,7 @@ instance Monad Partial where
   (Later x) >>= f = Later (x >>= f)
 ```
 
-```{pipe="sh append"}
+```{pipe="./append"}
 instance Eq a => Eq (Val a) where
   C x == C y = x == y
   _   == _   = False

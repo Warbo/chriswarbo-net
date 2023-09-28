@@ -17,7 +17,10 @@ echo "hello world!"
 print("hello world!")
 ```
 
-`chmod +x shebang.*`{pipe="sh"}
+```{pipe="sh"}
+chmod +x shebang.*
+(source "$stdenv/setup" && patchShebangs .)
+```
 
 A "shebang", written as `#!`, is a special code at the start of a file, which is used to tell the OS how to execute that file. For example, the top line of this script tells the OS to run it using the `/bin/sh` program:
 

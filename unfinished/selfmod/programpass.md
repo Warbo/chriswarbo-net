@@ -30,6 +30,7 @@ echo "" >> SelfMod.hs
 ```{pipe="sh > /dev/null"}
 echo "" 1>&2
 chmod +x run append ghci
+(source "$stdenv/setup" && patchShebangs .)
 ```
 
 ```{.haskell pipe="./append > /dev/null"}

@@ -10,6 +10,7 @@ dot -Tpng | file2img | pandoc -t json
 
 ```{pipe="sh > /dev/null"}
 chmod +x graph.sh
+(source "$stdenv/setup" && patchShebangs .)
 ```
 
 Since switching to [NixOS][nixos] [a few months ago][nixpost], I've been

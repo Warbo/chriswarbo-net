@@ -139,6 +139,7 @@ exit
 
 ```{.odd pipe="sh"}
 chmod +x eval_mem
+(source "$stdenv/setup" && patchShebangs .)
 MAXMEM=1000 ./eval_mem big_list.nix || exit 1
 ```
 

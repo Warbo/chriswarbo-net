@@ -10,6 +10,7 @@ echo "" >> code.hs
 
 ```{pipe="sh > /dev/null"}
 chmod +x tangle
+(source "$stdenv/setup" && patchShebangs .)
 ```
 
 ```{.haskell pipe="tee -a code.hs"}

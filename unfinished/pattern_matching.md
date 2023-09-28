@@ -31,7 +31,8 @@ set -e
 
 ```{pipe="sh > /dev/null"}
 ls 1>&2
-chmod +x delayed.sh repl.sh > /dev/null
+chmod +x delayed.sh repl.sh
+(source "$stdenv/setup" && patchShebangs .)
 ```
 
 [Python Enhancement Proposal 0643](https://www.python.org/dev/peps/pep-0634)
