@@ -556,6 +556,14 @@ Which of these approaches is preferable depends on the situation. In any case,
 it's advisable to avoid nesting Nix commands inside each other too much, as it
 can be difficult to control and/or override things as they get wrapped up.
 
+<details class="odd">
+ <summary>Impure NIX_PATH</summary>
+
+**Those relying on impure paths like `<nixpkgs>` may find this useful, but I've
+come to hold the opinion that it's always better to specify exact Nixpkgs
+revisions in our expressions (as the default value of an argument, if we want to
+support overriding)**
+
 Also note that we can vary the values we use for the environment variables; for
 example, if we want to override the nixpkgs collection that's used by the build,
 we can just pass some other value for `NIX_PATH`. One thing to keep in mind is
@@ -632,6 +640,7 @@ runCommand "bar"
     echo "done" > "$out"
   ''
 ```
+</details>
 
 ### Wrapping Binaries ###
 
