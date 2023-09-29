@@ -6,7 +6,8 @@ from os         import getenv
 from sys        import exit, stderr, stdin
 
 get = lambda f: hfeed2atom(doc = BeautifulSoup(f.read(), 'html5lib'),
-                           url = 'http://chriswarbo.net/blog/')
+                           url = 'http://chriswarbo.net/blog/',
+                           atom_url = 'http://chriswarbo.net/blog.atom')
 
 blog = getenv('blog')
 
@@ -25,5 +26,5 @@ output = getenv('out')
 if output is None:
     print(feeds[0])
 else:
-    with open(output, 'w') as f:
+    with open(output, 'wb') as f:
         f.write(feeds[0].encode('utf-8'))
