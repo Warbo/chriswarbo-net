@@ -1,8 +1,9 @@
 ---
 title: Useful Nix Hacks
 dependencies: [ 'static/nix' ]
-packages: [ 'jq', 'nix-instantiate', 'nix-shell', 'timeout' ]
-sha256: "sha256-afAdlLip4AXycGsYH3oU8ASJz1IN/GZ/clJvixf9mzo="
+packages: [ 'jq', 'nix-instantiate', 'nix-shell', 'proot',  'repo-copies',
+            'timeout' ]
+sha256: "sha256-whD2ksJRY+ahpRQ+FeRd/2/gryTJ8z7TPMuOntwOo9g="
 ---
 
 Here are a few helpful Nix expressions I've accumulated over the years, in case
@@ -12,14 +13,23 @@ care about reproducibility you can use `nixpkgs = import <nixpkgs> {};`):
 
 <!-- Start with our custom config, including nixpkgs -->
 
+```{pipe="sh"}
+# These will reference /nix/store paths, which won't exist when we
+# use the --store flag; so make a local (dereferenced) copy.
+{
+  echo 'import /repos/nixpkgs { config = {}; overlays = []; }'
+} > nixpkgs.nix
+
+{
+  echo 'import /repos/nix-helpers { nixpkgs = import ./nixpkgs.nix; }'
+} > nix-helpers.nix
+```
+
 ```{pipe="cat >> preamble.nix"}
-with (with rec {
-  inherit (import ./root/static/nix {}) forceBuilds nix-helpers;
-  inherit (nix-helpers) nixpkgs;
-}; {
-  inherit forceBuilds;
-  inherit (nix-helpers) nixpkgs;
-});
+with {
+  inherit (import ./nix-helpers.nix) forceBuilds;
+  nixpkgs = import ./nixpkgs.nix;
+};
 ```
 
 ```{pipe="tee -a preamble.nix"}
