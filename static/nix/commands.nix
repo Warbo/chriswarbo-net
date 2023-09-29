@@ -1,6 +1,6 @@
 { attrsToDirs', bash, cacert, coq, fail, git, glibcLocales, haskellPackages, lib
-, mkBin, nix, nixpkgs1803, pandoc, panhandle, panpipe, python3, replace, wget
-, withNix, xidel }:
+, mkBin, nix, nix-helpers-source, nixpkgs, nixpkgs1803, pandoc, panhandle
+, panpipe, python3, replace, wget, withNix, xidel }:
 
 with builtins;
 with lib;
@@ -71,7 +71,10 @@ with rec {
               (fetchGit {
                 inherit name;
                 url = "http://chriswarbo.net/git/${name}.git";
-              }).outPath));
+              }).outPath) // {
+                nixpkgs = "${nixpkgs.path}";
+                nix-helpers = "${nix-helpers-source}";
+              });
       };
       script = ''
         #!${bash}/bin/bash
