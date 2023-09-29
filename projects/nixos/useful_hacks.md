@@ -338,7 +338,9 @@ EXPR='with nixListToBashArray {
 
 export PREFIX='forceBuilds [('
 export SUFFIX=')]'
-QUIET=1 ./eval "$EXPR" 2> >(tee >(cat 1>&2)) || true
+#QUIET=1 ./eval "$EXPR" 2> >(tee >(cat 1>&2)) || true
+# TODO: DIsabled due to filling up tmpfs
+echo "$EXPR"
 ```
 
 The `code` snippet turns the variables in `env` into a Bash array with the given
@@ -464,9 +466,13 @@ export SUFFIX='; }; assert forceBuilds [ x ]; toString x'
 PASS='runCommand "passingTest" {} '\'\''echo pass > "$out"'\'\'
 FAIL='runCommand "failingTest" {} "exit 1"'
 
-UNWRAP=1 ./eval "withDeps [ ($PASS) ] hello" > extraDepPass
+# TODO: Disabled due to filling tmpfs
 
- QUIET=1 ./eval "withDeps [ ($FAIL) ] hello" > extraDepFail 2>&1 || true
+#UNWRAP=1 ./eval "withDeps [ ($PASS) ] hello" > extraDepPass
+echo "$PASS" > extraDepPass
+
+# QUIET=1 ./eval "withDeps [ ($FAIL) ] hello" > extraDepFail 2>&1 || true
+echo "$FAIL" > extraDepFail
 ```
 
 This way, we can make a new package which is equivalent to the original when our
@@ -508,7 +514,15 @@ following will augment a given attribute set to contain the needed config:
 
 With this, we can say things like:
 
-```{pipe="sh"}
+```nix
+runCommand "foo" (withNix { myVar = "hello"; }) ''
+  echo "$myVar" > myFile
+  nix-store --add myFile > "$out"
+''
+```
+
+```{pipe="cat > /dev/null"}
+TODO: I've disabled this for now, since it fills the sandbox tmpfs
 FUNC='runCommand "foo" (withNix { myVar = "hello"; })'
  STR=$(printf "''\n    %s\n    %s\n  ''" 'echo "$myVar" > myFile' \
                                          'nix-store --add myFile > "$out"')
@@ -647,7 +661,9 @@ wrap {
 ```
 
 ```{pipe="sh"}
-UNWRAP=1 PREFIX='toString (' SUFFIX=')' ./eval "$(cat wrapScript.nix)"
+cat wrapScript.nix
+# TODO: DIsable due to filling up the tmpfs
+#UNWRAP=1 PREFIX='toString (' SUFFIX=')' ./eval "$(cat wrapScript.nix)"
 ```
 
 Alternatively, we can pass a file instead of a script:
@@ -663,7 +679,9 @@ wrap {
 
 ```{pipe="sh"}
 echo 'print("hello")' > script.py
-UNWRAP=1 PREFIX='toString (' SUFFIX=')' ./eval "$(cat wrapFile.nix)"
+cat wrapFile.nix
+# TODO: Disable due to filling up the tmpfs
+#UNWRAP=1 PREFIX='toString (' SUFFIX=')' ./eval "$(cat wrapFile.nix)"
 ```
 
 ### Piping Data to the Nix Store ###
@@ -700,7 +718,8 @@ chmod +x pipeToNix.sh
   echo '  packages = [ pipeToNix ];'
   echo '}'
 } > shell.nix
-nix-shell --store "$HOME" --show-trace --run './pipeToNix.sh'
+# TODO: DIsabled due to filling up the tmpfs
+#nix-shell --store "$HOME" --show-trace --run './pipeToNix.sh'
 rm shell.nix
 ```
 
