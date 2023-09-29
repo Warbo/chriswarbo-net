@@ -233,13 +233,13 @@ printf '\n}\n'
 
 ```{pipe="cat > eval"}
 #!/usr/bin/env bash
-set -e
+set -ex
 
 # Prevents trying to create /homeless-shelter
 export HOME="$PWD"
 
 # Tell withTimeout to abort if we use this much RAM
-export MAX_KB=2000000
+export MAX_KB=3000000
 
 # $1 is the expression we show
 printf '> %s\n\n' "$1"
