@@ -273,7 +273,7 @@ fi
 
 ```{pipe="sh > /dev/null"}
 chmod +x eval
-(source "$stdenv/setup" && patchShebangs .)
+(source "$stdenv/setup" && patchShebangs eval)
 ```
 
 ### Accessing Lists in Bash ###
@@ -677,7 +677,7 @@ echo "foo" | pipeToNix myFilename
 ```{.bash pipe="sh"}
 printf '$ %s\n' "$(cat pipeToNix.sh)"
 chmod +x pipeToNix.sh
-(source "$stdenv/setup" && patchShebangs .)
+(source "$stdenv/setup" && patchShebangs pipeToNix.sh)
 {
   echo 'with (import ./result.nix);'
   echo 'mkShell {'
