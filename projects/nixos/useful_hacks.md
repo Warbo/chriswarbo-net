@@ -84,67 +84,6 @@ withDeps = deps: drv: overrideDerivation drv (old: {
 });
 ```
 
-```{pipe="cat > def_fetchGitHashless.nix"}
-fetchGitHashless = args: stdenv.lib.overrideDerivation
-  # Use a dummy hash, to appease fetchgit's assertions
-  (fetchgit (args // { sha256 = hashString "sha256" args.url; }))
-
-  # Remove the hash-checking
-  (old: {
-    outputHash     = null;
-    outputHashAlgo = null;
-    outputHashMode = null;
-    sha256         = null;
-  });
-```
-
-```{pipe="cat > def_fetchLatestGit.nix"}
-# Get the commit ID for the given ref in the given repo
-latestGitCommit = { url, ref ? "HEAD" }:
-  runCommand "repo-${sanitiseName ref}-${sanitiseName url}"
-    {
-      # Avoid Nix sandbox, which prevents network access
-      __noChroot = true;
-
-      # Avoids caching. This is a cheap operation and needs to be up-to-date
-      version = toString currentTime;
-
-      # Required for SSL
-      GIT_SSL_CAINFO = "${cacert}/etc/ssl/certs/ca-bundle.crt";
-
-      buildInputs = [ git gnused ];
-    }
-    ''
-      REV=$(git ls-remote "${url}" "${ref}") || exit 1
-
-      printf '"%s"' $(echo "$REV"        |
-                      head -n1           |
-                      sed -e 's/\s.*//g' ) > "$out"
-    '';
-
-fetchLatestGit = { url, ref ? "HEAD" }@args:
-  with { rev = import (latestGitCommit { inherit url ref; }); };
-  fetchGitHashless (removeAttrs (args // { inherit rev; }) [ "ref" ]);
-```
-
-```{pipe="cat > def_latestGit.nix"}
-latestGit = { url, ref ? "HEAD" }@args:
-  with rec {
-    # Make a unique variable name for this repo/ref combo
-    key    = "${hashString "sha256" url}_${hashString "sha256" ref}";
-
-    # Look it up
-    envRev = getEnv "nix_git_rev_${key}";
-
-    # Fetch the latest revision, if needed
-    newRev = import (latestGitCommit { inherit url ref; });
-
-    # If the environment contains a revision, use it; otherwise fetch one
-    rev = if envRev == "" then newRev else envRev;
-  };
-  fetchGitHashless (removeAttrs (args // { inherit rev; }) [ "ref" ]);
-```
-
 ```{pipe="cat > def_dirsToAttrs.nix"}
 dirsToAttrs = dir: mapAttrs (n: v: if v == "regular" || v == "symlink"
                                       then dir + "/${n}"
@@ -528,86 +467,19 @@ But which breaks when our tests don't pass:
 
 ### Hashless Git Fetching ###
 
-Nix's fixed output derivations are really useful, for ensuring that inputs are
-as expected and for more extensive caching. Unfortunately they're not as useful
-in "dynamic" situations, e.g. where we fetch or calculate which git revision to
-use.
-
-We can work around this by overriding the hash-checking mechanism of `fetchgit`:
-
-```{pipe="cat def_fetchGitHashless.nix"}
-```
-
-With this, we can specify a git repo without needing a hash:
-
-```{pipe="sh"}
-# We call the git derivation 'x', force it to be built (to ensure hash checking
-# is skipped), then spit out its store path
-export PREFIX='with { x = '
-export SUFFIX='; }; assert forceBuilds [ x ]; toString x'
-
-UNWRAP=1 ./eval 'fetchGitHashless {
-    url = "http://chriswarbo.net/git/chriswarbo-net.git";
-    rev = "7a5788e";
-  }' || true  # FIXME: Disabled due to error
-```
+The `builtins.fetchGit` function can do this now. If you want to see my old
+hack, check out this site's git history.
 
 ### Fetch Latest Git ###
 
-Sometimes we want to use the latest version of a git repo, rather than keeping a
-hard-coded revision/checksum pair in our source. I don't recommend this for
-third-party libraries, but it can be useful for integration testing and for
-projects which have components spread across several repos.
-
-We can do this using a derivation which fetches the repo's `HEAD` (or a branch,
-etc.), imports the result and passes it to `fetchGitHashless`:
-
-```{pipe="cat def_fetchLatestGit.nix"}
-```
-
-Now we only have to provide a URL (and optionally a branch) and our repos will
-stay up to date, e.g.:
-
-```{pipe="sh"}
-export PREFIX='toString ('
-export SUFFIX=')'
-UNWRAP=1 ./eval 'import (fetchLatestGit {
-           url = "http://chriswarbo.net/git/turtleviewer.git";
-         }) {}' || true  # FIXME: Disabled due to error
-```
-
-Notice that we `import` the result of `latestGitCommit`; this prevents the
-dependencies of that derivation (notably `currentTime`) from becoming
-dependencies of the resulting repo, and hence causing everything to keep
-rebuilding. Importing ensures that only a change in the commit ID will trigger a
-rebuild. The downside is that we blur the distinction between evaluation and
-building, which can slow down any Nix commands which evaluate these expressions.
+The `builtins.fetchGit` function can do this now. If you want to see my old
+hack, check out this site's git history.
 
 ### Cached Latest Git ###
 
-When Nix evaluates an expression, the value of `builtins.currentTime` remains
-constant for the whole time Nix is running; this ensures values are consistent,
-and means we can avoid the cache (like in `latestGitCommit`) without having our
-sub-expressions re-evaluated over and over. This doesn't prevent our expressions
-being re-evaluated on *different* Nix runs though; which can be slow if we have
-a shell script that runs a bunch of separate Nix commands.
-
-We can prevent such slowdowns by augmenting `fetchLatestGit` to check for an
-environment variable first, using `builtins.getEnv`; if we set that environment
-variable in our shell script, we can stop Nix checking it over and over:
-
-```{pipe="cat def_latestGit.nix"}
-```
-
-Thanks to laziness, we will never check the repo if we find a revision in the
-environment. This uses one environment variable per repo/ref combination (taking
-the hash of each, to ensure no funny characters appear in the name); we could
-also use one big environment variable, e.g. containing a JSON array of repos,
-refs and commits. The advantage of multiple variables is that we can append new
-commits to the environment trivially; the advantages of one big variable are
-that it's trivial to see all of the available repos, refs and commits (rather
-than e.g. scanning through the environment), and we don't need to do any hashing
-since all of the variable data appears in the value rather than the name.
+Use the `tarball-ttl` option to control how Nix caches online queries (including
+`builtins.fetchGit` uses). If you want to see my old hack, check out this site's
+git history.
 
 ### Use Nix in Builders ###
 
