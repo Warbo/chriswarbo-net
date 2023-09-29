@@ -253,12 +253,17 @@ PREAMBLE="$PREAMBLE with import ./result.nix;"
 # 'toString', or forcing a derivation to be built, etc.
 EXPR="$PREAMBLE $PREFIX $1 $SUFFIX"
 [[ -n "$QUIET" ]] || echo "EVALUATING: ($EXPR)" 1>&2
-RESULT=$(withTimeout nix-instantiate \
-  --show-trace \
-  --read-write-mode \
-  --eval \
-  --store "$HOME" \
-  -E "$EXPR")
+REPOS=$(repo-copies)
+RESULT=$(withTimeout \
+  proot \
+    -b "$(readlink -f "$REPOS/nixpkgs")":/repos/nixpkgs \
+    -b "$(readlink -f "$REPOS/nix-helpers")":/repos/nix-helpers \
+    nix-instantiate \
+      --show-trace \
+      --read-write-mode \
+      --eval \
+      --store "$HOME" \
+      -E "$EXPR")
 
 # Show some debug/progress info when rendering; set QUIET if you want to use the
 # stderr on the page (e.g. using 2>&1 to show real error messages)
