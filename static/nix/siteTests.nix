@@ -83,10 +83,6 @@ mapAttrs testScript {
     buildInputs = [ commands.cleanup pandoc panhandle panpipe ];
     includeSite = false;
   };
-  xidel_args = {
-    buildInputs = [ xidel ];
-    includeSite = false;
-  };
 } // {
   reposRedirect =
     runCommand "reposRedirect" { pages = attrsToDirs' "repos" repos; } ''
