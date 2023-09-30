@@ -16,10 +16,28 @@ and hopefully easier to understand.
 Caveat: I'm talking about normal, everyday maths here; nothing exotic, like
 finite fields or whatever!
 
+NOTE: I will be using
+["over-bar" notation for negation](negative_bar_notation.html) (like $\ngtv{5}$)
 
+## You Ain't Gonna Need It! ##
 
+As always, we should avoid unnecessary complications where possible. Situations
+which are easily modelled without negative numbers shouldn't have them
+shoe-horned in "for the sake of it", or "by default" (the same way we shouldn't
+default to fractions, complex numbers, surreal numbers, etc. when they're
+not needed).
 
+For example: Alice has 3 apples, Bob has 4 apples; Alice gives 2 apples to
+Bob, how many apples does Bob then have? Bob is *gaining* apples, so negatives
+aren't needed. Of course, when a situation *does* make sense with negatives we
+*should* use them: e.g. extending the example to ask how many apples *Alice*
+ends up with, which we can model by adding $\ngtv{2}$ to her $3$. We could
+instead use subtraction, but that *also* requires negatives (in case of
+"underflow"), so [I prefer the former](subtraction.html).
 
+Whilst this may seem obvious, note that many programming languages get it wrong:
+e.g. having their `length` functions a (signed) *integer*, rather than an
+(unsigned) *natural number*; forcing callers to account for the negative cases.
 
 ## Defining Negatives with Plus and Zero ##
 
@@ -40,8 +58,9 @@ called the "identity" value for addition), i.e.
 
 (@zero) $$x + 0 = x$$
 
-We can replace $x$ with $0$, to get $0 + 0 = 0$, which matches our definition of
-a negative above. Hence the negative of $0$ is itself $0$:
+This tells us that, as a special case, $0 + 0 = 0$ (in the case that $x = 0$).
+Since that sum equals $0$, it fits our above definition of a negative. Hence the
+negative of $0$ is itself $0$:
 
 (@zero-bar) $$\ngtv{0} = 0$$
 
