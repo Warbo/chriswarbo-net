@@ -70,12 +70,13 @@ mapAttrs testScript {
   no_cruft = { };
   no_essays_links = { };
   no_empty_files = { };
-  posts_are_hentries = {
-    buildInputs = [
-      (haskellPackages.ghcWithPackages
-        (h: [ h.microformats2-parser h.directory h.bytestring ]))
-    ];
-  };
+  # TODO: microformats2-parser is marked as broken
+  #posts_are_hentries = {
+  #  buildInputs = [
+  #    (haskellPackages.ghcWithPackages
+  #      (h: [ h.microformats2-parser h.directory h.bytestring ]))
+  #  ];
+  #};
   posts_have_titles = { buildInputs = [ fail xidel ]; };
   redirect_posts = { };
   scripts_in_place = { buildInputs = [ fail xidel ]; };
