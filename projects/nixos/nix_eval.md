@@ -1,6 +1,8 @@
 ---
 title: nix-eval for Haskell
 packages: [ 'nix-shell' ]
+dependencies: [ 'static/nix' ]
+sha256: "sha256-0tGlTL8jzT8EeWDkzV/Ele6MHB4Q09WJeFPNzQsUcJo="
 ---
 
 The [`nix-eval` package](https://hackage.haskell.org/package/nix-eval) scratches
@@ -12,14 +14,16 @@ NOTE: This page is [active code](/projects/activecode/), so check out the "view
 source" link at the bottom of the page if you want to follow along with the
 examples!
 
+```{pipe="cat > nixpkgs.nix"}
+fetchTarball {
+  sha256 = "1l4hdxwcqv5izxcgv3v4njq99yai8v38wx7v02v5sd96g7jj2i8f";
+  url    = "https://github.com/nixos/nixpkgs/archive/"
+    + "94d80eb72474bf8243b841058ce45eac2b163943.tar.gz";
+}
+```
+
 ```{pipe="cat > hsPkgs.nix"}
-with {
-  nixpkgs1803 = (import <nixpkgs> {}).fetchgit {
-    url    = https://github.com/NixOS/nixpkgs.git;
-    rev    = "94d80eb";
-    sha256 = "1l4hdxwcqv5izxcgv3v4njq99yai8v38wx7v02v5sd96g7jj2i8f";
-  };
-};
+with { nixpkgs1803 = import ./nixpkgs.nix; };
 with import nixpkgs1803 {};
 (haskell.packages.ghc7103.override (old: {
   overrides = lib.composeExtensions
@@ -70,19 +74,44 @@ with import nixpkgs1803 {};
 #!/usr/bin/env bash
 set -e
 
+echo "WARNING: Skipping nix_eval execution for space reasons" 1>&2
+echo "TODO: Disabled for space reasons"
+exit 0
+
+export HOME="$PWD"
+
 # Separate all arguments with spaces
 PKGS=""
 for PKG in "$@"
 do
   PKGS="$PKGS $PKG"
+  echo "Using pkg '$PKG'" 1>&2
+  PKG=""
 done
 
-PKG="import ./hsPkgs.nix (h: [$PKGS])"
-echo "Using pkg '$PKG'" 1>&2
+{
+  echo 'with { inherit (import root/static/nix {}) nixpkgs; };'
+  echo 'nixpkgs.mkShell {'
+  echo '  name = "nix_eval-shell";'
+  echo '  packages = ['
+  echo '    which'
+  echo "    (import ./hsPkgs.nix (h: [$PKGS]))"
+  echo '  ];'
+  echo '}'
+} > shell.nix
+
 command -v nix-shell 1>&2
-CMD=$(nix-shell --show-trace -p which -p "$PKG" --run 'which runhaskell')
+
+CMD=$(nix-shell --store "$HOME" --show-trace --run 'which runhaskell')
 echo "Running '$CMD'" 1>&2
-"$CMD" -XOverloadedStrings
+if "$CMD" -XOverloadedStrings
+then
+  rm -f shell.nix
+else
+  CODE="$?"
+  rm -f shell.nix
+  exit "$CODE"
+fi
 ```
 
 ```{pipe="sh > /dev/null"}
