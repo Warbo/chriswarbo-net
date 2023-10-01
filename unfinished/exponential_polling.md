@@ -72,11 +72,9 @@ Instead, we'll define whether a waiting time is "reasonable" *in terms of* the
 time taken by the task; i.e. at the *relative* sizes of the `Task` and `Wait`
 bars in the diagram above.
 
-A particularly simple definition is to allow waiting up to twice as long as the
-time taken by the task; in other words, the amount of "wasted" time after the
-task has finished can be the same as the "productive" time before it finished.
-This seems "reasonable", since it avoids *most* of the waiting time being wasted
-(in the worst case, we would only waste *half* of the waiting time).
+A particularly simple definition is having *most* of the time spent on the actual task; in other words, the amount of "wasted" time after the
+task has finished should not exceed the "productive" time before it finished.
+In the worst case, where "wasted" time *equals* "productive" time, we only waste *half* of the total waiting time.
 
 ```
 Time →
@@ -92,73 +90,23 @@ Time →
                            └Poll    └Poll    └Poll
 ```
 
+For example, we should wait no more than 20 minutes for a task which takes 10 minutes; we should wait no more than a year for a task which takes 6 months; and so on.
 
-the same amount of time before and after the
-twice as long as the task takes. ensure we don't waste make these equal (that's valid since they are both time intervals). Hence for tasks which take ten minutes, we want
-to find out they've finished within the following ten minutes (i.e. within
-twenty minutes of starting the task); for tasks which take a year, we want to
-find out they've finished withing the following year (within two years of
-starting the task).
-
-This definition of "reasonably soon" has a nice interpretation: most of the time
-will be spent performing the task, rather than waiting. In the worst case, which
-still fits this definition of "reasonably soon", we will end up waiting twice as
-long as necessary: if the task took time `T`, we will spend another `T` waiting
-until we poll it. after the same time
-we will only find out that the task has finished
-"reasonably soon" after the task has finished, then most of the time
-case, where we find out as late as possible, we half of our time "wasted"
-
-that case, for a task which takes ten minutes
-it is "reasonable" to find out it's finished up to ten minutes later (i.e. we
-should perform a poll some time between ten and twenty minutes after starting);
-for tasks which take a year it is "reasonable" to find out they've finished up
-to a year later (i.e. we should perform a poll some time between one and two
-years after starting).
-
-using a *formula*. We'll write `T` to
-represent the time taken by the task, and `R` to represent the period of time
-afterwards which still counts as "reasonably soon".
-
-Notice that `T` and `R` both represent time intervals, so we can start by trying
-the simplest possible formula:
+We can represent this more precisely using a *formula*. We'll write `T` to
+represent the time taken by the task, and `W` to represent the period of time
+afterwards which is "wasted". Since `T` and `W` both represent time intervals, we can relate them by insisting that:
 
 ```
-R = T
+W ≤ T
 ```
 
-This says once a task has finished, we'll find out about it "reasonably soon" as
-long as we poll at some time between `T` and `T+R`
+To fulfill this requirement, we must poll at some time between `T` and `2T`. We can also poll as many times as we like *before* `T`, but the task won't be finished yet.
 
-the task has finished, so we
-can find the know when the task has finished
+## Avoiding Excessive Polling ##
 
-We want to ensure:
+We don't waste too much of our own time polling over and over. For example, if we keep checking something every minute, it would be hard to e.g. go to the bathroom, make ourselves some lunch, etc. Surprisingly, the `W ≤ T` constraint is enough to figure out an *optimal* polling strategy!
 
- - We don't waste too much of our own time checking it again and again. For
-   example, checking something every minute would prevent us from going to the
-   bathroom, making ourselves some lunch, etc.
- - Once our task has finished, we should poll it reasonably soon after. For
-   example, if we only poll once per day, but the task only takes 10 minutes, we
-   would have wasted 23 hours and 50 minutes!
-
-The central question is what counts as "too long". This will vary depending on
-how long the task itself takes: wasting a day is bad for a 10 minute task, but
-reasonable for a task that takes a year.
-
-Let's use `T` to represent the time taken by our task. We don't know what `T`
-will be beforehand, but we want to ensure we don't wait longer than `2T` before
-polling: any longer than that would mean *most* of our time was wasted.
-
-Surprisingly, this simple constraint is enough to figure out a polling strategy!
-In order to avoid waiting for `2T`, we need to consider the worst-case scenario,
-which is when we poll *just* before the task finishes; i.e. after `T-ε`, for
-some arbitrarily-small value `ε`.
-
-In this case, *all* of time until the next poll will be wasted (except for `ε`,
-which is negligible). At this point we've been waiting for `T-ε` (although we
-may have polled multiple times so far); if we wait *longer* than this amount
-before we next poll, our total waiting time will violate the `2T` constraint.
+We only need to poll again if the task hadn't finished yet; and in that case it's safe to wait that whole time ag then we know `P < T`; hence it's always safe to wait for `P` ensure `W` does not exceed `T` we need to consider the worst-case scenario: when we poll *just* before the task finishes.  In this case, the entire time until our next poll will be wasted, so we must poll before another `T` elapses. Since we don't *know* what `T` is, we need to use some other value; thankfully in this case we know the time we made our previous poll was prevent our wasted time `W` exceeding the task time `T`, the e must should not wait any more than `T` the time between polls cannIn symbols *all* of time until the next poll will be wasted, i.e. any remaining wait will be `W+ε` At this point we've been waiting for `T-ε`; if we wait *longer* than this amount before we next poll, our total waiting time will violate the `2T` constraint.
 
 Hence to avoid violating the `2T` constraint, the time until the next poll
 cannot be longer than the total time we've waited so far. We *could* poll more

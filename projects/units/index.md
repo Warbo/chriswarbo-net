@@ -37,7 +37,7 @@ I'll try to cross-link such cases.
 ## Categories ##
 
 [Quick wins](quick_wins.html) lists some ideas which are relatively easy to
-adopt right now.  More specific, in-deph pages are collected below, into rough
+adopt right now. More specific, in-deph pages are collected below, into rough
 categories.
 
 ### Units of Measure ###
