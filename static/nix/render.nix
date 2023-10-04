@@ -59,7 +59,6 @@ with rec {
     # See https://stackoverflow.com/a/23696995/884682 for the awk command
     stripHash = runCommand "strip-hash-${name}" { inherit file; } ''
       {
-        echo ${commands.relativise}
         echo ${commands.render_page}
         awk '!/^sha256:/ || f++' < "$file"
       } > "$out"
@@ -67,11 +66,13 @@ with rec {
   };
     if md ? sha256 then "${hashFile "sha256" "${stripHash}"}-" else "";
 
-  untested = runCommand "untested-${prefix + name}" (vars // hash // {
-    inherit dir file SOURCE_PATH TO_ROOT;
-    buildInputs = inputs ++ extraPkgs
-      ++ [ commands.relativise commands.render_page fail ];
-    postprocessor = md.postprocessor or "";
+  # A "raw" page has been rendered, but not postprocessed or checked. We do that
+  # in separate derivations, to prevent tweaks from triggering the whole site to
+  # re-render (note that, due to Panpipe, each page can take arbitrarily long!)
+  raw = runCommand "raw-${prefix + name}" (vars // hash // {
+    inherit dir file SOURCE_PATH;
+    buildInputs = inputs ++ extraPkgs ++ [ commands.render_page fail ];
+
   } // optionalAttrs (hasAttr "parseArgs" md) {
     parseArgF = writeScript "${name}-parseArgs.sh" ''
       parseArgs=()
@@ -90,8 +91,26 @@ with rec {
     cd "$dir"
     SOURCE="$file" render_page
     grep '^.' < "$DEST" > /dev/null || fail "Error: No output when rendering"
+    mv "$DEST" "$out"
+  '';
 
-    relativise < "$DEST" > "$out"
+  untested = runCommand "untested-${name}" {
+    inherit raw TO_ROOT;
+    buildInputs = [
+      commands.cleanup
+      commands.relativise
+    ]
+    # If postprocessor is given, it will usually refer to a commands element
+      ++ (if md ? postprocessor && hasAttr md.postprocessor commands then
+        [ (getAttr md.postprocessor commands) ]
+      else
+        [ ]);
+    postprocessor = md.postprocessor or "cat";
+  } ''
+    # Perform some post-processing steps: we always run cleanup and relativise,
+    # and pages are free to set another postprocessor in their YAML (defaults
+    # to 'cat', which passes its stdio along unchanged)
+    < "$raw" cleanup | "$postprocessor" | relativise > "$out"
   '';
 
   rendered = if unfinished then

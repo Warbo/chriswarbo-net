@@ -31,16 +31,12 @@ then
 fi
 
 # We don't use pandoc's --filter option, as it buffers stderr which makes
-# debugging harder. 'postprocessor' comes from the file's YAML (default: 'cat')
+# debugging harder.
 pandoc "${IN_OPTIONS[@]}"      |
     panpipe                    |
     panhandle                  |
-    pandoc "${OUT_OPTIONS[@]}" |
-    cleanup                    |
-    "${postprocessor:-cat}"    > "$DEST" ||
+    pandoc "${OUT_OPTIONS[@]}" > "$DEST" ||
     fail "Rendering pipeline failed"
 
 # Check output
-
-[[ -e "$DEST" ]]                      || fail "Error: '$DEST' wasn't created"
-grep '[^ \n\t]' < "$DEST" > /dev/null || fail "Error: Output is empty"
+grep -q '[^ \n\t]' < "$DEST" || fail "Error: Output is empty"

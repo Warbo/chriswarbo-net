@@ -105,7 +105,7 @@ with rec {
     wrapCode = { };
 
     render_page = {
-      paths = [ wrapped.cleanup fail pandoc panhandle panpipe ];
+      paths = [ fail pandoc panhandle panpipe ];
       vars = {
         defaultTemplate = ../../templates/default.html;
         LANG = "en_US.UTF-8";
