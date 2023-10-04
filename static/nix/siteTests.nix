@@ -80,10 +80,6 @@ mapAttrs testScript {
   posts_have_titles = { buildInputs = [ fail xidel ]; };
   redirect_posts = { };
   scripts_in_place = { buildInputs = [ fail xidel ]; };
-  summariesUnwrapped = {
-    buildInputs = [ commands.cleanup pandoc panhandle panpipe ];
-    includeSite = false;
-  };
 } // {
   reposRedirect =
     runCommand "reposRedirect" { pages = attrsToDirs' "repos" repos; } ''

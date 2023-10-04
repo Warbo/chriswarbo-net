@@ -5,15 +5,6 @@ import sys
 
 msg = lambda s: sys.stderr.write(s + "\n")
 
-def unwrapSummary(e):
-    """Matches '<p><summary>foo</summary></p>' and replaces it with
-    '<summary>foo</summary>'"""
-    p = e.parent
-
-    # Only unwrap paragraphs if this summary is the only thing in it
-    if p.name == u'p' and [c.name for c in p.contents] == [u'summary']:
-        p.replace_with(e)
-
 data = sys.stdin.read()
 doc  = BeautifulSoup(data, 'html.parser')
 
@@ -40,9 +31,6 @@ for tag in ['code', 'pre', 'span', 'p']:
     for e in doc.find_all(tag):
         e.extract() if repr(e) == '<' + tag + '></' + tag + '>' \
         else None
-
-for s in doc.find_all('summary'):
-    unwrapSummary(s)
 
 # When we put multiple lines in a document's 'extra_head' (e.g. script tags),
 # Pandoc turns the newlines into '¶' for some reason. Tidy spots this, so we
