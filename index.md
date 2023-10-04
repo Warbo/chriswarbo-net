@@ -8,7 +8,7 @@ extra_head:
         title="ChrisWarbo.net Atom feed"/>
 
 postprocessor: stripTitle
-packages: [ 'file2img', 'showPosts', 'stripTitle' ]
+packages: [ 'file2img', 'showPosts' ]
 dependencies: [ 'static/code.png', 'static/rants' ]
 ---
 
