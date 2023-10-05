@@ -3,7 +3,7 @@ title: Useful Nix Hacks
 dependencies: [ 'static/nix' ]
 packages: [ 'jq', 'nix-instantiate', 'nix-shell', 'proot',  'repo-copies',
             'timeout' ]
-sha256: "sha256-9ZEDvztAcuLnbu+DjWg1c2bDKwv8xzHZNn2elqHPh9A="
+sha256: "sha256-/yqAstJDHAMu9PM4AclPJJPC8vho+Io302Uhm6BcDRs="
 ---
 
 Here are a few helpful Nix expressions I've accumulated over the years, in case

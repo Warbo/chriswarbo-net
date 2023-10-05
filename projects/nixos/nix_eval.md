@@ -2,7 +2,7 @@
 title: nix-eval for Haskell
 packages: [ 'nix-shell' ]
 dependencies: [ 'static/nix' ]
-sha256: "sha256-0tGlTL8jzT8EeWDkzV/Ele6MHB4Q09WJeFPNzQsUcJo="
+sha256: "sha256-YQOCn/1STyI5BiSUDcmPdeY7WCp/rZasHLwT2PzBzGI="
 ---
 
 The [`nix-eval` package](https://hackage.haskell.org/package/nix-eval) scratches

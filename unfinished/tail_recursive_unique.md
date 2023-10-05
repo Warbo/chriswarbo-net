@@ -2,7 +2,7 @@
 title: Tail-recursive Unique
 packages: [ 'nix', 'time' ]
 dependencies: [ 'static/nix' ]
-sha256: "sha256-1vU1orudOrfj4umRfzQ503N2NNX9Y38jSesCgchJiPU="
+sha256: "sha256-YlLjJM7/+Pm6xfvn1dIoub8XKRGirBr2714emJzybeE="
 ---
 
 ## Intro to Nix
