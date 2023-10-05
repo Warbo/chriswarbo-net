@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import mf2py
 import os
@@ -18,7 +18,7 @@ def fail(m):
     sys.exit(1)
 
 def run_checks_on(to_check, checks):
-    map(lambda(b, m): b or fail(m + ': ' + repr(to_check)), checks)
+    list(map(lambda b_m: b_m[0] or fail(b_m[1] + ': ' + repr(to_check)), checks))
 
 def check_hcard(card):
     run_checks_on(card, [

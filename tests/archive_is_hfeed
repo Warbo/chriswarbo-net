@@ -9,11 +9,12 @@ def fail(m):
     sys.exit(1)
 
 def run_checks_on(to_check, checks):
-    map(lambda(b, m): b or fail(m + ': ' + repr(to_check)), checks)
+    for (b, m) in checks:
+        b or fail(m + ': ' + repr(to_check))
 
 def check_feed(feed):
-    posts = filter(lambda f: f != 'index.html',
-                   os.listdir(os.getenv('rendered') + '/blog/'))
+    posts = [f for f in os.listdir(os.getenv('rendered') + '/blog/')
+             if f != 'index.html']
 
     run_checks_on(feed, [
         (feed['type'] == ['h-feed'],          'Not a h-feed'),
