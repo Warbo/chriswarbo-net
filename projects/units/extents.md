@@ -1,6 +1,9 @@
 ---
-title: Extents
+title: Extents (work in progress)
 ---
+
+TODO: This is closely related to the idea of [Torsors](torsors.html), and the
+difference between affine points being vectors.
 
  - This is the idea of a bounded *region*
  - It can be defined by its boundary, e.g. start and end points in 1D
@@ -68,6 +71,3 @@ all of the following are *the same* extent:
 ```
 
 Hence we can drop the labels, to get a line like `┌──┬──┬──┬──┐`
-
-This loses information about the absolute We can add labels
-Positions When thinking about numbers, there is an important distinction

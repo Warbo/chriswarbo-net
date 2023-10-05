@@ -4,9 +4,7 @@ title: Bar Notation for Negation
 
 <div style="display: none;">
 
-$$
 \def\ngtv#1{{\overline{#1}}}
-$$
 
 </div>
 

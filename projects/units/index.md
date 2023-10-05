@@ -56,6 +56,8 @@ We can make life even simpler by limiting ourselves to the SI subset of metric.
 Over-bar notation can also be [extended to place-value
 notation](place_value.html), which makes long-subtraction obsolete.
 
+Bars can also be used to [keep track of matching parentheses](parentheses.html).
+
 ## Arithmetic ##
 
 Subtraction is ambiguous, conflating multiple distinct ideas:
@@ -68,10 +70,14 @@ It can be useful to distinguish between *absolute values* and the *relative
 differences between them*. This is pretty straightforward in one dimension, and
 lets us find the difference between Natural numbers (resulting in an Integer).
 
-This is closely related to vectors, and extends to signed areas (bivectors),
-signed volumes (trivectors), etc. in higher dimensions. Those concepts are
-core to Geometric Algebra, but also appear in fields like Algebraic Calculus.
-I'm not sure if they're directly compatible, but it would be interesting to
-find out!
+This is closely related to vectors, and [extends](extents.html) to signed areas
+(bivectors), signed volumes (trivectors), etc. in higher dimensions. Those
+concepts are core to Geometric Algebra, but also appear in fields like Algebraic
+Calculus.  I'm not sure if they're directly compatible, but it would be
+interesting to find out!
 
 [Vectors](projective_geometric_algebra.html)
+
+## Geometry ##
+
+[A work in progress](projective.html)
