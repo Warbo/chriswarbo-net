@@ -5,10 +5,9 @@ function fail {
     exit 1
 }
 
-echo '<pre><code></code></pre>' > source
-SOURCE="$PWD/source" DEST="$PWD/out.html" render_page
+echo '<pre><code></code></pre>' | cleanup > out.html
 
-grep '<code>' < out.html > /dev/null && fail "Didn't strip <code>"
-grep '<pre>'  < out.html > /dev/null && fail "Didn't strip <pre>"
+grep -q '<code>' < out.html && fail "Didn't strip <code>"
+grep -q '<pre>'  < out.html && fail "Didn't strip <pre>"
 
 echo "Success" 1>&2

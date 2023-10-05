@@ -43,7 +43,7 @@ mapAttrs testScript {
   };
   dirs_have_indices = { };
   empty_panpipe_blocks_stripped = {
-    buildInputs = [ commands.render_page ];
+    buildInputs = [ commands.cleanup ];
     includeSite = false;
   };
   essays_redirects_to_projects = { buildInputs = [ commands.relTo ]; };
