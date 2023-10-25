@@ -46,44 +46,7 @@ function pushToWeb() {
     DIR=$(build wholeSite)
 
     echo "Pushing '$DIR' to Web root" 1>&2
-
-    # Since all of our timestamps are 1970-01-01, browsers may cache old
-    # versions, since the server tells them the last-modified date is the same
-    # as they've already seen. To avoid this we'll touch all of the files that
-    # get sent across, which we discover here using a dry-run.
-    CHANGED=$(copyToWeb -n | grep -v '^sending ' | grep -v 'deleting ')
-
     copyToWeb
-
-    # Touch all of the files. We pipe across a bash script, since it's quicker
-    # than invoking a new connection for each file.
-    echo "$CHANGED" | while read -r LINE
-    do
-        F=$(echo "$LINE" | sed -e "s/'/'\\\''/g")
-        echo "cd /var/www/html; sudo touch '$F'"
-    done | ssh chriswarbo.net 'bash'
-
-    # Ensure symlinks are in place
-    for PAIR in '/opt/git	/var/www/html/git'            \
-                '/opt/repopages	/var/www/html/projects/repos' \
-                '/var/www/html/projects	/var/www/html/essays' \
-                '/var/www/html/projects/repos	/var/www/html/repos'
-    do
-        SRC=$(echo "$PAIR" | cut -f1)
-        DST=$(echo "$PAIR" | cut -f2)
-        if ssh chriswarbo.net "test -h '$DST'"
-        then
-            FOUND=$(ssh chriswarbo.net "readlink '$DST'")
-            if [[ "x$FOUND" = "x$SRC" ]]
-            then
-                true
-            else
-                echo "WARNING: '$DST' points to '$FOUND', not '$SRC'" 1>&2
-            fi
-        else
-            echo "WARNING: '$DST' is not a symlink to '$SRC'" 1>&2
-        fi
-    done
 }
 
 printf "Waiting for rendering lock..." 1>&2
