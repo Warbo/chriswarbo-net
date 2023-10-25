@@ -12,30 +12,6 @@ fi
 # We use a lot of recursion, which can overflow the stack, so try increasing it
 ulimit -s 100000 || true
 
-function copyToWeb() {
-    # Some explanation of these options:
-    #   --ignore-times because Nix sets them all to 1970
-    #   --checksum uses file content to determine what's changed, in lieu of the
-    #     timestamp
-    #   --delete removes any files on the destination which aren't in the source
-    #   --progress tells us what it's up to
-    #   --copy-unsafe-links causes absolute symlinks (or relative ones pointing
-    #     outside the source tree) to be dereferenced and copied as files/dirs
-    #   --archive causes directories and (safe) symlinks to be copied, and
-    #     permissions, etc. to be preserved
-    #   -e forces SSH to use a TTY, so sudo will work
-    #   --rsync-path tells us what to run on the remote end, in this case we use
-    #     sudo so we've got permission to write to /var/www. NOTE: If you use an
-    #     SSH passphrase, this might cause it to be sent in the clear! We use
-    #     keys so it's not an issue.
-    #   --exclude tells rsync to ignore a path, so it won't copy or delete it
-    # Note that the trailing / after $DIR will cause its contents to be copied
-    rsync --ignore-times --checksum --delete --progress --copy-unsafe-links \
-          --archive --compress -e "ssh -t" --rsync-path="sudo rsync"        \
-          --exclude /git --exclude /essays --exclude /repos "$@"            \
-          "$DIR/" chriswarbo.net:/var/www/html
-}
-
 function build() {
     echo "Building '$1'" 1>&2
     nix-build --show-trace -A "$1" static/nix
@@ -43,10 +19,14 @@ function build() {
 
 function pushToWeb() {
     # Get raw files
-    DIR=$(build wholeSite)
+    if [[ "$#" -eq 1 ]]
+    then
+        DIR="$1"
+    else
+        DIR=$(build wholeSite)
+    fi
 
-    echo "Pushing '$DIR' to Web root" 1>&2
-    copyToWeb
+    DO_PUSH=1 ./pushS3.sh "$DIR"
 }
 
 printf "Waiting for rendering lock..." 1>&2
@@ -70,7 +50,8 @@ printf "Waiting for rendering lock..." 1>&2
           ;;
 
       push)
-          pushToWeb
+          shift
+          pushToWeb "$@"
           ;;
 
       *)
@@ -83,7 +64,7 @@ build: Builds the HTML, CSS, etc. of the site. Outputs a directory containing
 test: Builds the site and runs tests on the result. Outputs a directory
       containing the result.
 
-push: Builds the site and pushes pages to chriswarbo.net over SSH.
+push: Builds the site and pushes pages to chriswarbo.net
           " 1>&2
           exit 1
           ;;
