@@ -41,17 +41,9 @@ function doBuild() {
     nix-build --show-trace -A "$1" static/nix
 }
 
-function build() {
-    doBuild untestedSite
-}
-
-function buildAndTest() {
-    doBuild wholeSite
-}
-
 function pushToWeb() {
     # Get raw files
-    DIR=$(buildAndTest)
+    DIR=$(doBuild wholeSite)
 
     echo "Pushing '$DIR' to Web root" 1>&2
 
@@ -106,12 +98,12 @@ printf "Waiting for rendering lock..." 1>&2
           ;;
 
       build)
-          build
+          doBuild untestedSite
           ;;
 
       test)
           ./static/checkSource
-          buildAndTest
+          doBuild wholeSite
           ;;
 
       push)
