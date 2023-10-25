@@ -36,14 +36,14 @@ function copyToWeb() {
           "$DIR/" chriswarbo.net:/var/www/html
 }
 
-function doBuild() {
+function build() {
     echo "Building '$1'" 1>&2
     nix-build --show-trace -A "$1" static/nix
 }
 
 function pushToWeb() {
     # Get raw files
-    DIR=$(doBuild wholeSite)
+    DIR=$(build wholeSite)
 
     echo "Pushing '$DIR' to Web root" 1>&2
 
@@ -94,16 +94,16 @@ printf "Waiting for rendering lock..." 1>&2
   case "$1" in
       page)
           shift
-          doBuild "$@"
+          build "$@"
           ;;
 
       build)
-          doBuild untestedSite
+          build untestedSite
           ;;
 
       test)
           ./static/checkSource
-          doBuild wholeSite
+          build wholeSite
           ;;
 
       push)
