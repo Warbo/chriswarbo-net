@@ -36,12 +36,17 @@ function copyToWeb() {
           "$DIR/" chriswarbo.net:/var/www/html
 }
 
+function doBuild() {
+    echo "Building '$1'" 1>&2
+    nix-build --show-trace -A "$1" static/nix
+}
+
 function build() {
-    ./static/build untestedSite
+    doBuild untestedSite
 }
 
 function buildAndTest() {
-    ./static/build wholeSite
+    doBuild wholeSite
 }
 
 function pushToWeb() {
@@ -97,7 +102,7 @@ printf "Waiting for rendering lock..." 1>&2
   case "$1" in
       page)
           shift
-          ./static/build "$@"
+          doBuild "$@"
           ;;
 
       build)
