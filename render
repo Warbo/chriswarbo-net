@@ -17,15 +17,21 @@ function build() {
     nix-build --show-trace -A "$1" static/nix
 }
 
-function pushToWeb() {
+function check() {
+    ./static/checkSource 1>&2
+    build wholeSite
+}
+
+function push() {
     BUCKET="${BUCKET:-www.chriswarbo.net}"
 
-    # Get raw files
+    # Default to building and testing the site; override by passing a path
+    # explicitly (e.g. the result of './render build')
     if [[ "$#" -eq 1 ]]
     then
         SITE="$1"
     else
-        SITE=$(build wholeSite)
+        SITE=$(check)
     fi
 
     # Sanity check
@@ -49,6 +55,7 @@ function pushToWeb() {
     # Our Nix result is full of symlinks, which must be dereferenced
     args+=(-L)
 
+    echo "Syncing '$SITE' with '$BUCKET'" 1>&2
     RCLONE_S3_REGION=eu-west-1 RCLONE_S3_PROVIDER=AWS  RCLONE_S3_ENV_AUTH=true \
       with-aws-creds \
         rclone sync "${args[@]}" "$SITE" ":s3:$BUCKET"
@@ -79,6 +86,7 @@ function pushToWeb() {
         ]
     }'
 
+    echo "Redirecting 404s in /git to github.com/warbo" 1>&2
     with-aws-creds aws s3api put-bucket-website \
         --bucket "$BUCKET" \
         --website-configuration "$CONFIG"
@@ -100,18 +108,17 @@ printf "Waiting for rendering lock..." 1>&2
           ;;
 
       test)
-          ./static/checkSource
-          build wholeSite
+          check
           ;;
 
       push)
           shift
-          pushToWeb "$@"
+          push "$@"
           ;;
 
       *)
           echo "
-Usage: $0 <build|test|push>
+Usage: $0 <build|test|push|page>
 
 build: Builds the HTML, CSS, etc. of the site. Outputs a directory containing
        the result.
@@ -119,7 +126,11 @@ build: Builds the HTML, CSS, etc. of the site. Outputs a directory containing
 test: Builds the site and runs tests on the result. Outputs a directory
       containing the result.
 
-push: Builds the site and pushes pages to chriswarbo.net
+push: Push a given site directory to chriswarbo.net. If no argument is given,
+      defaults to using the output of 'test'.
+
+page: Build a given attribute of the site, e.g. a page or directory. Requires an
+      argument, which is passed to nix-build's -A option.
           " 1>&2
           exit 1
           ;;
