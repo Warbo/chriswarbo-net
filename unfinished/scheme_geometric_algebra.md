@@ -85,7 +85,7 @@ for this page's Markdown. Here's some preamble to get us going:
 
 ;; We'll also define a suite of property-tests as we go, which the HTML export
 ;; will check to keep us honest!
-(module+ test (require rackunit rackcheck))
+(module+ test (require rackunit rackcheck-lib))
 ```
 
 I also prefer to write multiplication with the usual `×` symbol, but Scheme uses
@@ -553,12 +553,12 @@ changing sign whenever a pair of *neighbouring* units are swapped:
 
 ```scheme
 (= (× i₀ h₁ d₀ i₀ h₁)
-   i₀h₁d₀i₀h₁   ;; Shorthand for this product, in the same order
-   -i₀h₁i₀d₀h₁  ;; Swap d₀i₀ to -i₀d₀
-   i₀i₀h₁d₀h₁   ;; Swap -h₁i₀ to i₀h₁
-   -h₁d₀h₁      ;; Since (= i₀i₀ -1), by definition of imaginary units
-   d₀h₁h₁       ;; Swap -h₁d₀ to d₀h₁
-   d₀)          ;; Since (= h₁h₁ 1), by definition of hyperbolic units
+   i₀h₁d₀i₀h₁         ;; Shorthand for this product, in the same order
+   -i₀h₁i₀d₀h₁        ;; Swap d₀i₀ to -i₀d₀
+   i₀i₀h₁d₀h₁         ;; Swap -h₁i₀ to i₀h₁
+   -h₁d₀h₁            ;; Since (= i₀i₀ -1), by definition of imaginary units
+   d₀h₁h₁             ;; Swap -h₁d₀ to d₀h₁
+   d₀)                ;; Since (= h₁h₁ 1), by definition of hyperbolic units
 ```
 
 This "geometric product" is just an extension of ordinary multiplication, since
@@ -574,44 +574,38 @@ always convert fractions to their lowest form).
 We'll represent each flavour of GA unit using a Racket `struct`, with the index
 as a field:
 
-```scheme
+```{.scheme pipe="tee -a geo.rkt"}
 (struct hyperbolic (index))
 (struct dual       (index))
 (struct imaginary  (index))
 ```
 
-Each "part" of a `geometric` number as a `rational` multiple of a list of units:
+Each "part" of a `geometric` number will be list of `rational` or GA unit
+elements, and a `geometric` number contains a list of its parts:
 
-```scheme
-(struct part (multiple units))
-```
-
-Finally a `geometric` number is a list of its parts:
-
-```scheme
+```{.scheme pipe="tee -a geo.rkt"}
 (struct geometric (parts))
 ```
 
 TODO: Add contracts, printers, readers, etc.
 
-We'll write a `canonical` function to rearrange any `geometric` number into
-alphabetical order, as well as replacing squared units based on their
-definitions:
+We'll write a `canonical` function, which will iterate through the parts of a
+`geometric` number to ensure:
 
-```scheme
-(define/match (canonical-part p)
-  ;; A rationals is already canonical
-  [(? rational? p) p]
+ - The units within each part are in alphabetical order (negating as needed)
+ - Any repeated (i.e. squared) units within a part are replaced according to
+   their definition (with -1, 0 or 1)
+ - All `rational` elements within a part are multiplied into a single `rational`
+ - The parts of the `geometric` number are listed in alphabetical order
+ - Any parts with the same list of units are combined (adding their `rational`
+   entries)
+ - If the result contains only a `rational`, that is returned without being
+   wrapped in a `geometric` struct
 
-  ;; Any units multiplied by 0 are just 0
-  [(part (? zero? m) _) m]
-
-  ;; If a part has no geometric units, it's just a rational
-  [(part m '()) m]
-
-  [(part m us) (canonical-list us (list m))])
-
-(define/match (canonical-list elems acc)
+```{.scheme pipe="tee -a geo.rkt"}
+;; This function is very slow, since it will shuttle back-and-forth over the
+;; list (given in zipper form).
+(define/match (canonical-part-acc elems acc)
   ;; Base case: no more elements to process, reverse our accumulated units
   [('() acc) (reverse acc)]
 
@@ -623,55 +617,131 @@ definitions:
 
   ;; A pair of rationals get multiplied together
   [((cons (? rational? a) us) (cons (? rational? b) accs))
-   (canonical-list (cons (× a b) us) accs)]
+   (canonical-part-acc (cons (× a b) us) accs)]
 
   ;; Rationals move before geometric units (no negative, as they commute)
 
   [((cons (? rational? u) us)
     (cons (and acc (or (hyperbolic _) (dual _) (imaginary _))) accs))
-  (canonical-list (cons u (cons acc us)) accs)]
+  (canonical-part-acc (cons u (cons acc us)) accs)]
 
   ;; A pair of identical hyperbolic units can be replaced with 1. We can't just
   ;; remove them entirely, since we need to ensure at least one element remains!
   [((cons (hyperbolic a) us) (cons (hyperbolic b) accs))
    #:when (= a b)
-   (canonical-list (cons 1 us) accs)]
+   (canonical-part-acc (cons 1 us) accs)]
 
   ;; A pair of identical imaginary units can be replaced with -1.
   [((cons (imaginary a) us) (cons (imaginary b) accs))
    #:when (= a b)
-   (canonical-list (cons -1 us) accs)]
+   (canonical-part-acc (cons -1 us) accs)]
 
   ;; If indexes appear in descending order, swap them and introduce a negative
 
   [((cons (and u (hyperbolic a)) us) (cons (and acc (hyperbolic b)) accs))
    #:when (< a b)
-   (canonical-list (cons -1 (cons u (cons acc us))) accs)]
+   (canonical-part-acc (cons -1 (cons u (cons acc us))) accs)]
 
   [((cons (and u (dual a)) us) (cons (and acc (dual b)) accs))
    #:when (< a b)
-   (canonical-list (cons -1 (cons u (cons acc us))) accs)]
+   (canonical-part-acc (cons -1 (cons u (cons acc us))) accs)]
 
   [((cons (and u (imaginary a)) us) (cons (and acc (imaginary b)) accs))
    #:when (< a b)
-   (canonical-list (cons -1 (cons u (cons acc us))) accs)]
+   (canonical-part-acc (cons -1 (cons u (cons acc us))) accs)]
 
   ;; If flavours aren't in alphabetical order, swap them and negate
 
   [((cons (and u (dual _)) us)
     (cons (and acc (or (hyperbolic _) (imaginary _))) accs))
-   (canonical-list (cons -1 (cons u (cons acc us))) accs)]
+   (canonical-part-acc (cons -1 (cons u (cons acc us))) accs)]
 
   [((cons (and u (hyperbolic _)) us) (cons (and acc (imaginary _)) accs))
-   (canonical-list (cons -1 (cons u (cons acc us))) accs)]
+   (canonical-part-acc (cons -1 (cons u (cons acc us))) accs)]
 
   ;; If none of the above cases match, use this unit as-is
-  [((cons u us) accs) (canonical-list us (cons u accs))])
+  [((cons u us) accs) (canonical-part-acc us (cons u accs))])
 
-(define (canonical n)
-  (cond
-    ((rational? n) n)
-    ()))
+(define (canonical-part p)
+  ;; Always include a 1 multiplier, to ensure the result will start with a
+  ;; single rational. The overhead is low if the part is already canonical,
+  ;; since the existing rational multiplier will be the first element.
+  (canonical-part-acc p '(1)))
+
+(define/match (compare-parts a b)
+  ;; If both run out at once, they're equal
+  [('() '()) 'EQ]
+
+  ;; Shorter is less than
+  [((cons _ _) '()) 'GT]
+  [('() (cons _ _)) 'LT]
+
+  ;; Skip over equal units
+  [((cons (? rational?) a) (cons (? rational?) b)) (compare-parts a b)]
+  [((cons (dual a) as) (cons (dual b) bs)) #:when (= a b) (compare-parts as bs)]
+  [((cons (hyperbolic a) as) (cons (hyperbolic b) bs)) #:when (= a b) (compare-parts as bs)]
+  [((cons (imaginary a) as) (cons (imaginary b) bs)) #:when (= a b) (compare-parts as bs)]
+
+  ;; Compare indices (equal are handled above)
+  [((cons (dual       a) _) (cons (dual       b) _)) (if (< a b) 'LT 'GT)]
+  [((cons (hyperbolic a) _) (cons (hyperbolic b) _)) (if (< a b) 'LT 'GT)]
+  [((cons (imaginary  a) _) (cons (imaginary  b) _)) (if (< a b) 'LT 'GT)]
+
+  ;; Compare flavours
+  [((cons (dual _) _) (cons (or (hyperbolic _) (imaginary _)) _)) 'LT]
+  [((cons (or (hyperbolic _) (imaginary _)) _) (cons (dual _) _)) 'GT]
+  [((cons (hyperbolic _) _) (cons (imaginary _) _)) 'LT]
+  [((cons (imaginary _) _) (cons (hyperbolic _) _)) 'GT]
+
+  ;; Should never reach here
+)
+
+(define/match (canonical-parts parts acc)
+  ;; Base case: reverse the elements we accumulated
+  [('() acc) (reverse acc)]
+
+  ;; Wrap purely rational parts into multipliers of no units
+  [((cons (? rational? x) parts) acc)
+   (canonical-parts (cons (list x) parts) acc)]
+
+  ;; Combine neighbouring rational parts
+  [((cons (or (? rational? x) (list (? rational? x))) parts)
+    (cons (or (? rational? y) (list (? rational? y))) acc))
+   (canonical-parts (cons (+ x y) parts) acc)]
+
+  ;; Move rational parts before those with geometric units
+  [((cons (or (? rational? x) (list (? rational? x))) parts)
+    (cons (and acc (not (? rational?) (list (? rational?)))) accs))
+   (canonical-parts (cons x (cons acc parts)) accs)]
+
+  ;; When neighbouring unit lists are the same, keep one and combine their
+  ;; rational multipliers
+  [((cons (and part (cons m1 u)) parts) (cons (and acc (cons m2 _)) accs))
+   (match (compare-parts part acc)
+    ['EQ (canonical-parts (cons (cons (× m1 m2) u) parts) accs)]
+
+    ;; Otherwise arrange them alphabetically and recurse
+    ['LT (canonical-parts (cons part (cons acc parts)) accs)]
+    ['GT (canonical-parts parts (cons part (cons acc accs)))]
+    )]
+
+  ;; Otherwise accept this part and move on
+  [((cons part parts) acc) (canonical-parts parts (cons part acc))])
+
+(define/match (canonical n)
+  [(geometric parts)
+   (match (canonical-parts (map canonical-part parts) '())
+     ;; An empty sum (of parts) is defined to be zero
+     ['() 0]
+
+     ;; If the units annihilate to leave a rational, return it as-is
+     [(list (? rational? n)) n]
+
+     ;; Otherwise wrap up the resulting parts in a new geometric number
+     [parts (geometric parts)])]
+
+  ;; Return anything else unchanged (e.g. rationals)
+  [n n])
 ```
 
 with their ration are always in canonical form, we'll write a
