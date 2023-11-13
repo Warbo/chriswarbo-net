@@ -1,0 +1,11 @@
+From: Chris Warburton
+Date: Tue, 07 Nov 2023 13:18:37 +0000
+State: new
+Subject: Broken links in State, Monads and Effects blog post
+Message-Id: <d05d7b425b8df7d1-0-artemis@manjaro-arm>
+
+The links to GHC's source are broken (when pointing out that `IO` is just a
+wrapper around a `Void` state).
+
+Look for the latest definition in their `master` branch, and link to that
+exact commit on github.
