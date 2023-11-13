@@ -73,24 +73,8 @@ with rec {
           rev = "21dcda3edf86c28d9594887e92c5d7bef589897c";
         };
         postPatch = ''
-          mkdir -p "$out/rackcheck"
-          cp ${
-            builtins.toFile "rackcheck-main.rkt" ''
-              #lang racket/base
-
-              (define-syntax-rule (reprovide mod ...)
-                (begin
-                  (require mod ...)
-                  (provide (all-from-out mod ...))))
-
-              (reprovide rackcheck-lib
-                         rackcheck-lib/gen/base
-                         rackcheck-lib/gen/syntax
-                         rackcheck-lib/gen/unicode
-                         rackcheck-lib/prop
-                         rackcheck-lib/rackunit)
-            ''
-          } "$out/rackcheck/main.rkt"
+          rm -r examples
+          rm -r rackcheck
         '';
       })
     ];
