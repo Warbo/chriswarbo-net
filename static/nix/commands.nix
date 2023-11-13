@@ -1,6 +1,7 @@
-{ attrsToDirs', bash, cacert, coq, fail, git, glibcLocales, haskellPackages, lib
-, mkBin, nix, nix-helpers-source, nixpkgs, nixpkgs1803, pandoc, panhandle
-, panpipe, python3, replace, wget, withNix, xidel }:
+{ applyPatches, attrsToDirs', bash, cacert, coq, fail, git, glibcLocales
+, haskellPackages, lib, mkBin, nix, nix-helpers-source, nixpkgs, nixpkgs1803
+, pandoc, panhandle, panpipe, python3, racketWithPackages, replace, wget
+, withNix, xidel }:
 
 with builtins;
 with lib;
@@ -61,6 +62,38 @@ with rec {
         exec nix-shell "$@"
       '';
     };
+
+    racketWithRackCheck = racketWithPackages [
+      (applyPatches {
+        name = "rackcheck-with-main";
+        src = fetchGit {
+          name = "rackcheck-src";
+          url = "https://github.com/Bogdanp/rackcheck.git";
+          ref = "master";
+          rev = "21dcda3edf86c28d9594887e92c5d7bef589897c";
+        };
+        postPatch = ''
+          mkdir -p "$out/rackcheck"
+          cp ${
+            builtins.toFile "rackcheck-main.rkt" ''
+              #lang racket/base
+
+              (define-syntax-rule (reprovide mod ...)
+                (begin
+                  (require mod ...)
+                  (provide (all-from-out mod ...))))
+
+              (reprovide rackcheck-lib
+                         rackcheck-lib/gen/base
+                         rackcheck-lib/gen/syntax
+                         rackcheck-lib/gen/unicode
+                         rackcheck-lib/prop
+                         rackcheck-lib/rackunit)
+            ''
+          } "$out/rackcheck/main.rkt"
+        '';
+      })
+    ];
 
     repo-copies = mkBin {
       name = "repo-copies";
