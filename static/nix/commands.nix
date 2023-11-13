@@ -30,8 +30,6 @@ with rec {
     ghcWithOmega =
       haskellPackages.ghcWithPackages (h: [ h.control-monad-omega ]);
 
-    matplotlib = python3.withPackages (p: [ p.matplotlib p.numpy ]);
-
     git = mkBin {
       name = "git";
       paths = [ git ];
@@ -41,6 +39,8 @@ with rec {
         exec git "$@"
       '';
     };
+
+    matplotlib = python3.withPackages (p: [ p.matplotlib p.numpy ]);
 
     nix-instantiate = mkBin {
       name = "nix-instantiate";
