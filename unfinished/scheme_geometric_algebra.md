@@ -1277,5 +1277,10 @@ printf '">DOWNLOAD RACKET CODE</a>'
 ```
 
 ```{pipe="sh"}
-raco test geo.rkt
+raco test geo.rkt || {
+  echo "BEGIN geo.rkt"
+  cat -n geo.rkt
+  echo "END geo.rkt"
+  false
+} 1>&2
 ```
