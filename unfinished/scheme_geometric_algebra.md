@@ -16,6 +16,26 @@ FIXME: Can we extend an n-dimensional GA or PGA to a CGA? Seems to require an
 ₀₁₂₃₄₅₆₇₈₉
 -->
 
+```{pipe="sh > /dev/null"}
+# Commands to use in our pipe attributes: both append code to the end of geo.rkt
+# but one also shows it on the page and the other doesn't.
+{
+  echo '#!'"$(command -v bash)"
+  echo 'tee -a geo.rkt'
+  echo 'echo >> geo.rkt'
+  echo 'echo >> geo.rkt'
+} > show
+
+{
+  echo '#!'"$(command -v bash)"
+  echo 'cat >> geo.rkt'
+  echo 'echo >> geo.rkt'
+  echo 'echo >> geo.rkt'
+} > hide
+
+chmod +x show hide
+```
+
 **Note:** In this post I will avoid my preferred [overbar
 notation](/projects/units/negative_bar_notation.html), and instead write
 negatives using a "minus sign" (like $-123$) for consistency with Scheme/Racket
@@ -64,7 +84,7 @@ Racket library. I won't show *all* of the code on screen, so scroll to the
 bottom for a link containing the full source, as well as the "view source" link
 for this page's Markdown. Here's some preamble to get us going:
 
-```{.scheme pipe="tee geo.rkt"}
+```{.scheme pipe="./show"}
 #lang racket
 ;; We'll document our definitions using Scribble
 (require scribble/srcdoc
@@ -90,15 +110,6 @@ definition:
    ".")))
 ```
 
-```{.scheme pipe="tee -a geo.rkt"}
-(define × *)
-```
-
-```{pipe="cat >> geo.rkt"}
-(module+ test
-  (check-equal? (×) 1)
-)
-```
 
 ## Numbers in Scheme ##
 
@@ -134,6 +145,16 @@ I want to alter and extend this tower, using insights from GA.
 ;; TODO: Check that complex? implies number?
 ;; TODO: Check that (integer? 1/2) is #f and (rational? 1/2) is #t
 ;; TODO: Check that (rational? 1+1i) is #f and (rational? 1+1i) is #t
+```{.scheme pipe="./show"}
+(define × *)
+```
+
+```{pipe="./hide"}
+(module+ test
+  (test-equal? "Empty product is 1" (×) 1)
+)
+
+```
 ```
 
 ### Numbers in Racket ###
@@ -167,9 +188,6 @@ and specifies some extra details of its implementation. In particular, Scheme
 so its `number` level adds nothing else to `complex`. We'll ignore the `complex`
 level for now, since it turns out we can redefine it from GA primitives later.
 
-```{pipe="cat >> geo.rkt"}
-;; TODO: Check that number? implies complex?
-```
 
 Racket *does* add some "basement levels", which are strict subsets of `integer`:
 
@@ -179,14 +197,11 @@ Racket *does* add some "basement levels", which are strict subsets of `integer`:
  - `zero` is a sub-set of `natural` containing only `0`. It is closed under
    `+`, `×`, `gcd`, `lcm`, `max`, `min`, etc.
 
-```{pipe="cat >> geo.rkt"}
-;; TODO: Check that natural? implies integer?
-;; TODO: Check that zero? implies natural?
-;; TODO: Check that (natural? -1) is #f and (integer? -1) is #t
-;; TODO: Check that (zero? 1) is #f and (natural? 1) is #t
-;; TODO: Check that (zero? 0)
-;; TODO: Check the closure of all the natural operations
-;; TODO: Check the closure of all the zero operations
+```{pipe="./hide"}
+(module+ test
+  (test-case
+    "Check the Racket-specific levels that we'll use"
+))
 ```
 
 Even more fine-grained structure is [described in the Typed Racket
@@ -561,17 +576,14 @@ always convert fractions to their lowest form).
 We'll represent each flavour of GA unit using a Racket `struct`, with the index
 as a field:
 
-```{.scheme pipe="tee -a geo.rkt"}
-(struct hyperbolic (index))
-(struct dual       (index))
-(struct imaginary  (index))
+```{.scheme pipe="./show"}
 ```
 
 Each "part" of a `geometric` number will be list of `rational` or GA unit
 elements, and a `geometric` number contains a list of its parts:
 
-```{.scheme pipe="tee -a geo.rkt"}
-(struct geometric (parts))
+```{pipe="./hide"}
+;; Helper functions
 ```
 
 TODO: Add contracts, printers, readers, etc.
@@ -589,7 +601,6 @@ We'll write a `canonical` function, which will iterate through the parts of a
  - If the result contains only a `rational`, that is returned without being
    wrapped in a `geometric` struct
 
-```{.scheme pipe="tee -a geo.rkt"}
 ;; This function is very slow, since it will shuttle back-and-forth over the
 ;; list (given in zipper form).
 (define/match (canonical-part-acc elems acc)
@@ -715,6 +726,8 @@ We'll write a `canonical` function, which will iterate through the parts of a
   ;; Otherwise accept this part and move on
   [((cons part parts) acc) (canonical-parts parts (cons part acc))])
 
+```{.scheme pipe="./show"}
+;; Converts the given number? to its canonical form
 (define/match (canonical n)
   [(geometric parts)
    (match (canonical-parts (map canonical-part parts) '())
