@@ -49,71 +49,84 @@ notation.
 
 I've recently taken an interest in [geometric algebra](https://bivector.net)
 ("GA", not to be confused with [algebraic
-geometry](https://en.wikipedia.org/wiki/Algebraic_geometry)!), which extends the
-usual "number line" in a way that elegantly models geometric ideas such as
-circles, volumes, rotations, etc. I don't want to motivate or advocate for GA
-itself, since there are plenty of [much better resources](https://bivector.net)
-out there. Hence I'm going to focus on explanation and implementation of some
-basic foundations of GA, since that's a good way to check my own understanding
-of the subject!
+geometry](https://en.wikipedia.org/wiki/Algebraic_geometry)!), which goes beyond
+the usual ["number line"](https://en.wikipedia.org/wiki/Number_line) in a way
+that elegantly models geometric ideas such as circles, volumes, rotations,
+etc. I don't want to motivate or advocate for GA itself, since there are plenty
+of [much better resources](https://bivector.net/doc.html#five) out there. Hence
+I'm going to focus on explanation and implementation of some basic foundations
+of GA, since that's a good way to check my own understanding of the subject!
 
-In this post I won't assume any prior knowledge of GA or related structures, but
-I will assume *some* familiarity with high-school algebra, like how to multiply
-groups of terms, e.g.
+I hope this can be useful, even to non-programmers (feel free to skip past the
+implementation sections, if they get too gnarly!). For programmers, I didn't
+want to write yet another library of standalone functions/classes; I instead
+wanted to think holistically about how GA can be incorporated more deeply into a
+language. I chose [Scheme](https://www.scheme.org) for this project since it's
+elegant, logical, principled and consistent; popularity and speed are not
+important (existing libraries address that better than I could!). I'll use
+[Racket](https://racket-lang.org), since that's the version of Scheme I'm most
+familiar with.
 
-$$(2 + x)(5 + 3y) = 10 + 5x + 6y + 3xy$$
-
-I will also be using a lot of
-[s-expressions](/blog/2017-08-29-s_expressions.html), AKA Lisp syntax or prefix
-notation. This may be unfamiliar, but is pretty simple and removes ambiguities
-like precedence: operations are written `(in parentheses)`, with the operation's
-name/symbol first and its inputs after. For example, the above equation could be
-written as follows:
-
-```scheme
-(= (× (+ 2 x) (+ 5 (× 3 y)))
-   (+ 10 (× 5 x) (× 6 y) (× 3 x y)))
-```
-
-Rather than writing a bunch of standalone functions/classes, I wanted to think
-holistically about how GA can be incorporated more deeply into a language. For a
-project like this I prefer a language that's elegant, logical, principled and
-consistent; rather than popular or fast. This makes Scheme a good choice; and
-I'll focus on Racket since that's the version I'm most familiar with. Note that
-I won't be paying much attention to efficiency (existing libraries address that
-better than I could!)
+We'll start with a brief look at numbers and arithmetic in Racket, why Geometric
+Algebra requires extensions to those, and build a working implementation. Then
+we'll see some applications, how to use different geometries, and some design
+considerations for the programming API.
 
 This page is [active code](/projects/activecode) which generates a working
 Racket library. I won't show *all* of the code on screen, so scroll to the
-bottom for a link containing the full source, as well as the "view source" link
-for this page's Markdown. Here's some preamble to get us going:
+bottom for a link containing the full source, as well as the usual "view source"
+link for this page's Markdown. Here's the start of the implementation, to get us
+going:
 
 ```{.scheme pipe="./show"}
 #lang racket
-;; We'll document our definitions using Scribble
+```
+
+### Required Knowledge ###
+
+In this post I won't assume any prior knowledge of GA or related structures
+(e.g. complex numbers, vectors, etc.) but I will assume *some* familiarity with
+high-school algebra, like how to multiply groups of terms, e.g.
+
+$$(2 + a)(5 + 3b) = 10 + 5a + 6b + 3ab$$
+
+I will be writing a lot of [s-expressions](/blog/2017-08-29-s_expressions.html)
+(AKA Lisp syntax or [prefix
+notation](https://en.wikipedia.org/wiki/Polish_notation)) since that matches the
+programming language I'm using (Scheme). This style may be unfamiliar, but is
+pretty simple and has the benefit of removing [ambiguities like
+precedence](https://en.wikipedia.org/wiki/Order_of_operations) (which tend to
+plague those trying to learn mathematics!). In an s-expression, operations are
+written `(in parentheses)`, with the operation's name/symbol first and its
+inputs after.  For example, the above equation could be written as follows (I've
+lined up the two inputs of `=` for clarity, but the meaning doesn't depend on
+the layout):
+
+```scheme
+(= (× (+ 2 a) (+ 5 (× 3 b)))
+   (+ 10 (× 5 a) (× 6 b) (× 3 a b)))
+```
+
+```{pipe="./hide"}
+;; We'll write our documentation using Scribble
 (require scribble/srcdoc
          (for-doc racket/base scribble/manual))
 
-;; We'll also define a suite of property-tests as we go, which the HTML export
-;; will check to keep us honest!
+;; We'll define a test suite as we go, as a "sub-module" called 'test'
 (module+ test (require rackunit rackcheck-lib))
 ```
 
-I also prefer to write multiplication with the usual `×` symbol, but Scheme uses
-the asterisk `*` instead (since that's easier to type). We can fix this with a
-definition:
-
-```{pipe="cat >> geo.rkt"}
-(provide
-  (proc-doc/names
-    × (-> number? ... number?) (z ...)
-  ("Returns the product of all the given numbers, or the multiplicative unit "
-   (racket 1)
-   " if no numbers are given. This is an alias for Racket's "
-   (racket *)
-   ".")))
-```
-
+We'll also be using Scheme's `quote` and `quasiquote` features, which may need a
+little explanation for those who aren't used to Scheme programming. A
+"quotation" is prefixed by a single-quote/apostrophe `'`, and is used to
+represent data without attempting to execute it. For example, the value of `'(+
+2 5)` is a *list* containing three elements (like `["+", 2, 5]` in other
+languages; and *unlike* `(+ 2 5)`, whose value is the `number` `7`). A
+"quasiquotation" is prefixed by a backtick `` ` ``, and is like a quotation
+except that expressions prefixed with a comma `,` are "unquoted"; for instance
+`` `(10 plus 20 is ,(+ 10 20)) `` gives the list `(10 plus 20 is 30)`
+(quasiquoting is similar to "string splicing" in other languages, like
+`"10 plus 20 is ${10 + 20}"`).
 
 ## Numbers in Scheme ##
 
