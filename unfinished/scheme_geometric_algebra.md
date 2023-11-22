@@ -310,64 +310,67 @@ with such size-based distinctions here.
 I don't want to give a full account of GA, but a nice starting point for our
 numerical tower is to consider the equation:
 
-$$x^2 + 1 = 0$$
+$$a^2 + 1 = 0$$
 
 Or, as an s-expression (where [the `sqr`
 function](https://docs.racket-lang.org/reference/generic-numbers.html#%28def._%28%28lib._racket%2Fmath..rkt%29._sqr%29%29)
 multiplies a number by itself):
 
 ```scheme
-(= (+ (sqr x) 1)
+(= (+ (sqr a) 1)
    0)
 ```
 
 This looks simple enough, but let's take a moment to consider its broader
 meaning. In particular, the sum includes one quantity that's *squared*
-`(sqr x)` and one quantity that *isn't squared* `1`. This feels "off", for a
+`(sqr a)` and one quantity that *isn't squared* `1`. This feels "off", for a
 couple of reasons:
 
- - As a physicist: the variable `x` must have different units than the constants
-   `1` and `0` in order to be dimensionally consistent. For example, if `x` were
+ - As a physicist: the variable `a` must have different units than the constants
+   `1` and `0` in order to be dimensionally consistent. For example, if `a` were
    a length then the constants must be areas.
  - As a computer scientist: this feels like an ill-typed expression, like we're
    mixing up encodings of semantically-distinct quantities.
 
 Sure, those fears *might* be unfounded; but we can put ourselves at ease by
 re-stating the equation entirely with squared terms. This requires introducing a
-couple of extra variables, which we'll call `y` and `z`:
+couple of extra variables, which we'll call `b` and `c`:
 
-``` scheme
-(= (+ (sqr x) (sqr y))
-   (sqr z))
+```scheme
+(= (+ (sqr a) (sqr b))
+   (sqr c))
 ```
 
-Where `(= (sqr y) 1)` and `(= (sqr z) 0)` by definition. We can also
-rearrange this equation to find that `(= (sqr x) (- (sqr y)))` and hence
-`(= (sqr x) -1)`.
+Now let's solve this equation:
 
-You may be tempted to "square root" these and say that `(= y 1)`, `(= z 0)` and
-(if you're familiar with complex numbers) `(= x i)`; however, those are just
-*some* of the solutions to these equations. Geometric Algebra provides more
-solutions, by extending our arithmetic to include *extra numbers*! These come in
-three flavours, and were initially developed using various standalone theories;
-we'll unify them into the larger framework of GA, but will keep their original
-names for posterity (again, don't worry if you've not seen these before):
+ - We know that `(= (sqr b) 1)` and `(= (sqr c) 0)`, by definition.
+ - We can rearrange the equation to find that `(= (sqr a) (- (sqr b)))`,
+   and hence `(= (sqr a) -1)`
 
- - We'll call solutions to `(= (sqr y) 1)` (other than 1 and -1) [hyperbolic
+You may be tempted to "square root" these and say that `(= b 1)`, `(= c 0)` and
+(if you're familiar with complex numbers) `(= a i)`; however, those are just
+*some* of the possible solutions to these equations. Not only are there negative
+solutions too, but Geometric Algebra provides even more by extending our
+arithmetic to include *extra numbers*! These come in three flavours (apologies
+for the intimidating names; they actually pre-date Geometric Algebra!):
+
+ - We'll call solutions to `(= (sqr b) 1)` (other than 1 and -1) [hyperbolic
    units](https://en.wikipedia.org/wiki/Split-complex_number) and write them as
    `h₀`, `h₁`, `h₂`, etc.
- - We'll call solutions to `(= (sqr z) 0)` (other than 0) [dual
+ - We'll call solutions to `(= (sqr c) 0)` (other than 0) [dual
    units](https://en.wikipedia.org/wiki/Dual_numbers) and write them as `d₀`,
    `d₁`, `d₂`, etc.
- - We'll call solutions to `(= (sqr x) -1)` [imaginary
+ - We'll call solutions to `(= (sqr a) -1)` [imaginary
    units](https://en.wikipedia.org/wiki/Imaginary_number) and write them as
    `i₀`, `i₁`, `i₂`, etc.
 
 Practical applications of GA will only use a few of these units, but I want my
 code to support arbitrarily-many. Each of these units is a perfectly legitimate
-`number`, but they are *not* `rational`; hence they must occur at a higher level
-of our numerical tower. We'll define a new level called `geometric` to contain
-all of them.
+`number`, but they are *not* part of `rational`; hence they must occur at a
+higher level of our numerical tower. We'll define a new level called `geometric`
+to contain all of them. I'll be referring to them as "GA units" or
+"non-`rational` units"; we *cannot* call them "irrational", since that already
+means something else!
 
 <figure>
 
@@ -393,7 +396,7 @@ all of them.
 These non-`rational` numbers do not appear on the familiar [number
 line](https://en.wikipedia.org/wiki/Number_line). We'll give their geometric
 interpretation later, with a section explaining each flavour. For now we'll just
-treat them as symbolic constants, just like we treat
+treat them as symbolic constants, the same way we treat
 [τ](https://tauday.com/tau-manifesto),
 [𝑒](https://en.wikipedia.org/wiki/E_(mathematical_constant)),
 [ϕ](https://en.wikipedia.org/wiki/Golden_ratio), etc.
