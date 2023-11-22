@@ -418,7 +418,80 @@ treat them as symbolic constants, the same way we treat
 [𝑒](https://en.wikipedia.org/wiki/E_(mathematical_constant)),
 [ϕ](https://en.wikipedia.org/wiki/Golden_ratio), etc.
 
-<!--
+### Representing GA Units In Scheme ###
+
+This is pretty simple, since each unit contains two pieces of information: the
+flavour and the index. We'll represent the flavour using a symbol: either `h` or
+`d` or `i`. The index will just be a `number` (we'll be sticking to `natural`
+indexes, but won't enforce that). We'll combine these into a *pair*, by either
+giving them as inputs to the `cons` operation, like `(cons 'd 0)` for `d₀`; or
+with a quotation, like `'(i . 2)` for `i₂` (where the `.` makes this a pair,
+rather than a list).
+
+It *looks like* we're calling functions named `d`, `h` and `i` with a `number`
+as input; but for something to be a name, there must be some underlying
+definition that it's referring to. In this case we have no definitions (or, if
+you prefer, symbols are merely names for themselves). These are ["uninterpreted
+functions"](https://en.wikipedia.org/wiki/Uninterpreted_function), meaning
+Racket will just pass around these expressions as-is.
+
+It may feel like cheating to claim these values are "incorporated deeply" into
+the language, compared to "usual" numbers. Admittedly the `natural` type is a
+special case (due to its place-value notation), but it turns out that *all* of
+Scheme's standard numerical tower relies on this "uninterpreted function" trick!
+
+Consider the simplest level, `integer`: this includes both `natural` numbers and
+their negatives. The latter are represented by prefixing the former with a `-`
+symbol: in other words, as an uninterpreted function call! The higher levels,
+`rational` and `complex`, use uninterpreted functions with two inputs (numerator
+& denominator, for `rational`; "real" & "imaginary" for `complex`).
+
+In any case, here are some *actual* functions for operating on these GA units:
+
+```{pipe="./hide"}
+(module+ test
+  (define gen:flavour
+    (gen:one-of '(d h i)))
+
+  (define gen:unit-ga
+    (gen:let ([f gen:flavour]
+              [i gen:natural])
+      (cons f i))))
+```
+
+```{.scheme pipe="./show"}
+;; Predicates for spotting if a value is a GA unit (i.e. an appropriate pair)
+
+(define/match (unit-d? n)
+  [((cons 'd index)) (number? index)]
+  [(_) #f])
+
+(define/match (unit-h? n)
+  [((cons 'h index)) (number? index)]
+  [(_) #f])
+
+(define/match (unit-i? n)
+  [((cons 'i index)) (number? index)]
+  [(_) #f])
+
+(define unit-ga? (disjoin unit-h? unit-d? unit-i?))
+
+;; Functions to access the flavour and index of a GA unit. The 'car'/'cdr'
+;; functions return the first/second element of a pair.
+(define unit-flavour car)
+(define unit-index cdr)
+
+;; Helper for sorting units alphabetically
+(define (unit<? x y)
+  (let ([fx (unit-flavour x)]
+        [fy (unit-flavour y)]
+        [ix (unit-index  x)]
+        [iy (unit-index  y)])
+    (or (symbol<? fx fy)
+        (and (equal? fx fy) (< iy ix)))))
+```
+
+<!-- TODO: READER MACROS
 
 ### What About This `complex` Thing?  ###
 
