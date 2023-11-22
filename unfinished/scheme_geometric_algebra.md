@@ -1276,6 +1276,13 @@ base64 -w0 < geo.rkt
 printf '">DOWNLOAD RACKET CODE</a>'
 ```
 
+<details class="odd">
+ <summary>Test results</summary>
+
+The generated code includes unit/property tests defined using `rackunit` and
+`rackcheck`. They are executed when this page is rendered to HTML: failure will
+abort the rendering process; when successful the output is written here:
+
 ```{pipe="sh"}
 raco test geo.rkt || {
   echo "BEGIN geo.rkt"
@@ -1284,3 +1291,5 @@ raco test geo.rkt || {
   false
 } 1>&2
 ```
+
+</details>
