@@ -3,13 +3,17 @@ title: A Numerical Tower For Geometric Algebra
 packages: ['racketWithRackCheck']
 ---
 
-FIXME: Complex numbers are commutative so i = h0h1, it does not work to have just i0
-FIXME: Quaternions also need combinations of h
-FIXME: What is the meaning of i0 etc? They're anticommutative...
-FIXME: A d point can be thought of as an ideal point at infinity
+<!--
 FIXME: Can we extend an n-dimensional GA or PGA to a CGA? Seems to require an
     extra h, but which to choose if we're already using those for our direction
-    vectors? Seems naff to reserve h0 or something since GA pays without needingit
+    vectors? Seems naff to reserve h0 or something since GA pays without needing
+    it
+TODO: Reader macros
+TODO: Use provide, etc. to replace number?, zero?, +, etc.
+TODO: Applications: include subalgebras corresponding to existing things, e.g.
+  complex numbers, quaternions, etc. (hence we gain their applications too)
+TODO: Using `geometric` to implement (vanilla) GA, PGA, CGA, etc.
+-->
 
 <!-- Unicode for copy/pasting:
 ×
