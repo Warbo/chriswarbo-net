@@ -130,31 +130,84 @@ definition:
 ────┴──────────┴────
 ```
 
- <figcaption>Scheme's numerical tower</figcaption>
+ <figcaption>
+  Scheme's standard numerical tower.
+ </figcaption>
 </figure>
 
-Scheme numbers form a "numerical tower" including `integer`, `rational`, `real`,
-`complex` and `number`: each a subset of the next. For example, an `integer`
-like `-42` is also a `rational` (like `-42/1`) and a `complex` like (`-42+0i`).
-I want to alter and extend this tower, using insights from GA.
+Scheme uses the asterisk `*` for multiplication, since it's easy to type on a
+standard US keyboard. I prefer the usual `×` symbol, for clarity. Hence we'll
+define `×` to be `*`, so that both symbols will mean multiplication:
 
-```{pipe="cat >> geo.rkt"}
-;; TODO: Check that integer? implies rational?
-;; TODO: Check that rational? implies real?
-;; TODO: Check that real? implies complex?
-;; TODO: Check that complex? implies number?
-;; TODO: Check that (integer? 1/2) is #f and (rational? 1/2) is #t
-;; TODO: Check that (rational? 1+1i) is #f and (rational? 1+1i) is #t
 ```{.scheme pipe="./show"}
 (define × *)
 ```
 
 ```{pipe="./hide"}
 (module+ test
+  (define gen:integer
+    (gen:let ([magnitude gen:natural]
+             [sign       gen:boolean])
+      (* (if sign 1 -1) magnitude)))
+
+  (define gen:rational
+    (gen:let ([numerator   gen:integer]
+              [denominator gen:integer])
+      (if (zero? denominator)
+        numerator
+        (/ numerator denominator))))
+
   (test-equal? "Empty product is 1" (×) 1)
+
+  (check-property
+    (property ×-is-extensionally-equal-to-*
+      ([nums (gen:list gen:rational)])
+      (test-equal? "× acts like *" (apply × nums) (apply * nums))))
 )
 
 ```
+
+Numbers in Scheme can be `exact` or `inexact`. That's mostly irrelevant for
+what we're doing, so in this post we'll stick to `exact` numbers. These are
+arranged in a "numerical tower", where each level is a super-set of the ones
+below, including:
+
+ - `number`: This is the top level, containing every numeric value.
+ - `complex`: These numbers use a clever trick for representing square roots of
+   negative numbers. If you've encountered it before, great; if not, don't worry
+   because we'll be replacing it with a more powerful trick!
+ - `real`: This supposedly includes the whole "number line", but is actually
+   rather silly since almost all of the "real numbers" can't be represented.
+ - `rational`: Includes all fractions, positive and negative.
+ - `integer`: Only whole numbers, positive and negative.
+
+These are cumulative, so an `integer` like `-42` is also a `rational` (e.g. you
+can think of it like `-42/1`), a `real` (like `-42.0`) and a `complex` (like
+`-42+0i`, if you know what that means). We'll use insights from GA to alter,
+extend and replace this tower!
+
+```{pipe="./hide"}
+(module+ test
+  (test-case
+    "Check the parts of Scheme's tower that we'll use"
+
+    (test-pred "Integer -1 exists"   integer?  -1)
+    (test-pred "Rational 1/2 exists" rational? 1/2)
+    (test-pred "Numbers 1+1i exists" number?   1+1i)
+
+    (test-false "Rational 1/2 isn't integer" (integer?  1/2))
+    (test-false "Number 1+1i isn't rational" (rational? 1+1i))
+
+    (check-property
+      (property integer?-implies-rational? ([n gen:integer])
+        (check-pred integer?  n)
+        (check-pred rational? n)))
+
+    (check-property
+      (property rational?-implies-number? ([n gen:rational])
+        (check-pred rational? n)
+        (check-pred number?   n)))
+))
 ```
 
 ### Numbers in Racket ###
