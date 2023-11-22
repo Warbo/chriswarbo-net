@@ -713,21 +713,45 @@ that we can *also* extend `rational` with one of those, say `h₀`, to get
 ## Geometric Arithmetic ##
 
 Adding and multiplying `geometric` numbers always results in another `geometric`
-number (i.e. `geometric` is closed under `+` and `×`).  For example:
+number (i.e. `geometric` is closed under `+` and `×`). The rules of their
+arithmetic should mostly match what you're used to, for example:
 
- - Adding a unit to itself gives a `rational` multiple, e.g. `(= (+ h₀ h₀) 2h₀)`
- - To multiply units we combine their `rational` parts and juxtapose their
-   symbols, e.g. `(= (× 2d₀ 3h₁) 6d₀h₁)`
- - A unit multiplied by itself can be simplified further, according to the
-   definitions above, e.g. `(= (× 3i₀ 7i₀) 21i₀i₀ -21)`
- - Addition cannot meaningfully combine *different* units, so a general
-   `geometric` number is represented as a "sum of parts" (which is nevertheless
-   a single number!), e.g. `(= (+ 7 -3i₀ 5h₀ i₀ h₁ -2d₀d₁ 2i₀) 7+5h₀+h₁-2d₀d₁)`
- - Addition and multiplication of general `geometric` numbers proceeds as if
-   their "sum of parts" were ordinary terms grouped using parentheses (like the
-   example in the introduction), e.g. `(= (× 2+d₂ 5+3h₀) 10+5d₂+6h₀+3d₂h₀)`
+ - Any `geometric` number multiplied by `0`, or added to its negative, is `0`
+ - Any `geometric` number divided by itself, or multiplied by its reciprocal, is
+   `1`
+ - Adding a `geometric` number to itself is the same as multiplying by a
+   `natural`, e.g.
+   `(= (+ h₀ h₀) (× 2 h₀))`. This extends to subtraction (multiplying by an
+   `integer`) and division (multiplying by a `rational`)
+ - Addition is associative and commutative, and nested sums can be flattened,
+   e.g. `(= (+ d₀ (+ i₁ i₀)) (+ d₀ (+ i₀ i₁)) (+ (+ d₀ i₀) i₁) (+ d₀ i₀ i₁))`
+ - Multiplication is associative and nested products can be flattened, e.g.
+   `(= (× h₀ (× h₁ i₀)) (× (× h₀ h₁) i₀) (× h₀ h₁ i₀))`
+ - Multiplication "distributes over" addition in the usual way, e.g.
+   `(= (× d₁ (+ h₀ i₀)) (+ (× d₁ h₀) (× d₁ i₀)))`
+ - Multiplying a GA unit by itself (squaring) produces an `integer`, according
+   to the definition of each "flavour", e.g. `(= (× 3 i₀ i₀) (× 3 -1) -3)`
 
-### The Geometric Product Anti-Commutes ###
+A product which includes *different* GA units, like `(× 5 d₀ h₁)`, cannot be
+simplified further. We allow these products to be abbreviated as a single value,
+like `5d₀h₁`. Likewise, a sum involving different (products of) GA units cannot
+be simplified, e.g. `(+ 4d₀ i₀i₁)`: we allow such sums to be abbreviated as a
+single value, whose "parts" are separated by `+`, like `4d₀+i₀i₁` (note the lack
+of spaces!).
+
+There are many equivalent ways to write such products and sums, so we declare
+that a general `geometric` number should be written in the form of a sum of
+products. For example `(× 3d₁ (+ h₁ i₀))` *does not* have this form (it's the
+product of a product and a sum), but we can distribute the multiplication to get
+`3d₁h₁+3d₁i₀`, which has the correct form. This makes it easier to spot when two
+`geometric` numbers are the same (similar to why we write fractions in their
+lowest form).
+
+Addition and multiplication of general `geometric` numbers proceeds as if their
+sums and products were ordinary terms grouped using parentheses, like the
+example in the introduction, e.g. `(= (× 2+d₂ 5+3h₀) 10+5d₂+6h₀+3d₂h₀)`
+
+### The Geometric Product Anti-Commutes! ###
 
 The most important feature of Geometric Algebra is that the GA units
 *anti-commute* when multiplied together. This means the order of units appearing
@@ -745,15 +769,14 @@ changing sign whenever a pair of *neighbouring* units are swapped:
    d₀)                ;; Since (= h₁h₁ 1), by definition of hyperbolic units
 ```
 
-This "geometric product" is just an extension of ordinary multiplication, since
-`rational` numbers commute in the usual way, with each other and with GA units.
-From now on, we will always convert `geometric` numbers into alphabetical order
-of their sums and products (this will be their canonical form, similar to how we
-always convert fractions to their lowest form).
+This may seem weird, but it only affects the GA units; any `rational` numbers
+occuring in a product commute in the usual way, both with each other and with GA
+units.
 
-## Implementing `geometric` ##
+From now on, not only will we convert all `geometric` numbers into a
+sum-of-products, but we will also write their units in alphabetical order,
+negating when a swap is needed.
 
-### Encoding Numbers ###
 
 We'll represent each flavour of GA unit using a Racket `struct`, with the index
 as a field:
