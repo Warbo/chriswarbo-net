@@ -69,7 +69,7 @@ with rec {
   # A "raw" page has been rendered, but not postprocessed or checked. We do that
   # in separate derivations, to prevent tweaks from triggering the whole site to
   # re-render (note that, due to Panpipe, each page can take arbitrarily long!)
-  raw = runCommand "raw-${prefix + name}" (vars // hash // {
+  raw = runCommand "raw-${prefix + name}" ({
     inherit dir file SOURCE_PATH;
     buildInputs = inputs ++ extraPkgs ++ [ commands.render_page fail ];
 
@@ -85,7 +85,7 @@ with rec {
       ${concatMapStringsSep "\n" (arg: "renderArgs+=(${escapeShellArg arg})")
       md.renderArgs}
     '';
-  }) ''
+  } // hash // vars) ''
     export DEST="$PWD/out.html"
 
     cd "$dir"
