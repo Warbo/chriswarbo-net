@@ -45,6 +45,10 @@ notation](/projects/units/negative_bar_notation.html), and instead write
 negatives using a "minus sign" (like $-123$) for consistency with Scheme/Racket
 notation.
 
+<nav id="toc"></nav>
+<script type="text/javascript" src="/js/table-of-contents.js"></script>
+<div data-content>
+
 ## Introduction ##
 
 I've recently taken an interest in [geometric algebra](https://bivector.net)
