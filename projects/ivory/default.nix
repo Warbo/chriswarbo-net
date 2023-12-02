@@ -15,6 +15,7 @@ with rec {
   };
 
   allPages = mapAttrs' renderPage {
+    index = { };
     sums_and_products = { };
     negatives_and_inverses = { };
     radicals = { };
