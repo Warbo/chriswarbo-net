@@ -105,18 +105,19 @@ say, and I quote:
 > A user agent must interpret an
 > [OBJECT](http://www.w3.org/TR/1998/REC-html40-19980424/struct/objects.html#edef-OBJECT)
 > element according to the following precedence rules:
->  1) The user agent must first try to render the object. It should not render
->  the element's contents, but it must examine them in case the element contains
->  any direct children that are
->  [PARAM](http://www.w3.org/TR/1998/REC-html40-19980424/struct/objects.html#edef-PARAM)
->  elements (see
->  [object initialization](http://www.w3.org/TR/1998/REC-html40-19980424/struct/objects.html#object-init))
->  or [MAP](http://www.w3.org/TR/1998/REC-html40-19980424/struct/objects.html#edef-MAP)
->  elements (see
->  [client-side image maps](http://www.w3.org/TR/1998/REC-html40-19980424/struct/objects.html#client-side-maps)).
->  2) If the user agent is not able to render the object for whatever reason
->  (configured not to, lack of resources, wrong architecture, etc.), it must try
->  to render its contents.
+>
+> 1) The user agent must first try to render the object. It should not render
+> the element's contents, but it must examine them in case the element contains
+> any direct children that are
+> [PARAM](http://www.w3.org/TR/1998/REC-html40-19980424/struct/objects.html#edef-PARAM)
+> elements (see
+> [object initialization](http://www.w3.org/TR/1998/REC-html40-19980424/struct/objects.html#object-init))
+> or [MAP](http://www.w3.org/TR/1998/REC-html40-19980424/struct/objects.html#edef-MAP)
+> elements (see
+> [client-side image maps](http://www.w3.org/TR/1998/REC-html40-19980424/struct/objects.html#client-side-maps)).
+> 2) If the user agent is not able to render the object for whatever reason
+> (configured not to, lack of resources, wrong architecture, etc.), it must try
+> to render its contents.
 >
 > Authors should not include content in
 > [OBJECT](http://www.w3.org/TR/1998/REC-html40-19980424/struct/objects.html#edef-OBJECT)
