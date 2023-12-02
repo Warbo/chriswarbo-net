@@ -3,7 +3,7 @@ title: Useful Nix Hacks
 dependencies: [ 'static/nix' ]
 packages: [ 'jq', 'nix-instantiate', 'nix-shell', 'proot',  'repo-copies',
             'timeout' ]
-sha256: "sha256-lhOcC3S8VqDvkkvG00mAz0TwxOCPLKULUugcYGBociM="
+sha256: "sha256-DP8q6LotaNuEC7LRYPD19hoahMzlHlwwq3bgxrsmEVY="
 ---
 
 Here are a few helpful Nix expressions I've accumulated over the years, in case
@@ -278,12 +278,14 @@ else
 fi
 
 # Set FORMAT to have your JSON laid out nicely
-if [[ -n "$FORMAT" ]]
-then
-  echo "$RESULT2" | jq '.'
-else
-  echo "$RESULT2"
-fi
+{
+  if [[ -n "$FORMAT" ]]
+  then
+    echo "$RESULT2" | jq '.'
+  else
+    echo "$RESULT2"
+  fi
+} | sed -e 's@/nix/store/[^-]*-@/nix/store/...-@g' -e "s@$PWD@.@g"
 ```
 
 ```{pipe="sh > /dev/null"}
