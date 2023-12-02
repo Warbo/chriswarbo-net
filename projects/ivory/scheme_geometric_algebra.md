@@ -95,18 +95,19 @@ multiplies a number by itself):
 
 This looks simple enough, but let's take a moment to consider its broader
 meaning. In particular, the sum includes one quantity that's *squared*
-`(sqr a)` and one quantity that *isn't squared* `1`. This feels "off", for a
-couple of reasons:
+`(sqr a)`{.scheme} and one quantity that *isn't squared* `1`{.scheme}. This
+feels "off", for a couple of reasons:
 
- - As a physicist: the variable `a` must have different units than the constants
-   `1` and `0` in order to be dimensionally consistent. For example, if `a` were
-   a length then the constants must be areas.
+ - As a physicist: the variable `a`{.scheme} must have different units than the
+   constants `1`{.scheme} and `0`{.scheme} in order to be dimensionally
+   consistent. For example, if `a` were a length then the constants must be
+   areas.
  - As a computer scientist: this feels like an ill-typed expression, like we're
    mixing up encodings of semantically-distinct quantities.
 
 Sure, those fears *might* be unfounded; but we can put ourselves at ease by
 re-stating the equation entirely with squared terms. This requires introducing a
-couple of extra variables, which we'll call `b` and `c`:
+couple of extra variables, which we'll call `b`{.scheme} and `c`{.scheme}:
 
 ```scheme
 (= (+ (sqr a) (sqr b))
@@ -115,34 +116,38 @@ couple of extra variables, which we'll call `b` and `c`:
 
 Now let's solve this equation:
 
- - We know that `(= (sqr b) 1)` and `(= (sqr c) 0)`, by definition.
- - We can rearrange the equation to find that `(= (sqr a) (- (sqr b)))`,
-   and hence `(= (sqr a) -1)`
+ - We know that `(= (sqr b) 1)`{.scheme} and `(= (sqr c) 0)`{.scheme}, by
+   definition.
+ - We can rearrange the equation to find that `(= (sqr a) (- (sqr b)))`{.scheme}
+   and hence `(= (sqr a) -1)`{.scheme}
 
-You may be tempted to "square root" these and say that `(= b 1)`, `(= c 0)` and
-(if you're familiar with complex numbers) `(= a i)`; however, those are just
-*some* of the possible solutions to these equations. Not only are there negative
-solutions too, but Geometric Algebra provides even more by extending our
-arithmetic to include *extra numbers*! These come in three flavours (apologies
-for the intimidating names; they actually pre-date Geometric Algebra!):
+You may be tempted to "square root" these and say that `(= b 1)`{.scheme},
+`(= c 0)`{.scheme} and (if you're familiar with complex numbers)
+`(= a i)`{.scheme}; however, those are just *some* of the possible solutions to
+these equations. Not only are there negative solutions too, but Geometric
+Algebra provides even more by extending our arithmetic to include *extra
+numbers*! These come in three flavours, one for each of our variables (apologies
+for the intimidating names, which actually pre-date Geometric Algebra!):
 
- - We'll call solutions to `(= (sqr b) 1)` (other than 1 and -1) [hyperbolic
+ - We'll call solutions to `(= (sqr b) 1)`{.scheme} (other than `1`{.scheme} and
+   `-1`{.scheme}) [hyperbolic
    units](https://en.wikipedia.org/wiki/Split-complex_number) and write them as
-   `h₀`, `h₁`, `h₂`, etc.
- - We'll call solutions to `(= (sqr c) 0)` (other than 0) [dual
-   units](https://en.wikipedia.org/wiki/Dual_numbers) and write them as `d₀`,
-   `d₁`, `d₂`, etc.
- - We'll call solutions to `(= (sqr a) -1)` [imaginary
+   `h₀`{.scheme}, `h₁`{.scheme}, `h₂`{.scheme}, etc.
+ - We'll call solutions to `(= (sqr c) 0)`{.scheme} (other than `0`{.scheme})
+   [dual units](https://en.wikipedia.org/wiki/Dual_numbers) and write them as
+   `d₀`{.scheme}, `d₁`{.scheme}, `d₂`{.scheme}, etc.
+ - We'll call solutions to `(= (sqr a) -1)`{.scheme} [imaginary
    units](https://en.wikipedia.org/wiki/Imaginary_number) and write them as
-   `i₀`, `i₁`, `i₂`, etc.
+   `i₀`{.scheme}, `i₁`{.scheme}, `i₂`{.scheme}, etc.
 
 Practical applications of GA will only use a few of these units, but I want my
 code to support arbitrarily-many. Each of these units is a perfectly legitimate
-`number`, but they are *not* part of `rational`; hence they must occur at a
-higher level of our numerical tower. We'll define a new level called `geometric`
-to contain all of them. I'll be referring to them as "GA units" or
-"non-`rational` units"; we *cannot* call them "irrational", since that already
-means something else!
+`number`{.scheme}, but they are *not* part of `rational`{.scheme}; hence they
+must occur at a higher level of our numerical tower. We'll define a new level
+called `geometric`{.scheme} to contain all of them. I'll be referring to them as
+GA/`geometric`{.scheme}/non-`rational`{.scheme} units". Note that we *cannot*
+call them "irrational", since [that already means something
+else](https://en.wikipedia.org/wiki/Irrational_number)!
 
 <figure>
 
@@ -162,13 +167,15 @@ means something else!
     └──────────┘
 ```
 
- <figcaption>Numerical tower with a `geometric` level at the top</figcaption>
+ <figcaption>
+  Numerical tower with a `geometric`{.scheme} level at the top
+ </figcaption>
 </figure>
 
-These non-`rational` numbers do not appear on the familiar [number
+These non-`rational`{.scheme} numbers do not appear on the familiar [number
 line](https://en.wikipedia.org/wiki/Number_line). We'll give their geometric
-interpretation later, with a section explaining each flavour. For now we'll just
-treat them as symbolic constants, the same way we treat
+interpretation later. For now we'll just treat them as symbolic constants, the
+same way we treat
 [τ](https://tauday.com/tau-manifesto),
 [𝑒](https://en.wikipedia.org/wiki/E_(mathematical_constant)),
 [ϕ](https://en.wikipedia.org/wiki/Golden_ratio), etc.
@@ -176,32 +183,36 @@ treat them as symbolic constants, the same way we treat
 ### Representing GA Units In Scheme ###
 
 This is pretty simple, since each unit contains two pieces of information: the
-flavour and the index. We'll represent the flavour using a symbol: either `h` or
-`d` or `i`. The index will just be a `number` (we'll be sticking to `natural`
-indexes, but won't enforce that). We'll combine these into a *pair*, by either
-giving them as inputs to the `cons` operation, like `(cons 'd 0)` for `d₀`; or
-with a quotation, like `'(i . 2)` for `i₂` (where the `.` makes this a pair,
-rather than a list).
+flavour and the index. We'll represent the flavour using a symbol: either
+`h`{.scheme} or `d`{.scheme} or `i`{.scheme}. The index will just be a
+`number`{.scheme} (we'll be sticking to `natural`{.scheme} indexes, but won't
+enforce it). We'll combine these into a *pair*, by either giving them as inputs
+to the `cons`{.scheme} operation, like `(cons 'd 0)`{.scheme} for `d₀`{.scheme};
+or with a quotation, like `'(i . 2)`{.scheme} for `i₂`{.scheme} (where the `.`
+makes this a pair, rather than a list).
 
-It *looks like* we're calling functions named `d`, `h` and `i` with a `number`
-as input; but for something to be a name, there must be some underlying
-definition that it's referring to. In this case we have no definitions (or, if
-you prefer, symbols are merely names for themselves). These are ["uninterpreted
+It *looks like* we're calling functions named `d`{.scheme}, `h`{.scheme} and
+`i`{.scheme} with a `number`{.scheme} as input; but for something to be a name,
+there must be some underlying definition that it's referring to. In this case we
+have no definitions (or, if you prefer, symbols are merely names for
+themselves). These are ["uninterpreted
 functions"](https://en.wikipedia.org/wiki/Uninterpreted_function), meaning
 Racket will just pass around these expressions as-is.
 
 It may feel like cheating to claim these values are "incorporated deeply" into
-the language, compared to "usual" numbers. Admittedly the `natural` type is a
-special case (due to its place-value notation), but it turns out that *all* of
-Scheme's standard numerical tower relies on this "uninterpreted function" trick!
+the language, compared to "usual" numbers. Admittedly the `natural`{.scheme}
+type is a special case (due to its place-value notation), but it turns out that
+*all* of Scheme's standard numerical tower relies on this "uninterpreted
+function" trick!
 
-Consider the simplest level, `integer`: this includes both `natural` numbers and
-their negatives. The latter are represented by prefixing the former with a `-`
-symbol: in other words, as an uninterpreted function call! The higher levels,
-`rational` and `complex`, use uninterpreted functions with two inputs (numerator
-& denominator, for `rational`; "real" & "imaginary" for `complex`).
+Consider `integer`{.scheme}: this includes both `natural`{.scheme} numbers and
+their negatives. The latter are represented by prefixing the former with a
+`-`{.scheme} symbol, representing negation, which is left uninterpreted. The
+higher levels, `rational`{.scheme} and `complex`{.scheme}, use uninterpreted
+functions with two inputs (numerator & denominator, for `rational`{.scheme};
+"real" & "imaginary" for `complex`{.scheme}).
 
-In any case, here are some *actual* functions for operating on these GA units:
+In any case, here are some Scheme functions for manipulating these GA units:
 
 ```{pipe="./hide"}
 (module+ test
