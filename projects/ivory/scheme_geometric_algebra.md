@@ -61,54 +61,11 @@ of [much better resources](https://bivector.net/doc.html#five) out there. Hence
 I'm going to focus on explanation and implementation of some basic foundations
 of GA, since that's a good way to check my own understanding of the subject!
 
-I hope this can be useful, even to non-programmers (feel free to skip past the
-implementation sections, if they get too gnarly!). For programmers, I didn't
-want to write yet another library of standalone functions/classes; I instead
-wanted to think holistically about how GA can be incorporated more deeply into a
-language. I chose [Scheme](https://www.scheme.org) for this project since it's
-elegant, logical, principled and consistent; popularity and speed are not
-important (existing libraries address that better than I could!). I'll use
-[Racket](https://racket-lang.org), since that's the version of Scheme I'm most
-familiar with.
-
-We'll start with a brief look at numbers and arithmetic in Racket, why Geometric
-Algebra requires extensions to those, and build a working implementation. Then
-we'll see some applications, how to use different geometries, and some design
-considerations for the programming API.
-
-This page is [active code](/projects/activecode) which generates a working
-Racket library. I won't show *all* of the code on screen, so scroll to the
-bottom for a link containing the full source, as well as the usual "view source"
-link for this page's Markdown. Here's the start of the implementation, to get us
+ Here's the start of the implementation, to get us
 going:
 
 ```{.scheme pipe="./show"}
 #lang racket
-```
-
-### Required Knowledge ###
-
-In this post I won't assume any prior knowledge of GA or related structures
-(e.g. complex numbers, vectors, etc.) but I will assume *some* familiarity with
-high-school algebra, like how to multiply groups of terms, e.g.
-
-$$(2 + a)(5 + 3b) = 10 + 5a + 6b + 3ab$$
-
-I will be writing a lot of [s-expressions](/blog/2017-08-29-s_expressions.html)
-(AKA Lisp syntax or [prefix
-notation](https://en.wikipedia.org/wiki/Polish_notation)) since that matches the
-programming language I'm using (Scheme). This style may be unfamiliar, but is
-pretty simple and has the benefit of removing [ambiguities like
-precedence](https://en.wikipedia.org/wiki/Order_of_operations) (which tend to
-plague those trying to learn mathematics!). In an s-expression, operations are
-written `(in parentheses)`, with the operation's name/symbol first and its
-inputs after.  For example, the above equation could be written as follows (I've
-lined up the two inputs of `=` for clarity, but the meaning doesn't depend on
-the layout):
-
-```scheme
-(= (× (+ 2 a) (+ 5 (× 3 b)))
-   (+ 10 (× 5 a) (× 6 b) (× 3 a b)))
 ```
 
 ```{pipe="./hide"}
@@ -119,18 +76,6 @@ the layout):
 ;; We'll define a test suite as we go, as a "sub-module" called 'test'
 (module+ test (require rackunit rackcheck-lib))
 ```
-
-We'll also be using Scheme's `quote` and `quasiquote` features, which may need a
-little explanation for those who aren't used to Scheme programming. A
-"quotation" is prefixed by a single-quote/apostrophe `'`, and is used to
-represent data without attempting to execute it. For example, the value of `'(+
-2 5)` is a *list* containing three elements (like `["+", 2, 5]` in other
-languages; and *unlike* `(+ 2 5)`, whose value is the `number` `7`). A
-"quasiquotation" is prefixed by a backtick `` ` ``, and is like a quotation
-except that expressions prefixed with a comma `,` are "unquoted"; for instance
-`` `(10 plus 20 is ,(+ 10 20)) `` gives the list `(10 plus 20 is 30)`
-(quasiquoting is similar to "string splicing" in other languages, like
-`"10 plus 20 is ${10 + 20}"`).
 
 ## Numbers in Scheme ##
 
