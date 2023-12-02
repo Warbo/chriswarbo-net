@@ -18,6 +18,7 @@ with rec {
     index = { };
     sums_and_products = { };
     negatives_and_inverses = { };
+    numbers_in_scheme = { };
     radicals = { };
     geometric_units = { };
     geometric_algebra = { };
