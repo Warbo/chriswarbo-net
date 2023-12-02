@@ -1,4 +1,4 @@
-{ fail, lib, runCommand, tidy-html5, wrap, xidel }:
+{ fail, lib, runCommand, html-tidy, wrap, xidel }:
 
 with rec {
   base = ../..;
@@ -17,7 +17,7 @@ lib.mapAttrs testScript {
   no_blogspot = { buildInputs = [ xidel ]; };
   no_gitorious = { };
   no_selfclosing_scripts = { buildInputs = [ fail xidel ]; };
-  tidy_html5 = { buildInputs = [ tidy-html5 ]; };
+  tidy = { buildInputs = [ html-tidy ]; };
 } // {
   nonempty = wrap {
     name = "non-empty";
