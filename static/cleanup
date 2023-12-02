@@ -41,4 +41,10 @@ for header in doc.find_all('head'):
     for odd_para in odd_paras:
         odd_para.replace_with(odd_para.replace('¶', ''))
 
+# Tidy doesn't like the ol element's type="1" attribute in XHTML5; remove it,
+# since that's the default style anyway
+for ol in doc.find_all('ol'):
+    if 'type' in ol.attrs and ol['type'] == u'1':
+        del(ol['type'])
+
 print(str(doc))
