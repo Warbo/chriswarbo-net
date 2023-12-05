@@ -8,10 +8,10 @@ msg = lambda s: sys.stderr.write(s + "\n")
 data = sys.stdin.read()
 doc  = BeautifulSoup(data, 'html.parser')
 
-# Tables should be given summaries, specified by a sibling with class "summary"
+# We used to give tables summaries, specified by a sibling with class "summary"
+# html-tidy now complains about this, so just remove them
 for summarise in doc.find_all(class_='summarise'):
     for summary in summarise.find_all(class_='summary'):
-        summarise.table['summary'] = ''.join(summary.strings).strip()
         highest = summary
         drop    = True
         for parent in summary.parents:
