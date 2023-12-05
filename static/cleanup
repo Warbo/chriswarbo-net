@@ -33,13 +33,15 @@ for tag in ['code', 'pre', 'span', 'p']:
         else None
 
 # When we put multiple lines in a document's 'extra_head' (e.g. script tags),
-# Pandoc turns the newlines into '¶' for some reason. Tidy spots this, so we
+# Pandoc can put '¶' and '<br />' in the <head>, which Tidy spots. So we
 # strip them out here.
 import re
 for header in doc.find_all('head'):
     odd_paras = header.find_all(string = re.compile('¶'))
     for odd_para in odd_paras:
         odd_para.replace_with(odd_para.replace('¶', ''))
+    for br in header.find_all('br'):
+        br.extract()
 
 # Tidy doesn't like the ol element's type="1" attribute in XHTML5; remove it,
 # since that's the default style anyway
