@@ -43,6 +43,15 @@ for header in doc.find_all('head'):
     for br in header.find_all('br'):
         br.extract()
 
+    # While we're here, move any rogue <style> elements to the header
+    for style in doc.find_all('style'):
+        in_header = False
+        for parent in style.parents:
+            if parent == header:
+                in_header = True
+        if not in_header:
+            header.append(style)
+
 # Tidy doesn't like the ol element's type="1" attribute in XHTML5; remove it,
 # since that's the default style anyway
 for ol in doc.find_all('ol'):
