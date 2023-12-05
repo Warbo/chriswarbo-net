@@ -1,6 +1,5 @@
-{ attrsToDirs', commands, darkhttpd, fail, git, haskell, haskellPackages, lib
-, linkchecker, pandoc, panhandle, panpipe, procps, python3, python3Packages
-, repos, runCommand, untestedSite, utillinux, wget, wrap, xidel }:
+{ attrsToDirs', commands, darkhttpd, fail, git, lib, linkchecker, procps
+, python3, repos, runCommand, untestedSite, utillinux, wget, wrap, xidel }:
 
 with builtins;
 with lib;
