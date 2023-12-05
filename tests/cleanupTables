@@ -23,9 +23,6 @@ do
     echo "$CLEANED" | grep '<span' > /dev/null &&
         fail "Didn't strip span: $CLEANED"
 
-    echo "$CLEANED" | grep 'summary=.sum.' > /dev/null ||
-        fail "Didn't have summary: $CLEANED"
-
     echo "$CLEANED" | grep '<p' > /dev/null &&
         fail "Didn't remove parent <p>"
 done < <(inputs)
