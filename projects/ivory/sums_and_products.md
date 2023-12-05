@@ -57,57 +57,115 @@ just numbers. So what about these generalisations makes them "sums" and
 *difference* between a "sum" and a "product"?
 
 This post will explore these ideas; and, for the adventurous, we'll implement
-these ideas in code, using the Racket language. Racket is written in [prefix
-form]() (AKA [s-expressions]()), which may be unfamiliar but is hopefully
-straightforward: expressions are written `(in parentheses)`, with the operation
-first and its inputs afterwards. For example `(+ 1 2 3)`{.scheme} is the sum of
-`1`{.scheme}, `2`{.scheme} and `3`{.scheme}; whilst `(× 7 (+ 4 x))`{.scheme} is
-the product of `7`{.scheme} and `(+ 4 x)`{.scheme}, with the latter being the
-sum of `4`{.scheme} and some variable `x`{.scheme}. We can represent equations
-like this:
-
-```scheme
-(= (+ 1 2 (× 3 (+ 4 5)))
-   (+ 3   (× 3 (+ 4 5)))
-   (+ 3   (+ (× 3 4) (× 3 5)))
-   (+ 3      (× 3 4) (× 3 5))
-   (+ 3      12      (× 3 5))
-   (+ 15             (× 3 5))
-   (+ 15             15)
-   (× 15 2)
-   30)
-```
+these ideas in Racket code.
 
 ## Types ##
 
-We can think of addition and multiplication as *operations* which transform
-input values into an output value. A fundamental aspect of these values is their
-*type*: what sort of things are we talking about? For the addition and
-multiplication we learn in school, all of the values are *numbers*: they have
-type number. They could be literal numbers, like `12`{.scheme}; or variables
-representing unknown numbers, like `x`{.scheme}; or the result of some numerical
-operation, like `(+ 1 2 3)`{.scheme}. This means the *output* of one sum/product
-can be used as *input* to another, so they can be nested arbitrarily.
+We can think of addition and multiplication as *operations* or *functions* which
+transform "input values" into an "output value". A fundamental aspect of these
+values is their *type*: what sort of things are we talking about?
+
+For the addition and multiplication we learn in school, all of the values are
+*numbers*; i.e. they have type number. They could be "literal" numbers, like
+`12`{.scheme}; or "variables" which *represent* some number, like `x`{.scheme};
+or the output of some other numerical operation, like `(+ 1 2)`{.scheme}.
+
+Having the same type for inputs and outputs allows sums and products to be
+*nested* in arbitrary ways: with the output one one used as the input of
+another, forming "trees":
+
+<figure>
+
+```
+    +
+  ┌─┴─┐
+  │   │
+  ×   3
+┌─┴─┐
+│   │
+7   ×
+  ┌─┴─┐
+  │   │
+  2   9
+```
+
+ <figcaption>A tree of nested sums and products, equivalent to the s-expression
+ `(+ (× 7 (× 2 9)) 3)`{.scheme}, or the infix expression $(7 × (2 × 9)) + 3$.
+</figure>
+
+Any operation that combines things of *different* types, or whose output has a
+different type to its inputs, is not usually considered a sum or a product.
 
 When we extend the ideas of sum and product to more general situations, we
 always require the the input and output types to match, so they can be nested.
 For example, the product of intervals is an interval; the sum of random
-variables is a random variable; etc. Any operation that combines things of
-*different* types, or whose output has a different type to its inputs, is
-usually not considered to be a sum or a product.
+variables is a random variable; etc.
 
 ## Laws of Algebra ##
 
-Algebra focuses on *operations*, and the *laws* they obey. Some laws (known as
-[axios]()) are obeyed by definition, e.g we define a "group" as anything which
-obeys the axioms of group theory, so therefore every group obeys those laws.
-Other laws (known as [theorems]()) are an inevitable consequence of certain
-axioms. We'll look at a few laws which are important for sums and products
-(don't worry about their horrible names!)
-
-Note: Programmers may refer to laws as [invariants]() or [properties](). They
-are usually well-suited to automated testing, e.g. via [property checking]().
+We can characterise operations *algebraically* by stating "laws": equations
+which an operation always satisfies, regardless of its inputs (written ). by
+that which sum and products using equations, which tell us when different forms
+of nesting are equal. These are *algebraic laws*, although programmers may refer
+to them as
+[invariants](https://en.wikipedia.org/wiki/Invariant_(mathematics)#Invariants_in_computer_science)
+or
+[properties](https://hypothesis.works/articles/what-is-property-based-testing/).
 
 ### The Law Of Associativity ###
 
-This law holds for any operation
+<figure>
+
+```
+   +                   +                      +
+   │                   │                      │
+┌──┴──┐             ┌──┴──┐             ┌─────┼─────┐
+│     │             │     │             │     │     │
+a     +      =      +     c      =      a     b     c
+      │             │
+   ┌──┴──┐       ┌──┴──┐
+   │     │       │     │
+   b     c       a     b
+```
+
+---
+
+```
+   ×                   ×                      ×
+   │                   │                      │
+┌──┴──┐             ┌──┴──┐             ┌─────┼─────┐
+│     │             │     │             │     │     │
+a     ×      =      ×     c      =      a     b     c
+      │             │
+   ┌──┴──┐       ┌──┴──┐
+   │     │       │     │
+   b     c       a     b
+```
+
+<figcaption>The law of associativity for `+` and `+`. These equations always
+hold, regardless of the values of `a`, `b` and `c`.
+</figure>
+
+This law states how nesting an operation inside that same operation works, like
+having a sum-of-sums or a product-of-products. It tells us the following are
+always equal, regardless of what `x`, `y` and `z` are:
+
+```scheme
+(= (+ x (+ y z))
+   (+ (+ x y) z)
+   (+ x y z))
+   
+(= (× x (× y z))
+   (× (× x y) z)
+   (× x y z))
+```
+
+It may be easier to see what's happening by drawing these as trees:
+
+
+
+There are a few things to notice about these equations. Firstly, the inputs `x`,
+`y` and `z` always appear in the same order: associativity does not let us swap
+around values. Instead, it lets us "rebalance" nested operations; as a tree
+
+says the following should worknesting a su an operation inside *the same* operation wor
