@@ -16,15 +16,15 @@ packages: ['racketWithRackCheck']
 ```
     ┌─┐ ┌──┐ ┌─┐
     │ └─┘  └─┘ │
-    │  number  │
-    ├──────────┤
-    │ complex  │
-    ├──────────┤
-    │   real   │
+    │ integer  │
     ├──────────┤
     │ rational │
     ├──────────┤
-    │ integer  │
+    │   real   │
+    ├──────────┤
+    │ complex  │
+    ├──────────┤
+    │  number  │
 ────┴──────────┴────
 ```
 
@@ -66,25 +66,27 @@ symbols will mean multiplication:
 
 ```
 
-Numbers in Scheme can be `exact`{.scheme} or `inexact`{.scheme}. That's mostly
-irrelevant for what we're doing, so in this post we'll stick to `exact`{.scheme}
-numbers. These are arranged in a "numerical tower", where each level is a
-super-set of the ones below, including:
+Numbers in Scheme can be `exact`{.scheme} or `inexact`{.scheme}. Ivory is only
+concerned with `exact`{.scheme} numbers, so we'll ignore the latter. Scheme
+arranges its types in a "numerical tower", where each level is a super-set of
+the ones above, including:
 
- - `number`{.scheme}: This is the top level, containing every numeric value.
- - `complex`{.scheme}: These numbers use a clever trick for representing square
-   roots of negative numbers. If you've encountered it before, great; if not,
-   don't worry because we'll be replacing it with a more powerful trick!
+ - `integer`{.scheme}: Whole numbers, positive and negative.
+ - `rational`{.scheme}: All fractions, positive and negative.
  - `real`{.scheme}: This supposedly includes the whole "number line", but is
    actually rather silly since almost all of the "real numbers" can't be
    represented.
- - `rational`{.scheme}: Includes all fractions, positive and negative.
- - `integer`{.scheme}: Only whole numbers, positive and negative.
+ - `complex`{.scheme}: This uses a clever trick to represent square roots of
+   negative numbers. If you've encountered it before, great; if not, don't worry
+   since Ivory does not include this level (we instead define a mezzanine inside
+   the `geometric`{.scheme} level)
+ - `number`{.scheme}: This is the top level, containing every numeric value.
 
 These are cumulative, so an `integer`{.scheme} like `-42`{.scheme} is also a
 `rational`{.scheme} (e.g. you can think of it like `-42/1`{.scheme}), a `real`
-and a `complex` (like `-42+0i`{.scheme}, if you know what that means). We'll use
-insights from GA to alter, extend and replace this tower!
+and a `complex` (like `-42+0i`{.scheme}, if you know what that means).
+
+This basic framework is the inspiration for Ivory.
 
 ```{pipe="./hide"}
 (module+ test
@@ -115,27 +117,28 @@ insights from GA to alter, extend and replace this tower!
 <figure>
 
 ```
-    ┌─┐ ┌──┐ ┌─┐
-    │ └─┘  └─┘ │
-    │  number  │
-    │ c̶o̶m̶p̶l̶e̶x̶  │
-    ├──────────┤
-    │   r̶e̶a̶l̶   │
-    │ rational │
-    ├──────────┤
-    │ integer  │
-────┼──────────┼────
-    │ natural  │
-    ├──────────┤
-    │   zero   │
-    └──────────┘
+        ┌─┐ ┌──┐ ┌─┐
+        │ └─┘  └─┘ │
+        │   zero   │
+       ╭┴──────────┴╮
+       │  natural   │
+      ╭┴────────────┴╮
+      │   integer    │
+     ╭┴──────────────┴╮
+     │    rational    │
+     ├────────────────┤
+     │      real      │
+    ╭┴────────────────┴╮
+    │     complex      │
+    ├──────────────────┤
+    │      number      │
+────┴──────────────────┴────
 ```
 
  <figcaption>
-  Racket's numerical tower (somewhat simplified). We'll ignore
-  `complex`{.scheme} (which is just another name for `number`{.scheme}). We'll
-  also ignore `real`{.scheme}, since it only differs from `rational`{.scheme}
-  when using `inexact`{.scheme} numbers (which we're ignoring).
+  Racket's numerical tower (somewhat simplified): `complex`{.scheme} is another
+  name for `number`{.scheme}, and `real`{.scheme} is another name for
+  `rational`{.scheme} (for `exact`{.scheme} numbers, at least).
  </figcaption>
 </figure>
 
@@ -143,15 +146,15 @@ Racket already [extends Scheme's standard numerical
 tower](https://docs.racket-lang.org/reference/numbers.html#%28tech._number%29),
 and pins-down some details that Scheme leaves open. In particular:
 
- - Scheme *allows* levels that are higher than `complex`{.scheme}, but Racket
-   doesn't provide any.
- - Racket's top-level `number`{.scheme} adds nothing else to `complex`{.scheme}
-   (they're literally just synonyms!)
+ - Scheme *allows* levels between `complex`{.scheme} and `number`{.scheme}, but
+   Racket doesn't provide any.
+ - Racket's foundational `number`{.scheme} type adds nothing else to
+   `complex`{.scheme} (they're just synonyms)
  - The only `exact`{.scheme} numbers in Racket's `real`{.scheme} level are
-   `rational`{.scheme}. Hence, as far as we're concerned, `real`{.scheme} is
-   just a different (more confusing) name for `rational`{.scheme}.
+   `rational`{.scheme}. Hence, as far as Ivory is concerned, those levels are
+   the same.
 
-Racket *does* add some "basement levels", which are strict subsets of
+Racket *does* add some "attic levels", which are strict subsets of
 `integer`{.scheme}:
 
  - `natural`{.scheme} is a sub-set of `integer`{.scheme} without negatives. It
@@ -208,11 +211,12 @@ Racket *does* add some "basement levels", which are strict subsets of
 Even more fine-grained structure is [described in the Typed Racket
 documentation](https://docs.racket-lang.org/ts-reference/type-ref.html#%28part._.Numeric_.Types%29)
 (e.g. `byte`{.scheme} is a subset of `natural`{.scheme} between `0`{.scheme} and
-`255`{.scheme}) but we won't bother with such size-based distinctions.
+`255`{.scheme}) but Ivory does not make such size-based distinctions.
 
 ## Code ##
 
-Here's a URI containing all of the Racket code generated by this post:
+This post defines Racket code, including a RackCheck test suite to check the
+claims we make on this page. Here's a URI containing all of the generated code:
 
 ```{.unwrap pipe="sh | pandoc -t json"}
 # Use a data URL. These default to US-ASCII encoding, so we need to
