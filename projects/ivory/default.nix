@@ -15,14 +15,21 @@ with rec {
 
   # TODO: Use filesIn
   allPages = mapAttrs renderPage (with allPages; {
+    complex_and_hypercomplex_numbers = { };
+    expressions = { };
+    geometric_algebra = { };
+    geometric_units = { };
+    indeterminates = { };
     index = { };
-    sums_and_products = { };
     negatives_and_inverses = { };
     numbers_in_scheme = { };
+    numerical_towers = { };
+    polynomials = { };
     radicals = { };
-    geometric_units = { };
-    geometric_algebra = { };
-  };
+    #scheme_geometric_algebra = { };
+    sums_and_products = { };
+    zero_one_many = { inherit numbers_in_scheme; };
+  });
 };
 mapAttrs' (name: value: {
   inherit value;
