@@ -2,19 +2,19 @@
 , nixpkgs-lib ? nix-helpers.nixpkgs-lib }:
 with rec {
   inherit (defs) render;
-  inherit (nixpkgs-lib) mapAttrs';
+  inherit (nixpkgs-lib) mapAttrs mapAttrs';
 
-  renderPage = n: vals: {
-    name = "${n}.html";
-    value = render (rec {
-      name = "${n}.md";
-      file = ./. + "/${name}";
-      SOURCE_PATH = "projects/ivory/${name}";
+  renderPage = name: extraVars:
+    render {
+      name = "${name}.html";
+      file = ./. + "/${name}.md";
+      SOURCE_PATH = "projects/ivory/${name}.md";
       TO_ROOT = "./../..";
-    } // vals);
-  };
+      vars = { setup = ./setup.sh; } // extraVars;
+    };
 
-  allPages = mapAttrs' renderPage {
+  # TODO: Use filesIn
+  allPages = mapAttrs renderPage (with allPages; {
     index = { };
     sums_and_products = { };
     negatives_and_inverses = { };
@@ -24,4 +24,7 @@ with rec {
     geometric_algebra = { };
   };
 };
-allPages
+mapAttrs' (name: value: {
+  inherit value;
+  name = "${name}.html";
+}) allPages
