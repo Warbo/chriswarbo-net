@@ -169,3 +169,36 @@ There are a few things to notice about these equations. Firstly, the inputs `x`,
 around values. Instead, it lets us "rebalance" nested operations; as a tree
 
 says the following should worknesting a su an operation inside *the same* operation wor
+
+### Representing Sums And Products in Scheme ###
+
+Since products and sums don't always "reduce" to something simpler, we'll use
+the same "uninterpreted function" trick as we did for representing GA units.
+This time, since we're dealing with products and sums, we'll use the symbols `×`
+and `+`. Also, since they can accept any amount of inputs, we'll keep them in a
+list rather than a pair.
+
+This makes the implementation of multiplication and addition pretty simple: we
+just wrap all of the inputs into a product or sum, respectively. We then apply a
+`canonical` function (defined in the next section), to rearrange them into our
+preferred form (sum-of-products, in alphabetical order):
+
+```{.scheme pipe="./show"}
+;; Shorthands for creating products and sums
+(define (geo-× . args) (canonical (cons '× args)))
+(define (geo-+ . args) (canonical (cons '+ args)))
+
+;; Predicates for spotting products, sums and general geometric numbers
+
+(define/match (geo-×? n)
+  [((cons '× ns)) (andmap geometric? ns)]
+  [(_) #f])
+
+(define/match (geo-+? n)
+  [((cons '+ ns)) (andmap geometric? ns)]
+  [(_) #f])
+
+(define geo? (disjoin unit-ga? geo-×? geo-+?))
+
+(define geometric? (disjoin number? geo?))
+```
