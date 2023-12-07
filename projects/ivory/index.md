@@ -111,13 +111,21 @@ plague those trying to learn mathematics!).
 
 In an s-expression, operations are written `(in parentheses)`{.scheme}, with the
 operation's name/symbol first and its inputs after. For example, the above
-equation could be written as an s-expression like this (I've lined up the two
-inputs of `=`{.scheme} for clarity, but the meaning doesn't depend on layout):
+equation could be written as an s-expression like this :
+
+<figure>
 
 ```scheme
 (= (× (+ 2 a) (+ 5 (× 3 b)))
    (+ 10 (× 5 a) (× 6 b) (× 3 a b)))
 ```
+
+<figcaption>An s-expression representing `=`{.scheme} applied to two inputs, AKA
+an equation (the inputs are on separate lines for clarity, but this does not
+alter the meaning). Its inputs are sums and products (`+`{.scheme} and
+`×`{.scheme}) applied to inputs including literal numbers (`2`{.scheme},
+`5`{.scheme}, etc.), variables (`a`{.scheme} and `b`{.scheme}) and other
+sums/products of these.</figcaption></figure>
 
 At times we'll be using Scheme's `quote`{.scheme} and `quasiquote`{.scheme}
 features, which may need a little explanation for those who aren't used to
@@ -130,7 +138,7 @@ elements (like `["+", 2, 5]`{.python} in other languages; and *unlike*
 quotation except that expressions prefixed with a comma `,`{.scheme} are
 "unquoted"; for instance `` `(10 plus 20 is ,(+ 10 20)) ``{.scheme} gives the
 list `(10 plus 20 is 30)`{.scheme} (quasiquoting is similar to "string splicing"
-in other languages, like `"10 plus 20 is ${10 + 20}"`{.php}).
+in other languages, like `"10 plus 20 is ${10 + 20}"`{.nix}).
 
 ## Implementation ##
 
@@ -152,9 +160,9 @@ The following pages give introductory information, without defining any code:
 These pages introduce some of the mathematical ideas that guide our design, and
 implement useful definitions that make the subsequent sections easier:
 
- - [Negatives And Inverses](negatives_and_inverses.html) uses these concepts to
-   implement subtraction and division in terms of addition and multiplication,
-   simplifying how much arithmetic we need to consider.
+ - [Negatives And Inverses](negatives_and_inverses.html) are used to implement
+   subtraction and division in terms of addition and multiplication, which
+   simplifies our arithmetic.
  - [Sums And Products](sums_and_products.html) implements these operations
    symbolically, explores the resulting tree structures, and defines algorithms
    to normalise them. Many of our tower's levels are based on these trees.
@@ -163,20 +171,32 @@ The levels of the Ivory tower are explained and implemented in the following:
 
  - [Zero, One, Many](zero_one_many.html) describes the top levels of the tower.
  - [Radicals](radicals.html) implements the `algebraic` level, representing
-   roots symbolically and taking these into account when normalising.
- - [Geometric Units](geometric_units.html) extends the usual number line with
-   extra values which anti-commute, beginning our implementation of the
-   `geometric` level. These are represented symbolically, and our normalisation
-   procedure is extended sort products alphabetically.
+   roots symbolically.
+ - [Geometric Units](geometric_units.html) begins the definition of `geometric`,
+   by introducing symbolic values separate from the usual number line.
  - [Complex And Hypercomplex Numbers](complex_and_hypercomplex_numbers.html)
-   explores the mezzanine levels inside `geometric`, and their various uses.
+   use the geometric units to construct the mezzanine levels inside `geometric`.
  - [Geometric Algebra](geometric_algebra.html) completes the implementation of
-   the `geometric` level, and explores applications to geometry and physics.
+   the `geometric` level.
  - [Indeterminates](indeterminates.html) implements the `univariate-monomial`,
    level, and introduces the `monomial` and `homogeneous` mezzanines from
    `polynomial`.
  - [Polynomials](polynomials.html) finishes the implementation of the
    `polynomial` level and explores its `univariate` mezzanine.
- - [General Expressions](general_expressions.html) extends `polynomial` to form
-   the `rational-expression` and `algebraic-expression` levels, which are
-   the most general numerical values supported by Ivory.
+ - [Expressions](expressions.html) extends `polynomial` to form the
+   `rational-expression` and `algebraic-expression` levels, which are the most
+   general numerical values supported by Ivory.
+
+### Code ###
+
+The entire Ivory codebase, generated from these pages, is archived in the
+following link:
+
+```{.unwrap pipe="sh | pandoc -t json"}
+# Use a data URL. These default to US-ASCII encoding, so we need to
+# specify UTF8 for our unicode symbols.
+#printf '<a download="ivory.zip" href="data:application/zip;base64,'
+#base64 -w0 < ivory.zip
+#printf '">DOWNLOAD IVORY FOR RACKET</a>'
+echo 'TODO'
+```
