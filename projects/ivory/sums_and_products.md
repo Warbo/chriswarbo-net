@@ -70,13 +70,17 @@ patterns. For example:
  <figcaption>Multiplication table for integers</figcaption>
 </figure>
 
-However, the ideas of sums and products have been generalised much further than
-just numbers. So what about these generalisations makes them "sums" and
-"products"; what makes other things *not* sums or products; and what's the
-*difference* between a "sum" and a "product"?
+We can generalise these ideas of sum and product to much more than simple
+numbers. To do so we have to decide which aspects to keep, and which to ignore.
+In other words, what is the "essence" that makes the above tabulations a sum and
+a product? Which things *cannot* be considered as sums or products? Whilst we're
+at it, what's the actual *distinction* between a "sum" and a "product"?
 
-This post will explore these ideas; and, for the adventurous, we'll implement
-these ideas in Racket code.
+### Representing Sums And Products in Scheme ###
+
+Ivory will represent sums and products as "uninterpreted function symbols", i.e.
+as lists like `'(+ 1 2)`{.scheme} or `(× 3 4)`{.scheme}: our normalisation rules
+will reduce such lists into their unique normal form.
 
 ## Types ##
 
@@ -85,9 +89,10 @@ transform "input values" into an "output value". A fundamental aspect of these
 values is their *type*: what sort of things are we talking about?
 
 For the addition and multiplication we learn in school, all of the values are
-*numbers*; i.e. they have type number. They could be "literal" numbers, like
-`12`{.scheme}; or "variables" which *represent* some number, like `x`{.scheme};
-or the output of some other numerical operation, like `(+ 1 2)`{.scheme}.
+*numbers*; i.e. they "have type `number`". Numbers can be "literal", like
+`12`{.scheme}; or a (named) "variable" which *represents* some number, like
+`x`{.scheme}; or, crucially, they can be the *output* of some *other* numerical
+operation, like `(+ 1 2)`{.scheme}.
 
 Having the same type for inputs and outputs allows sums and products to be
 *nested* in arbitrary ways: with the output one one used as the input of
@@ -112,36 +117,34 @@ another, forming "trees":
  `(+ (× 7 (× 2 9)) 3)`{.scheme}, or the infix expression $(7 × (2 × 9)) + 3$.
 </figure>
 
-Any operation that combines things of *different* types, or whose output has a
-different type to its inputs, is not usually considered a sum or a product.
-
-When we extend the ideas of sum and product to more general situations, we
-always require the the input and output types to match, so they can be nested.
-For example, the product of intervals is an interval; the sum of random
-variables is a random variable; etc.
+This is a crucial aspect of sums and products. An operation which *doesn't*
+output the same type as its inputs, or which combines inputs of different types,
+is not usually considered a sum or a product.
 
 ## Laws of Algebra ##
 
 We can characterise operations *algebraically* by stating "laws": equations
-which an operation always satisfies, regardless of its inputs (written ). by
-that which sum and products using equations, which tell us when different forms
-of nesting are equal. These are *algebraic laws*, although programmers may refer
-to them as
+which an operation always satisfies, regardless of its inputs. This latter
+aspect can be represented by using variables for inputs (we'll use the names
+`a`, `b` and `c`), and stating the laws "for all" values of those variables.
+(Programmers may also know these as
 [invariants](https://en.wikipedia.org/wiki/Invariant_(mathematics)#Invariants_in_computer_science)
 or
-[properties](https://hypothesis.works/articles/what-is-property-based-testing/).
+[properties](https://hypothesis.works/articles/what-is-property-based-testing/)).
 
-### The Law Of Associativity ###
+Since these laws state that different forms of sums and products are equal, and
+our goal with Ivory is represent all numbers in a unique normal form, we will
+choose one form for each law, and rewrite the other equal forms into this one.
+
+### Associativity ###
 
 <figure>
 
 ```
    +                   +                      +
-   │                   │                      │
 ┌──┴──┐             ┌──┴──┐             ┌─────┼─────┐
 │     │             │     │             │     │     │
 a     +      =      +     c      =      a     b     c
-      │             │
    ┌──┴──┐       ┌──┴──┐
    │     │       │     │
    b     c       a     b
@@ -151,75 +154,274 @@ a     +      =      +     c      =      a     b     c
 
 ```
    ×                   ×                      ×
-   │                   │                      │
 ┌──┴──┐             ┌──┴──┐             ┌─────┼─────┐
 │     │             │     │             │     │     │
 a     ×      =      ×     c      =      a     b     c
-      │             │
    ┌──┴──┐       ┌──┴──┐
    │     │       │     │
    b     c       a     b
 ```
 
-<figcaption>The law of associativity for `+` and `+`. These equations always
+<figcaption>The law of associativity for `+` and `×`. These equations always
 hold, regardless of the values of `a`, `b` and `c`.
 </figure>
 
-This law states how nesting an operation inside that same operation works, like
-having a sum-of-sums or a product-of-products. It tells us the following are
-always equal, regardless of what `x`, `y` and `z` are:
+This law states that sums-of-sums, or products-of-products, do not depend on how
+they are nested; so long as the value occur in the same order from
+left-to-right. This justifies the application of `+` and `×` to
+*arbitrarily-many* inputs, which are equivalent to nested operations; but don't
+require an arbitrary choice of branching structure.
 
-```scheme
-(= (+ x (+ y z))
-   (+ (+ x y) z)
-   (+ x y z))
-   
-(= (× x (× y z))
-   (× (× x y) z)
-   (× x y z))
-```
+#### Implementing Associativity ####
 
-It may be easier to see what's happening by drawing these as trees:
-
-
-
-There are a few things to notice about these equations. Firstly, the inputs `x`,
-`y` and `z` always appear in the same order: associativity does not let us swap
-around values. Instead, it lets us "rebalance" nested operations; as a tree
-
-says the following should worknesting a su an operation inside *the same* operation wor
-
-### Representing Sums And Products in Scheme ###
-
-Since products and sums don't always "reduce" to something simpler, we'll use
-the same "uninterpreted function" trick as we did for representing GA units.
-This time, since we're dealing with products and sums, we'll use the symbols `×`
-and `+`. Also, since they can accept any amount of inputs, we'll keep them in a
-list rather than a pair.
-
-This makes the implementation of multiplication and addition pretty simple: we
-just wrap all of the inputs into a product or sum, respectively. We then apply a
-`canonical` function (defined in the next section), to rearrange them into our
-preferred form (sum-of-products, in alphabetical order):
+We will normalise such nested operations by flattening them. First, some helper
+functions:
 
 ```{.scheme pipe="./show"}
-;; Shorthands for creating products and sums
-(define (geo-× . args) (canonical (cons '× args)))
-(define (geo-+ . args) (canonical (cons '+ args)))
+;; Predicates for spotting products and sums
+(define (×? n) (and (pair? n) (equal? '× (car n))))
+(define (+? n) (and (pair? n) (equal? '+ (car n))))
 
-;; Predicates for spotting products, sums and general geometric numbers
+;; Indicates whether a value was/wasn't in normal form, and hence may need
+;; further normalising.
+(define (unchanged x) (values x #f))
+(define (  changed x) (values x #t))
 
-(define/match (geo-×? n)
-  [((cons '× ns)) (andmap geometric? ns)]
-  [(_) #f])
+;; Append an element to the end of a list
+(define (snoc xs x) (append xs (list x)))
 
-(define/match (geo-+? n)
-  [((cons '+ ns)) (andmap geometric? ns)]
-  [(_) #f])
+;; Return #f when no element of xs satisfies pred, otherwise return (list a b c)
+;; where (append a (cons b c)) = xs, and (pred b)
+(define ((split pred) xs)
+  (match/values (splitf-at xs (negate pred))
+    [(xs (cons y ys)) (list xs y ys)]
+    [(_  _          ) #f]))
+```
 
-(define geo? (disjoin unit-ga? geo-×? geo-+?))
+```{pipe="./hide"}
+(module+ test
+  (check-property
+    (property split-works ([xs (gen:list gen:natural)])
+      (match ((split even?) xs)
+        [#f (test-equal? "No split means no matches" (filter even? xs) '())]
+        [(list pre x suf)
+          (test-equal? "Split should pick first match" (filter even? pre) '())
+          (test-pred "Found value should match" even? x)
+          (test-equal? "Split results should append to input"
+            (append pre (cons x suf)) xs)]))))
+```
 
-(define geometric? (disjoin number? geo?))
+Now we can spot nested sums/products and normalise them to a single sum/product:
+
+```
+;; Match nested operations; bind the inner operation's inputs to xs, and append
+;; them to the outer operation's other inputs (pre and suf)
+(define/match (normalise-associativity n)
+  [(cons '+ (app (split +?) (list pre (cons '+ xs) suf)))
+   (changed (cons '+ (append pre xs suf)))]
+
+  [(cons '× (app (split ×?) (list pre (cons '× xs) suf)))
+   (changed (cons '× (append pre xs suf)))]
+
+  [_ (unchanged n)])
+```
+
+### Identity ###
+
+<figure>
+
+```
+   +                   +
+┌──┴──┐             ┌──┴──┐
+│     │      =      │     │      =      a
+a     0             0     a
+```
+
+---
+
+```
+   ×                   ×
+┌──┴──┐             ┌──┴──┐
+│     │      =      │     │      =      a
+a     1             1     a
+```
+
+</figure>
+
+Sums and products each have an *identity* value: a value that "does nothing"
+for that operation. When adding numbers, the number `0` is the identity (since
+adding zero to any number leaves it unchanged); when multiplying numbers, the
+number `1` is the identity (since multiplying any number by one leaves it
+unchanged).
+
+When an operation is applied to *no* inputs, it makes sense to output its
+identity element, since that fits the pattern established by associativity. For
+example, a nested sum like `(+ 1 (+ 2 3 4) 5 6)`{.scheme} can be "flattened" by
+replacing the inner sum by its three inputs, like `(+ 1 2 3 4 5 6)`{.scheme}.
+When the inner sum has *no* inputs, like `(+ 1 (+) 5 6)`{.scheme}, we likewise
+replace it with nothing, to get `(+ 1 5 6)`{.scheme}. Hence the empty sum acts
+like an identity element, and the same argument applies to empty products.
+
+#### Implementing Identity ####
+
+Since these identity elements "do nothing", we can remove them when normalising
+a sum or product:
+
+```{.scheme pipe="./show"}
+(define/match (normalise-identity n)
+  ;; Identity elements can be removed from sums and products
+
+  [((cons '+ (app (split (curry equal? 0)) (list pre 0 suf))))
+   (changed (cons '+ (append pre suf)))]
+
+  [((cons '× (app (split (curry equal? 1)) (list pre 1 suf))))
+   (changed (cons '× (append pre suf)))]
+
+  ;; Empty sums and products are their identity elements
+  [((list '+)) (changed 0)]
+  [((list '×)) (changed 1)]
+
+  [(_) (unchanged n)])
+```
+
+### Distributivity ###
+
+<figure>
+
+```
+   ×                    +
+┌──┴──┐             ┌───┴───┐
+│     │             │       │
+a     +      =      ×       ×
+   ┌──┴──┐       ┌──┴──┐ ┌──┴──┐
+   │     │       │     │ │     │
+   b     c       a     b a     c
+```
+
+---
+
+```
+
+      ×                 +
+   ┌──┴──┐          ┌───┴───┐
+   │     │          │       │
+   +     c   =      ×       ×
+┌──┴──┐          ┌──┴──┐ ┌──┴──┐
+│     │          │     │ │     │
+a     b          a     c b     c
+```
+
+</figure>
+
+So far all of these laws have applied equally to both sums and products. Not
+only does distributivity apply differently to each, but it tells us which
+operations act like sums, and which act like products.
+
+#### Implementing Distributivity ####
+
+```{.scheme pipe="./show"}
+;; Check (pred (nth 0 xs) (nth 1 xs)), (pred (nth 1 xs) (nth 2 xs)), etc. until
+;; we find a neighbouring pair elements a & b which pass the predicate, then
+;; return (list pre a b suf), where (append pre (cons a (cons b suf))) = xs.
+;; If no such pair of elements is found, return #f.
+(define ((split-pair pred) xs)
+  (define/match (go xs ys)
+    [((cons x xs) '()        ) (go xs (list x))]
+    [('()         ys         ) #f]
+    [((cons x xs) (cons y ys))
+     (if (pred y x)
+       (list (reverse ys) y x xs)
+       (go xs (cons x (cons y ys))))])
+
+  (go xs '()))
+```
+
+```{pipe="./hide"}
+(module+ test
+  (check-property
+    (property split-pair-works ([xs (gen:list gen:natural)])
+      (match ((split-pair <) xs)
+        [#f
+         (test-equal? "When no pairs are <, xs must be reverse sorted"
+           xs (reverse (sort xs <)))]
+
+        [(list pre x y suf)
+         (test-equal? "split-pair should split input" `(,@pre ,x ,y ,@suf) xs)
+         (test-check "split-pair should find pair matching predicate" < x y)
+
+         ;; For x & y to be the first pair where x < y, that means no elements
+         ;; before y (i.e. in (snoc pre x)) should be greater than their
+         ;; predecessor. Or, in other words, the elements of (snoc pre x) should
+         ;; be in descending order. To test this, sorting should be a no-op.
+         (test-equal? "split-pair should return first pair matching predicate"
+           (snoc pre x)
+           (sort (snoc pre x) >))]))))
+```
+
+```{.scheme pipe="./show"}
+;; Distributivity: if a product contains a sum, distribute everything on its
+;; left and right into that sum. This will match over and over until the sum
+;; is the only value inside the product.
+(define (normalise-distributivity n)
+  [(cons '× (app (split-pair (lambda (x y) (+? x)))  ;; A sum followed by y
+                 (list pre (cons '+ xs) y suf)))
+   ;; Keep the product
+   (changed (cons '× (append
+     pre
+     ;; Multiply all of xs's summands by y on their right
+     (list (cons '+ (map (lambda (x) (list '× x y)) xs)))
+     suf
+   )))]
+
+  [(cons '× (app (split-pair (lambda (x y) (+? y)))  ;; x followed by a sum
+                 (list pre x (cons '+ ys) suf)))
+   ;; Keep the product, in case pre/suf contain more elements
+   (changed (cons '× (append
+     pre
+     ;; Multiply all of ys's sumands by x
+     (list (cons '+ (map (curry list '× x) ys)))
+     suf
+   )))]
+
+  [_ (unchanged n)])
+```
+
+## Fully Normalising Sums And Products ##
+
+```{.scheme pipe="./show"}
+;; Accept a normalising function as argument, and use that to recurse. That
+;; allows more-sophisticated normalisation procedures to be passed in, like
+;; defined in later pages!
+(define (normalise normalise n) (match n
+  [(app normalise-associativity  n #t) (changed n)]
+  [(app normalise-identity       n #t) (changed n)]
+  [(app normalise-distributivity n #t) (changed n)]
+
+  ;; A singleton sum or product outputs its only input
+  [(list '+ n) (changed n)]
+  [(list '× n) (changed n)]
+
+  ;; Sums of multiple Racket numbers simplify via addition
+  [(cons '+ (app (split number?)
+                 (list pre x (app (split number?)
+                                  (list mid y suf)))))
+   (changed (append (list '+ (+ x y)) pre mid suf))]
+
+  ;; Products of multiple Racket numbers simplify via multiplication
+  [(cons '× (app (split number?)
+                 (list pre x (app (split number?)
+                                  (list mid y suf)))))
+   (changed (append (list '× (× x y)) pre mid suf))]
+
+  ;; Recurse through the elements of a sum or product to see if any change
+  [(cons (and op (or '+ '×)) xs)
+   (for/fold ([result      (list op)]
+              [any-changed #f])
+             ([(x changed) (map normalise xs)])
+     (values (snoc result x) (or any-changed changed)))]
+
+  ;; Otherwise there's nothing left to do
+  [_ (unchanged n)]))
 ```
 
 ## Code ##

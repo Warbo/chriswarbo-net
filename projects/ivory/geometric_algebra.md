@@ -97,63 +97,11 @@ until the standard sum-of-products form is reached.
 ```{pipe="./hide"}
 ;; Helper functions
 
-;; Append an element to the end of a list
-(define (snoc xs x) (append xs (list x)))
+(define geo? (disjoin unit-ga? ×? +?))
+
+(define geometric? (disjoin number? geo?))
 
 (define geo-zero? (conjoin number? zero?))
-
-;; Return #f when no element of xs satisfies pred, otherwise return (list a b c)
-;; where (append a (cons b c)) = xs, and (pred b)
-(define ((split pred) xs)
-  (match/values (splitf-at xs (negate pred))
-    [(xs (cons y ys)) (list xs y ys)]
-    [(_  _          ) #f]))
-
-(module+ test
-  (check-property
-    (property split-works ([xs (gen:list gen:natural)])
-      (match ((split even?) xs)
-        [#f (test-equal? "No split means no matches" (filter even? xs) '())]
-        [(list pre x suf)
-          (test-equal? "Split should pick first match" (filter even? pre) '())
-          (check-pred even? x)
-          (test-equal? "Split results should append to input"
-            (append pre (cons x suf)) xs)]))))
-
-;; Check (pred (nth 0 xs) (nth 1 xs)), (pred (nth 1 xs) (nth 2 xs)), etc. until
-;; we find a neighbouring pair elements a & b which pass the predicate, then
-;; return (list pre a b suf), where (append pre (cons a (cons b suf))) = xs.
-;; If no such pair of elements is found, return #f.
-(define ((split-pair pred) xs)
-  (define/match (go xs ys)
-    [((cons x xs) '()        ) (go xs (list x))]
-    [('()         ys         ) #f]
-    [((cons x xs) (cons y ys))
-     (if (pred y x)
-       (list (reverse ys) y x xs)
-       (go xs (cons x (cons y ys))))])
-
-  (go xs '()))
-
-(module+ test
-  (check-property
-    (property split-pair-works ([xs (gen:list gen:natural)])
-      (match ((split-pair <) xs)
-        [#f
-         (test-equal? "When no pairs are <, xs must be reverse sorted"
-           xs (reverse (sort xs <)))]
-
-        [(list pre x y suf)
-         (test-equal? "split-pair should split input" `(,@pre ,x ,y ,@suf) xs)
-         (test-check "split-pair should find pair matching predicate" < x y)
-
-         ;; For x & y to be the first pair where x < y, that means no elements
-         ;; before y (i.e. in (snoc pre x)) should be greater than their
-         ;; predecessor. Or, in other words, the elements of (snoc pre x) should
-         ;; be in descending order. To test this, sorting should be a no-op.
-         (test-equal? "split-pair should return first pair matching predicate"
-           (snoc pre x)
-           (sort (snoc pre x) >))]))))
 
 ;; Compare whether xs is less than ys: shorter lists are less than
 (define (list<? xs ys <?)
