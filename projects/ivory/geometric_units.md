@@ -200,66 +200,70 @@ In any case, here are some Scheme functions for manipulating these GA units:
 #### Parsing Geometric Units ####
 
 Now we have a *representation* for `geometric` units, as a pair of flavour and
-index, we can extend Racket's parser to understand the subscript form. There are
-a few ways to do this: we'll use a custom
-[`readtable`{.scheme}](https://docs.racket-lang.org/guide/hash-reader.html#%28part._readtable%29),
-since that lets us target our changes to only affect numeric literals. This
-works by defining a custom `read`{.scheme} function to consume characters of our
-desired syntax from a `port`, and return a datum/syntax-object representing our
-desired result; a custom readtable can then dispatch to that function when
-appropriate characters are encountered in some code.
-
-We'll leave the custom readtable until the end of our implementation, but we can
-define a function to read GA units here, which will be invoked when the input
-contains a `d`{.scheme}, `h`{.scheme} or `i`{.scheme}. This functionshould
-consume any following subscript digits, and construct a pair to represent the
-corresponding GA unit. If no subscript digits are found, it should fall-back to
-the normal reader:
+index, we can define a function to read this subscript syntax:
 
 ```{.scheme pipe="./show"}
-(define (read-unit src in)
+(define (subscripts-to-digits s)
+  (for/fold ([digits s])
+            ([i    "0123456789"]
+             [char "₀₁₂₃₄₅₆₇₈₉"])
+    (string-replace digits (string char) (string i))))
+
+(define (parse-unit in)
   ;; Look for flavour and index, using regexp capture groups
-  (match (regexp-match #px"^([dhi])(₀|([₁₂₃₄₅₆₇₈₉][₀₁₂₃₄₅₆₇₈₉]*))" in)
-    ;; No match: fall back to normal parsing rules (e.g. for symbols)
-    [#f (read-syntax/recursive src in #f #f)]
+  (match (regexp-match
+           ;; Match flavour then index; disallow leading zeros
+           #px"^([dhi])((₀(?![₀₁₂₃₄₅₆₇₈₉]))|([₁₂₃₄₅₆₇₈₉][₀₁₂₃₄₅₆₇₈₉]*))"
+           in)
+    ;; No match
+    [#f #f]
 
     ;; Found a match: s is entire match, groups are captured substrings
-    [(list s flavour-group index-group)
+    [(cons s (cons flavour-group (cons index-group _)))
      (cons
-       (string->symbol flavour-group)
-       (string->number (for/fold ([digits index-group])
-                                   ([i    "0123456789"]
-                                    [char "₀₁₂₃₄₅₆₇₈₉"])
-                           (string-replace digits char i))))])
+       (string->symbol (bytes->string/utf-8 flavour-group))
+       (string->number
+         (subscripts-to-digits (bytes->string/utf-8 index-group))))]))
 ```
 
 ```{pipe="./hide"}
 (module+ test
-  (define (string->unit s) (read-unit #f (open-input-string s)))
+  (test-equal? "Convert ₀ to 0" (subscripts-to-digits "₀") "0")
+  (test-equal? "Convert ₁ to 1" (subscripts-to-digits "₁") "1")
+  (test-equal? "Convert ₂ to 2" (subscripts-to-digits "₂") "2")
+  (test-equal? "Convert ₃ to 3" (subscripts-to-digits "₃") "3")
+  (test-equal? "Convert ₄ to 4" (subscripts-to-digits "₄") "4")
+  (test-equal? "Convert ₅ to 5" (subscripts-to-digits "₅") "5")
+  (test-equal? "Convert ₆ to 6" (subscripts-to-digits "₆") "6")
+  (test-equal? "Convert ₇ to 7" (subscripts-to-digits "₇") "7")
+  (test-equal? "Convert ₈ to 8" (subscripts-to-digits "₈") "8")
+  (test-equal? "Convert ₉ to 9" (subscripts-to-digits "₉") "9")
 
-  (test-equal? "Parse dual 0"          (string->unit "d₀") '(d . 0))
-  (test-equal? "Parse hyperbolic 0"    (string->unit "h₀") '(h . 0))
-  (test-equal? "Parse imaginary 0"     (string->unit "i₀") '(i . 0))
-  (test-equal? "Non-unit 0 left alone" (string->unit "a₀") 'a₀)
+  (define (string->unit s) (parse-unit (open-input-string s)))
+
+  (test-equal? "Parse dual 0"        (string->unit "d₀") '(d . 0))
+  (test-equal? "Parse hyperbolic 0"  (string->unit "h₀") '(h . 0))
+  (test-equal? "Parse imaginary 0"   (string->unit "i₀") '(i . 0))
+  (test-false  "Non-unit 0 unparsed" (string->unit "a₀"))
 
   (test-equal? "Parse dual 1"          (string->unit "d₁") '(d . 1))
   (test-equal? "Parse hyperbolic 1"    (string->unit "h₁") '(h . 1))
   (test-equal? "Parse imaginary 1"     (string->unit "i₁") '(i . 1))
-  (test-equal? "Non-unit 1 left alone" (string->unit "a₁") 'a₁)
+  (test-false  "Non-unit 1 unparsed" (string->unit "a₁"))
 
   (test-equal? "Parse dual 10"          (string->unit "d₁₀") '(d . 10))
   (test-equal? "Parse hyperbolic 10"    (string->unit "h₁₀") '(h . 10))
   (test-equal? "Parse imaginary 10"     (string->unit "i₁₀") '(i . 10))
-  (test-equal? "Non-unit 10 left alone" (string->unit "a₁₀") 'a₁₀)
+  (test-false  "Non-unit 10 unparsed" (string->unit "a₁₀"))
 
-  (test-equal? "Invalid dual index left alone"       (string->unit "d₀₁") 'd₀₁)
-  (test-equal? "Invalid hyperbolic index left alone" (string->unit "h₀₁") 'h₀₁)
-  (test-equal? "Invalid imaginary index left alone"  (string->unit "i₀₁") 'i₀₁)
-  (test-equal? "Invalid non-unit left alone"         (string->unit "a₀₁") 'a₀₁)
+  (test-false "Invalid dual index unparsed"       (string->unit "d₀₁"))
+  (test-false "Invalid hyperbolic index unparsed" (string->unit "h₀₁"))
+  (test-false "Invalid imaginary index unparsed"  (string->unit "i₀₁"))
+  (test-false "Invalid non-unit unparsed"         (string->unit "a₀₁"))
 
-  (test-equal? "Dual without index is symbol"       (string->unit "d") 'd)
-  (test-equal? "Hyperbolic without index is symbol" (string->unit "h") 'h)
-  (test-equal? "Imaginary without index is symbol"  (string->unit "i") 'i)
+  (test-false "Dual without index unparsed"       (string->unit "d"))
+  (test-false "Hyperbolic without index unparsed" (string->unit "h"))
+  (test-false "Imaginary without index unparsed"  (string->unit "i"))
 )
 ```
 
