@@ -262,3 +262,17 @@ the normal reader:
   (test-equal? "Imaginary without index is symbol"  (string->unit "i") 'i)
 )
 ```
+
+## Code ##
+
+```{.unwrap pipe="./dump geo-units.rkt"}
+```
+
+<details class="odd">
+ <summary>Test results</summary>
+
+```{pipe="./tests"}
+```
+
+</details>
+</div>

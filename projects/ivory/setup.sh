@@ -38,4 +38,21 @@ printf '%s\nexport LANG=en_US.UTF-8\ncat >> %s\necho >> %s\necho >> %s\n' \
            's/.*base64,//g' 's/[\"'\''].*$//g'
 } > extract
 
-chmod +x extract hide show tests
+# Writes a HTML anchor for downloading the given file's contents via data URL
+{
+    printf '%s\n{\nprintf "<a id=\"racket\" download=\"$1\" "\n' "$SHEBANG"
+
+    # Use a data URL. These default to US-ASCII encoding, so we need to
+    # specify UTF8 for our unicode symbols.
+    printf "printf 'href=\"data:text/plain;charset=utf-8;base64,'\n"
+
+    # The contents needs to be URL-encoded. That requires extra dependencies,
+    # which I'd rather avoid. Instead, we can use GNU coreutils to Base64-encode
+    # it, which will avoid the need for a separate URL-encoding step.
+    printf 'base64 -w0 < "$1"\n'
+
+    # Run the result through pandoc so panhandle can unwrap it
+    printf "printf '\">DOWNLOAD RACKET CODE</a>'\n} | pandoc -t json"
+} > dump
+
+chmod +x dump extract hide show tests
