@@ -1,5 +1,5 @@
 ---
-title: Numbers In Scheme
+title: "Ivory: Numbers In Scheme"
 packages: ['racketWithRackCheck']
 ---
 

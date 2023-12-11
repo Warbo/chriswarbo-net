@@ -1,5 +1,6 @@
 ---
-title: Indeterminates
+title: "Ivory: Indeterminates"
+packages: ['racketWithRackCheck']
 ---
 TODO
 

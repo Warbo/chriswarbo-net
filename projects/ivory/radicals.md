@@ -1,5 +1,6 @@
 ---
-title: "A New Numeric Tower: Radicals"
+title: "Ivory: Radicals"
+packages: ['racketWithRackCheck']
 ---
 
 > To be radical is to grasp things by the root

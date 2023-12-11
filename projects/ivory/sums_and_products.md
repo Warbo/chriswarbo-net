@@ -1,5 +1,6 @@
 ---
-title: "A New Numeric Tower: Sums And Products"
+title: "Ivory: Sums And Products"
+packages: ['racketWithRackCheck']
 ---
 
 ## Introduction ##

@@ -1,5 +1,6 @@
 ---
-title: "A New Numeric Tower: Geometric Algebra"
+title: "Ivory: Geometric Algebra"
+packages: ['racketWithRackCheck']
 ---
 
 ## Geometric Arithmetic ##

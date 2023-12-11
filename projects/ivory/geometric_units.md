@@ -1,5 +1,6 @@
 ---
-title: "A New Numeric Tower: Geometric Units"
+title: "Ivory: Geometric Units"
+packages: ['racketWithRackCheck']
 ---
 
 In this page we will leave the ordinary number line, and begin to introduce the

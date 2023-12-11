@@ -1,5 +1,6 @@
 ---
-title: "A New Numeric Tower: Negatives And Inverses"
+title: "Ivory:: Negatives And Inverses"
+packages: ['racketWithRackCheck']
 ---
 
 TODO
