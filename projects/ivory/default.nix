@@ -17,7 +17,9 @@ with rec {
   allPages = mapAttrs renderPage (with allPages; {
     complex_and_hypercomplex_numbers = { };
     expressions = { };
-    geometric_algebra = { };
+    geometric_algebra = {
+      inherit geometric_units numbers_in_scheme sums_and_products zero_one_many;
+    };
     geometric_units = { };
     indeterminates = { };
     index = { };
@@ -27,7 +29,7 @@ with rec {
     polynomials = { };
     radicals = { };
     #scheme_geometric_algebra = { };
-    sums_and_products = { };
+    sums_and_products = { inherit numbers_in_scheme; };
     zero_one_many = { inherit numbers_in_scheme; };
   });
 };

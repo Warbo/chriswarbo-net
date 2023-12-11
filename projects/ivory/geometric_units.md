@@ -3,6 +3,21 @@ title: "Ivory: Geometric Units"
 packages: ['racketWithRackCheck']
 ---
 
+```{pipe="sh"}
+bash $setup geo-units.rkt
+```
+
+```{pipe="./hide"}
+#lang racket
+(provide unit-ga?
+         unit-flavour
+         unit-index
+         unit<?
+         subscripts-to-digits
+         parse-unit)
+(module+ test (require rackunit rackcheck-lib))
+```
+
 In this page we will leave the ordinary number line, and begin to introduce the
 `geometric` level of the Ivory tower. Our starting point is the equation:
 

@@ -3,6 +3,22 @@ title: "Ivory: Geometric Algebra"
 packages: ['racketWithRackCheck']
 ---
 
+```{pipe="sh"}
+bash "$setup" geo.rkt
+for DEP in "$geometric_units" "$numbers_in_scheme" "$sums_and_products" \
+           "$zero_one_many"
+do
+  ./extract "$DEP"
+done
+```
+
+```{pipe="./hide"}
+#lang racket
+(require "geo-units.rkt")
+(require "sums-and-products.rkt")
+(module+ test (require rackunit rackcheck-lib))
+```
+
 ## Geometric Arithmetic ##
 
 Adding and multiplying `geometric` numbers always results in another `geometric`

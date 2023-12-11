@@ -3,7 +3,8 @@ title: "Ivory: Numbers In Scheme"
 packages: ['racketWithRackCheck']
 ---
 
-```{pipe="bash $setup num.rkt"}
+```{pipe="sh"}
+bash $setup num.rkt
 ```
 
 ```{pipe="./hide"}

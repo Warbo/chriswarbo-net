@@ -3,7 +3,25 @@ title: "Ivory: Sums And Products"
 packages: ['racketWithRackCheck']
 ---
 
-## Introduction ##
+```{pipe="sh > /dev/null"}
+bash $setup sums-and-products.rkt
+for DEP in "$numbers_in_scheme"
+do
+  ./extract "$DEP"
+done
+```
+
+```{pipe="./hide"}
+#lang racket
+(provide
+  +?
+  ×?
+  ivory-+
+  ivory-×
+  normalise)
+(require (rename-in "num.rkt" [normalise old:normalise]))
+(module+ test (require rackunit rackcheck-lib))
+```
 
 We tend to learn about sums ("adding numbers") quite early, either when starting
 school or even before. We also learn about products ("times-ing numbers")
