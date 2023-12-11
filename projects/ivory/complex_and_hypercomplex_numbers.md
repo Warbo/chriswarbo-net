@@ -168,10 +168,10 @@ which I don't consider "numeric" enough to live in our tower!
 #### Dual Numbers ####
 
 If we extend `rational` with a single *dual* unit, say `d₀`, we get the system
-of [dual numbers](), which is useful for e.g. automatic differentiation. Dual
-numbers don't include an imaginary unit, and `complex` numbers don't include a
-dual unit, so neither is a sub-set of the other. Hence they'll need to live
-side-by-side in our tower!
+of [dual numbers](https://en.wikipedia.org/wiki/Dual_numbers), which is useful
+for e.g. automatic differentiation. Dual numbers don't include an imaginary
+unit, and `complex` numbers don't include a dual unit, so neither is a sub-set
+of the other. Hence they'll need to live side-by-side in our tower!
 
 <figure>
 
