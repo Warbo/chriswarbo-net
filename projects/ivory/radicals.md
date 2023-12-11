@@ -2,6 +2,9 @@
 title: "A New Numeric Tower: Radicals"
 ---
 
+> To be radical is to grasp things by the root
+— <cite>Karl Marx, *Critique of Hegel's Philosophy of Right*</cite>
+
 TODO
 
  - `(expt x y)` is tricky:

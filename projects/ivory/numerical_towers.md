@@ -6,7 +6,7 @@ title: "Ivory: Numerical Towers"
 > It transcends the limits of my mind
 > Ivory Towers in the sky
 > A dreadful and enchanting sight
-— <cite>Ivory Towers, Acid Mammoth</cite>
+— <cite>Acid Mammoth, *Ivory Towers*</cite>
 
 Numerical Towers are a particular way to design and organise a programming
 language's numeric values and operations, notably used by the Lisp, Scheme &

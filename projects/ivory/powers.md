@@ -2,6 +2,12 @@
 title: "Ivory: By Your Powers Combined"
 ---
 
+> Try, if you can to come where we have gone
+> You may achieve what can't be simply done
+> Look back and there you are where we have been
+> And still there's so much in between
+— <cite>Helloween, *Power*</cite>
+
 TODO
 
  - Exponents let us implement reciprocals (powers of 1̅), and hence fractions

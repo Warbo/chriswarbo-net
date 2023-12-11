@@ -2,6 +2,12 @@
 title: Complex And Hypercomplex Numbers
 ---
 
+> You created this dream out of bits and pieces
+> Filed away in your mind
+> You're caught inside a fantasy
+> But we'll find the truth inside
+— <cite>Star One, *Cassandra Complex*</cite>
+
 <!--
 
 them gives us are extra numbers have structure which you might have encountered elsewhere
