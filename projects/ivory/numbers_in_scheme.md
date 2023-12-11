@@ -9,7 +9,10 @@ bash $setup num.rkt
 
 ```{pipe="./hide"}
 #lang racket
-(module+ test (require rackunit rackcheck-lib))
+(provide × normalise)
+(module+ test
+  (require rackunit rackcheck-lib)
+  (provide gen:integer gen:rational))
 ```
 
 <figure>
@@ -44,6 +47,8 @@ symbols will mean multiplication:
 ```
 
 ```{pipe="./hide"}
+(define normalise identity)
+
 (module+ test
   (define gen:integer
     (gen:let ([magnitude gen:natural]
@@ -64,7 +69,6 @@ symbols will mean multiplication:
       ([nums (gen:list gen:rational)])
       (test-equal? "× acts like *" (apply × nums) (apply * nums))))
 )
-
 ```
 
 Numbers in Scheme can be `exact`{.scheme} or `inexact`{.scheme}. Ivory is only
