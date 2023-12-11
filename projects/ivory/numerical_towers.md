@@ -95,6 +95,18 @@ basis 🤞
 <figure>
 
 ```
+┌─────────┬─────────────────┐
+│ boolean │   even-square   │
+├─ ─ ─ ─ ─┴─ ─ ─┬─ ─ ─ ─ ─ ─┤
+│     square    │ quadruple │
+│               ├─ ─ ─ ─ ─ ─┤
+│               │   even    │
+├─ ─ ─ ─ ─ ─ ─ ─┴─ ─ ─ ─ ─ ─┤
+│          natural          │
+└───────────────────────────┘
+```
+
+```
 ┌──────┬────────────┬────────────┐
 │ dual │  complex   │ hyperbolic │
 │      ├ ─ ─ ─ ─ ─ ─┤            │
@@ -106,21 +118,12 @@ basis 🤞
 └────────────────────────────────┘
 ```
 
-```
-┌────────────┬─────────────┐
-│ univariate │ monomial    │
-│            ├ ─ ─ ─ ─ ─ ─ ┤
-│            │ homogeneous │
-├─ ─ ─ ─ ─ ─ ┴ ─ ─ ─ ─ ─ ─ ┤
-│        polynomial        │
-└──────────────────────────┘
-```
-
  <figcaption>
 
-Mezzanine structure inside the `geometric` and `polynomial` levels of the
-Ivory tower. "Siblings" appear side-by-side, indicating that neither contains
-the other.
+Mezzanine structure inside the `natural` and `geometric` levels of the Ivory
+tower. Set containment is shown vertically; "siblings" appear side-by-side,
+underneath their intersection (i.e. the extra values introduced by siblings are
+*disjoint*).
 
  </figcaption>
 </figure>
@@ -139,30 +142,31 @@ mezzanines is to support siblings, which allows many more useful types to be
 defined that would otherwise conflict; with the overall tower being agnostic
 about such internal distinctions.
 
-For example, the `univariate-monomial` level contains expressions of the form
-`nvᵃ`, where `n` is a `number`, `a` is a `natural` and `v` is an
-[indeterminate](https://en.wikipedia.org/wiki/Indeterminate_%28%29). This is a
-superset of `number`, since `(= v⁰ 1)`, so `(= nv⁰ n)`. There are two useful
-levels we could put underneath, which generalise such expressions in different
-ways:
+For example, there are many useful subsets of `natural` which contain `zero`,
+and hence could appear as an intermediate level in our tower. Unfortunately,
+most are incompatible with each other, such that choosing one would prevent us
+being able to express others; e.g. if we included a `boolean` level containing
+`0` and `1`, we could not have an `even` level (since it couldn't appear above
+or below `boolean`). Mezzanines are more flexible, allowing us to provide
+`boolean` *and* `even`, as siblings inside `natural`: this is permitted since
+their intersection (the values they have in common) is precisely the `zero`
+level that sits above both!
 
- - `univariate` `polynomials` include *sums* as well as products, and have the
-   form `av⁰+bv¹+cv²+…` for arbitrary `number` values `a`, `b`, `c`, …
- - Multivariate `monomials` allow arbitrarily-many indeterminates, with the form
-   `nv₀ᵃv₁ᵇv₂ᶜ…` for arbitrary `number` `n` and `natural` values `a`, `b`, `c`,
-   … (for consistency, `v₀` is a synonym for the `univariate` indeterminate `v`)
+The relationship between `square` and `even` is more delicate: both are useful
+sets to provide; but they cannot be levels of the tower, since neither contains
+the other; yet they can't be directly encoded as siblings without including
+*another* subset above them to represent their intersection. The latter would
+give `boolean` an `even-square` sibling, but we must ask ourselves if there is
+any merit to such subdivision, or whether it's an arbitrary hack? In this case
+it seems worthwhile, since `even-square` has a non-trivial relationship to
+`even` via `quadruple` (multiples of four, which also have nice closure
+properties and number-theoretic significance). `even-square` also complements
+its sibling `boolean`, as being the most natural subsets of `square` that
+include `zero` (no pun intended).
 
-These both generalise to the `polynomial` level (sums and products with
-arbitrarily-many indeterminates); yet making either of these a level between
-`univariate-monomial` and `polynomial` would prevent the other from being
-defined at all. Ivory avoids this dichotomy by choosing *neither*: instead going
-straight to `polynomial`, and defining these finer-grained types as siblings
-inside it.
-
-In contrast, we *cannot* use mezzanines to define, say, a subset of `polynomial`
-which only uses `rational` numbers, since no subdivisions *inside* the
-`polynomial` level can change the fact that it's below (and hence wholly
-contains) `geometric`, `algebraic`, etc.
+In contrast, we *cannot* use mezzanines to define, say, an `odd` subset of
+`natural` (or `odd-square`, etc.), since every subdivision occuring *inside* the
+`natural` level must necessarily sit below (and hence contain) `zero`.
 
 ### Operations ###
 
@@ -178,4 +182,4 @@ will also be in its `zero` subset; and so on.
 
 Although a good rule of thumb, unfortunately this "lowering" behaviour doesn't
 always hold; e.g. comparison functions like `≤` are not defined below the
-`algebraic` level.
+`real` level.
