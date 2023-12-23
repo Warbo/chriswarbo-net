@@ -221,8 +221,8 @@ or
 [properties](https://hypothesis.works/articles/what-is-property-based-testing/)).
 
 Since these laws state that different forms of sums and products are equal, and
-our goal with Ivory is represent all numbers in a unique normal form, we will
-choose one form for each law, and rewrite the other equal forms into this one.
+our goal with Ivory is to represent all numbers in a unique normal form, we will
+choose one form for each law, and rewrite the other equal forms into that one.
 
 ### Associativity ###
 
@@ -255,10 +255,10 @@ hold, regardless of the values of `a`, `b` and `c`.
 </figure>
 
 This law states that sums-of-sums, or products-of-products, do not depend on how
-they are nested; so long as the value occur in the same order from
+they are nested; so long as the inputs occur in the same order from
 left-to-right. This justifies the application of `+` and `×` to
-*arbitrarily-many* inputs, which are equivalent to nested operations; but don't
-require an arbitrary choice of branching structure.
+*arbitrarily-many* inputs, which are equivalent to nested operations (but don't
+require an arbitrary choice of branching structure).
 
 #### Implementing Associativity ####
 
@@ -428,11 +428,29 @@ a     +      =      ×       ×
 a     b          a     c b     c
 ```
 
+<figcaption>
+Distributivity relates addition and multiplication, with the latter
+"distributing over" the former.
+</figcaption>
+
 </figure>
 
 So far all of these laws have applied equally to both sums and products. Not
 only does distributivity apply differently to each, but it tells us which
-operations act like sums, and which act like products.
+operations act like sums, and which act like products. Specifically, it says
+that multiplying a sum, like `(× 2 (+ 3 7 19))`{.scheme}, is the same as
+multiplying each element of that sum individually, like
+`(+ (× 2 3) (× 2 7) (× 2 19))`{.scheme}. We say that multiplication "distributes
+over" addition. The same is not true if we switch the role of `+` and `×` (you
+may like to convince yourself of this by finding a counter-example)!
+
+Notice that distributing a multiplication doesn't change its order: distributing
+a multiplication "on the left", like `(× a ...)`{.scheme}, produces a sum of
+products which *also* multiply on the left; and vice versa "on the right", like
+`(× ... a)`{.scheme}. This isn't relevant for types like `integer`, since
+their product also obeys the *commutativity law*, that
+`(= (× a b) (× b a))`{.scheme}; however, we'll soon encounter numbers which
+*don't* commute, so it's important that we don't swap things around by accident!
 
 #### Absorption ####
 
