@@ -232,57 +232,108 @@ Now we can spot nested sums/products and normalise them to a single sum/product:
 <figure>
 
 ```
-   +                   +
-┌──┴──┐             ┌──┴──┐
-│     │      =      │     │      =      a
-a     0             0     a
++
+│      =      a
+a
 ```
 
 ---
 
 ```
-   ×                   ×
-┌──┴──┐             ┌──┴──┐
-│     │      =      │     │      =      a
-a     1             1     a
+×
+│      =      a
+a
 ```
+
+<figcaption>
+A sum or product containing only a single input, is equal to that input. Hence,
+in the case of a single argument, both sum and product act as the
+[identity function](https://en.wikipedia.org/wiki/Identity_function).
+</figcaption>
 
 </figure>
 
-Sums and products each have an *identity* value: a value that "does nothing"
-for that operation. When adding numbers, the number `0` is the identity (since
-adding zero to any number leaves it unchanged); when multiplying numbers, the
-number `1` is the identity (since multiplying any number by one leaves it
-unchanged).
+In mathematics, the word "identity" refers to something that leaves a value
+unchanged. Here we consider two sorts of identity. Firstly, the *identity
+function* (or operation) is that which outputs its input. Since a sum with only
+a single input does not add anything to it, the output equals that input; and
+hence that sum is an identity function. Likewise, a product with only a single
+input does not multiply it by anything, so the output equals that input, and the
+product too is an identity function. These facts allow us to "unwrap" sums or
+products of a single value when normalising expressions.
 
-When an operation is applied to *no* inputs, it makes sense to output its
-identity element, since that fits the pattern established by associativity. For
-example, a nested sum like `(+ 1 (+ 2 3 4) 5 6)`{.scheme} can be "flattened" by
-replacing the inner sum by its three inputs, like `(+ 1 2 3 4 5 6)`{.scheme}.
-When the inner sum has *no* inputs, like `(+ 1 (+) 5 6)`{.scheme}, we likewise
-replace it with nothing, to get `(+ 1 5 6)`{.scheme}. Hence the empty sum acts
-like an identity element, and the same argument applies to empty products.
+The second sort of identity is a *value*, whose inclusion in the inputs of an
+operation does not change the output. We know from associativity that nested
+operations are equivalent to a single operation with all the same inputs; hence
+an *empty* operation is the identity value, since it does not affect the inputs
+(only the nesting). For example, `(+ a (+))`{.scheme} is (by associativity) the
+same as `(+ a)`{.scheme}, and hence the same as `a`{.scheme} (since, as
+described above, the sum of a single input leaves it unchanged). Here is the
+same example shown graphically (with a half-line `╵` to indicate no inputs):
+
+```
+   +                +
+┌──┴──┐      =      │      =      a
+a     +             a
+      ╵
+```
+
+Hence [`(+)`{.scheme}](https://en.wikipedia.org/wiki/Empty_sum) is the identity
+value for sums, and a similar argument shows that
+[`(×)`{.scheme}](https://en.wikipedia.org/wiki/Empty_product) is the identity
+value for products.
+
+Now, we know from primary school that adding `0` to a number *also* leaves it
+unchanged; so zero must *also* be an identity for addition. In which case, what
+happens if we add zero to empty sum, like `(+ 0 (+))`{.scheme}? We know that
+adding `0` leaves a value unchanged, so the result is `(+)`{.scheme}; yet we
+also showed that adding `(+)`{.scheme} leaves a value unchanged, so the result
+is *also* `0`. This only makes sense if both of these are the same value! We can
+use the same approach to find that `(×)`{.scheme} and `1`{.scheme} must be the
+same value. Hence:
+
+<figure>
+
+```
++      =      0
+╵
+```
+
+---
+
+```
+×      =      1
+╵
+```
+
+<figcaption>
+A *empty* sum or product (i.e. which has no inputs) is called the *identity
+element* of that operation. These are equal to the values zero and one,
+respectively.
+</figcaption>
+
+</figure>
 
 #### Implementing Identity ####
 
-Since these identity elements "do nothing", we can remove them when normalising
-a sum or product:
+Unwrapping a single-input sum or product is easy:
 
 ```{.scheme pipe="./show"}
-(define/match (normalise-identity n)
-  ;; Identity elements can be removed from sums and products
+  ;; A singleton sum or product outputs its only input
+  [(list '+ n) (changed n)]
+  [(list '× n) (changed n)]
+```
 
-  [((cons '+ (app (split (curry equal? 0)) (list pre 0 suf))))
-   (changed (cons '+ (append pre suf)))]
+Since the identity values can be written in two ways (`0`{.scheme} or
+`(+)`{.scheme}; `1`{.scheme} or `(×)`{.scheme}) our normal form needs to choose
+one for each. We'll use the empty operation, since that exposes structure that
+other clauses can use, e.g. to allow the existing associativity clauses to
+simplify multiplication by `1` and addition of `0`:
 
-  [((cons '× (app (split (curry equal? 1)) (list pre 1 suf))))
-   (changed (cons '× (append pre suf)))]
-
+```{.scheme pipe="./show"}
   ;; Empty sums and products are their identity elements
-  [((list '+)) (changed 0)]
-  [((list '×)) (changed 1)]
-
-  [(_) (unchanged n)])
+  [0 (changed (list '+))]
+  [1 (changed (list '×))]
 ```
 
 ### Distributivity ###

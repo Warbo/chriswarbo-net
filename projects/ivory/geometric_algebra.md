@@ -144,21 +144,8 @@ until the standard sum-of-products form is reached.
 A `number` which isn't a product or sum is already in normal form:
 
 ```{.scheme pipe="./show"}
-  [((? geometric? (not (? geo?)))) n]
-  [((? unit-ga?)) n]
-```
-
-The easiest fixes to make are replacing products and sums that have fewer than
-two elements:
-
-```{.scheme pipe="./show"}
-  ;; Empty sums/products are equivalent to their respective identities
-  [('(+)) 0]
-  [('(×)) 1]
-
-  ;; The sum/product of a single number is just that number
-  [(`(+ ,n)) (canonical n)]
-  [(`(× ,n)) (canonical n)]
+  [(? geometric? (not (? geo?))) n]
+  [(? unit-ga?) n]
 ```
 
 The next few rules use a helper function called `split`, which splits a list at
