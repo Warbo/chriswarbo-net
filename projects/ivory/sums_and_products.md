@@ -468,6 +468,49 @@ above will cause it to absorb all of a product's inputs. In particular, their
 results use `(map ... xs)`{.scheme}, which will return an empty list when
 `xs`{.scheme} is empty!
 
+### Commutativity ###
+
+<figure>
+
+```
+   +                   +
+┌──┴──┐             ┌──┴──┐
+│     │             │     │
+a     b      =      b     a
+```
+
+<figcaption>
+Changing the order of the inputs to a commutative operation does not affect its
+output.
+</figcaption>
+
+</figure>
+
+Addition and multiplication of numbers are both *commutative*, meaning that the
+order of their inputs does not affect their output. We will require sums to be
+commutative, but we will not assume that products are; since that turns out to
+be quite restrictive. We can use commutativity to normalise sums, by sorting
+their inputs into a consistent order.
+
+#### Implementing Commutativity ####
+
+The following clause implements a form of Bubble Sort, by spotting a pair of
+neighbouring inputs which are in the wrong order:
+
+```{pipe="./show"}
+  [(cons '+ (app (split-pair (lambda (x y) (not (lex≤ x y))))
+                 (list pre x y suf)))
+   (changed (append '(+) pre (list y x) suf))]
+```
+
+Note that we cannot sort the inputs based on their *numerical value*, since we
+will encounter multi-dimensional values which don't have a linear ordering.
+Instead we will compare the *literal syntax* of expressions, known as a
+[lexicographical ordering](https://en.wikipedia.org/wiki/Lexicographic_order):
+
+```{.scheme pipe="cat lessthan"}
+```
+
 
 ```{.scheme pipe="./show"}
 ;; Accept a normalising function as argument, and use that to recurse. That
