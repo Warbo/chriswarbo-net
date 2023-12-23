@@ -12,7 +12,7 @@ bash $setup num.rkt
 (provide × normalise)
 (module+ test
   (require rackunit rackcheck-lib)
-  (provide gen:integer gen:rational))
+  (provide gen:integer gen:rational prop))
 ```
 
 <figure>
@@ -50,6 +50,20 @@ symbols will mean multiplication:
 (define normalise identity)
 
 (module+ test
+  (require (for-syntax syntax/parse))
+
+  (define-syntax (prop stx)
+    (define-syntax-class free
+      #:description "free variable"
+      (pattern (var:id gen:expr)))
+
+    (syntax-parse stx
+      [(_ name:id (v:free ...) body ...+)
+       #:fail-when (check-duplicate-identifier
+                     (syntax->list #'(v.var ...)))
+                   "duplicate variable name"
+       #'(check-property (property name ([v.var v.gen] ...) body ...))]))
+
   (define gen:integer
     (gen:let ([magnitude gen:natural]
              [sign       gen:boolean])
