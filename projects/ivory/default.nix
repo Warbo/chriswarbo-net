@@ -16,6 +16,8 @@ with rec {
   # TODO: Use filesIn
   allPages = mapAttrs renderPage (with allPages; {
     complex_and_hypercomplex_numbers = { };
+    conformal = { };
+    dyadic = { };
     expressions = { };
     geometric_algebra = {
       inherit geometric_units numbers_in_scheme sums_and_products zero_one_many;
@@ -27,6 +29,7 @@ with rec {
     numbers_in_scheme = { };
     numerical_towers = { };
     polynomials = { };
+    powers = { };
     radicals = { };
     #scheme_geometric_algebra = { };
     sums_and_products = { inherit numbers_in_scheme; };

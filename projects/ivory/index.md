@@ -5,38 +5,40 @@ title: "Ivory: A Mammoth Numerical Tower"
 <figure>
 
 ```
-             ┌─┐ ┌──┐ ┌─┐
-             │ └─┘  └─┘ │
-             │   zero   │
-            ╭┴──────────┴╮
-            │  natural   │
-           ╭┴────────────┴╮
-           │   integer    │
-          ╭┴──────────────┴╮
-          │     dyadic     │
-         ╭┴────────────────┴╮
-         │     rational     │
-        ╭┴──────────────────┴╮
-        │     algebraic      │
-        ├────────────────────┤
-        │        real        │
-       ╭┴────────────────────┴╮
-       │      geometric       │
-       ├──────────────────────┤
-       │        number        │
-      ┌┴┐ ┌─┐ ┌──┐  ┌──┐ ┌─┐ ┌┴┐
-      │ └─┘ └─┘  └──┘  └─┘ └─┘ │
-      │  univariate-monomial   │
-     ╭┴────────────────────────┴╮
-     │        polynomial        │
-    ┌┴┐ ┌─┐ ┌─┐  ┌──┐  ┌─┐ ┌─┐ ┌┴┐
-    │ └─┘ └─┘ └──┘  └──┘ └─┘ └─┘ │
-    │    rational-expression     │
-   ╭┴────────────────────────────┴╮
-   │     algebraic-expression     │
-   ├──────────────────────────────┤
-   │          expression          │
-───┴──────────────────────────────┴───
+              ┌─┐ ┌──┐ ┌─┐
+              │ └─┘  └─┘ │
+              │   zero   │
+             ╭┴──────────┴╮
+             │  natural   │
+            ╭┴────────────┴╮
+            │   integer    │
+           ╭┴──────────────┴╮
+           │     dyadic     │
+          ╭┴────────────────┴╮
+          │     decimal      │
+         ╭┴──────────────────┴╮
+         │      rational      │
+        ╭┴────────────────────┴╮
+        │      algebraic       │
+        ├──────────────────────┤
+        │         real         │
+       ╭┴──────────────────────┴╮
+       │       geometric        │
+       ├────────────────────────┤
+       │         number         │
+      ┌┴┐ ┌─┐  ┌──┐  ┌──┐  ┌─┐ ┌┴┐
+      │ └─┘ └──┘  └──┘  └──┘ └─┘ │
+      │   univariate-monomial    │
+     ╭┴──────────────────────────┴╮
+     │         polynomial         │
+    ┌┴┐ ┌─┐ ┌──┐  ┌──┐  ┌──┐ ┌─┐ ┌┴┐
+    │ └─┘ └─┘  └──┘  └──┘  └─┘ └─┘ │
+    │     rational-expression      │
+   ╭┴──────────────────────────────┴╮
+   │      algebraic-expression      │
+   ├────────────────────────────────┤
+   │           expression           │
+───┴────────────────────────────────┴───
 ```
 
  <figcaption>
@@ -160,24 +162,35 @@ The following pages give introductory information, without defining any code:
 These pages introduce some of the mathematical ideas that guide our design, and
 implement useful definitions that make the subsequent sections easier:
 
- - [Negatives And Inverses](negatives_and_inverses.html) are used to implement
-   subtraction and division in terms of addition and multiplication, which
-   simplifies our arithmetic.
  - [Sums And Products](sums_and_products.html) implements these operations
    symbolically, explores the resulting tree structures, and defines algorithms
    to normalise them. Many of our tower's levels are based on these trees.
+ - [By Your Powers Combined](powers.html) extends the sums and products
+   representation to include exponents, useful for reciprocals and roots.
+ - [Negatives And Inverses](negatives_and_inverses.html) are used to implement
+   subtraction and division in terms of addition and multiplication, which
+   simplifies our arithmetic.
 
 The levels of the Ivory tower are explained and implemented in the following:
 
  - [Zero, One, Many](zero_one_many.html) describes the top levels of the tower.
+ - [Manifest Decimation](dyadic.html) describes `decimal`, those fractions with
+   a power of ten as denominator (i.e. with a finite number of non-repeating
+   decimal places). Also includes the binary equivalent, known as `dyadic`,
+   which are well-suited to efficient algorithms.
  - [Radicals](radicals.html) implements the `algebraic` level, representing
    roots symbolically.
  - [Geometric Units](geometric_units.html) begins the definition of `geometric`,
    by introducing symbolic values separate from the usual number line.
  - [Complex And Hypercomplex Numbers](complex_and_hypercomplex_numbers.html)
-   use the geometric units to construct the mezzanine levels inside `geometric`.
+   use the geometric units to construct mezzanine levels inside `geometric`.
  - [Geometric Algebra](geometric_algebra.html) completes the implementation of
-   the `geometric` level.
+   the `geometric` level, with multi-vectors and graded operations.
+ - [Secure, Contain, Project](projective.html) uses `geometric` numbers to
+   implement a library for projective geometry (points, lines, planes, etc.)
+ - [With Jubilee And Circle Line](conformal.html) extends the above library to
+   the conformal geometry of circles, spheres, etc. where "flat" shapes like
+   lines and planes are treated as having infinite radius.
  - [Indeterminates](indeterminates.html) implements the `univariate-monomial`,
    level, and introduces the `monomial` and `homogeneous` mezzanines from
    `polynomial`.

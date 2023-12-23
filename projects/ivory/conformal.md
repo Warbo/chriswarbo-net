@@ -16,3 +16,7 @@ TODO:
  - Extend PGA to CGA
  - Grades represent circles, spheres, etc.
    - Lines, planes, etc. emerge when passing through infinity
+ - Try to remain compatible with projective definitions
+   - CGA is more general, so ideally PGA would be implemented in terms of CGA
+     (just using a subset).
+   - Seems tricky given that their signatures are different...
