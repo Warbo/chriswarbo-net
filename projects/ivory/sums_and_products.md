@@ -90,11 +90,34 @@ at it, what's the actual *distinction* between a "sum" and a "product"?
 (define (  changed x) (values x #t))
 ```
 
+```{pipe="cat > split"}
+;; Return #f when no element of xs  satisfies pred, otherwise return (list a b c)
+;; where (append a (cons b c)) = xs, and (pred b)
+(define ((split pred) xs)
+  (match/values (splitf-at xs (negate pred))
+    [(xs (cons y ys)) (list xs y ys)]
+    [(_  _          ) #f]))
+```
+
 ```{pipe="sh"}
 # We define these helpers up here, so they're outside the definition of
 # normalise. We want to show them further down, so write them to separate files
 # as well
 ./hide < helpers
+./hide < split
+```
+
+```{pipe="./hide"}
+(module+ test
+  (prop split-works ([xs (gen:list gen:natural)])
+    (match ((split even?) xs)
+      [#f (check-equal?  (filter even? xs) '() "No split means no matches")]
+      [(list pre x suf)
+        (check-pred   even? x "Found value should match")
+        (check-equal? (filter even? pre) '() "Split should pick first match")
+        (check-equal? (append pre (cons x suf)) xs
+          "Split results should append to input")]))
+)
 ```
 
 Ivory will represent sums and products as "uninterpreted function symbols", i.e.
@@ -200,26 +223,6 @@ functions:
 
 ;; Append an element to the end of a list
 (define (snoc xs x) (append xs (list x)))
-
-;; Return #f when no element of xs satisfies pred, otherwise return (list a b c)
-;; where (append a (cons b c)) = xs, and (pred b)
-(define ((split pred) xs)
-  (match/values (splitf-at xs (negate pred))
-    [(xs (cons y ys)) (list xs y ys)]
-    [(_  _          ) #f]))
-```
-
-```{pipe="./hide"}
-(module+ test
-  (check-property
-    (property split-works ([xs (gen:list gen:natural)])
-      (match ((split even?) xs)
-        [#f (test-equal? "No split means no matches" (filter even? xs) '())]
-        [(list pre x suf)
-          (test-equal? "Split should pick first match" (filter even? pre) '())
-          (test-pred "Found value should match" even? x)
-          (test-equal? "Split results should append to input"
-            (append pre (cons x suf)) xs)]))))
 ```
 
 Now we can spot nested sums/products and normalise them to a single sum/product:
@@ -240,6 +243,15 @@ These make use of a few trivial helper functions:
 ```{.scheme pipe="cat helpers"}
 ```
 
+More interestingly, we use the `split` function to split up a list (above, we're
+splitting up the inputs of a sum or product), by finding an element `y` that
+satisfies a given predicate (above, the predicates are `+?`{.scheme} and `×?`,
+to spot a nested sum or product). The result also includes all the elements
+occuring before `y`{.scheme} (which we call `xs`{.scheme}) and all those
+following `y`{.scheme} (which we call `ys`{.scheme}). If no such element is
+found, we return `#f`{.scheme} (and hence the above clauses won't match):
+
+```{pipe="cat split"}
 ```
 
 ### Identity ###
