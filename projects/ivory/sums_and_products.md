@@ -159,8 +159,16 @@ at it, what's the actual *distinction* between a "sum" and a "product"?
 ```
 
 Ivory will represent sums and products as "uninterpreted function symbols", i.e.
-as lists like `'(+ 1 2)`{.scheme} or `(× 3 4)`{.scheme}: our normalisation rules
-will reduce such lists into their unique normal form.
+as lists like `'(+ 1 2)`{.scheme} or `'(× 3 4)`{.scheme}. This page defines
+the clauses of a normalisation procedure, to reduce such lists into a unique
+normal form:
+
+```{.scheme pipe="./show"}
+;; Put sums and products into normal form. The first argument can be called to
+;; normalise sub-expressions; the second argument can be used to compare/sort
+;; expressions.
+(define (normalise normalise ≤ n) (match n
+```
 
 ## Types ##
 
@@ -254,26 +262,20 @@ require an arbitrary choice of branching structure.
 
 #### Implementing Associativity ####
 
-We will normalise such nested operations by flattening them. First, some helper
-functions:
+We will normalise such nested operations by flattening them, using the following
+clauses of `normalise`{.scheme}:
 
 ```{.scheme pipe="./show"}
+  ;; Match nested operations; bind the inner operation's inputs to xs, and
+  ;; append them to the outer operation's other inputs (pre and suf)
 
-```
-
-Now we can spot nested sums/products and normalise them to a single sum/product:
-
-```
-;; Match nested operations; bind the inner operation's inputs to xs, and append
-;; them to the outer operation's other inputs (pre and suf)
-(define/match (normalise-associativity n)
   [(cons '+ (app (split +?) (list pre (cons '+ xs) suf)))
    (changed (cons '+ (append pre xs suf)))]
 
   [(cons '× (app (split ×?) (list pre (cons '× xs) suf)))
    (changed (cons '× (append pre xs suf)))]
+```
 
-  [_ (unchanged n)])
 These make use of a few trivial helper functions:
 
 ```{.scheme pipe="cat helpers"}
@@ -490,20 +492,20 @@ sum that's had the multiplication by `y`{.scheme} distributed across its inputs
 `(× x y)`{.scheme}):
 
 ```{.scheme pipe="./show"}
-;; Distributivity: if a product contains a sum, distribute everything on its
-;; left and right into that sum. This will match over and over until the sum
-;; is the only value inside the product.
-(define (normalise-distributivity n)
   [(cons '× (app (split-pair (lambda (x y) (+? x)))  ;; A sum followed by y
                  (list pre (cons '+ xs) y suf)))
-   ;; Keep the product
+   ;; Keep the product, in case pre/suf contain more elements
    (changed (cons '× (append
      pre
      ;; Multiply all of xs's summands by y on their right
      (list (cons '+ (map (lambda (x) (list '× x y)) xs)))
      suf
    )))]
+```
 
+Next we do the same when the *second* value is a sum:
+
+```{.scheme pipe="./show"}
   [(cons '× (app (split-pair (lambda (x y) (+? y)))  ;; x followed by a sum
                  (list pre x (cons '+ ys) suf)))
    ;; Keep the product, in case pre/suf contain more elements
@@ -513,8 +515,6 @@ sum that's had the multiplication by `y`{.scheme} distributed across its inputs
      (list (cons '+ (map (curry list '× x) ys)))
      suf
    )))]
-
-  [_ (unchanged n)])
 ```
 
 Notice that we do not have to implement absorption separately, since the
@@ -566,20 +566,13 @@ Instead we will compare the *literal syntax* of expressions, known as a
 ```{.scheme pipe="cat lessthan"}
 ```
 
+## Final Pieces ##
+
+Our `normalise` function needs a few more clauses to be complete. Firstly, if
+we find a sum or product containing ordinary Racket `number`s, then we should
+add/multiply them using Racket's usual addition/multiplication operations:
 
 ```{.scheme pipe="./show"}
-;; Accept a normalising function as argument, and use that to recurse. That
-;; allows more-sophisticated normalisation procedures to be passed in, like
-;; defined in later pages!
-(define (normalise normalise n) (match n
-  [(app normalise-associativity  n #t) (changed n)]
-  [(app normalise-identity       n #t) (changed n)]
-  [(app normalise-distributivity n #t) (changed n)]
-
-  ;; A singleton sum or product outputs its only input
-  [(list '+ n) (changed n)]
-  [(list '× n) (changed n)]
-
   ;; Sums of multiple Racket numbers simplify via addition
   [(cons '+ (app (split number?)
                  (list pre x (app (split number?)
@@ -591,14 +584,24 @@ Instead we will compare the *literal syntax* of expressions, known as a
                  (list pre x (app (split number?)
                                   (list mid y suf)))))
    (changed (append (list '× (× x y)) pre mid suf))]
+```
 
+If we have a sum or product which doesn't match *any* of the above clauses, we
+should try normalising its inputs recursively:
+
+```{.scheme pipe="./show"}
   ;; Recurse through the elements of a sum or product to see if any change
   [(cons (and op (or '+ '×)) xs)
    (for/fold ([result      (list op)]
               [any-changed #f])
              ([(x changed) (map normalise xs)])
      (values (snoc result x) (or any-changed changed)))]
+```
 
+Finally, a value which doesn't match any of the clauses defined on this page
+should be left unchanged:
+
+```{.scheme pipe="./show"}
   ;; Otherwise there's nothing left to do
   [_ (unchanged n)]))
 ```
