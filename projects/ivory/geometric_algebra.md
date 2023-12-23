@@ -86,12 +86,12 @@ From now on, not only will we convert all `geometric` numbers into a
 sum-of-products, but we will also write their units in alphabetical order,
 negating when a swap is needed.
 
-### Reducing To Canonical Form ###
+### Reducing To Normal Form ###
 
-Our GA implementation relies on the canonical form mentioned above, with a few
+Our GA implementation relies on the normal form mentioned above, with a few
 extra conditions arising from our encoding as Racket values. We convert
-`geometric` numbers into this form using a `canonical` function, which uses
-pattern-matching to rearrange various non-canonical structures; and recurses
+`geometric` numbers into this form using a `normalise` function, which uses
+pattern-matching to rearrange various non-normal structures; and recurses
 until the standard sum-of-products form is reached.
 
 ```{pipe="./hide"}
@@ -137,11 +137,11 @@ until the standard sum-of-products form is reached.
 ```
 
 ```{.scheme pipe="./show"}
-;; Converts the given number? to its canonical form
-(define/match (canonical n)
+;; Converts the given number towards its normal form
+(define (normalise normalise n) (match n
 ```
 
-A `number` which isn't a product or sum is already in canonical form:
+A `number` which isn't a product or sum is already in normal form:
 
 ```{.scheme pipe="./show"}
   [((? geometric? (not (? geo?)))) n]
@@ -186,11 +186,11 @@ inside a product or sum.
   [((cons '× (app (split geo-×?) (list pre (cons '× xs) suf))))
    (apply geo-× (append pre xs suf))]
 
-  ;; Recurse when elements of a sum or product aren't canonical
+  ;; Recurse when elements of a sum or product aren't normal
   [((cons (and sym (or '× '+)) (app (split (lambda (x)
-                                             (not (equal? x (canonical x)))))
+                                             (not (equal? x (normalise x)))))
                                     (list pre x suf))))
-   (canonical (cons sym (append pre (list (canonical x)) suf)))]
+   (normalise (cons sym (append pre (list (normalise x)) suf)))]
 ```
 
 The remaining cases spot patterns between neighbouring elements inside products
@@ -221,7 +221,7 @@ since the sorting rules will bring problematic elements together!
                (list pre x y suf))))  ;; Bind results
    ;; Remove x and y, combine them accoding to sym, and prepend the result on to
    ;; the remaining list
-   (canonical (append
+   (normalise (append
                 (list sym (match sym ['× (× x y)] ['+ (+ x y)]))
                 pre
                 suf))]
@@ -344,7 +344,7 @@ When rearranging a product we need to introduce a `-1` when swapping GA units
                                  (unit<? y x)]
                                 [_ #f]))
                   (list pre x y suf))))
-   (canonical (append '(× -1) pre (list y x) suf))]
+   (normalise (append '(× -1) pre (list y x) suf))]
 
   ;; At this point products should contain no nested sums or products, only GA
   ;; units and non-geo? coefficients. Move the latter to the front.
@@ -353,20 +353,20 @@ When rearranging a product we need to introduce a `-1` when swapping GA units
    (apply geo-× (append (list y) pre (cons x suf)))]
 ```
 
-Our final patterns match the canonical forms that we want, and return them
+Our final patterns match the normal forms that we want, and return them
 unchanged (this way, we'll get a match error if we've forgotten to handle some
 case).
 
 ```{.scheme pipe="./show"}
   ;; A product of GA units, preceded by an optional non-geo?, is
-  ;; canonical
+  ;; normal
   [((list '×
           (? (disjoin unit-ga? (conjoin geometric? (negate geo?))))
           (? unit-ga?) ...))
    n]
 
   ;; A sum of one optional non-geo?, followed by GA units and products, is
-  ;; canonical
+  ;; normal
   [((list '+
           (? geometric?)
           (? (disjoin unit-ga? geo-×?)) ...))
@@ -393,15 +393,15 @@ case).
              [tail (gen:resize (gen:sized-list gen:elem) (- fuel cost 1))])
             (cons head tail))))))))
 
-  ;; Generates arbitrary, possibly non-canonical, products
+  ;; Generates arbitrary, possibly non-normal, products
   (define gen:product
     (gen:map (gen:delay (gen:sized-list gen:geo)) (curry cons '×)))
 
-  ;; Generates arbitrary, possibly non-canonical, sums
+  ;; Generates arbitrary, possibly non-normal, sums
   (define gen:sum
     (gen:map (gen:delay (gen:sized-list gen:geo)) (curry cons '+)))
 
-  ;; Generates arbitrary, possible non-canonical, geometric numbers
+  ;; Generates arbitrary, possible non-normal, geometric numbers
   (define gen:geo
     (gen:sized (lambda (fuel)
       ;; GA units & rationals are the leaves of our expression trees, so
@@ -411,8 +411,8 @@ case).
                        (5 . ,gen:unit-ga )
                        (5 . ,gen:rational))))))
 
-  ;; Generates canonical geometric numbers
-  (define gen:geometric (gen:map gen:geo canonical))
+  ;; Generates normal geometric numbers
+  (define gen:geometric (gen:map gen:geo normalise))
 
   (prop preserve-non-geometric-behaviour ([x gen:rational]
                                           [y gen:rational])
