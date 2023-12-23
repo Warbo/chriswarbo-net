@@ -114,25 +114,26 @@ until the standard sum-of-products form is reached.
     [else (list<? (cdr xs) (cdr ys) <?)]))  ;; Recurse on tails
 
 (module+ test
-  (check-property
-    (property list<?-works ([x  gen:natural]
-                            [xs (gen:list gen:natural)]
-                            [ys (gen:list gen:natural)])
-      (test-false "Lists not list<? themselves" (list<? xs xs          <))
-      (test-true  "list<? shorter longer"       (list<? xs (cons x xs) <))
-      (test-false "Not list<? longer shorter"   (list<? (cons x xs) xs <))
-      (match* ((list<? xs ys <) (list<? ys xs <))
-        [(#t #t) (test-false "Can't be list<? both ways round" #t)]
-        [(#f #f) (test-true "Neither list<? means equal?" (equal? xs ys))]
-        [((or (and #t (app (const* xs ys) lo hi))
-              (and #f (app (const* ys xs) lo hi))) _)
-         (test-true "Prepending equal elements maintains list<?"
-           (list<? (cons x lo) (cons x hi) <))
-         (test-true "Appending the same number of things maintains list<?"
-           (list<? (append lo (shuffle (append xs ys)))
-                   (append hi (shuffle (append xs ys)))
-                   <))])
-      )))
+  (prop list<?-works ([x  gen:natural]
+                      [xs (gen:list gen:natural)]
+                      [ys (gen:list gen:natural)])
+    (check-false (list<? xs xs          <) "Lists not list<? themselves")
+    (check-true  (list<? xs (cons x xs) <) "list<? shorter longer")
+    (check-false (list<? (cons x xs) xs <) "Not list<? longer shorter")
+    (match* ((list<? xs ys <) (list<? ys xs <))
+      [(#t #t) (check-false #t "Can't be list<? both ways round")]
+      [(#f #f) (check-true  (equal? xs ys) "Neither list<? means equal?")]
+      [((or (and #t (app (const* xs ys) lo hi))
+            (and #f (app (const* ys xs) lo hi))) _)
+       (check-true
+         (list<? (cons x lo) (cons x hi) <)
+         "Prepending equal elements maintains list<?")
+       (check-true
+         (list<? (append lo (shuffle (append xs ys)))
+                 (append hi (shuffle (append xs ys)))
+                 <)
+         "Appending the same number of things maintains list<?")]))
+)
 ```
 
 ```{.scheme pipe="./show"}
@@ -413,58 +414,52 @@ case).
   ;; Generates canonical geometric numbers
   (define gen:geometric (gen:map gen:geo canonical))
 
-  (check-property
-    (property preserve-non-geometric-behaviour ([x gen:rational]
-                                                [y gen:rational])
-      (test-equal? "geo-× emulates constant ×" (geo-×)     (×))
-      (test-equal? "geo-× emulates unary ×"    (geo-× x)   (× x))
-      (test-equal? "geo-× emulates binary ×"   (geo-× x y) (× x y))
-      (test-equal? "geo-+ emulates constant +" (geo-+)     (+))
-      (test-equal? "geo-+ emulates unary +"    (geo-+ x)   (+ x))
-      (test-equal? "geo-+ emulates binary +"   (geo-+ x y) (+ x y))
-      (test-equal? "canonical rational is itself" (canonical x) x)))
+  (prop preserve-non-geometric-behaviour ([x gen:rational]
+                                          [y gen:rational])
+    (check-equal?  (geo-×)     (×) "geo-× emulates constant ×")
+    (check-equal?     (geo-× x)   (× x) "geo-× emulates unary ×")
+    (check-equal?    (geo-× x y) (× x y) "geo-× emulates binary ×")
+    (check-equal?  (geo-+)     (+) "geo-+ emulates constant +")
+    (check-equal?     (geo-+ x)   (+ x) "geo-+ emulates unary +")
+    (check-equal?    (geo-+ x y) (+ x y) "geo-+ emulates binary +")
+    (check-equal?  (normalise x) x "normal rational is itself"))
 
-  (check-property
-    (property canonical-correctly-handles-units ([x gen:unit-ga]
-                                                 [y gen:unit-ga]
-                                                 [i gen:natural])
-      (test-equal? "Dual units square"       (geo-× `(d . ,i) `(d . ,i))  0)
-      (test-equal? "Hyperbolic units square" (geo-× `(h . ,i) `(h . ,i))  1)
-      (test-equal? "Imaginary units square"  (geo-× `(i . ,i) `(i . ,i)) -1)
-      (when (not (equal? x y))
-        (test-equal? "× anticommutes for units" (geo-× x y) (geo-× -1 y x)))
-      ))
+  (prop normalise-correctly-handles-units ([x gen:unit-ga]
+                                           [y gen:unit-ga]
+                                           [i gen:natural])
+    (check-equal?        (geo-× `(d . ,i) `(d . ,i))  0 "Dual units square")
+    (check-equal?  (geo-× `(h . ,i) `(h . ,i))  1 "Hyperbolic units square")
+    (check-equal?   (geo-× `(i . ,i) `(i . ,i)) -1 "Imaginary units square")
+    (when (not (equal? x y))
+      (check-equal?  (geo-× x y) (geo-× -1 y x) "× anticommutes for units")))
 
-  (check-property
-    (property single-non-canonical-number ([x gen:geo])
-      (test-pred "Non-canonical numbers are still geometric?" geometric? x)
-      (test-equal? "Left product with 0 is 0"  (geo-× 0 x) 0)
-      (test-equal? "Right product with 0 is 0" (geo-× x 0) 0)
-      (test-equal? "Sum with self is doubling" (geo-× 2 x) (geo-+ x x))))
+  (prop single-non-normal-number ([x gen:geo])
+    (check-pred geometric? x "Non-normal numbers are still geometric?")
+    (check-equal? (geo-× 0 x) 0           "Left product with 0 is 0")
+    (check-equal? (geo-× x 0) 0           "Right product with 0 is 0")
+    (check-equal? (geo-× 2 x) (geo-+ x x) "Sum with self is doubling"))
 
-  (check-property
-    (property single-canonical-number ([x gen:geometric])
-      (test-pred "Canonical numbers are geometric?" geometric? x)
-      (test-equal? "Canonical is idempotent"   x (canonical x))
-      (test-equal? "1 is left identity of ×"   x (geo-× 1 x))
-      (test-equal? "1 is right identity of ×"  x (geo-× x 1))
-      (test-equal? "0 is left identity of +"   x (geo-+ 0 x))
-      (test-equal? "0 is right identity of +"  x (geo-+ x 0))))
+  (prop single-normal-number ([x gen:geometric])
+    (check-pred geometric? x "Normal numbers are geometric?")
+    (check-equal? x (normalise x) "Normalise is idempotent")
+    (check-equal? x (geo-× 1 x)   "1 is left  identity of ×")
+    (check-equal? x (geo-× x 1)   "1 is right identity of ×")
+    (check-equal? x (geo-+ 0 x)   "0 is left  identity of +")
+    (check-equal? x (geo-+ x 0)   "0 is right identity of +"))
 
-  (check-property
-    (property two-non-canonical-numbers ([x gen:geo] [y gen:geo])
-      (test-equal? "+ commutes" (geo-+ x y) (geo-+ y x))))
+  (prop two-non-normal-numbers ([x gen:geo] [y gen:geo])
+    (check-equal?  (geo-+ x y) (geo-+ y x) "+ commutes"))
 
   (check-property
     ;; Double the deadline since it often times-out after around 90/100 tests!
     (make-config #:deadline (+ (current-inexact-milliseconds) (* 120 1000)))
-    (property three-non-canonical-numbers ([x gen:geo] [y gen:geo] [z gen:geo])
-      (test-equal? "+ associates" (geo-+ (geo-+ x y) z) (geo-+ x (geo-+ y z)))
-      (test-equal? "× associates" (geo-× (geo-× x y) z) (geo-× x (geo-× y z)))
-      (test-equal? "× left-distributes over +" (geo-+ (geo-× x y) (geo-× x z))
-                                               (geo-× x (geo-+ y z)))
-      (test-equal? "× right-distributes over +" (geo-+ (geo-× x z) (geo-× y z))
-                                                (geo-× (geo-+ x y) z))))
+    (property three-non-normal-numbers ([x gen:geo] [y gen:geo] [z gen:geo])
+      (check-equal? (geo-+ (geo-+ x y) z) (geo-+ x (geo-+ y z)) "+ associates")
+      (check-equal? (geo-× (geo-× x y) z) (geo-× x (geo-× y z)) "× associates")
+      (check-equal? (geo-+ (geo-× x y) (geo-× x z)) (geo-× x (geo-+ y z))
+                    "× left-distributes over +")
+      (check-equal? (geo-+ (geo-× x z) (geo-× y z)) (geo-× (geo-+ x y) z)
+                    "× right-distributes over +")))
 )
 ```
 

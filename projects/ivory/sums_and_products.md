@@ -20,7 +20,8 @@ done
   ivory-×
   normalise)
 (require (rename-in "num.rkt" [normalise old:normalise]))
-(module+ test (require rackunit rackcheck-lib))
+(module+ test
+  (require rackunit rackcheck-lib (submod "num.rkt" test)))
 ```
 
 We tend to learn about sums ("adding numbers") quite early, either when starting

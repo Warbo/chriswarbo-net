@@ -78,10 +78,8 @@ symbols will mean multiplication:
 
   (test-equal? "Empty product is 1" (×) 1)
 
-  (check-property
-    (property ×-is-extensionally-equal-to-*
-      ([nums (gen:list gen:rational)])
-      (test-equal? "× acts like *" (apply × nums) (apply * nums))))
+  (prop ×-matches-* ([nums (gen:list gen:rational)])
+    (check-equal? (apply × nums) (apply * nums) "× acts like *"))
 )
 ```
 
@@ -117,18 +115,16 @@ This basic framework is the inspiration for Ivory.
     (test-pred "Numbers 1+1i exists" number?   1+1i)
 
     (test-false "Rational 1/2 isn't integer" (integer?  1/2))
-    (test-false "Number 1+1i isn't rational" (rational? 1+1i))
+    (test-false "Number 1+1i isn't rational" (rational? 1+1i)))
 
-    (check-property
-      (property integer?-implies-rational? ([n gen:integer])
-        (check-pred integer?  n)
-        (check-pred rational? n)))
+  (prop integer?-implies-rational? ([n gen:integer])
+    (check-pred integer?  n)
+    (check-pred rational? n))
 
-    (check-property
-      (property rational?-implies-number? ([n gen:rational])
-        (check-pred rational? n)
-        (check-pred number?   n)))
-))
+  (prop rational?-implies-number? ([n gen:rational])
+    (check-pred rational? n)
+    (check-pred number?   n))
+)
 ```
 
 ### Numbers in Racket ###
@@ -195,36 +191,34 @@ Racket *does* add some "attic levels", which are strict subsets of
     (test-pred  "1 is natural"      natural?  1 )
     (test-pred  "-1 is integer"     integer? -1 )
     (test-false "1 isn't zero"     (zero?     1))
-    (test-false "-1 isn't natural" (natural? -1))
+    (test-false "-1 isn't natural" (natural? -1)))
 
-    (check-property
-      (property natural?-implies-integer? ([n gen:natural])
-        (check-pred natural? n)
-        (check-pred integer? n)))
+  (prop natural?-implies-integer? ([n gen:natural])
+    (check-pred natural? n)
+    (check-pred integer? n))
 
-    (check-property
-      (property natural-is-closed ([x gen:natural] [y gen:natural])
-        (test-pred   "+ is closed" natural? (+   x y))
-        (test-pred   "× is closed" natural? (×   x y))
-        (test-pred "gcd is closed" natural? (gcd x y))
-        (test-pred "lcm is closed" natural? (lcm x y))
-        (test-pred "max is closed" natural? (max x y))
-        (test-pred "min is closed" natural? (min x y))
-        (when (> y 0)
-          (test-pred  "quotient is closed" natural? (quotient  x y))
-          (test-pred "remainder is closed" natural? (remainder x y))
-          (test-pred      "expt is closed" natural? (expt x y)))
-        (when (> x 0)
-          (test-pred      "expt is closed" natural? (expt x y)))))
+  (prop natural-is-closed ([x gen:natural] [y gen:natural])
+    (check-pred  natural? (+   x y)   "+ is closed")
+    (check-pred  natural? (×   x y)   "× is closed")
+    (check-pred  natural? (gcd x y) "gcd is closed")
+    (check-pred  natural? (lcm x y) "lcm is closed")
+    (check-pred  natural? (max x y) "max is closed")
+    (check-pred  natural? (min x y) "min is closed")
+    (when (> y 0)
+      (check-pred natural? (quotient  x y)  "quotient is closed")
+      (check-pred natural? (remainder x y) "remainder is closed")
+      (check-pred natural? (expt      x y)      "expt is closed"))
+    (when (> x 0)
+      (check-pred natural? (expt      x y) "expt is closed")))
 
-    (test-case "zero is closed"
-      (test-pred   "+ is closed" zero? (+   0 0))
-      (test-pred   "× is closed" zero? (×   0 0))
-      (test-pred "gcd is closed" zero? (gcd 0 0))
-      (test-pred "lcm is closed" zero? (lcm 0 0))
-      (test-pred "max is closed" zero? (max 0 0))
-      (test-pred "min is closed" zero? (min 0 0)))
-))
+  (test-case "zero is closed"
+    (test-pred   "+ is closed" zero? (+   0 0))
+    (test-pred   "× is closed" zero? (×   0 0))
+    (test-pred "gcd is closed" zero? (gcd 0 0))
+    (test-pred "lcm is closed" zero? (lcm 0 0))
+    (test-pred "max is closed" zero? (max 0 0))
+    (test-pred "min is closed" zero? (min 0 0)))
+)
 ```
 
 Even more fine-grained structure is [described in the Typed Racket
