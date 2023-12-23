@@ -99,15 +99,36 @@ at it, what's the actual *distinction* between a "sum" and a "product"?
     [(_  _          ) #f]))
 ```
 
+```{pipe="cat > split-pair"}
+;; Check (pred (nth 0 xs) (nth 1 xs)), (pred (nth 1 xs) (nth 2 xs)), etc. until
+;; we find a neighbouring pair elements a & b which pass the predicate, then
+;; return (list pre a b suf), where (append pre (cons a (cons b suf))) = xs.
+;; If no such pair of elements is found, return #f.
+(define ((split-pair pred) xs)
+  (define/match (go xs ys)
+    [((cons x xs) '()        ) (go xs (list x))]
+    [('()         ys         ) #f]
+    [((cons x xs) (cons y ys))
+     (if (pred y x)
+       (list (reverse ys) y x xs)
+       (go xs (cons x (cons y ys))))])
+
+  (go xs '()))
+```
+
 ```{pipe="sh"}
 # We define these helpers up here, so they're outside the definition of
 # normalise. We want to show them further down, so write them to separate files
 # as well
 ./hide < helpers
 ./hide < split
+./hide < split-pair
 ```
 
 ```{pipe="./hide"}
+;; Append an element to the end of a list
+(define (snoc xs x) (append xs (list x)))
+
 (module+ test
   (prop split-works ([xs (gen:list gen:natural)])
     (match ((split even?) xs)
@@ -117,6 +138,23 @@ at it, what's the actual *distinction* between a "sum" and a "product"?
         (check-equal? (filter even? pre) '() "Split should pick first match")
         (check-equal? (append pre (cons x suf)) xs
           "Split results should append to input")]))
+
+  (prop split-pair-works ([xs (gen:list gen:natural)])
+    (match ((split-pair <) xs)
+      [#f
+       (check-equal? xs (reverse (sort xs <))
+         "When no pairs are <, xs must be reverse sorted")]
+
+      [(list pre x y suf)
+       (check-equal?  `(,@pre ,x ,y ,@suf) xs "split-pair should split input")
+       (check < x y "split-pair should find pair matching predicate")
+
+       ;; For x & y to be the first pair where x < y, that means no elements
+       ;; before y (i.e. in (snoc pre x)) should be greater than their
+       ;; predecessor. Or, in other words, the elements of (snoc pre x) should
+       ;; be in descending order. To test this, sorting should be a no-op.
+       (check-equal? (snoc pre x) (sort (snoc pre x) >)
+         "split-pair should return first pair matching predicate")]))
 )
 ```
 
@@ -221,8 +259,6 @@ functions:
 
 ```{.scheme pipe="./show"}
 
-;; Append an element to the end of a list
-(define (snoc xs x) (append xs (list x)))
 ```
 
 Now we can spot nested sums/products and normalise them to a single sum/product:
@@ -422,44 +458,36 @@ output zero (regardless of any other inputs).
 
 #### Implementing Distributivity ####
 
-```{.scheme pipe="./show"}
-;; Check (pred (nth 0 xs) (nth 1 xs)), (pred (nth 1 xs) (nth 2 xs)), etc. until
-;; we find a neighbouring pair elements a & b which pass the predicate, then
-;; return (list pre a b suf), where (append pre (cons a (cons b suf))) = xs.
-;; If no such pair of elements is found, return #f.
-(define ((split-pair pred) xs)
-  (define/match (go xs ys)
-    [((cons x xs) '()        ) (go xs (list x))]
-    [('()         ys         ) #f]
-    [((cons x xs) (cons y ys))
-     (if (pred y x)
-       (list (reverse ys) y x xs)
-       (go xs (cons x (cons y ys))))])
+Distributivity can help us normalise expressions, by replacing one of these
+forms with the other. We'll choose the sum-of-products form to be normal, since
+it's easy to convert *into* that form by distributing multiplications over sums;
+going the other way, to produce a product-of-sums, would require
+[factorising](https://en.wikipedia.org/wiki/Factorization), which is notoriously
+slow!
 
-  (go xs '()))
+We need to be careful not to change the order of any multiplications; to ensure
+this, when a sum is multiplied by many values we'll only distribute those which
+occur immediately to its the left or right; this can be repeated until all of
+the values have been distributed into the sum. For example, given a product like
+`(× a b (+ c d))`{.scheme} we will first distribute `b`, to get
+`(× a (+ (× b c) (× b d)))`{.scheme}, then distribute `a` to get
+`(+ (× a b c) (× a b d))`{.scheme}.
+
+To find a sum and its immediate neighbour in a product, we use a modified
+version of the above `split`{.scheme} function: `split-pair`{.scheme} will split
+a list at a *pair of consecutive elements* which satisfy the given *binary*
+predicate:
+
+```{.scheme pipe="cat split-pair"}
 ```
 
-```{pipe="./hide"}
-(module+ test
-  (check-property
-    (property split-pair-works ([xs (gen:list gen:natural)])
-      (match ((split-pair <) xs)
-        [#f
-         (test-equal? "When no pairs are <, xs must be reverse sorted"
-           xs (reverse (sort xs <)))]
-
-        [(list pre x y suf)
-         (test-equal? "split-pair should split input" `(,@pre ,x ,y ,@suf) xs)
-         (test-check "split-pair should find pair matching predicate" < x y)
-
-         ;; For x & y to be the first pair where x < y, that means no elements
-         ;; before y (i.e. in (snoc pre x)) should be greater than their
-         ;; predecessor. Or, in other words, the elements of (snoc pre x) should
-         ;; be in descending order. To test this, sorting should be a no-op.
-         (test-equal? "split-pair should return first pair matching predicate"
-           (snoc pre x)
-           (sort (snoc pre x) >))]))))
-```
+We use `split-pair`{.scheme} to define two separate clauses. We first look
+through the inputs of a product, for a neighbouring pair of the form
+`(cons '+ xs)`{.scheme} (a sum with inputs `xs`{.scheme}) and any value
+`y`{.scheme}. If found, we remove both from the product's inputs, and insert a
+sum that's had the multiplication by `y`{.scheme} distributed across its inputs
+(i.e. replacing each element `x`{.scheme} of `xs`{.scheme} with
+`(× x y)`{.scheme}):
 
 ```{.scheme pipe="./show"}
 ;; Distributivity: if a product contains a sum, distribute everything on its
