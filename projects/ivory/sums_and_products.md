@@ -130,6 +130,20 @@ at it, what's the actual *distinction* between a "sum" and a "product"?
 (define (snoc xs x) (append xs (list x)))
 
 (module+ test
+  (define (gen:cons gen:x gen:y gen:empty)
+    (gen:sized (lambda (fuel)
+      (if (< fuel 2)
+        gen:empty
+        (gen:bind (gen:integer-in 1 (- fuel 1)) (lambda (cost)
+          (gen:let ([x (gen:resize gen:x cost)]
+                    [y (gen:resize gen:y (- fuel cost 1))])
+            (cons x y))))))))
+
+  (define (gen:sized-list gen:elem)
+    (gen:cons gen:elem
+              (gen:delay (gen:sized-list gen:elem))
+              (gen:const '())))
+
   (prop split-works ([xs (gen:list gen:natural)])
     (match ((split even?) xs)
       [#f (check-equal?  (filter even? xs) '() "No split means no matches")]

@@ -363,23 +363,6 @@ case).
 
 ```{pipe="./hide"}
 (module+ test
-  ;; Generate a list, using gen:elem to generate its elements. The resulting
-  ;; generator uses its size parameter (provided by RackCheck) as a sort of
-  ;; "fuel": a portion of this fuel is spent on generating the first element,
-  ;; and the rest passed on to a recursive call for the tail; an empty list is
-  ;; generated when we run out of fuel. This is useful to avoid generating the
-  ;; exponentially-large or exponentially-small lists that naive recursion would
-  ;; produce (resulting in out-of-memory, or uninteresting tests)
-  (define (gen:sized-list gen:elem)
-    (gen:sized (lambda (fuel)
-      (if (< fuel 2)
-        (gen:const '())
-        (gen:bind (gen:integer-in 1 (- fuel 1)) (lambda (cost)
-          (gen:let
-            ([head (gen:resize gen:elem cost)]
-             [tail (gen:resize (gen:sized-list gen:elem) (- fuel cost 1))])
-            (cons head tail))))))))
-
   ;; Generates arbitrary, possibly non-normal, products
   (define gen:product
     (gen:map (gen:delay (gen:sized-list gen:geo)) (curry cons '×)))
