@@ -369,6 +369,30 @@ So far all of these laws have applied equally to both sums and products. Not
 only does distributivity apply differently to each, but it tells us which
 operations act like sums, and which act like products.
 
+#### Absorption ####
+
+<figure>
+
+```
+   ×                ×                ×
+┌──┴──┐             │             ┌──┴──┐
+│     │      =      +      =      │     │
+a     +             ╵             +     a
+      ╵             ╵             ╵
+```
+
+</figure>
+
+Distributivity has an important relationship to our identity laws. When a
+product contains a sum, distributivity says that all of the product's other
+inputs can be distributed over the inputs of that sum. If that sum has *no*
+inputs, the result will be an empty sum; we say that the empty sum has
+[absorbed](https://en.wikipedia.org/wiki/Absorbing_element) the products.
+
+We showed that an empty sum must equal `0`{.scheme}, so this "absorption"
+behaviour tells us that products with zero occuring as an input will always
+output zero (regardless of any other inputs).
+
 #### Implementing Distributivity ####
 
 ```{.scheme pipe="./show"}
@@ -438,7 +462,12 @@ operations act like sums, and which act like products.
   [_ (unchanged n)])
 ```
 
-## Fully Normalising Sums And Products ##
+Notice that we do not have to implement absorption separately, since the
+identity clauses will replace `0`{.scheme} with `'(+)`, and the two clauses
+above will cause it to absorb all of a product's inputs. In particular, their
+results use `(map ... xs)`{.scheme}, which will return an empty list when
+`xs`{.scheme} is empty!
+
 
 ```{.scheme pipe="./show"}
 ;; Accept a normalising function as argument, and use that to recurse. That
