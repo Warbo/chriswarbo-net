@@ -79,6 +79,24 @@ at it, what's the actual *distinction* between a "sum" and a "product"?
 
 ### Representing Sums And Products in Scheme ###
 
+```{pipe="cat > helpers"}
+;; Predicates for spotting products and sums
+(define (×? n) (and (pair? n) (equal? '× (car n))))
+(define (+? n) (and (pair? n) (equal? '+ (car n))))
+
+;; Indicates whether a value was/wasn't in normal form, and hence may need
+;; further normalising.
+(define (unchanged x) (values x #f))
+(define (  changed x) (values x #t))
+```
+
+```{pipe="sh"}
+# We define these helpers up here, so they're outside the definition of
+# normalise. We want to show them further down, so write them to separate files
+# as well
+./hide < helpers
+```
+
 Ivory will represent sums and products as "uninterpreted function symbols", i.e.
 as lists like `'(+ 1 2)`{.scheme} or `(× 3 4)`{.scheme}: our normalisation rules
 will reduce such lists into their unique normal form.
@@ -179,14 +197,6 @@ We will normalise such nested operations by flattening them. First, some helper
 functions:
 
 ```{.scheme pipe="./show"}
-;; Predicates for spotting products and sums
-(define (×? n) (and (pair? n) (equal? '× (car n))))
-(define (+? n) (and (pair? n) (equal? '+ (car n))))
-
-;; Indicates whether a value was/wasn't in normal form, and hence may need
-;; further normalising.
-(define (unchanged x) (values x #f))
-(define (  changed x) (values x #t))
 
 ;; Append an element to the end of a list
 (define (snoc xs x) (append xs (list x)))
@@ -225,6 +235,11 @@ Now we can spot nested sums/products and normalise them to a single sum/product:
    (changed (cons '× (append pre xs suf)))]
 
   [_ (unchanged n)])
+These make use of a few trivial helper functions:
+
+```{.scheme pipe="cat helpers"}
+```
+
 ```
 
 ### Identity ###
