@@ -197,7 +197,7 @@ For the addition and multiplication we learn in school, all of the values are
 operation, like `(+ 1 2)`{.scheme}.
 
 Having the same type for inputs and outputs allows sums and products to be
-*nested* in arbitrary ways: with the output one one used as the input of
+*nested* in arbitrary ways: with the output of one used as the input of
 another, forming "trees":
 
 <figure>
@@ -364,12 +364,12 @@ value for products.
 
 Now, we know from primary school that adding `0` to a number *also* leaves it
 unchanged; so zero must *also* be an identity for addition. In which case, what
-happens if we add zero to empty sum, like `(+ 0 (+))`{.scheme}? We know that
-adding `0` leaves a value unchanged, so the result is `(+)`{.scheme}; yet we
-also showed that adding `(+)`{.scheme} leaves a value unchanged, so the result
-is *also* `0`. This only makes sense if both of these are the same value! We can
-use the same approach to find that `(×)`{.scheme} and `1`{.scheme} must be the
-same value. Hence:
+happens if we add zero to an empty sum, like `(+ 0 (+))`{.scheme}? Adding `0`
+leaves the empty sum unchanged, so the result is `(+)`{.scheme}; yet we also
+showed that adding `(+)`{.scheme} will leave the `0`{.scheme} unchanged, so the
+result is *also* `0`. This only makes sense if both of these are the same value!
+We can use the same approach to find that `(×)`{.scheme} and `1`{.scheme} must
+be the same value. Hence:
 
 <figure>
 
@@ -501,8 +501,8 @@ slow!
 
 We need to be careful not to change the order of any multiplications; to ensure
 this, when a sum is multiplied by many values we'll only distribute those which
-occur immediately to its the left or right; this can be repeated until all of
-the values have been distributed into the sum. For example, given a product like
+occur immediately to its left or right; this can be repeated until all of the
+values have been distributed into the sum. For example, given a product like
 `(× a b (+ c d))`{.scheme} we will first distribute `b`, to get
 `(× a (+ (× b c) (× b d)))`{.scheme}, then distribute `a` to get
 `(+ (× a b c) (× a b d))`{.scheme}.
