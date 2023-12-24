@@ -16,9 +16,12 @@ done
 (provide
   +?
   ×?
-  ivory-+
-  ivory-×
-  normalise)
+  changed
+  normalise
+  snoc
+  split
+  split-pair
+  unchanged)
 (require (rename-in "num.rkt" [normalise old:normalise]))
 (module+ test
   (require rackunit rackcheck-lib (submod "num.rkt" test)))
@@ -90,6 +93,17 @@ at it, what's the actual *distinction* between a "sum" and a "product"?
 (define (  changed x) (values x #t))
 ```
 
+```{pipe="cat > lessthan"}
+;; Compare expressions lexicographically (i.e. via "dictionary order" of their
+;; literal syntax)
+(define (lex≤ . args)
+  (define (to-string x)
+    (let ([o (open-output-string)])
+      (write x o)
+      (get-output-string o)))
+  (apply string<=? (map to-string args)))
+```
+
 ```{pipe="cat > split"}
 ;; Return #f when no element of xs  satisfies pred, otherwise return (list a b c)
 ;; where (append a (cons b c)) = xs, and (pred b)
@@ -121,6 +135,7 @@ at it, what's the actual *distinction* between a "sum" and a "product"?
 # normalise. We want to show them further down, so write them to separate files
 # as well
 ./hide < helpers
+./hide < lessthan
 ./hide < split
 ./hide < split-pair
 ```
@@ -143,6 +158,34 @@ at it, what's the actual *distinction* between a "sum" and a "product"?
     (gen:cons gen:elem
               (gen:delay (gen:sized-list gen:elem))
               (gen:const '())))
+
+  (define gen:expr (gen:frequency
+    `([5 . ,gen:rational]
+      [5 . ,(gen:symbol)]
+      [1 . ,(gen:cons (gen:delay gen:expr) (gen:delay gen:expr) gen:rational)]
+      [1 . ,(gen:sized-list (gen:delay gen:expr))])))
+
+  (prop lex≤-is-reflexive ([x gen:expr])
+    (check lex≤ x x))
+
+  (prop lex≤-is-total ([x gen:expr] [y gen:expr])
+    (check-true (or (lex≤ x y) (lex≤ y x))))
+
+  (prop lex≤-is-transitive ([x gen:expr]
+                            [y gen:expr]
+                            [z gen:expr])
+    (define-values (a b c) (cond
+      [(and (lex≤ x y) (lex≤ y z)) (values x y z)]
+      [(and (lex≤ x z) (lex≤ z y)) (values x z y)]
+      [(and (lex≤ y x) (lex≤ x z)) (values y x z)]
+      [(and (lex≤ y z) (lex≤ z x)) (values y z x)]
+      [(and (lex≤ z x) (lex≤ x y)) (values z x y)]
+      [(and (lex≤ z y) (lex≤ y x)) (values z y x)]))
+
+    (check lex≤ a b "≤ ordered smaller")
+    (check lex≤ b c "≤ ordered larger")
+    (check lex≤ a c "≤ is transitive")
+    (check-true (lex≤ a b c) "≤ n-ary"))
 
   (prop split-works ([xs (gen:list gen:natural)])
     (match ((split even?) xs)
