@@ -13,28 +13,17 @@ with rec {
       vars = { setup = ./setup.sh; } // extraVars;
     };
 
-  # TODO: Use filesIn
-  allPages = mapAttrs renderPage (with allPages; {
-    complex_and_hypercomplex_numbers = { };
-    conformal = { };
-    dyadic = { };
-    expressions = { };
-    geometric_algebra = {
-      inherit geometric_units numbers_in_scheme sums_and_products zero_one_many;
-    };
-    geometric_units = { };
-    indeterminates = { };
-    index = { };
-    negatives_and_inverses = { };
-    numbers_in_scheme = { };
-    numerical_towers = { };
-    polynomials = { };
-    powers = { };
-    radicals = { };
-    #scheme_geometric_algebra = { };
-    sums_and_products = { inherit numbers_in_scheme; };
-    zero_one_many = { inherit numbers_in_scheme; };
-  });
+  pages = mapAttrs (_: _: { }) (nix-helpers.suffixedFilesIn ".md" ./.);
+
+  allPages = mapAttrs renderPage (with allPages;
+    pages // {
+      geometric_algebra = {
+        inherit geometric_units numbers_in_scheme sums_and_products
+          zero_one_many;
+      };
+      sums_and_products = { inherit numbers_in_scheme; };
+      zero_one_many = { inherit numbers_in_scheme; };
+    });
 };
 mapAttrs' (name: value: {
   inherit value;
