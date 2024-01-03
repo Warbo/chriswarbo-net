@@ -200,6 +200,12 @@ The levels of the Ivory tower are explained and implemented in the following:
    `rational-expression` and `algebraic-expression` levels, which are the most
    general numerical values supported by Ivory.
 
+<div style="display: hidden;">
+
+[Old page](scheme_geometric_algebra.html)
+
+</div>
+
 ### Code ###
 
 The entire Ivory codebase, generated from these pages, is archived in the
