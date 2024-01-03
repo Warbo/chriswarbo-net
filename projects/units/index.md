@@ -9,7 +9,7 @@ test of time", which is certainly an advantage; but they also suffer a form of
 traction.
 
 For example, we still talk about 90°, 120° and 180° instead of ¼, ⅓ and ½ turns;
-essenti.ally because the Babylonians didn't have fractions 5000 years ago. We
+essentially because the Babylonians didn't have fractions 5000 years ago. We
 also have redundant units like the tonne (Megagram) and litre
 (milli-cubic-metre); we waste time learning tricky, niche concepts (like
 subtraction and pseudovectors) rather than more elegant, general alternatives
@@ -18,11 +18,11 @@ subtraction and pseudovectors) rather than more elegant, general alternatives
 These pages are my ongoing attempt to find such situations, where we can replace
 complicated approaches with simpler ones; combine a bunch of ad-hoc choices into
 some smaller set of consistent rules; and avoid some notions entirely (turning
-them into niche historcal curiosities, rather than foundational curricula taught
-to every child).
+them into niche historical curiosities, rather than foundational curricula
+taught to every child).
 
 Note that the truly important parts, the underlying ideas, are generally *not*
-my own; although their unorthodox presentation will include some originality;
+my own; although their unorthodox presentation will include some originality,
 e.g. to avoid historical baggage and focus on coherence. Many of these are whole
 subjects which *will not* be described in full detail, or with the level of
 rigour some might desire; this is largely due to my own ignorance, but also to
@@ -37,7 +37,7 @@ I'll try to cross-link such cases.
 ## Categories ##
 
 [Quick wins](quick_wins.html) lists some ideas which are relatively easy to
-adopt right now. More specific, in-deph pages are collected below, into rough
+adopt right now. More specific, in-depth pages are collected below, into rough
 categories.
 
 ### Units of Measure ###

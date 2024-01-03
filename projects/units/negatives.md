@@ -33,10 +33,10 @@ aren't needed. Of course, when a situation *does* make sense with negatives we
 *should* use them: e.g. extending the example to ask how many apples *Alice*
 ends up with, which we can model by adding $\ngtv{2}$ to her $3$. We could
 instead use subtraction, but that *also* requires negatives (in case of
-"underflow"), so [I prefer the former](subtraction.html).
+"underflow"), so [I prefer to stick with addition](subtraction.html).
 
-Whilst this may seem obvious, note that many programming languages get it wrong:
-e.g. having their `length` functions a (signed) *integer*, rather than an
+Whilst this may seem obvious, note that many programming languages get it wrong,
+e.g. encoding `length` as a (signed) *integer*, rather than an
 (unsigned) *natural number*; forcing callers to account for the negative cases.
 
 ## Defining Negatives with Plus and Zero ##

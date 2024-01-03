@@ -13,15 +13,14 @@ benefits!
 
 Imperial units differ between countries, have arbitrary conversion factors, and
 lots of redundancy. Metric is the same in every country, and doesn't require
-conversions (it is 'consistent')..
+conversions (it is *coherent*).
 
 #### Use metres instead of yards ####
 
 Those stuck with imperial for compatibility (e.g. in the USA) may find it useful
 to measure distances in yards rather than feet: since a yard is roughly the same
 size as a metre, this can build intuition for metric, and rough estimates can be
-used interchangably. (Using kiloyards instead of miles, and centiyards instead
-of centimetres is lessof a 'quick win'!)
+used interchangably.
 
 ### Use the SI subset of metric ###
 
@@ -38,30 +37,35 @@ a turn). For example we can say 'a quarter turn' rather than '90 degrees'.
 ### Write turns using τ ###
 
 Radians are another natural unit of angle, where there are around 6.28… radians
-per turn; a quantity we represent with the symbol τ (also equal to 2π). Writing
-our angles with a τ suffix, like ¼τ, works for *both* of these units:
+per turn; a quantity we represent with the symbol τ. Writing our angles with a τ
+suffix, like ¼τ, works for *both* of these units:
 
- - We can interpret τ as 'turns' (similar to interpreting ° as 'degrees'); in
-   this case a quarter of a turn
- - Alternatively, we can interpret τ as the constant 6.28… radians per turn; in
-   which case we're multiplying it by ¼ of a turn, to get about 1.57… radians.
+ - We can interpret τ as 'turns', similar to how we interpret ° as 'degrees'.
+   Hence ¼τ can be read as "a quarter turn".
+ - Alternatively, we can interpret τ as a conversion factor between radians and
+   turns, with a value around 6.28… radians per turn. In which case ¼τ can be
+   read as "a quarter of the radians in a turn", which is about 1.57… radians.
 
-Both of these interpetations are equivalent/interchangable; we can use whichever
-is most convenient, and switch between them as desired.
+Both of these interpetations are equivalent/interchangable: the syntax we write
+down is the same for both, how we choose to interpret them is a matter of taste
+and convenience.
 
 ### Replace π with τ/2 ###
 
-The constant τ is equal to 2π, so any quantity or formula using one can easily
-be converted to use the other. Since we're already using τ for turns, we never
-need to use π.
+The constant π (around 3.14…) is the number of radians in half a turn. Since we
+already have the constant τ for the number of radians in a turn, we can replace
+all occurrences of π with τ/2. Whilst the factor of ½ seems annoying, having it
+appear explicitly in a formula seems preferable to having it be *implicit* in
+the definition of π (in fact it is common for formulas to contain 2π, which have
+the opposite problem!)
 
 ### Add negatives instead of subtracting ###
 
 Subtraction is redundant and doesn't behave as nicely as addition: in particlar,
 rearranging subtractions will change their result (it's not 'commutative' or
-'associative'), e.g. $(2 - 3) - 7 = \bar{8}$, but $2 - (7 - 3) = \bar{2}$.
+'associative'), e.g. $(2 - 3) - 7 = 8̅$, but $2 - (3 - 7) = 6$.
 
-Subtraction requires negative numbers (like the above results); in which case,
-we might as well use them as *inputs* too. That way we can always use addition,
-which has nicer behaviour, e.g.
-$(2 + \bar{3}) + \bar{7} = 2 + (\bar{7} + \bar{3}) = bar{8}$
+Subtraction requires negative numbers (like the $8̅$ above); in which case, we
+might as well use them as *inputs* too. That way we can always use addition,
+which is commutative and associative, e.g.
+$(2 + 3̅) + 7̅ = 2 + (3̅ + 7̅) = 3̅ + 2 + 7̅ = 8̅$

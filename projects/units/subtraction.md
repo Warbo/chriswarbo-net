@@ -14,19 +14,19 @@ addition, and I personally think it causes more problems than it solves.
 
 We can define subtraction using addition and negation:
 
-$$x - y \equiv x + \ngtv{y}$
+$$x - y \equiv x + \ngtv{y}$$
 
 Hence situations involving negatives don't need subtraction: we can stick to
 additions, and sprinkle in some negatives as needed. Furthermore, if a situation
 *doesn't* allow negatives, then it doesn't allow subtraction either, since it
 gives negative answers when the second value is larger than the first
-(e.g. $5 - 7 = \ngtv{2}).
+(e.g. $5 - 7 = \ngtv{2}$).
 
 So any time we might want subtraction, we could use negatives instead; and any
 time we can't use negatives, we also can't use subtraction. Thus subtraction
 isn't *needed*. We might find it *useful* . Unf subtraction is just an abbreviation
 
-We can't swap around the values of a subtraction, since $x - y /neq y - x$. In
+We can't swap around the values of a subtraction, since $x - y \neq y - x$. In
 fact, we get the negative result: $x - y = \ngtv{y - x}$ (we say that
 subtraction "anti-commutes").
 
