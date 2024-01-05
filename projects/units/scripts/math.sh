@@ -25,7 +25,7 @@ wrap() {
 
 # Format negatives: defaults to using overbars, but may be overridden by giving
 # this script the argument 'minus'
-negatives() {
+negs() {
     if [[ "$NEG" = 'bar' ]]
     then
         # Use custom stylesheet to transform unary_minus into overbar
@@ -39,15 +39,18 @@ negatives() {
 # Convert Content MathML to Presentation MathML
 # TODO: Add a semantic element with the original Content MathML
 format() {
-    # The $CTOP (Content to Presentation) stylesheet comes from the W3C examples
-    # whilst the $OURS stylesheet lets us tweak the presentation unconditionally
-    # (unlike e.g. negation, which we sometimes want as minus and other times as
-    # an overbar)
-    wrap | xsltproc "$OURS" - | negatives | xsltproc "$CTOP" -
+    # The $OURS stylesheet lets us tweak the presentation unconditionally. We
+    # apply it twice, so it can preprocess the Content MathML and postprocess
+    # Presentation MathML. The $CTOP stylesheet comes from the W3C examples, and
+    # converts C(ontent MathML) to P(resentation MathML).
+    wrap | xsltproc "$OURS" - | negs | xsltproc "$CTOP" - | xsltproc "$OURS" -
 }
 
 # Makes Presentation MathML more browser-compatible
 fixup() {
+    # Run through $OURS stylesheet again, so it can fix up any generated
+    # Presentation MathML.
+    xsltproc "$OURS" - |
     sed -e 's@<?xml[^>]*?>@@g' \
         -e 's@<m:@<@g' \
         -e 's@</m:@</@g' \

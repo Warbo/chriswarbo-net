@@ -28,4 +28,17 @@
     </m:mfrac>
   </xsl:template>
 
+
+  <!-- Summands beginning with a minus need parentheses -->
+  <xsl:template
+      match="m:mrow[*[1][self::m:mo][text()='−']][preceding-sibling::m:mo[text()='+']]">
+    <m:mrow>
+      <m:mo>(</m:mo>
+      <m:mfenced>
+        <xsl:apply-templates/>
+      </m:mfenced>
+      <m:mo>)</m:mo>
+    </m:mrow>
+  </xsl:template>
+
 </xsl:stylesheet>

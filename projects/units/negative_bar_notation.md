@@ -82,17 +82,48 @@ expressions out loud, rather than pronouncing the symbols (like "minus five" or
 
 Consider a long expression like this:
 
-```{pipe="cat > frac.mml"}
-<apply>
-  <divide/>
-  <apply>
-    <power/>
-    <ci>y</ci>
-    <cn>3</cn>
-  </apply>
-  <cn>7</cn>
-</apply>
+```{pipe="sh > inner.mml"}
+{
+  echo '123.45' | num
+  {
+    echo '<apply><divide/>'
+    {
+      echo '42' | num
+      {
+        echo '<apply><power/>'
+        echo 'y' | var
+        echo '2' | num
+        echo '</apply>'
+      }
+    } | mult
+    echo '7' | num
+    echo '</apply>'
+  }
+} | add
 ```
+
+```{.unwrap pipe="sh | tee long.mml | math block"}
+{
+  echo 'x' | var
+  {
+    echo '2' | num
+    cat inner.mml | neg
+    echo '96' | num
+  } | add
+} | mult
+```
+
+The bar clearly shows which parts are negative, without needing more parentheses
+(although we can add them if desired). For comparison, using minus signs would
+give this:
+
+```{.unwrap pipe="sh | math block minus"}
+cat long.mml
+```
+
+If we don't like such long bars, we can instead multiply by
+`1`{.unwrap pipe="num | neg | math"} (note that this *still* requires fewer
+parentheses than a minus sign):
 
 ```{.unwrap pipe="sh | math block"}
 {
@@ -100,26 +131,15 @@ Consider a long expression like this:
   {
     echo '2' | num
     {
-      echo '123.45' | num
-      cat frac.mml
-    } | add | neg
+      echo '1' | num | neg
+      cat inner.mml
+    } | mult
     echo '96' | num
   } | add
-} | mult | tee >(cat 1>&2)
+} | mult
 ```
 
-The bar clearly shows which parts are negative, without needing more parentheses
-(although we can add them if desired). For comparison, using minus signs would
-give this:
-
-$$x(2 + (-(123.45 + \frac{42y^2}{7})) + 96)$$
-
-If we don't like such long bars, we can instead multiply by $\ngtv{1}$ (note
-that this *still* require fewer parentheses than a minus sign):
-
-$$x(2 + \ngtv{1}(123.45 + \frac{42y^2}{7}) + 96)$$
-
-See below for more discussion of $\ngtv{1}$.
+See below for more discussion of `1`{.unwrap pipe="num | neg | math"}.
 
 ### Horizontal Alignment ###
 
