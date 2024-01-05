@@ -2,21 +2,23 @@
 title: Bar Notation for Negation
 ---
 
-<div style="display: none;">
-
-\def\ngtv#1{{\overline{#1}}}
-
-</div>
-
 There are many ways we can write down "negatives", or more general "negations"
-(whose result may actually be positive!). The most common way is using
-a "minus sign", e.g. $-5$ for the negative of $5$, but I think [minus signs are
-too cumbersome and confusing](minus.html). Instead, I prefer to draw a line
-*over the top* (often called a "bar"), rather than to the left.
+(whose result may actually be positive!). The most common way is using a "minus
+sign", e.g. `5`{.unwrap pipe="num | neg | math minus"} for the negative of
+`5`{.unwrap pipe="num | math"} but I think [minus signs are too cumbersome and
+confusing](minus.html). Instead, I prefer to draw a line *over the top* (often
+called a "bar"), rather than to the left.
 
-For example, the negative of $5$ can be written $\ngtv{5}$, the negative of a
-variable $x$ can be written $\ngtv{x}$, the negative of a sum $p + 43$ can be
-written $\ngtv{p + 43}$, and so on.
+```{pipe="add > sum"}
+<ci>p</ci><cn>43</cn>
+```
+
+For example, the negative of `5`{.unwrap pipe="num | math"} can be written
+`5`{.unwrap pipe="num | neg | math"}, the negative of a variable
+`x`{.unwrap pipe="var | math"} can be written
+`x`{.unwrap pipe="var | neg | math"}, the negative of a sum
+`cat sum`{.unwrap pipe="sh | math"} can be written
+`cat sum`{.unwrap pipe="sh | neg | math"}, and so on.
 
 This [bar notation](https://en.wikipedia.org/wiki/Overline#Math_and_science)
 is not original! Prior/similar uses include:
@@ -40,10 +42,29 @@ which makes for unfortunate clashes. Here are some I'm aware of:
 
 #### Repeating Decimals ####
 
-Bars are sometimes used for repeating decimals, e.g. $1.\ngtv{23}$ to represent
-$1.23232323\ldots$. Since [this varies between countries
-](https://en.wikipedia.org/wiki/Repeating_decimal#Notation), it can be avoided
-in favour of a different notation.
+```{pipe="cat > repeating_decimal_bar"}
+<mrow>
+  <mn>1</mn>
+  <mo>.</mo>
+  <mover>
+    <mn>23</mn>
+    <mo>&#175;</mo>
+  </mover>
+</mrow>
+```
+
+```{pipe="cat > repeating_decimal_ellipsis"}
+<mrow>
+  <mn>1.23232323</mn>
+  <mo>…</mo>
+</mrow>
+```
+
+Bars are sometimes used for repeating decimals, e.g. `cat
+repeating_decimal_bar`{.unwrap pipe="sh | math"} to represent `cat
+repeating_decimal_ellipsis`{.unwrap pipe="sh | math"}. Since [this varies
+between countries ](https://en.wikipedia.org/wiki/Repeating_decimal#Notation),
+it can be avoided in favour of a different notation.
 
 #### p-adic Numbers ####
 
@@ -61,7 +82,31 @@ expressions out loud, rather than pronouncing the symbols (like "minus five" or
 
 Consider a long expression like this:
 
-$$x(2 + \ngtv{123.45 + \frac{42y^2}{7}} + 96)$$
+```{pipe="cat > frac.mml"}
+<apply>
+  <divide/>
+  <apply>
+    <power/>
+    <ci>y</ci>
+    <cn>3</cn>
+  </apply>
+  <cn>7</cn>
+</apply>
+```
+
+```{.unwrap pipe="sh | math block"}
+{
+  echo 'x' | var
+  {
+    echo '2' | num
+    {
+      echo '123.45' | num
+      cat frac.mml
+    } | add | neg
+    echo '96' | num
+  } | add
+} | mult | tee >(cat 1>&2)
+```
 
 The bar clearly shows which parts are negative, without needing more parentheses
 (although we can add them if desired). For comparison, using minus signs would
