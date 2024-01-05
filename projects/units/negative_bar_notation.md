@@ -164,57 +164,79 @@ things. For example, here's a small times-table:
  padding: 0.2em 0.3em;
 }
 </style>
+
+```{pipe="cat > table.html"}
 <table class="times-table"><thead>
  <tr class="even">
-  <th>×</th>
-  <th scope="col">2&#x305;</th>
-  <th>1&#x305;</th>
-  <th>0</th>
-  <th>1</th>
-  <th>2</th>
+  <th>`<mo>×</mo>`{.unwrap pipe="math"}</th>
+  <th scope="col">`2`{.unwrap pipe="num | neg | math"}</th>
+  <th>`1`{.unwrap pipe="num | neg | math"}</th>
+  <th>`0`{.unwrap pipe="num | math"}</th>
+  <th>`1`{.unwrap pipe="num | math"}</th>
+  <th>`2`{.unwrap pipe="num | math"}</th>
  </tr>
 </thead><tbody>
  <tr class="odd">
-  <th scope="row">2&#x305;</th>
-  <td>4</td>
-  <td>2</td>
-  <td>0</td>
-  <td>2&#x305;</td>
-  <td>4&#x305;</td>
+  <th scope="row">`2`{.unwrap pipe="num | neg | math"}</th>
+  <td>`4`{.unwrap pipe="num | math"}</td>
+  <td>`2`{.unwrap pipe="num | math"}</td>
+  <td>`0`{.unwrap pipe="num | math"}</td>
+  <td>`2`{.unwrap pipe="num | neg | math"}</td>
+  <td>`4`{.unwrap pipe="num | neg | math"}</td>
  </tr>
  <tr class="even">
-  <th>1&#x305;</th>
-  <td>2</td>
-  <td>1</td>
-  <td>0</td>
-  <td>1&#x305;</td>
-  <td>2&#x305;</td>
+  <th>`1`{.unwrap pipe="num | neg | math"}</th>
+  <td>`2`{.unwrap pipe="num | math"}</td>
+  <td>`1`{.unwrap pipe="num | math"}</td>
+  <td>`0`{.unwrap pipe="num | math"}</td>
+  <td>`1`{.unwrap pipe="num | neg | math"}</td>
+  <td>`2`{.unwrap pipe="num | neg | math"}</td>
  </tr>
  <tr class="odd">
-  <th>0</th>
-  <td>0</td>
-  <td>0</td>
-  <td>0</td>
-  <td>0</td>
-  <td>0</td>
+  <th>`0`{.unwrap pipe="num | math"}</th>
+  <td>`0`{.unwrap pipe="num | math"}</td>
+  <td>`0`{.unwrap pipe="num | math"}</td>
+  <td>`0`{.unwrap pipe="num | math"}</td>
+  <td>`0`{.unwrap pipe="num | math"}</td>
+  <td>`0`{.unwrap pipe="num | math"}</td>
  </tr>
  <tr class="even">
-  <th>1</th>
-  <td>2&#x305;</td>
-  <td>1&#x305;</td>
-  <td>0</td>
-  <td>1</td>
-  <td>2</td>
+  <th>`1`{.unwrap pipe="num | math"}</th>
+  <td>`2`{.unwrap pipe="num | neg | math"}</td>
+  <td>`1`{.unwrap pipe="num | neg | math"}</td>
+  <td>`0`{.unwrap pipe="num | math"}</td>
+  <td>`1`{.unwrap pipe="num | math"}</td>
+  <td>`2`{.unwrap pipe="num | math"}</td>
  </tr>
  <tr class="odd">
-  <th>2</th>
-  <td>4&#x305;</td>
-  <td>2&#x305;</td>
-  <td>0</td>
-  <td>1</td>
-  <td>2</td>
+  <th>`2`{.unwrap pipe="num | math"}</th>
+  <td>`4`{.unwrap pipe="num | neg | math"}</td>
+  <td>`2`{.unwrap pipe="num | neg | math"}</td>
+  <td>`0`{.unwrap pipe="num | math"}</td>
+  <td>`2`{.unwrap pipe="num | math"}</td>
+  <td>`4`{.unwrap pipe="num | math"}</td>
  </tr>
 </tbody></table>
+```
+
+<figure>
+
+```{.unwrap pipe="sh"}
+< table.html pandoc -f markdown -t json | panpipe | panhandle
+```
+
+<figcaption>Multiplication table with overbars for negation</figcaption>
+</figure>
+
+<figure>
+
+```{.unwrap pipe="sh"}
+< table.html sed -e 's/math/math minus/g' |
+  pandoc -f markdown -t json | panpipe | panhandle
+```
+
+<figcaption>Multiplication table with minus signs for negation</figcaption>
+</figure>
 
 This seems like a minor quibble, but grids of numbers/expressions are used all
 over the place: spreadsheets, long addition/multiplication, matrices, etc.
