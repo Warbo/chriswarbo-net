@@ -4,17 +4,23 @@ set -eu
 # Rendering defaults
 NEG=bar
 CONTEXT=inline
+SEM=1
 
 # Allow defaults to be overridden by arguments
 for ARG in "$@"
 do
     case "$ARG" in
-        minus) NEG=minus ;;
-        bar) NEG=bar ;;
-        block) CONTEXT=block ;;
+         minus)     NEG=minus  ;;
+           bar)     NEG=bar    ;;
+         block) CONTEXT=block  ;;
         inline) CONTEXT=inline ;;
+         nosem)     SEM=0      ;;
+           sem)     SEM=1      ;;
     esac
 done
+
+# Capture the markup we've been given on stdin
+GIVEN=$(cat)
 
 # All MathML must occur in a math element with this namespace
 wrap() {
@@ -48,18 +54,36 @@ format() {
 
 # Makes Presentation MathML more browser-compatible
 fixup() {
-    # Run through $OURS stylesheet again, so it can fix up any generated
-    # Presentation MathML.
-    xsltproc "$OURS" - |
     sed -e 's@<?xml[^>]*?>@@g' \
         -e 's@<m:@<@g' \
         -e 's@</m:@</@g' \
         -e 's@xmlns:m=.http://www.w3.org/1998/Math/MathML.@@g' | tr -d '\n'
 }
 
+# Adds the original (untransformed) markup as a semantic annotation
+semantics() {
+    if [[ "$SEM" -eq 0 ]]
+    then
+        # Don't add semantics, just stick with the presentation markup
+        cat
+    else
+        # Insert an opening <semantics> tag after the opening <math> tag, and
+        # (temporarily) remove the closing </math> tag
+        sed -e 's@\(<math[^>]*>\)@\1<semantics>@g' \
+            -e 's@</math>@@g'
+
+        # Add the given markup (assumed to be Content MathML) as an annotation
+        printf '<annotation-xml encoding="MathML-Content">%s</annotation-xml>' \
+               "$GIVEN"
+
+        # Close everything off
+        printf '</semantics></math>'
+    fi
+}
+
 echo "BEGIN math.sh" 1>&2
 
-MATHS=$(format | fixup)
+MATHS=$(echo "$GIVEN" | format | fixup | semantics)
 echo "MATHS='$MATHS'" 1>&2
 
 # Convert to Pandoc JSON. We can't just pipe it into Pandoc, since that will try
