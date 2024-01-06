@@ -1,3 +1,10 @@
 #!/usr/bin/env bash
 set -e
-printf '<cn>%s</cn>' "$(cat)"
+
+if [[ -n "$1" ]]
+then
+    NUM="$1"
+else
+    NUM=$(cat)
+fi
+printf '<cn>%s</cn>' "$NUM"
