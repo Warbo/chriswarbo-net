@@ -120,14 +120,10 @@ result: `cat anti_comm.mml`{.unwrap pipe="sh | math"} (we say that subtraction
 ```
 
 Addition extends to arbitrarily-many inputs, which we call being "associative".
-In particular, `cat add_left.mml`{.unwrap pipe="sh | math"} is the same as
-`cat add_right.mml`{.unwrap pipe="sh | math"}, so we can just avoid nesting
-altogether and write `cat add_flat.mml`{.unwrap pipe="sh | math"} (the same
-goes when dealing with more than three inputs, nested in any way).
-
-```{pipe="sh > sub_flat.mml"}
-{ var 'x'; var 'y'; var 'z'; } | mapply 'minus'
-```
+In particular, `cat add_left.mml`{.unwrap pipe="sh | math nosem"} is the same as
+`cat add_right.mml`{.unwrap pipe="sh | math nosem"}, so we can just avoid
+nesting altogether and write `cat add_flat.mml`{.unwrap pipe="sh | math"} (the
+same goes when dealing with more than three inputs, nested in any way).
 
 ```{pipe="sh > sub_neq.mml"}
 {
@@ -181,7 +177,7 @@ goes when dealing with more than three inputs, nested in any way).
 ```
 
 In contrast, using subtraction with more than two values is ambiguous. For
-example `cat sub_flat_example.mml`{.unwrap pipe="sh | math"}
+example `cat sub_flat_example.mml`{.unwrap pipe="sh | math nosem"}
 could mean `cat sub_left_example.mml`{.unwrap pipe="sh | math"} *or* it could
 mean `cat sub_right_example.mml`{.unwrap pipe="sh | math"}, which give different
 results. In general `cat sub_neq.mml`{.unwrap pipe="sh | math"}, so we're forced
@@ -210,8 +206,8 @@ to keep careful track of nesting when using subtraction.
 Associative operations are also better for computers, since they're trivial to
 calculate in parallel. For example, if we have three processors, we can
 calculate `cat add_example_flat.mml`{.unwrap pipe="sh | math"} in parallel by
-transforming it into `cat add_example_nest.mml`{.unwrap pipe="sh | math"}; the
-result will always be identical, but the nested parts can be calculated
+transforming it into `cat add_example_nest.mml`{.unwrap pipe="sh | math nosem"};
+the result will always be identical, but the nested parts can be calculated
 independently, and hence on separate processors at the same time. We cannot
 perform such transformations for operations that *aren't* associative; hence
 subtraction can't easily be done in parallel.

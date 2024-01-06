@@ -9,7 +9,7 @@ sign", e.g. `5`{.unwrap pipe="num | neg | math minus"} for the negative of
 confusing](minus.html). Instead, I prefer to draw a line *over the top* (often
 called a "bar"), rather than to the left.
 
-```{pipe="add > sum"}
+```{pipe="add > sum.mml"}
 <ci>p</ci><cn>43</cn>
 ```
 
@@ -17,8 +17,8 @@ For example, the negative of `5`{.unwrap pipe="num | math"} can be written
 `5`{.unwrap pipe="num | neg | math"}, the negative of a variable
 `x`{.unwrap pipe="var | math"} can be written
 `x`{.unwrap pipe="var | neg | math"}, the negative of a sum
-`cat sum`{.unwrap pipe="sh | math"} can be written
-`cat sum`{.unwrap pipe="sh | neg | math"}, and so on.
+`cat sum.mml`{.unwrap pipe="sh | math"} can be written
+`cat sum.mml`{.unwrap pipe="sh | neg | math"}, and so on.
 
 This [bar notation](https://en.wikipedia.org/wiki/Overline#Math_and_science)
 is not original! Prior/similar uses include:
@@ -42,7 +42,7 @@ which makes for unfortunate clashes. Here are some I'm aware of:
 
 #### Repeating Decimals ####
 
-```{pipe="cat > repeating_decimal_bar"}
+```{pipe="cat > repeating_decimal_bar.mml"}
 <mrow>
   <mn>1</mn>
   <mo>.</mo>
@@ -53,18 +53,19 @@ which makes for unfortunate clashes. Here are some I'm aware of:
 </mrow>
 ```
 
-```{pipe="cat > repeating_decimal_ellipsis"}
+```{pipe="cat > repeating_decimal_ellipsis.mml"}
 <mrow>
   <mn>1.23232323</mn>
   <mo>…</mo>
 </mrow>
 ```
 
-Bars are sometimes used for repeating decimals, e.g. `cat
-repeating_decimal_bar`{.unwrap pipe="sh | math"} to represent `cat
-repeating_decimal_ellipsis`{.unwrap pipe="sh | math"}. Since [this varies
-between countries ](https://en.wikipedia.org/wiki/Repeating_decimal#Notation),
-it can be avoided in favour of a different notation.
+Bars are sometimes used for repeating decimals, e.g.
+`cat repeating_decimal_bar.mml`{.unwrap pipe="sh | math nosem"} to represent
+`cat repeating_decimal_ellipsis.mml`{.unwrap pipe="sh | math nosem"}. Since
+[this varies between
+countries](https://en.wikipedia.org/wiki/Repeating_decimal#Notation), it can be
+avoided in favour of a different notation.
 
 #### p-adic Numbers ####
 
