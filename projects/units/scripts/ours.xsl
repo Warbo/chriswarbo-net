@@ -41,4 +41,24 @@
     </m:mrow>
   </xsl:template>
 
+  <!-- When multiplying literal numbers, they must be separated by an explicit ×
+       rather than an "invisible times". The CTOP stylesheet handles 'unadorned'
+       literals, but not those decorated with superscripts, overlines, etc. -->
+  <xsl:template
+      match="m:mo[text()='⁢'][preceding-sibling::m:mn][
+             following-sibling::m:msup[*[1][self::m:mn]]
+             ]">
+    <!-- Writes '3×10²' instead of '3⁢10²' -->
+    <m:mo>×</m:mo>
+  </xsl:template>
+  <xsl:template
+      match="m:mo[text()='⁢'][
+             preceding-sibling::m:mover[*[1][self::m:mn]]
+             ][
+             following-sibling::m:msup[*[1][self::m:mn]]
+             ]">
+    <!-- Writes 3̄×10² instead of 3̄⁢10²-->
+    <m:mo>×</m:mo>
+  </xsl:template>
+
 </xsl:stylesheet>
