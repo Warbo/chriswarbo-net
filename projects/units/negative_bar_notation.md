@@ -85,31 +85,24 @@ Consider a long expression like this:
 
 ```{pipe="sh > inner.mml"}
 {
-  echo '123.45' | num
+  num '123.45'
   {
-    echo '<apply><divide/>'
     {
-      echo '42' | num
-      {
-        echo '<apply><power/>'
-        echo 'y' | var
-        echo '2' | num
-        echo '</apply>'
-      }
+      num '42'
+      { var 'y'; num '2'; } | mapply 'power'
     } | mult
-    echo '7' | num
-    echo '</apply>'
-  }
+    num '7'
+  } | mapply 'divide'
 } | add
 ```
 
 ```{.unwrap pipe="sh | tee long.mml | math block"}
 {
-  echo 'x' | var
+  var 'x'
   {
-    echo '2' | num
+    num '2'
     cat inner.mml | neg
-    echo '96' | num
+    num '96'
   } | add
 } | mult
 ```
@@ -128,14 +121,14 @@ parentheses than a minus sign):
 
 ```{.unwrap pipe="sh | math block"}
 {
-  echo 'x' | var
+  var 'x'
   {
-    echo '2' | num
+    num '2'
     {
-      echo '1' | num | neg
+      num '1' | neg
       cat inner.mml
     } | mult
-    echo '96' | num
+    num '96'
   } | add
 } | mult
 ```
