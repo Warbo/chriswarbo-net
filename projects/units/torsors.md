@@ -10,12 +10,41 @@ we *can* find their difference; and that difference is a vector (not a point).
 Furthermore, we can always add such 'differences' to our torsor values,
 resulting in more torsor values. In particular, the following equation holds:
 
-$$tAdd x (tDiff y x) = y$$
+```{.unwrap pipe="sh | math block nosem"}
+tag() {
+  printf '<%s>' "$1"
+  cat
+  printf '</%s>' "$1"
+}
 
-In the case of points and vectors, adding the vector $y - x$ to the point $x$
-gives the point $y$.
+row() { tag 'mrow'; }
 
-### Uses ###
+mi() { echo "$1" | tag 'mi'; }
+mo() { echo "$1" | tag 'mo'; }
+
+
+D=$({
+  mi 'tDiff'
+  mo '⁡'
+  { mo '('; mi 'y'; mo ','; mi 'x'; mo ')'; } | row
+} | row)
+
+{
+  {
+    mi 'tAdd'
+    mo '⁡'
+    { mo '('; mi 'x'; mo ','; echo "$D"; mo ')'; } | row
+  } | row
+  mo '='
+  mi 'y'
+} | row
+```
+
+In the case of points and vectors, adding the vector
+`var 'y'; var 'x';`{.unwrap pipe="sh | mapply minus | math"} to the point
+`x`{.unwrap pipe="var | math"} gives the point `y`{.unwrap pipe="var | math"}.
+
+## Uses ##
 
 Torsors are useful for avoiding arbitrary coordinates, i.e. when there's no
 natural/obvious way to define 'zero'. We would like to build an approach to
@@ -27,8 +56,8 @@ point can 'undo' such combinations.
 
 We can specialise a projective space to an affine space by choosing a
 distinguished line (normally this is the line at infinity; but we can use any
-finite line as a One place we can use this is the affine plane, where there is no
-'zero' point or line:
+finite line as a One place we can use this is the affine plane, where there is
+no 'zero' point or line:
 
  - The 'difference' between two points is a *directed line segment*. Note that
    it is *not* a line, since there's no way to choose an orientation when taking
@@ -45,12 +74,13 @@ Dually, for affine lines:
  - Adding a directed angle to a line yields a line. NO! It requires a
    point on the line, for the intersection! Otherwise we have a *direction*!
 
-Again, the second property is affine, so we can Notice that these segments have no particular 'length' (or equivalent metric,
-like *quadrance*), since projective geometry doesn't impose any. Likewise, these
-angles have no 'arc-length' or 'radius'. As a consequence, we cannot 'transport'
-these objects through the space in a unique way: for example, vector addition is
-as easy as 'gluing' the start of one vector to the end of another; but this
-requires 'transporting' the vectors around (or, equivalently, redefining their
+Again, the second property is affine, so we can Notice that these segments have
+no particular 'length' (or equivalent metric, like *quadrance*), since
+projective geometry doesn't impose any. Likewise, these angles have no
+'arc-length' or 'radius'. As a consequence, we cannot 'transport' these objects
+through the space in a unique way: for example, vector addition is as easy as
+'gluing' the start of one vector to the end of another; but this requires
+'transporting' the vectors around (or, equivalently, redefining their
 origin). In projective geometry we can 'transport' line segments in
 
 (Directed) line segments can interact with (directed) angles: adding an angle to
@@ -67,4 +97,6 @@ introduce a rotation.
 Two angles of a distinguished point point except there's no need for a
 distinguished point in that case; they
 
-### Affine
+## Affine ##
+
+TODO

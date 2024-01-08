@@ -1,11 +1,10 @@
 ---
-title: Generalising Place-Value Numbers to Polynomials
-TODO: Needs --mathjax --standalone options
+title: Generalising place-value numbers to polynomials
 ---
 
 "Place-value" numbers, also known as Hindu-Arabic numbers, are the 'normal' way
-we write down numbers, e.g. '123' to represent "a hundred and twenty three" (AKA
-'CXXIII' in roman numerals).
+we write down numbers, e.g. `123`{.unwrap pipe="num | math"} to represent "a
+hundred and twenty three" (AKA 'CXXIII' in roman numerals).
 
 Place-value notation is usually taught very early on, since it's such a
 fundamental part of how we do mathematics. That's good, but it also means we're
@@ -14,7 +13,7 @@ some simple rules (and hopefully gain some intuition over time); once we *are*
 more sophisticated, e.g. at high school, we may be so used to place-value
 numbers that we never think to re-visit those rules, and the underlying theory.
 
-## Simple Rules ##
+## Simple rules ##
 
 We may have learned place-value notation via rules like the following:
 
@@ -26,13 +25,26 @@ Hence the digits, from right-to-left, count "ones", "tens", "hundreds",
 
 TODO: LINK TO LOGARITHMIC NAMING
 
-Our example of '123' contains 3 ones, 2 tens and 1 hundred. The overall number
-is the sum of these parts, so 3 + 20 + 100 = 123.
+```{pipe="sh > sum.mml"}
+{
+  {
+    num '3'
+    num '20'
+    num '100'
+  } | add
+  num '123'
+} | mapply 'eq'
+```
+
+Our example of `123`{.unwrap pipe="num | math"} contains
+`3`{.unwrap pipe="num | math"} ones, `2`{.unwrap pipe="num | math"} tens and
+`1`{.unwrap pipe="num | math"} hundred. The overall number is the sum of these
+parts, so `cat sum.mml`{.unwrap pipe="sh | math"}.
 
 Note that the 'ten times more' rule ensures we get zeros on the right, which
 makes the final sum pretty easy.
 
-## More Sophisticated Rules ##
+## More sophisticated rules ##
 
 Once we've spent a few years becoming comfortable with arithmetic, we can
 re-visit the rules of place-value notation. In particular, we can make the above
@@ -46,19 +58,51 @@ than "bit", "octet", "dozit", etc.).
 The next key insight is that multiplying the base over and over (for each extra
 digit going left) is the same as the *power* operation in arithmetic:
 
-$$
-10^{0} &= 1
-10^{1} = 10 \times &1 &= 10
-10^{2} = 10 \times 10 \times 1 &= 10
+```{pipe="sh"}
+{
+  { num '10'; num '0'; } | mapply 'power'
+  num '1'
+} | mapply 'eq' > 0.mml
+
+{
+  { num '10'; num '1'; } | mapply 'power'
+  { num '10'; num '1'; } | mult
+  num '10'
+} | mapply 'eq' > 1.mml
+
+{
+  { num '10'; num '2'; } | mapply 'power'
+  { num '10'; num '10'; num '1'; } | mult
+  num '100'
+} | mapply 'eq' > 2.mml
+```
+
+`cat 0.mml`{.unwrap pipe="sh | math"}
+
+`cat 1.mml`{.unwrap pipe="sh | math"}
+
+`cat 2.mml`{.unwrap pipe="sh | math"}
 
 For the above example:
 
-$$123 &= 1 \times 10^{2} &+ 2 \times 10^{1} &+ 3 \times 10^{0}
-      &= 1 \times 100    &+ 2 \times 10     &+ 3 \times 1$$
+```{.unwrap pipe="sh | math block"}
+{
+  num '123'
+  {
+    { num '1'; { num '10'; num '2'; } | mapply 'power'; } | mult
+    { num '2'; { num '10'; num '1'; } | mapply 'power'; } | mult
+    { num '3'; { num '10'; num '0'; } | mapply 'power'; } | mult
+  } | add
+  {
+    { num '1'; num '100'; } | mult
+    { num '2'; num  '10'; } | mult
+    { num '3'; num   '1'; } | mult
+  } | add
+} | mapply 'eq'
+```
 
-
-We will keep things general by referring to our base using a variable $b$.
-From this perspective, the number '123' "ones" digit is multiplied by 10^0^
+We will keep things general by referring to our base using a variable
+`b`{.unwrap pipe="var | math"}.
 
 * Columns raise the base to increasing powers
 ** We tend to use base 10

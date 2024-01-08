@@ -2,6 +2,8 @@
 title: Joining Parentheses
 ---
 
+TODO: Maybe just draw boxes?
+
 Parentheses are used to 'group together' parts of an expression; for example
 $8 + ((3 + 2) \times (1 + 4))$. When many parentheses are nested, a common
 problem is having to physically *count them* to figure out which ones match up;
