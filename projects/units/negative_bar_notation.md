@@ -1,5 +1,5 @@
 ---
-title: Bar Notation for Negation
+title: Bar notation for negation
 ---
 
 There are many ways we can write down "negatives", or more general "negations"
@@ -33,53 +33,13 @@ is not original! Prior/similar uses include:
 
 **Please suggest more links!**
 
-### Known Conflicts ###
-
-Bar notation is also used for things which have nothing to do with negatives,
-which makes for unfortunate clashes. Here are some I'm aware of:
-
-**Please suggest more clashes!**
-
-#### Repeating Decimals ####
-
-```{pipe="cat > repeating_decimal_bar.mml"}
-<mrow>
-  <mn>1</mn>
-  <mo>.</mo>
-  <mover>
-    <mn>23</mn>
-    <mo>&#175;</mo>
-  </mover>
-</mrow>
-```
-
-```{pipe="cat > repeating_decimal_ellipsis.mml"}
-<mrow>
-  <mn>1.23232323</mn>
-  <mo>…</mo>
-</mrow>
-```
-
-Bars are sometimes used for repeating decimals, e.g.
-`cat repeating_decimal_bar.mml`{.unwrap pipe="sh | math nosem"} to represent
-`cat repeating_decimal_ellipsis.mml`{.unwrap pipe="sh | math nosem"}. Since
-[this varies between
-countries](https://en.wikipedia.org/wiki/Repeating_decimal#Notation), it can be
-avoided in favour of a different notation.
-
-#### p-adic Numbers ####
-
-p-adic numbers have the same conflict as repeating decimals, except going to the
-left instead of right. If we pick one of the other common notations for
-repeating decimals, we should also use it for p-adic numbers, for consistency.
-
-### Pronunciation ###
+## Pronunciation ##
 
 I propose sticking to the word "negative" when saying these quantities or
 expressions out loud, rather than pronouncing the symbols (like "minus five" or
-"five bar").
+"five bar"). This is more explicit and understandable, regardless of notation.
 
-### Long and Short Bars ###
+## Readability and aesthetics: long and short bars ##
 
 Consider a long expression like this:
 
@@ -135,10 +95,12 @@ parentheses than a minus sign):
 
 See below for more discussion of `1`{.unwrap pipe="num | neg | math"}.
 
-### Horizontal Alignment ###
+## Alignment and spacing ##
 
 Adding bars doesn't add any horizontal space, which makes it easier to align
-things. For example, here's a small times-table:
+things. For example, here's a small times-table written using bar notation. The
+contents of each cell is an independent MathML expression: no attempt has been
+made to align them, yet they manage to look pretty clear.
 
 <style type="text/css">
 .times-table {
@@ -222,6 +184,12 @@ things. For example, here's a small times-table:
 <figcaption>Multiplication table with overbars for negation</figcaption>
 </figure>
 
+Bars add a *little* vertical space to an expression, which causes a little
+wiggling; but only due to the *thickness* of the line (and some separation). In
+comparison, minus signs extend an expression horizontally by the *entire length*
+of the line (plus some separation). Here's the same table using minus signs, and
+the wiggling between cells is much more pronounced!
+
 <figure>
 
 ```{.unwrap pipe="sh"}
@@ -233,10 +201,54 @@ things. For example, here's a small times-table:
 </figure>
 
 This seems like a minor quibble, but grids of numbers/expressions are used all
-over the place: spreadsheets, long addition/multiplication, matrices, etc.
-Place-value numbers *themselves* are a grid of digits, which makes bar notation
-so attractive when using [negative digits](negative_digits.html).
+over the place: spreadsheets, long addition/multiplication, matrices, etc. When
+things line-up, we can skim them quickly and spot discrepencies; when they
+don't, we must expend mental effort to keep track of items individually.
 
-Bars add a *little* vertical space to an expression, but only the *thickness* of
-the bar (and some separation); in comparison, minus signs extend an expression
-horizontally by their entire *length* (plus separation).
+### Negative digits ###
+
+Thanks to the place-value system we use to write them, *numbers themselves* can
+be thought of as a grid of digits. Negative numbers are thus made of
+[negative digits](negative_digits.html), which can make arithmetic simpler and
+more uniform. This is natural to express with overbar notation, but awkward and
+ambiguous using minus signs.
+
+## Known Conflicts ##
+
+Bar notation is also used for things which have nothing to do with negatives,
+which makes for unfortunate clashes. Here are some I'm aware of:
+
+**Please suggest more clashes!**
+
+### Repeating Decimals ###
+
+```{pipe="cat > repeating_decimal_bar.mml"}
+<mrow>
+  <mn>1</mn>
+  <mo>.</mo>
+  <mover>
+    <mn>23</mn>
+    <mo>&#175;</mo>
+  </mover>
+</mrow>
+```
+
+```{pipe="cat > repeating_decimal_ellipsis.mml"}
+<mrow>
+  <mn>1.23232323</mn>
+  <mo>…</mo>
+</mrow>
+```
+
+Bars are sometimes used for repeating decimals, e.g.
+`cat repeating_decimal_bar.mml`{.unwrap pipe="sh | math nosem"} to represent
+`cat repeating_decimal_ellipsis.mml`{.unwrap pipe="sh | math nosem"}. Since
+[this varies between
+countries](https://en.wikipedia.org/wiki/Repeating_decimal#Notation), it can be
+avoided in favour of a different notation.
+
+### p-adic Numbers ###
+
+p-adic numbers have the same conflict as repeating decimals, except going to the
+left instead of right. If we pick one of the other common notations for
+repeating decimals, we should also use it for p-adic numbers, for consistency.
