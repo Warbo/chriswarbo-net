@@ -213,7 +213,7 @@ perfect spot for it in our unfortunately-wonky tower:
    ┌─┐ ┌──┐ ┌─┐ ╔╦╕
    │ └─┘  └─┘ │ ╢╟├╯
    │geometric ╞╧╣╚╡
-  ╭┴──────────┴─╨─┤
+  ┌┴──────────┴─╨─┤
   │dual-quaternion│
   ├────╥──────────┤
   │    ║quaternion│
