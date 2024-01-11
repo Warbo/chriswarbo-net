@@ -31,11 +31,11 @@ etc.).
 
 There are two ways to specify an output: using its hash, or using a derivation.
 
-### Outputs specfied by hash ###
+### Outputs specified by hash ###
 
-These use two pieces of information: a name (for human readability), a hash of
-the file/folder contents. These are combined into the output's path, using the
-pattern `<store>/<hash>-<name>`; e.g.
+These use two pieces of information: a name (for human readability), and a hash
+of the file/folder contents. These are combined into the output's path, using
+the pattern `<store>/<hash>-<name>`; e.g.
 `/nix/store/9krlzvny65gdc8s7kpb6lkx8cd02c25b-default-builder.sh`. This is a neat
 trick: paths are the standard way to refer to files/folders, so putting hashes
 in output paths ensures every reference specifies the exact content that it's
@@ -49,8 +49,12 @@ There are two downsides to this approach:
    someone else do that and tell you the result), so this approach cannot
    specify *new* outputs that don't yet exist.
 
-This approach to specifying outputs is mostly useful for things we already have;
-when we want to refer to files and folders in a precise, reproducible way.
+This approach to specifying outputs is mostly useful as a cache/database of
+things we already have; when we want a "content address" for files and folders.
+For example, if we're going to compile multiple copies of some source code then
+giving identical versions the same path avoids redundant compilation; whilst
+those with differing content should be kept at distinct paths so we can compile
+each individually.
 
 ### Outputs specified by derivation ###
 
@@ -61,9 +65,9 @@ ends in `.drv`. These files must contain certain fields, including a "system"
 string arguments to give to that executable (say,
 `["-c", "echo RUNNING >&2 && echo $message > $out"]`) and a key/value map of
 strings to use as environment variables (e.g. `("message", "hello")`). Together
-these fields are essentially specifying an `exec` syscall. Nix will use this
-command to *create* outputs if they aren't found, which overcomes the first
-problem identified with the previous approach.
+these fields are essentially specifying an `exec` syscall; and that's exactly
+how Nix will use them, to *create* outputs that don't already exist. This
+overcomes the first problem identified with the hash-only approach.
 
 Derivation files must specify at least one output, with each having a name and a
 path. Like with the previous approach, these paths have the form
@@ -73,7 +77,7 @@ an output ahead of time, only *a command to create it*; hence overcoming the
 second problem.
 
 Derivations may optionally specify "inputs", which are just references to other
-outputs, specified either by its path (which contains a hash), or as a named
+outputs, specified either by a path (which contains a hash), or as a named
 output of some other derivation (specified by the path to its `.drv` file, which
 again contains a hash). This way, `.drv` files can refer to each other to form a
 directed acyclic graph; and since each path contains a hash, these dependencies
@@ -85,22 +89,31 @@ every git commit a tamper-proof specification of its entire history.
 ## How do we get an output? ##
 
 Now we know how outputs are specified, it should be pretty clear how Nix can
-get them (known as "building", or "realising").
+get them (I already said, it can run the specified executable!). The algorithm
+Nix follows is sketched below, and is known as "building" or "realising" an
+output.
 
 All outputs have a filesystem path, either specified directly (when we're
 relying on the hash that occurs in the path) or written in a specified `.drv`
-file. The first thing Nix will do is check if that path already exists on the
-filesystem: if it does, no further action is needed and we're finished!
+file. The first thing Nix will do is check if the specified output's path
+already exists on the filesystem: if it does, no further action is needed and
+we're finished!
 
 If the specified output *doesn't* already exist on our system, Nix can query
 *other* systems to see if they have it. These are called "binary caches" or
 "remote stores" (depending on how they're set up), and are usually part of our
 system config (e.g. a default Nix installation will use `cache.nixos.org` as a
 binary cache). If one of these returns a hit for the specified output path, Nix
-will copy its contents to the local filesystem, and is then finished.
+will copy its contents to the local filesystem, and is then finished. This lets
+us decouple *specification* from *implementation*: for example, the Nixpkgs
+project tends to specify derivations with large dependency graphs, with inputs
+being as detailed and fine-grained as the particular patches to apply to the
+source of the GCC compiler that is used to build the shell that is used to run
+the tests of the library that... and so on! However, we don't need to *run* all
+of those steps, since Nix will just fetch the output we asked for from a cache!
 
-If there were no hits, and the output is only specified by its hash, then Nix
-must abort at this point, since there's no way to re-create the desired
+If there were no cache hits, and the output is only specified by its hash, then
+Nix must abort at this point, since there's no way to re-create the desired
 file/folder given only its hash.
 
 The interesting case happens when outputs of a *derivation* are not found, since
