@@ -2,10 +2,10 @@
 title: "Ivory: Numerical Towers"
 ---
 
-> The witchery that is cast in these towers
-> It transcends the limits of my mind
-> Ivory Towers in the sky
-> A dreadful and enchanting sight
+> | The witchery that is cast in these towers
+> | It transcends the limits of my mind
+> | Ivory Towers in the sky
+> | A dreadful and enchanting sight
 — <cite>Acid Mammoth, *Ivory Towers*</cite>
 
 Numerical Towers are a particular way to design and organise a programming

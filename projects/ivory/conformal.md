@@ -2,13 +2,13 @@
 title: "Ivory: With Jubilee And Circle Line"
 ---
 
-> Roam in grace, there's no frontier
-> There is life beyond the spheres
-> The long way home
-> Endless space
-> Proceed and carry on
-> The long way home
-> There is life beyond the spheres
+> | Roam in grace, there's no frontier
+> | There is life beyond the spheres
+> | The long way home
+> | Endless space
+> | Proceed and carry on
+> | The long way home
+> | There is life beyond the spheres
 — <cite>Blind Guardian, *Life Beyond the Spheres*</cite>
 
 TODO:

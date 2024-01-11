@@ -2,9 +2,9 @@
 title: "Ivory: Manifest Decimation"
 ---
 
-> I will forge my own world, my own law
-> And if broken, my dragons will decimate
-> Without a single word ever spoken
+> | I will forge my own world, my own law
+> | And if broken, my dragons will decimate
+> | Without a single word ever spoken
 — <cite>Machinae Supremacy, *My Dragons Will Decimate*</cite>
 
 TODO:
