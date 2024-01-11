@@ -10,11 +10,11 @@ title: "Ivory: Numerical Towers"
 
 Numerical Towers are a particular way to design and organise a programming
 language's numeric values and operations, notably used by the Lisp, Scheme &
-Smalltalk families. We will characterised the approach as follows:
+Smalltalk families. We will characterise the approach as follows:
 
  - Multiple types of number are provided, e.g. `natural`, `integer`, `rational`,
    etc.
- - These types are constants, e.g. no parameterising like `(integer-modulo 7)`
+ - These types are constant, e.g. no parameterising like `(integer-modulo 7)`
    or `(matrix 3 3)`
  - Different types of number can use different representations, e.g. `integer`
    may use a sign to distinguish positives from negatives; whilst `rational` may
@@ -83,12 +83,9 @@ languages.
 This simplicity comes at the cost of having less precise types for our functions
 to choose from. For example, in a numerical tower with `integer` as a subset of
 `rational`, then any function accepting `rational` inputs *must* handle negative
-values and zero values; we cannot restrict ourselves to e.g. "non-zero positive
-rationals", since such a level would need to occur above `rational`, but cannot
-be either above or below `zero` or `integer` (since it doesn't wholly contain,
-and isn't wholly contained by, either). In such cases we may have to rely on
-assertions, and convince ourselves that our usage is correct on a case-by-case
-basis 🤞
+values; indeed, we cannot restrict anything to "non-zero" numbers, if `zero` is
+at the top of the tower! In such cases we may have to rely on assertions, and
+convince ourselves that our usage is correct on a case-by-case basis 🤞
 
 ### Mezzanines ###
 
