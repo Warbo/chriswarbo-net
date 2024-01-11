@@ -2,7 +2,7 @@
 title: Haskell Parsing
 ---
 
-I like [s-expressions](../blog/2017-08-29-s_expressions.html), but there are
+I like [s-expressions](2017-08-29-s_expressions.html), but there are
 perfectly good arguments for avoiding them (e.g. "hard for people to read"), but
 most languages seem to 'throw the baby out with the bathwater' by having their
 human-friendly language be the *only* representation!
@@ -35,8 +35,8 @@ especially crazy given that:
    `undefined` values, which cause a hard crash if accessed (e.g. by a generic
    AST traversal). Basically like uncheckable, uncatchable null reference
    exceptions (although
-   [they behave differently](../blog/2020-02-09-bottom.html) from a logical,
-   Curry-Howard    perspective)
+   [they behave differently](2020-02-09-bottom.html) from a logical,
+   Curry-Howard perspective)
  - Yet, one of the benefits of Haskell is that [it doesn't have
    null](http://www.nickknowlson.com/blog/2013/04/16/why-maybe-is-better-than-null/)!
  - Template Haskell, which defines a completely bespoke set of types for
