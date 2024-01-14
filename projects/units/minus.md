@@ -34,11 +34,11 @@ e.g. `num '2'; var 'x';`{.unwrap pipe="sh | mult | math"} to mean
 "`2`{.unwrap pipe="num | math"} times `x`{.unwrap pipe="var | math"}". Using the
 minus sign for two different operations makes this ambiguous, since
 `num '2'; var 'x';`{.unwrap pipe="sh | mapply minus | math"} could mean "two
-times negative `x`{.unapply pipe="var | math"}" *or* it could mean "two take
+times negative `x`{.unwrap pipe="var | math"}" *or* it could mean "two take
 away `x`{.unwrap pipe="var | math"}"; these are two *very* different things!
 Convention is to always treat such minus signs as subtraction, and use
 parentheses if we want multiplication, e.g.
-`cat explicit.mml`{.unwrap pipe="math nosem"}
+`cat explicit.mml`{.unwrap pipe="sh | math nosem"}
 
 ## Avoid unary minus: prefer over-bars for negatives ##
 

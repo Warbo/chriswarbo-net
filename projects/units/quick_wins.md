@@ -62,11 +62,58 @@ the opposite problem!)
 
 ### Add negatives instead of subtracting ###
 
+```{pipe="sh > bad.mml"}
+{
+  {
+    {
+      num '2'
+      num '3'
+    } | mapply 'minus'
+    num '7'
+  } | mapply 'minus'
+  num '8' | neg
+} | mapply 'eq'
+```
+
+```{pipe="sh > good.mml"}
+{
+  {
+    num '2'
+    {
+      num '3'
+      num '7'
+    } | mapply 'minus'
+  } | mapply 'minus'
+  num '6'
+} | mapply 'eq'
+```
+
 Subtraction is redundant and doesn't behave as nicely as addition: in particlar,
 rearranging subtractions will change their result (it's not 'commutative' or
-'associative'), e.g. $(2 - 3) - 7 = 8̅$, but $2 - (3 - 7) = 6$.
+'associative'), e.g. `cat bad.mml`{.unwrap pipe="sh | math"}, but
+`cat good.mml`{.unwrap pipe="sh | math"}.
 
-Subtraction requires negative numbers (like the $8̅$ above); in which case, we
-might as well use them as *inputs* too. That way we can always use addition,
-which is commutative and associative, e.g.
-$(2 + 3̅) + 7̅ = 2 + (3̅ + 7̅) = 3̅ + 2 + 7̅ = 8̅$
+```{pipe="sh > addition.mml"}
+{
+  {
+    printf '<mrow><mo>(</mo>'
+    { num '2'; num '3' | neg; } | add
+    printf '<mo>)</mo></mrow>'
+    num '7' | neg
+  } | add
+  {
+    num 2
+    printf '<mrow><mo>(</mo>'
+    { num '3' | neg; num '7' | neg; } | add
+    printf '<mo>)</mo></mrow>'
+  } | add
+  { num '3' | neg; num '2'; num '7' | neg; } | add
+  num '8' | neg
+} | mapply 'eq'
+```
+
+Subtraction requires negative numbers (like the
+`8`{.unwrap pipe="num | neg | math"} above); in which case, we might as well use
+them as *inputs* too. That way we can always use addition, which is commutative
+and associative, e.g. all of the following are equal
+`cat addition.mml`{.unwrap pipe="sh | math"}
