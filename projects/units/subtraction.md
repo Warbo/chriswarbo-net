@@ -21,7 +21,8 @@ addition, and I personally think it causes more problems than it solves.
 
 ## Subtraction is *redundant* ##
 
-We can define subtraction using addition and negation:
+We can define subtraction using addition and negation (using
+[overbar notation for negatives](negative_bar_notation.html)):
 
 ```{.unwrap pipe="sh | math block"}
 {
@@ -47,6 +48,11 @@ So any time we might want subtraction, we could add negatives instead; and any
 time we can't use negatives, we also can't use subtraction. Thus subtraction
 isn't *needed*. We might find it *useful*, but it's ultimately just an
 abbreviation for adding negatives.
+
+### Adding negatives using negative digits ###
+
+We can use the familiar "long addition" algorithm to add negatives, if we think
+of them as having [negative digits](negative_digits.html)!
 
 ## Subtraction is *hard* ##
 

@@ -1,44 +1,43 @@
 ---
-title: Bar notation for negation
+title: Overbar notation for negation
 packages: [ 'mathml' ]
 ---
 
-There are many ways we can write down "negatives", or more general "negations"
-(whose result may actually be positive!). The most common way is using a "minus
-sign", e.g. `5`{.unwrap pipe="num | neg | math minus"} for the negative of
-`5`{.unwrap pipe="num | math"} but I think [minus signs are too cumbersome and
-confusing](minus.html). Instead, I prefer to draw a line *over the top* (often
-called a "bar"), rather than to the left.
+There are many ways we can write down [negatives](negatives.html) (or more
+general "negations"). The most common way is to prefix terms with a "minus
+sign", like `5`{.unwrap pipe="num | neg | math minus"} for the negative of
+`5`{.unwrap pipe="num | math"}, but I think [minus signs are too cumbersome and
+confusing](minus.html). On this page, I'll explain why I instead prefer to draw
+a line/bar *along the top* of a term (which I pronounce as "negative", rather
+than "minus" or "bar").
+
+In fact, any notation which affects the *entire length* of a term will have
+these advantages; for example we could write in a different colour. I just find
+overbars the most convenient (e.g. they don't require swapping pens)!
 
 ```{pipe="add > sum.mml"}
 <ci>p</ci><cn>43</cn>
 ```
 
-For example, the negative of `5`{.unwrap pipe="num | math"} can be written
-`5`{.unwrap pipe="num | neg | math"}, the negative of a variable
-`x`{.unwrap pipe="var | math"} can be written
-`x`{.unwrap pipe="var | neg | math"}, the negative of a sum
-`cat sum.mml`{.unwrap pipe="sh | math"} can be written
-`cat sum.mml`{.unwrap pipe="sh | neg | math"}, and so on.
+Here are some examples of this notation:
 
-This [bar notation](https://en.wikipedia.org/wiki/Overline#Math_and_science)
-is not original! Prior/similar uses include:
+ - The negative of the number `5`{.unwrap pipe="num | math"} can be written
+   `5`{.unwrap pipe="num | neg | math"}
+ - The negative of a variable `x`{.unwrap pipe="var | math"} can be written
+   `x`{.unwrap pipe="var | neg | math"}
+ - The negative of a sum `cat sum.mml`{.unwrap pipe="sh | math"} can be written
+   `cat sum.mml`{.unwrap pipe="sh | neg | math"}
 
- - [Signed digits](https://en.wikipedia.org/wiki/Signed-digit_representation)
-   often use bars to indicate negatives.
- - Bars used for (logical) negation, (complex) conjugation, (set) complement,
-   and other sorts of "inverses" (these are related, since negatives are
-   [additive inverses](https://en.wikipedia.org/wiki/Additive_inverse))
- - [Wildberger](https://www.wildegg.com) advocates bar notation for negatives
-   (e.g. in their [YouTube videos](https://www.youtube.com/c/njwildberger))
+Note that this [bar notation](https://en.wikipedia.org/wiki/Overline#Math_and_science)
+is not original. Negatives are an
+["additive inverse"](https://en.wikipedia.org/wiki/Additive_inverse), and it is
+quite common to indicate other sorts of "inverse" with an overbar, for example:
 
-**Please suggest more links!**
-
-## Pronunciation ##
-
-I propose sticking to the word "negative" when saying these quantities or
-expressions out loud, rather than pronouncing the symbols (like "minus five" or
-"five bar"). This is more explicit and understandable, regardless of notation.
+ - [Negative digits](negative_digits.html), when writing numbers in a [signed or
+   balanced base](https://en.wikipedia.org/wiki/Signed-digit_representation).
+ - Negation of a logical or boolean expression.
+ - Conjugation of a (hyper)complex number (negating its "imaginary" parts)
+ - The complement (opposite/negation) of a set
 
 ## Readability and aesthetics: long and short bars ##
 
@@ -68,17 +67,20 @@ Consider a long expression like this:
 } | mult
 ```
 
-The bar clearly shows which parts are negative, without needing more parentheses
-(although we can add them if desired). For comparison, using minus signs would
-give this:
+The bar clearly shows which parts are negative, without needing more
+parentheses; although we can add them if desired (in fact, [grouping used to be
+written with such overlines](https://en.wikipedia.org/wiki/Vinculum_(symbol));
+before parentheses became common!).
+
+For comparison, using minus signs would give this:
 
 ```{.unwrap pipe="sh | math block minus"}
 cat long.mml
 ```
 
-If we don't like such long bars, we can instead multiply by
-`1`{.unwrap pipe="num | neg | math"} (note that this *still* requires fewer
-parentheses than a minus sign):
+Even if we don't like such long bars, we could instead multiply by
+`1`{.unwrap pipe="num | neg | math"} and *still* require fewer parentheses than
+using a minus sign!
 
 ```{.unwrap pipe="sh | math block"}
 {
@@ -94,7 +96,8 @@ parentheses than a minus sign):
 } | mult
 ```
 
-See below for more discussion of `1`{.unwrap pipe="num | neg | math"}.
+See [the page on negatives](negatives.html) for more discussion about
+`1`{.unwrap pipe="num | neg | math"}.
 
 ## Alignment and spacing ##
 

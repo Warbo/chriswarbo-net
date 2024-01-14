@@ -46,25 +46,25 @@ categories.
 systems](metric.html), although
 [not for the reasons usually given](metric_red_herring.html).
 
-We can make life even simpler by limiting ourselves to the SI subset of metric.
+We can make life even simpler by limiting ourselves to the SI subset of metric,
+although [that could also be improved](improving_our_units.html).
 
 ### Numbers ###
 
-['Minus' is ambiguous](minus.html) and should be avoided. Instead, I find
-[over-bar notation composes better than minus signs](negatives.html)
+['Minus signs' are ambiguous](minus.html) and should be avoided. Instead,
+[over-bar notation composes better](negative_bar_notation.html), and facilitates
+[negative digits](negative_digits.html) which let us
+[avoid subtraction](subtraction.html).
 
-Over-bar notation can also be [extended to place-value
-notation](place_value.html), which makes long-subtraction obsolete.
+<div style="display: none;">
 
-Bars can also be used to [keep track of matching parentheses](parentheses.html).
+Unfinished:
 
-## Arithmetic ##
-
-Subtraction is ambiguous, conflating multiple distinct ideas:
-
- - Inverting/undoing addition: in this case, it's simpler to
-   [add a negative](subtraction.html) instead.
- - Finding [the differece between values](diff.html)
+ - [Extending to place-value notation](place_value.html)
+ - [Joining matching parentheses](parentheses.html).
+ - [Vectors and PGA](projective_geometric_algebra.html)
+ - [Projective geometry](projective.html)
+ - Finding [the difference between values](diff.html)
 
 It can be useful to distinguish between *absolute values* and the *relative
 differences between them*. This is pretty straightforward in one dimension, and
@@ -76,8 +76,4 @@ concepts are core to Geometric Algebra, but also appear in fields like Algebraic
 Calculus.  I'm not sure if they're directly compatible, but it would be
 interesting to find out!
 
-[Vectors](projective_geometric_algebra.html)
-
-## Geometry ##
-
-[A work in progress](projective.html)
+</div>
