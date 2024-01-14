@@ -1,5 +1,6 @@
 ---
 title: Minus signs are ambiguous
+packages: [ 'mathml' ]
 ---
 
 The minus sign has *two* common usages:

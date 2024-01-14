@@ -1,7 +1,7 @@
-{ applyPatches, attrsToDirs', bash, cacert, coq, fail, git, glibcLocales
-, haskellPackages, lib, mkBin, nix, nix-helpers-source, nixpkgs, nixpkgs1803
-, pandoc, panhandle, panpipe, python3, racketWithPackages, replace, wget
-, withNix, xidel }:
+{ applyPatches, attrsToDirs', bash, buildEnv, cacert, coq, fail, git
+, glibcLocales, haskellPackages, jq, lib, libxslt, mkBin, nix
+, nix-helpers-source, nixpkgs, nixpkgs1803, pandoc, panhandle, panpipe, python3
+, racketWithPackages, replace, suffixedFilesIn, wget, withNix, xidel }:
 
 with builtins;
 with lib;
@@ -19,9 +19,6 @@ with rec {
       ++ concatMap (x: x.propagatedBuildInputs) xs);
 
   extras = {
-    # Not present in 20.03 or later
-    inherit (nixpkgs1803) php56;
-
     # Avoids depending on GTK, Gnome, etc.
     coqNoIde = coq.override { buildIde = false; };
 
@@ -40,6 +37,31 @@ with rec {
         exec git "$@"
       '';
     };
+
+    mathml = with rec {
+      # XSL stylesheets related to MathML
+      web-xslt = fetchGit {
+        url = "https://github.com/davidcarlisle/web-xslt.git";
+        ref = "main";
+        rev = "e2d0023bd9b0e5f0538e2ec3df34a5ec5872f549";
+      };
+
+      # Scripts to generate MathML
+      scripts = mapAttrs (name: file:
+        mkBin {
+          inherit name file;
+          paths = [ jq libxslt ];
+          vars = {
+            CTOP = "${web-xslt}/ctop/ctop.xsl";
+            BARS = ../mathml/bars.xsl;
+            OURS = ../mathml/ours.xsl;
+          };
+        }) (suffixedFilesIn ".sh" ../mathml);
+    };
+      buildEnv {
+        name = "mathml";
+        paths = builtins.attrValues scripts;
+      };
 
     matplotlib = python3.withPackages (p: [ p.matplotlib p.numpy ]);
 

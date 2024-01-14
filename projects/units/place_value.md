@@ -1,5 +1,6 @@
 ---
 title: Generalising place-value numbers to polynomials
+packages: [ 'mathml' ]
 ---
 
 "Place-value" numbers, also known as Hindu-Arabic numbers, are the 'normal' way

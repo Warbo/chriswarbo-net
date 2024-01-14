@@ -1,5 +1,6 @@
 ---
 title: Bar notation for negation
+packages: [ 'mathml' ]
 ---
 
 There are many ways we can write down "negatives", or more general "negations"

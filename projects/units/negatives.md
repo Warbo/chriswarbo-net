@@ -1,5 +1,6 @@
 ---
 title: Negatives
+packages: [ 'mathml' ]
 ---
 
 "Negatives" (like [negative

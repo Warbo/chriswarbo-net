@@ -1,5 +1,6 @@
 ---
 title: Negative Digits
+packages: [ 'mathml' ]
 ---
 
 This page describes an elegant method for taking one number away from another,

@@ -1,5 +1,6 @@
 ---
 title: Quick wins for improving units
+packages: [ 'mathml' ]
 ---
 
 Some of the ideas described in this project are more aspirational than
