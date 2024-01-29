@@ -19,7 +19,6 @@ def example(a):
   return foobar(d)
 ```
 
-
 You're right that in Haskell/ML/Scala/etc. we would probably use
 `Either[Exception, T]`{scala} (Scala has a type called `Try[T]`{scala} which is
 essentially the same; its values are `Success(T)`{scala} and
@@ -41,7 +40,7 @@ def example(a: Either[Exception, Foo]): Either[Exception, FooBar] = a match {
 }
 ```
 
-We' ve not really gained anything here, since the `isinstance...: return...`
+We've not really gained anything here, since the `isinstance...: return...`
 lines have just become `case Left(e) => Left(e)`{scala}. Note that we don't need
 pattern-matching for this; we can do the same thing using functions (a form of
 [Church encoding](https://en.wikipedia.org/wiki/Church_encoding)) in any of 
@@ -60,7 +59,6 @@ def example(a):
     )
   )
 ```
-
 
 This assumes we have:
 
@@ -153,7 +151,7 @@ app = lambda f, x: f if isLeft(f) else (
 ```python
 def app(f, x):
   pair = product(f, x)
-  return pair[0](pair[1])
+  return map(pair, lambda p: p[0](p[1]))
 ```
 
 Or we could define `product` like this:
