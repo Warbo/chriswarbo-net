@@ -14,9 +14,15 @@ done
 
 ```{pipe="./hide"}
 #lang racket
-(require "geo-units.rkt")
-(require "sums-and-products.rkt")
-(module+ test (require rackunit rackcheck-lib))
+(require
+  "geo-units.rkt"
+  "num.rkt"
+  "sums-and-products.rkt")
+(module+ test
+  (require rackunit rackcheck-lib
+           (submod         "geo-units.rkt" test)
+           (submod               "num.rkt" test)
+           (submod "sums-and-products.rkt" test)))
 ```
 
 ## Geometric Arithmetic ##
@@ -106,7 +112,7 @@ until the standard sum-of-products form is reached.
 
 ```{.scheme pipe="./show"}
 ;; Converts the given number towards its normal form
-(define (normalise normalise n) (match n
+(define (normalise:geometric normalise ≤ n) (match n
 ```
 
 The remaining cases spot patterns between neighbouring elements inside products
@@ -128,7 +134,7 @@ since the sorting rules will bring problematic elements together!
                                (and 'i (app (const -1) x)))))
                    _        ;; Ignore 2nd unit, since it's equal? to the 1st
                    suf)))  ;; Bind to elements occurring after matching pair
-   (apply geo-× (append (list x) pre suf))]
+   (changed (cons '× (append (list x) pre suf)))]
 
   ;; A sum of two terms containing the same GA units, can be replaced by a
   ;; single multiple of those units; that multiple being the sum of the two
@@ -139,8 +145,8 @@ since the sorting rules will bring problematic elements together!
                                [(list
                                   (or `(× . ,xs) (? unit-ga? (app list xs)))
                                   (or `(× . ,ys) (? unit-ga? (app list ys))))
-                                ;; which do not contain sums or products
-                                (and (not (findf (disjoin geo-+? geo-×?)
+                                ;; which only contain reals and unit-gas
+                                (and (not (findf (disjoin +? ×?)
                                                  (append xs ys)))
                                      ;; and have the same GA units
                                      (equal? (filter unit-ga? xs)
@@ -156,14 +162,14 @@ since the sorting rules will bring problematic elements together!
    (let ([units   (filter unit-ga? xs)]  ;; xs and ys have the same units
          ;; Multiply all the coefficients in xs together into a single value
          ;; (this may be 1, if there were no coefficients!); and same for ys.
-         [x-coeff (apply × (filter (negate unit-ga?) xs))]
-         [y-coeff (apply × (filter (negate unit-ga?) ys))])
-     (apply geo-+ (append
+         [x-coeff (cons '× (filter (negate unit-ga?) xs))]
+         [y-coeff (cons '× (filter (negate unit-ga?) ys))])
+     (changed (cons '+ (append
        pre
        ;; Multiply units by the sum of both coefficients
-       (list (apply geo-× (cons (+ x-coeff y-coeff) units)))
+       (list (cons '× (cons (+ x-coeff y-coeff) units)))
        suf
-     )))]
+     ))))]
 ```
 
 We've now run out of simplification rules, and move on to arranging the elements
@@ -184,7 +190,7 @@ When rearranging a product we need to introduce a `-1` when swapping GA units
                                 (unit<? y x)]
                                [_ #f]))
                  (list pre x y suf)))
-   (normalise (append '(× -1) pre (list y x) suf))]
+   (changed (append '(× -1) pre (list y x) suf))]
 
   ;; At this point products should contain no nested sums or products, only GA
   ;; units and non-geometric coefficients. Move the latter to the front.
@@ -192,7 +198,10 @@ When rearranging a product we need to introduce a `-1` when swapping GA units
                                                 (number? y)
                                                 (not (geometric? y)))))
                  (list pre x y suf)))
-   (apply geo-× (append (list y) pre (cons x suf)))]
+   (changed (cons '× (append (list y) pre (cons x suf))))]
+
+  ;; Leave anything else unchanged
+  [n (unchanged n)]
 ))
 ```
 
@@ -216,54 +225,70 @@ When rearranging a product we need to introduce a `-1` when swapping GA units
                        (5 . ,gen:unit-ga )
                        (5 . ,gen:rational))))))
 
+  ;; Fixed-point of our normalise procedure; only include parts we care about
+  (define norm
+    (curry reduce (curry step (list normalise:geometric) lex≤)))
+
   ;; Generates normal geometric numbers
-  (define gen:geometric (gen:map gen:geo normalise))
+  (define gen:geometric (gen:map gen:geo norm))
 
   (prop preserve-non-geometric-behaviour ([x gen:rational]
                                           [y gen:rational])
-    (check-equal?  (geo-×)     (×) "geo-× emulates constant ×")
-    (check-equal?     (geo-× x)   (× x) "geo-× emulates unary ×")
-    (check-equal?    (geo-× x y) (× x y) "geo-× emulates binary ×")
-    (check-equal?  (geo-+)     (+) "geo-+ emulates constant +")
-    (check-equal?     (geo-+ x)   (+ x) "geo-+ emulates unary +")
-    (check-equal?    (geo-+ x y) (+ x y) "geo-+ emulates binary +")
-    (check-equal?  (normalise x) x "normal rational is itself"))
+    (check-equal? (norm (list '×))     '(×)     "normalise empty ×")
+    (check-equal? (norm (list '× x))   (× x)   "normalise unary ×")
+    (check-equal? (norm (list '× x y)) (× x y) "normalise binary ×")
+    (check-equal? (norm (list '+))     '(+)     "normalise empty +")
+    (check-equal? (norm (list '+ x))   (+ x)   "normalise unary +")
+    (check-equal? (norm (list '+ x y)) (+ x y) "normalise binary +")
+    (check-equal? (norm x)             x       "normalise rational"))
 
   (prop normalise-correctly-handles-units ([x gen:unit-ga]
                                            [y gen:unit-ga]
                                            [i gen:natural])
-    (check-equal?        (geo-× `(d . ,i) `(d . ,i))  0 "Dual units square")
-    (check-equal?  (geo-× `(h . ,i) `(h . ,i))  1 "Hyperbolic units square")
-    (check-equal?   (geo-× `(i . ,i) `(i . ,i)) -1 "Imaginary units square")
+    (check-equal? (norm `(× (d . ,i) (d . ,i)))  0 "Duals square")
+    (check-equal? (norm `(× (h . ,i) (h . ,i)))  1 "Hyperbolics square")
+    (check-equal? (norm `(× (i . ,i) (i . ,i))) -1 "Imaginaries square")
     (when (not (equal? x y))
-      (check-equal?  (geo-× x y) (geo-× -1 y x) "× anticommutes for units")))
+      (check-equal? (norm (list '× x y))
+                    (norm (list '× -1 y x))
+                    "× anticommutes for units")))
 
   (prop single-non-normal-number ([x gen:geo])
     (check-pred geometric? x "Non-normal numbers are still geometric?")
-    (check-equal? (geo-× 0 x) 0           "Left product with 0 is 0")
-    (check-equal? (geo-× x 0) 0           "Right product with 0 is 0")
-    (check-equal? (geo-× 2 x) (geo-+ x x) "Sum with self is doubling"))
+    (check-equal? (norm (list '× 0 x)) 0 "Left product with 0 is 0")
+    (check-equal? (norm (list '× x 0)) 0 "Right product with 0 is 0")
+    (check-equal? (norm (list '× 2 x))
+                  (norm (list '+ x x))
+                  "Sum with self is doubling"))
 
   (prop single-normal-number ([x gen:geometric])
     (check-pred geometric? x "Normal numbers are geometric?")
-    (check-equal? x (normalise x) "Normalise is idempotent")
-    (check-equal? x (geo-× 1 x)   "1 is left  identity of ×")
-    (check-equal? x (geo-× x 1)   "1 is right identity of ×")
-    (check-equal? x (geo-+ 0 x)   "0 is left  identity of +")
-    (check-equal? x (geo-+ x 0)   "0 is right identity of +"))
+    (check-equal? x (norm x) "Normalise is idempotent")
+    (check-equal? x (norm (list '× 1 x)) "1 is left  identity of ×")
+    (check-equal? x (norm (list '× x 1)) "1 is right identity of ×")
+    (check-equal? x (norm (list '+ 0 x)) "0 is left  identity of +")
+    (check-equal? x (norm (list '+ x 0)) "0 is right identity of +"))
 
   (prop two-non-normal-numbers ([x gen:geo] [y gen:geo])
-    (check-equal?  (geo-+ x y) (geo-+ y x) "+ commutes"))
+    (check-equal? (norm (list '+ x y))
+                  (norm (list '+ y x))
+                  "+ commutes"))
 
   (check-property
     ;; Double the deadline since it often times-out after around 90/100 tests!
     (make-config #:deadline (+ (current-inexact-milliseconds) (* 120 1000)))
     (property three-non-normal-numbers ([x gen:geo] [y gen:geo] [z gen:geo])
-      (check-equal? (geo-+ (geo-+ x y) z) (geo-+ x (geo-+ y z)) "+ associates")
-      (check-equal? (geo-× (geo-× x y) z) (geo-× x (geo-× y z)) "× associates")
-      (check-equal? (geo-+ (geo-× x y) (geo-× x z)) (geo-× x (geo-+ y z))
+      (check-equal? (norm `(+ (+ ,x ,y) ,z))
+                    (norm `(+ ,x (+ ,y ,z)))
+                    "+ associates")
+      (check-equal? (norm `(× (× ,x ,y) ,z))
+                    (norm `(× ,x (× ,y ,z)))
+                    "× associates")
+      (check-equal? (norm `(+ (× ,x ,y) (× ,x ,z)))
+                    (norm `(× ,x (+ ,y ,z)))
                     "× left-distributes over +")
-      (check-equal? (geo-+ (geo-× x z) (geo-× y z)) (geo-× (geo-+ x y) z)
+      (check-equal? (norm `(+ (× ,x ,z) (× ,y ,z)))
+                    (norm `(× (+ ,x ,y) ,z))
                     "× right-distributes over +")))
 )
 ```

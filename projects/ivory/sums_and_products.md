@@ -17,14 +17,20 @@ done
   +?
   ×?
   changed
-  normalise
+  lex≤
+  normalise:associative
+  normalise:identity
+  normalise:distributivity
+  normalise:commutativity
+  normalise:sums-and-products
   snoc
   split
   split-pair
   unchanged)
-(require (rename-in "num.rkt" [normalise old:normalise]))
+(require "num.rkt")
 (module+ test
-  (require rackunit rackcheck-lib (submod "num.rkt" test)))
+  (require rackunit rackcheck-lib (submod "num.rkt" test))
+  (provide gen:sized-list))
 ```
 
 We tend to learn about sums ("adding numbers") quite early, either when starting
@@ -217,15 +223,8 @@ at it, what's the actual *distinction* between a "sum" and a "product"?
 
 Ivory will represent sums and products as "uninterpreted function symbols", i.e.
 as lists like `'(+ 1 2)`{.scheme} or `'(× 3 4)`{.scheme}. This page defines
-the clauses of a normalisation procedure, to reduce such lists into a unique
-normal form:
-
-```{.scheme pipe="./show"}
-;; Put sums and products into normal form. The first argument can be called to
-;; normalise sub-expressions; the second argument can be used to compare/sort
-;; expressions.
-(define (normalise normalise ≤ n) (match n
-```
+various normalisation procedures, to reduce such lists into a unique normal
+form.
 
 ## Types ##
 
@@ -320,9 +319,10 @@ require an arbitrary choice of branching structure).
 #### Implementing Associativity ####
 
 We will normalise such nested operations by flattening them, using the following
-clauses of `normalise`{.scheme}:
+procedure:
 
 ```{.scheme pipe="./show"}
+(define (normalise:associative normalise ≤ n) (match n
   ;; Match nested operations; bind the inner operation's inputs to xs, and
   ;; append them to the outer operation's other inputs (pre and suf)
 
@@ -331,6 +331,8 @@ clauses of `normalise`{.scheme}:
 
   [(cons '× (app (split ×?) (list pre (cons '× xs) suf)))
    (changed (cons '× (append pre xs suf)))]
+
+  [n (unchanged n)]))
 ```
 
 These make use of a few trivial helper functions:
@@ -438,6 +440,10 @@ respectively.
 
 #### Implementing Identity ####
 
+```{.scheme pipe="./show"}
+(define (normalise:identity normalise ≤ n) (match n
+```
+
 Unwrapping a single-input sum or product is easy:
 
 ```{.scheme pipe="./show"}
@@ -456,6 +462,8 @@ simplify multiplication by `1` and addition of `0`:
   ;; Empty sums and products are their identity elements
   [0 (changed (list '+))]
   [1 (changed (list '×))]
+
+  [n (unchanged n)]))
 ```
 
 ### Distributivity ###
@@ -567,6 +575,7 @@ sum that's had the multiplication by `y`{.scheme} distributed across its inputs
 `(× x y)`{.scheme}):
 
 ```{.scheme pipe="./show"}
+(define (normalise:distributivity normalise ≤ n) (match n
   [(cons '× (app (split-pair (lambda (x y) (+? x)))  ;; A sum followed by y
                  (list pre (cons '+ xs) y suf)))
    ;; Keep the product, in case pre/suf contain more elements
@@ -590,6 +599,8 @@ Next we do the same when the *second* value is a sum:
      (list (cons '+ (map (curry list '× x) ys)))
      suf
    )))]
+
+  [n (unchanged n)]))
 ```
 
 Notice that we do not have to implement absorption separately, since the
@@ -628,9 +639,12 @@ The following clause implements a form of Bubble Sort, by spotting a pair of
 neighbouring inputs which are in the wrong order:
 
 ```{pipe="./show"}
+(define (normalise:commutativity normalise ≤ n) (match n
   [(cons '+ (app (split-pair (lambda (x y) (not (lex≤ x y))))
                  (list pre x y suf)))
    (changed (append '(+) pre (list y x) suf))]
+
+  [n (unchanged n)]))
 ```
 
 Note that we cannot sort the inputs based on their *numerical value*, since we
@@ -643,11 +657,12 @@ Instead we will compare the *literal syntax* of expressions, known as a
 
 ## Final Pieces ##
 
-Our `normalise` function needs a few more clauses to be complete. Firstly, if
+Our `normalise` functions need a few more clauses to be complete. Firstly, if
 we find a sum or product containing ordinary Racket `number`s, then we should
 add/multiply them using Racket's usual addition/multiplication operations:
 
 ```{.scheme pipe="./show"}
+(define (normalise:sums-and-products normalise ≤ n) (match n
   ;; Sums of multiple Racket numbers simplify via addition
   [(cons '+ (app (split number?)
                  (list pre x (app (split number?)
@@ -678,7 +693,7 @@ should be left unchanged:
 
 ```{.scheme pipe="./show"}
   ;; Otherwise there's nothing left to do
-  [_ (unchanged n)]))
+  [n (unchanged n)]))
 ```
 
 ## Code ##

@@ -9,7 +9,7 @@ bash $setup num.rkt
 
 ```{pipe="./hide"}
 #lang racket
-(provide × normalise)
+(provide × normalise:real reduce step)
 (module+ test
   (require rackunit rackcheck-lib)
   (provide gen:integer gen:rational prop))
@@ -47,7 +47,18 @@ symbols will mean multiplication:
 ```
 
 ```{pipe="./hide"}
-(define normalise identity)
+(define (normalise:real normalise ≤ n) n)
+
+(define (step norms ≤ n)
+  (for/fold ([result  n]
+             [changed #f])
+            ([norm norms]
+             #:unless changed)
+    (norm (curry step norms ≤) result)))
+
+(define (reduce step n)
+  (let-values ([(result changed) (step n)])
+    (if changed (reduce step result) result)))
 
 (module+ test
   (require (for-syntax syntax/parse))

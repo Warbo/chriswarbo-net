@@ -15,7 +15,9 @@ bash $setup geo-units.rkt
          unit<?
          subscripts-to-digits
          parse-unit)
-(module+ test (require rackunit rackcheck-lib))
+(module+ test
+  (require rackunit rackcheck-lib)
+  (provide gen:unit-ga))
 ```
 
 In this page we will leave the ordinary number line, and begin to introduce the
@@ -88,29 +90,6 @@ called `geometric`{.scheme} to contain all of them. I'll be referring to them as
 GA/`geometric`{.scheme}/non-`rational`{.scheme} units". Note that we *cannot*
 call them "irrational", since [that already means something
 else](https://en.wikipedia.org/wiki/Irrational_number)!
-
-<figure>
-
-```
-    ┌─┐ ┌──┐ ┌─┐
-    │ └─┘  └─┘ │
-    │  number  │
-    │geometric |
-    ├──────────┤
-    │ rational │
-    ├──────────┤
-    │ integer  │
-────┼──────────┼────
-    │ natural  │
-    ├──────────┤
-    │   zero   │
-    └──────────┘
-```
-
- <figcaption>
-  Numerical tower with a `geometric`{.scheme} level at the top
- </figcaption>
-</figure>
 
 These non-`rational`{.scheme} numbers do not appear on the familiar [number
 line](https://en.wikipedia.org/wiki/Number_line). We'll give their geometric
