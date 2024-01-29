@@ -6,13 +6,13 @@ packages: [ "ghcWithOmega" ]
 This is a sequel to [an earlier blog post about computable numbers](
 /blog/2017-02-27-listing_things.html). In that post I gave a simple suggestion
 for computing numbers to unlimited precision using a Turing machine. Personally,
-I much prefer language/algebraic approaches to computability, so I also wrote up
-an alternative language-based approach that I find cleaner:
+I much prefer linguistic/algebraic approaches to computability, so I also wrote
+up an alternative language-based approach that I find cleaner:
 
  - Similar to before, we will represent a number as two never-ending "streams"
    of bits, one on each side of the radix point.
  - Rather than fiddling around with binary tapes, interleaving, etc. we will
-   keep everything abstract by data using [free variables](
+   keep everything abstract by using [free variables](
    https://en.wikipedia.org/wiki/Free_variables_and_bound_variables). We will
    use 4 variables `l0`, `l1`, `r0` and `r1`.
  - Now we choose a universal programming language; I'm quite fond of
