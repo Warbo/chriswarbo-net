@@ -42,31 +42,92 @@ stick to cons-lists, since they're the most familiar. The most important
 decision is whether to stratify our bags, i.e. should "bags of bags" have the
 same type as a "bag of bags of bags"?
 
-Here's an unstratified implementation, called `UBag`: every element of a `UBag`
-is another `UBag`, with arbitrary nesting allowed.
-
-```haskell
-data UBag = UEmpty
-          | UInsert UBag UBag
+```{pipe="cat > hide && chmod +x hide"}
+{
+  echo
+  cat
+  echo
+} >> "$(echo "$1" | sed -e 's@.@/@g')"
 ```
 
-Every `UBag` is either `UEmpty` (an empty `UBag`), or `UInsert foo bar`. The
-latter is ambiguous about which is being inserted and which we're inserting
-into: we'll declare that the first `UBag` (`foo`) is being inserted into the
-second (`bar`).
+```{pipe="cat > show && chmod +x show"}
+tee >(./hide "$@")
+```
 
-Here are some of Wildberger's definitions, implemented with `UBag`:
+### Unstatified bags ###
+
+Here's an unstratified implementation, which is encapsulated by a module called
+`Data.Bag.Unstratified`. Every "element" of one of these `Bag` values is another
+(unstratified) `Bag`, with arbitrary nesting allowed.
+
+```{pipe="./hide Data.Bag.Unstratified"
+module Data.Bag.Unstratified where
+
+```
+
+```{.haskell pipe="./show Data.Bag.Unstratified"}
+data Bag = Empty
+         | Insert Bag Bag
+```
+
+Every `Bag` is either `Empty` (an empty `Bag`), or `Insert foo bar`. The
+latter is ambiguous about which is being inserted and which we're inserting
+into: we'll declare that the first `Bag` (`foo`) is being inserted into the
+second (`bar`). This is important if we want to operate on the *contents* of a
+`Bag`; for example mapping a function over each element. Notice that we treat
+the parts of an `Insert` differently: the first is given to `f` whilst the
+second is given to `map f`:
 
 ```haskell
--- Zero
-zero = UEmpty
+map :: (Bag -> Bag) -> Bag -> Bag
+map f Empty = Empty
+map f (Insert x xs) = Insert (f x) (map f xs)
+```
 
--- Nat
-one = UInsert zero UEmpty
-two = UInsert zero one
+This `map` function is a bit like that of a `Functor`, except that it's not
+polymorphic. We can likewise make an analogue of `Applicative` by taking
+cartesian products:
 
--- Poly
-alpha = UInsert one UEmpty
+```haskell
+join :: Bag -> Bag
+join Empty                     = Empty
+join (Insert Empty         ys) = join ys
+join (Insert (Insert x xs) ys) = Insert x (join (Insert xs ys))
+
+prop_joinEmpty = join Empty == Empty
+prop_joinSingleton x = join (Insert x Empty) == x
+prop_joinTwo x y = join (Insert x (Insert y Empty)) == add x y
+```
+
+``` haskell
+product :: (Bag -> Bag -> Bag) -> Bag -> Bag -> Bag
+product f Empty         y = Empty
+product f (Insert x xs) y = add (map (f x) y) (product f xs y)
+```
+
+This relies on a definition of `add`, to combine the elements of one `Bag` with
+those of another:
+
+```haskell
+add :: Bag -> Bag -> Bag
+add Empty         y = y
+add (Insert x xs) y = Insert x (add xs y)
+```
+
+If we use `add` as the combining function for `pruduct`, we get multiplication:
+
+``` haskell
+multiply :: Bag -> Bag -> Bag
+multiply = product add
+```
+
+Here are some more basic definitions:
+
+```haskell
+zero = Empty
+one = Insert zero zero
+two = Insert zero one
+alpha = Insert one Empty
 ```
 
 represents inserting the `UBag` `foo` into the `UBag` bar.
@@ -123,3 +184,60 @@ instance Eq Bag where
 isWe only care about
 Whilst bags, sets,
 lists, etc. tend to be generic/polymor
+
+
+### Stratified bags ###
+
+```haskell
+data SBag t = SEmpty
+            | SInsert t (SBag t)
+```
+
+``` haskell
+-- Zero
+sZero :: SBag t
+sZero = SEmpty
+
+-- Nat
+sOne :: SBag (SBag t)
+sOne = SInsert sZero SEmpty
+sTwo = SInsert sZero sOne
+
+-- Poly
+sAlpha = SInsert sOne SEmpty
+```
+
+```haskell
+sinsertEq :: Eq t => t -> SBag t -> SBag t
+sinsertEq x SEmpty                     = SInsert x SEmpty
+sinsertEq x (SInsert y ys) | x == y    = SInsert y ys
+sinsertEq x (SInsert y ys) | otherwise = SInsert y (sinsertEq x ys)
+```
+
+Since we want to allow bags of bags
+
+```haskell
+instance Eq t => Eq (SBag t) where
+  (SInsert x xs) == (SInsert y ys) = (x, xs) == (y, ys)
+  SEmpty         == SEmpty         = True
+  _              == _              = False
+```
+
+```haskell
+instance Ord t => Ord (SBag t) where
+  compare (SInsert x xs) (SInsert y ys) = case compare x y of
+    | EQ     -> compare xs ys
+    | result -> result
+  compare SEmpty  SEmpty = EQ
+  compare SEmpty  _      = LT
+  compare SInsert _      = GT
+```
+
+```haskell
+sinsert :: Ord t => t -> SBag t -> SBag t
+sinsert x SEmpty         = SInsert x SEmpty
+sinsert x (SInsert y ys) = case compare x y of
+  | EQ -> SInsert y ys
+  | LT -> SInsert y (sinsert x ys)
+  | GT -> SInsert x (SInsert y ys)
+```
