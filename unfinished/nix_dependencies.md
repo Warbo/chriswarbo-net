@@ -2,13 +2,13 @@
 title: Dependency Solving in Nix
 ---
 
-I've written a lot about the Nix build system over the past decade, but one
-complaint I keep coming across is that Nix requires dependency constraints to be
-'solved manually'.
+I've [written a lot about the Nix build system](/projects/nixos) over the past
+decade, but one complaint I keep coming across is that Nix requires dependency
+constraints to be "solved manually".
 
 This is a sort of category-error: sure, it's true that Nix doesn't "solve
 dependency constraints"; in the same way that, say, `/usr/bin/env` doesn't
-"solve dependency constraints". That's not what it's for. Yet that doesn't stop
+"solve dependency constraints". That's not what it's for! Yet that doesn't stop
 us using *actual* dependency solvers, if we want to.
 
 In this post I want to show *why* Nix doesn't perform constraint-solving; why
@@ -48,12 +48,6 @@ for Nix are the original Nix CLI (`nix-build`, `nix-store`, etc.) and the "new"
 
 ### Nixlang ###
 
-The Nix CLIs can be given "expressions" which *calculate* specifications, using
-a simple (but Turing-complete) programming language called the Nix Expression
-Language. This language is often just called "Nix", but I'll call it Nixlang to
-avoid ambiguity. Nix CLI commads read Nixlang expressions: either written
-straight on the commandline, or in "`.nix` files". Many of the code examples in
-this post are written in Nixlang.
 
 ## Building Up By Example ##
 
@@ -355,47 +349,3 @@ I hate having to remember things, or carry out steps which could be automated. T
 ### Normalise Inputs To Avoid Unnecessary Rebuiding ###
 
 It's very common to update a project's version number, which has no effect on its dependencies. To avoid rebuilding lock files unnecessarily, we can pre-process the config file to normalise such unnecessary details: for example, replace the project's version number with "unversioned" or 0.0.0. That way, its hash will be unaffected by such irrelevant updates.
-
-## Appendix: Nixlang Glossary ##
-
-Modern eyes would see Nixlang as an extension of JSON; but for historical
-reasons it has slightly different syntax and terminology. Here's a quick
-glossary, to help understand this post:
-
- - "Attribute sets", AKA "attrsets" or "sets" are basically JSON objects. They
-   associate names with values, like `{ x = 42; y = true; "1.2" = {}; }`.
-   Notice the `=` (rather than JSON's `:`) and the trailing `;` characters.
-   Names can be looked-up like `foo.x` (or `foo."1.2"` for awkward names).
- - Functions separate their (only) argument from their return value with a `:`,
-   like `myArg: myArg.someAttribute`. Function calls use a space, like
-   `myFunction 123`. Multi-argument functions can be simulated either by
-   currying, like `x: y: x + y`; or uncurrying, like `args: args.x + args.y`
- - Uncurried functions have a nicer syntax, like `{x, y ? 42}: x + y`. In this
-   example, if `y` isn't given then it defaults to using `y = 42;`
-
- - Any attrset defining the names `__functor` and `__functionArgs` is a
-   "functor". Functors can be called like functions; with the advantage that we
-   can also put other attributes in them too.
- - Any attrset associating the name `type` to the string `"derivation"` will be
-   considered to be a Nix derivation; although Nix will fail to get its outputs
-   unless various other names are also present (e.g. `system`, `builder`, etc.)
- - Functions ca be given *argument names*. These
- - `builtins` is a variable bound by default to an attrset of useful functions
-   and constants, like `builtins.fetchGit` and `builtins.storeDir`
- - `with` turns an attrset into variable bindings, e.g. `with { x = 2; }; x + x`
-   evaluates to `4` (equivalent to `({ x ? 2 }: x + x) {}`)
-.
-
-Most Nixlang code is written in functions; those functions are organised in
-(nested) attrsets; and used to define and transform various derivations. The
-phrase "repository" can refer to a directory of such definitions (usually
-tracked by git), although that's just a convention; Nix has no concept of
-"repositories" (it just 'gets specified outputs').
-
-The most important repository is Nixpkgs. Most Nix projects use *some* of its
-definitions, and a copy is included when installing Nix.
-
-#### Imports ####
-
-Nixlang has a built-in function called `import`, which takes a path or
-derivation
