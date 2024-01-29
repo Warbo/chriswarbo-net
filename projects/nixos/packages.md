@@ -13,14 +13,14 @@ chmod +x graph.sh
 (source "$stdenv/setup" && patchShebangs .)
 ```
 
-Since switching to [NixOS][nixos] [a few months ago][nixpost], I've been
-learning more and more about using the [Nix package manager][nix] that it's
-based on.
+Since [switching](switching_to_nixos.html) to [NixOS](http://nixos.org) a
+few months ago, I've been learning more and more about using the
+[Nix package manager](https://nixos.org/nix) that it's based on.
 
 I'm still nowhere near an expert, but thought I'd document some of the things
 I've found out, what I misunderstood and which approaches tend to work better
 than others. This post is an introduction and a reproduction of a
-[comment I made on Hacker News][hackernews].
+[comment I made on Hacker News](https://news.ycombinator.com/item?id=8729061).
 
 # Package Managers #
 
@@ -32,7 +32,7 @@ There are a few advantages to using a package manager. Without a package
 manager, applications tend to come with copies of all of the third-party code
 they make use of. This wastes space, since many applications might include
 copies of the same thing. It can also be insecure, since vulnerabilities in
-these third-party components must be patched in every since copy to remove the
+these third-party components must be patched in every single copy to remove the
 threat. The alternative is to have the user install one copy of the third-party
 code, and have every application use that copy. This is painful to do by hand,
 and is what package managers are great for.
@@ -229,7 +229,3 @@ a "DB server" package to manage their machine). We then use dependencies to
 create, for example, a "Web Site" package which depends on all of these.
 
 I have to admit I've not used NixOps or DisNix!
-
-[nixos]: http://nixos.org
-[nixpost]: /projects/nixos/switching_to_nixos.html
-[hackernews]: https://news.ycombinator.com/item?id=8729061
