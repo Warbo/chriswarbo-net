@@ -354,3 +354,37 @@ and outputs a `.nix` file based on the result: passing that derivation to
 `import` will cause the solver to run, and give us a value containing those
 results (which we can, say, use to specify some version numbers in another
 derivation)
+
+### Fetchers ###
+
+Nixlang provides several built-in "fetchers", which define outputs resulting
+from HTTP downloads, Git checkouts, etc.; and Nixpkgs defines helper functions
+to fetch from even more places. It can sometimes be confusing which one to use.
+Here are some of the most common:
+
+ - The `fetchurl` helper from Nixpkgs. This is basically the same as
+   `builtins.fetchurl`{.nix}, but it's been around longer. It's also a pain to
+   use since we first need to fetch Nixpkgs (causing a "bootstrapping" problem)!
+   Consider it deprecated.
+ - The `fetchgit` helper from Nixpkgs is likewise deprecated now that we have
+   `builtins.fetchGit`{.nix}.
+ - `builtins.fetchGit`{.nix} will fetch a specific commit of a Git repo (or
+   `HEAD` if none is specified; though I recommend against this). This is
+   *usually* what you want, for source code and such, since the result is a
+   directory containing the repo contents. There are a couple of annoyances with
+   `fetchGit`, caused by the way Git works: firstly it has to fetch a bunch of
+   metadata, to find the requested commit; and secondly, if that commit is too
+   far back in the history of the specified branch/ref, `fetchGit` may fail to
+   find it. These are fine for "ordinary" repos, like that of an application or
+   library; but they can cause problems for repos which build up many commits,
+   like Nixpkgs.
+ - `builtins.fetchTarball`{.nix} is useful to download *and extract* a file
+   over HTTP; outputting a *directory* of the file's contents. Again, this is
+   *usually* what you want, when fetching something like source code.
+ - `builtins.fetchurl`{.nix} will *only* download a file; it won't try to
+   extract it. This is useful for downloading things other than archives; e.g. a
+   raw JSON file, or something.
+ - Nixpkgs also provides a handy `fetchFromGitHub` function. It's just a
+   wrapper around `fetchTarball`, but is nicer to use since we can give it
+   arguments like `owner` and `rev`, and it takes care of constructing the
+   corresponding GitHub URL.
