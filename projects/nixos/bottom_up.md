@@ -175,76 +175,58 @@ hello
 
 ### Specifying a derivation ###
 
-Derivations are a great idea, but they're pretty tedious to write by hand
-(especially calculating all the required hashes). Instead, Nix comes with a
-simple scripting language (the "Nix expression language") for generating `.drv`
-files for us. Here's a Nix expression for a simple derivation, which I'll save
-in a file called `example.nix` (note that this isn't an output or `.drv` file,
-so it doesn't need to live in the Nix store):
+Since `.drv` files act like outputs specified by hash, we can create them using
+`nix-store --add` (nobody *actually* does this, like **ever**; we're going deep
+into the weeds now)!
 
-```nix
-derivation {
-  name = "myName";
-  system = "aarch64-linux";
-  builder = "/bin/sh";
-  args = [ "-c" "echo RUNNING >&2 && echo $message > $out" ];
-  message = "hello";
-}
+Nix was created around 2003, before the ubiquity of JSON; hence its `.drv` files
+use a different format called
+[ATerm](http://releases.strategoxt.org/strategoxt-manual/unstable/manual/chunk-chapter/tutorial-aterms.html).
+Knowing the details of ATerm isn't particularly helpful, so this example uses a
+string I've just copy/pasted from an existing `.drv` file, and altered some of
+the strings. Those changes will affect the hash appearing in the output path, so
+we'll just make up a hash of all-zeros for now:
+
+```sh
+$ echo 'Derive([("out","/nix/store/00000000000000000000000000000000-myName","","")],[],[],"aarch64-linux","/bin/sh",["-c","echo RUNNING >&2 && echo ABC > $out"],[("out","/nix/store/00000000000000000000000000000000-myName")])' > myName.drv
+$ nix-store --add myName.drv
+error: derivation '/nix/store/3fdp5s0b0ri1gxjibzlvk53lkh96zyxs-myName.drv' has incorrect output '/nix/store/00000000000000000000000000000000-myName', should be '/nix/store/qmzs40qikw90r1lrqhhgyppspvv19pdb-myName'
 ```
 
-This expression is calling a built-in function called `derivation` with a single
-argument: a "set" (think JSON object) containing a bunch of "attributes" (keys).
-Note that we're not specifying any output names, so the `derivation` function
-will default to using a single output called `out`, which will also appear as an
-environment variable (hence why our Bash snippet is writing to `$out`). If
-you're not on an `aarch64-linux` machine, you can replace that string with the
-expression `builtins.currentSystem` instead!
+Nix has hashed the fields of this `.drv` file and found that the output path is
+invalid (since we made up a dummy hash). Thankfully it's provided the correct
+value, which we can copy/paste into our file and try again:
 
-We can evaluate this Nix expression to produce a `.drv` file by using the
-`nix-instantiate` command:
-
-```
-$ nix-instantiate example.nix
-warning: you did not specify '--add-root'; the result might be removed by the
-garbage collector
-/nix/store/i762zk23lrfsz8fjfd4lbjh48073hmlh-myName.drv
-$ cat /nix/store/i762zk23lrfsz8fjfd4lbjh48073hmlh-myName.drv
-Derive([("out","/nix/store/zcgax4c4wfvby6p06dwjl8cc4dvkvypr-myName","","")],[],
-[],"aarch64-linux","/bin/sh",["-c","echo RUNNING >&2 && echo $message > $out"],
-[("builder","/bin/sh"),("message","hello"),("name","myName"),("out",
-"/nix/store/zcgax4c4wfvby6p06dwjl8cc4dvkvypr-myName"),("system","aarch64-linux")
-])
+```sh
+$ echo 'Derive([("out","/nix/store/qmzs40qikw90r1lrqhhgyppspvv19pdb-myName","","")],[],[],"aarch64-linux","/bin/sh",["-c","echo RUNNING >&2 && echo ABC > $out"],[("out","/nix/store/qmzs40qikw90r1lrqhhgyppspvv19pdb-myName")])' > myName.drv
+$ nix-store --add myName.drv
+/nix/store/xq7zgzsmazhic07ph4kczzals8jgfqmb-myName.drv
 ```
 
-Unfortunately Nix was created before the ubiquity of JSON, so its `.drv` format
-may look unfamiliar. Thankfully the `nix derivation show` command will translate
-it for us (albeit with a warning message, which we can ignore!):
+I admit that a long, hard-coded string written in an obscure data format isn't
+the most enlightening; however, now our `.drv` file is in the Nix store we can
+use the `nix derivation show` command to display its contents in a more familiar
+JSON representation:
 
-```
+```sh
 $ nix derivation show /nix/store/i762zk23lrfsz8fjfd4lbjh48073hmlh-myName.drv
-warning: The interpretation of store paths arguments ending in `.drv` recently
-changed. If this command is now failing try again with
-'/nix/store/i762zk23lrfsz8fjfd4lbjh48073hmlh-myName.drv^*'
+warning: The interpretation of store paths arguments ending in `.drv` recently changed. If this command is now failing try again with '/nix/store/xq7zgzsmazhic07ph4kczzals8jgfqmb-myName.drv^*'
 {
-  "/nix/store/i762zk23lrfsz8fjfd4lbjh48073hmlh-myName.drv": {
+  "/nix/store/xq7zgzsmazhic07ph4kczzals8jgfqmb-myName.drv": {
     "args": [
       "-c",
-      "echo RUNNING >&2 && echo $message > $out"
+      "echo RUNNING >&2 && echo ABC > $out"
     ],
     "builder": "/bin/sh",
     "env": {
-      "builder": "/bin/sh",
-      "message": "hello",
-      "name": "myName",
-      "out": "/nix/store/zcgax4c4wfvby6p06dwjl8cc4dvkvypr-myName",
-      "system": "aarch64-linux"
+      "out": "/nix/store/qmzs40qikw90r1lrqhhgyppspvv19pdb-myName"
     },
     "inputDrvs": {},
     "inputSrcs": [],
     "name": "myName",
     "outputs": {
       "out": {
-        "path": "/nix/store/zcgax4c4wfvby6p06dwjl8cc4dvkvypr-myName"
+        "path": "/nix/store/qmzs40qikw90r1lrqhhgyppspvv19pdb-myName"
       }
     },
     "system": "aarch64-linux"
@@ -252,117 +234,72 @@ changed. If this command is now failing try again with
 }
 ```
 
+**Aside:** I [wrote an Emacs
+mode](https://github.com/Warbo/warbo-emacs-d/blob/master/personal/programming.el)
+which runs this command when opening any file of the form `/nix/store/*.drv`!
+
 Hopefully you can see how each part of a derivation I described above appears in
 this file (although we've not specified any inputs, for simplicity). We can
-"realise" the outputs of this derivation using the `nix-store --realise`
-command:
+"realise" this derivation (i.e. *get* its *specified outputs*) using the
+`nix-store --realise` command (you could also use `nix-build` instead):
 
-```
-$ nix-store --realise /nix/store/i762zk23lrfsz8fjfd4lbjh48073hmlh-myName.drv
+```sh
+nix-store --realise /nix/store/xq7zgzsmazhic07ph4kczzals8jgfqmb-myName.drv
 this derivation will be built:
-  /nix/store/i762zk23lrfsz8fjfd4lbjh48073hmlh-myName.drv
-building '/nix/store/i762zk23lrfsz8fjfd4lbjh48073hmlh-myName.drv'...
+  /nix/store/xq7zgzsmazhic07ph4kczzals8jgfqmb-myName.drv
+building '/nix/store/xq7zgzsmazhic07ph4kczzals8jgfqmb-myName.drv'...
 RUNNING
-warning: you did not specify '--add-root'; the result might be removed by the
-garbage collector
-/nix/store/zcgax4c4wfvby6p06dwjl8cc4dvkvypr-myName
-$ cat /nix/store/zcgax4c4wfvby6p06dwjl8cc4dvkvypr-myName
-hello
-```
-
-Notice that the text `RUNNING` appears, which shows that the `/bin/sh` command
-was indeed executed; and sure enough the output contains the text `hello` which
-we specified for the `message` environment variable.
-
-Whilst `nix-instantiate` and `nix-store --realise` are useful to make it clear
-what's going on (generating a `.drv` then getting its outputs), in practice we
-can just use the simpler `nix-build` command:
-
-```
-$ nix-build example.nix
-/nix/store/zcgax4c4wfvby6p06dwjl8cc4dvkvypr-myName
-```
-
-Note that this time we did not get a `RUNNING` message, or anything mentioning
-"building" or "garbage collectors". That's because the output already exists, so
-Nix did not need to run anything!
-
-We can make life *even easier* by renaming our file to `default.nix`: that way,
-we can run `nix-build` without having to specify any filename!
-
-```
-$ mv example.nix default.nix
-$ nix-build
-/nix/store/zcgax4c4wfvby6p06dwjl8cc4dvkvypr-myName
-```
-
-#### Writing a `.drv` file manually ####
-
-We can remove a couple more abstraction layers from the above example, and avoid
-the Nix expression language entirely, if we don't mind some trial-and-error to
-calculate the hashes.
-
-Since `.drv` files act like outputs specified by hash, we can create them
-"manually" using `nix-store --add`. For example, we can create a new `.drv` file
-by copying the contents of the above example (and changing the commands, to
-ensure it won't get the same hash!); we don't know what the output path should
-be yet, so I've used all-zeroes for its hash:
-
-```sh
-$ echo 'Derive([("out","/nix/store/00000000000000000000000000000000-myName","","")],[],[],"aarch64-linux","/bin/sh",["-c","echo ABC > $out"],[("out","/nix/store/00000000000000000000000000000000-myName")])' > myName.drv
-$ nix-store --add myName.drv
-error: derivation '/nix/store/97ip2v92rqjs83s2xxf23wq011ln9kjq-myName.drv' has incorrect output '/nix/store/00000000000000000000000000000000-myName', should be '/nix/store/r853x2wai95pp9c711j10srq10xryn8a-myName'
-```
-
-Nix has spotted that this `.drv` file is invalid, due to the dummy hash we used;
-and thankfully has provided the correct value (based on a hash of the other
-fields). We can copy/paste that path into our file contents, to get a working
-Nix derivation:
-
-```sh
-$ echo 'Derive([("out","/nix/store/r853x2wai95pp9c711j10srq10xryn8a-myName","","")],[],[],"aarch64-linux","/bin/sh",["-c","echo ABC > $out"],[("out","/nix/store/r853x2wai95pp9c711j10srq10xryn8a-myName")])' > myName.drv
-$ nix-store --add myName.drv
-/nix/store/mcjp1bawqh0my5pma8lbpm4mdpldw9sd-myName.drv
-$ nix-store --realise /nix/store/mcjp1bawqh0my5pma8lbpm4mdpldw9sd-myName.drv
-this derivation will be built:
-  /nix/store/mcjp1bawqh0my5pma8lbpm4mdpldw9sd-myName.drv
-building '/nix/store/mcjp1bawqh0my5pma8lbpm4mdpldw9sd-myName.drv'...
 warning: you did not specify '--add-root'; the result might be removed by the garbage collector
-/nix/store/r853x2wai95pp9c711j10srq10xryn8a-myName
-$ cat /nix/store/r853x2wai95pp9c711j10srq10xryn8a-myName
+/nix/store/qmzs40qikw90r1lrqhhgyppspvv19pdb-myName
+$ cat /nix/store/qmzs40qikw90r1lrqhhgyppspvv19pdb-myName
 ABC
 ```
 
-This is about as low-level as we can go with Nix; and whilst I don't advise such
-commands for day-to-day use, it's at least clear that *in principle* we could
-do all of this ourselves, and perhaps make some different choices (e.g. like the
-[Guix project](https://guix.gnu.org)).
+Notice that the text `RUNNING` appears, which shows that the `/bin/sh` command
+was indeed executed; and sure enough the output contains the text `ABC` as we
+expect.
 
-#### Demystifying the `derivation` function ####
+This is pretty low-level, and I don't advise using Nix in this way. Thankfully
+there are a few higher-level interfaces built on this foundation, such as the
+[Guix project](https://guix.gnu.org)). Today we'll stick to those offered by a
+default Nix installation, which are based around the Nix Expression Language.
 
-We just jumped down two steps of abstraction, from using the Nix language's
-`derivation` function to writing `.drv` files manually. It can also be
-enlightening to make a derivation *with* the Nix language, but *without* the
-`derivation` function; to demystify what's going on.
+#### Derivations in the Nix Expression Language ####
 
-We'll start in the `nix repl`, which is useful for experimenting. First note
-that, in the Nix language, a derivation is just an attribute set (~JSON object)
-with an attribute called `type` set to the string `"derivation"`:
+Nix comes with a simple scripting language (the "Nix Expression Language", or
+[Nixlang](glossary.html)) for generating `.drv` files. The best way to learn any
+language is to immerse ourselves, so we'll open a
+[REPL](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop) and
+start experimenting:
 
 ```nix
 $ nix repl
 Welcome to Nix 2.17.1. Type :? for help.
 
-nix-repl>  { foo = "some ordinary attribute set"; }
-{ foo = "some ordinary attribute set"; }
+nix-repl>
+```
 
+Here's an "attribute set" (think: JSON object), containing a string, a number
+and a list:
+
+```nix
+nix-repl> { hello = "world"; age = 42; "my list" = [ 1 2 3 ]; }
+{ age = 42; hello = "world"; "my list" = [ ... ]; }
+```
+
+Nixlang is lazy, so it's left the list unevaluated (`...`). Derivations are
+represented as attribute sets; in fact, Nix will treat *any* set as a derivation
+if it contains an attribute called `type` with the value `"derivation"`; even
+a set containing nothing else!
+
+```nix
 nix-repl> { type = "derivation"; }
 «derivation ???»
 ```
 
-Of course, this is missing all of the required fields of a derivation; but we
-can figure out what they need to be by using the `:b` (build) command of
-`nix repl`, and following the error messages:
+Of course, that attribute set is missing all of the required fields of a
+derivation; but we can figure out what they need to be by using the `:b` (build)
+command of `nix repl`, and following the error messages:
 
 ```nix
 nix-repl> :b { type = "derivation"; }
@@ -391,9 +328,19 @@ error: expression evaluated to invalid derivation '/nix/store/000000000000000000
 ```
 
 This `invalid derivation` error is due to that path not existing. We can fix
-this by using the `builtins.toFile` function to create a file in the Nix store:
-it acts in a similar way to the `nix-store --add` command, returning the path of
-the file:
+this by using the `builtins.toFile`{.nix} function to create a file in the Nix
+store:
+
+ - `builtins`{.nix} is a variable that's always in scope. By default it's bound
+   to an attribute set of useful functions and constants.
+ - `builtins.toFile`{.nix} will look up the value of an attribute called
+   `toFile` in the `builtins`{.nix} attribute set. By default that will be a
+   helper function for writing files to the Nix store.
+ - `builtins.toFile "foo.drv" ""`{.nix} calls that function with two arguments.
+   The first is a filename we want, and the second is the file contents.
+ - This function acts in a similar way to the `nix-store --add` command,
+   returning the path of the file it created.
+ - We use that path as the value of our `drvPath` attribute.
 
 ```nix
 nix-repl> :b {
@@ -412,16 +359,19 @@ error:
        error: error parsing derivation '/nix/store/2pzx8pi92qfrbnm3wmcpmvv0cs1517fv-foo.drv': error: expected string 'Derive(['
 ```
 
-We can see that Nix is now attempting to parse our `.drv` file, so we'll need to
-write its contents like we did in the "manual" approach (again, changing the
-command to ensure we get a different hash). Note that we can write strings using
-`''two apostrophes''`, to avoid having to `\`-escape all the quotation marks:
+We can see that Nix is now attempting to parse our `.drv` file, but it failed
+since we used an empty string for the contents. To get any further we'll need to
+write some ATerm-formatted data like we did in the "manual" approach above.
+We'll just copy/paste the contents we used before, but change the command to
+ensure we get a different hash. Note that we can also write strings in Nixlang
+using `''two apostrophes''`, which avoids having to `\`-escape all the quotation
+marks:
 
 ```nix
 nix-repl> :b {
   type = "derivation";
   name = "foo";
-  drvPath = builtins.toFile "foo.drv" ''Derive([("out","/nix/store/r853x2wai95pp9c711j10srq10xryn8a-myName","","")],[],[],"aarch64-linux","/bin/sh",["-c","echo 'I AM FOO' > $out"],[("out","/nix/store/r853x2wai95pp9c711j10srq10xryn8a-myName")])'';
+  drvPath = builtins.toFile "foo.drv" ''Derive([("out","/nix/store/qmzs40qikw90r1lrqhhgyppspvv19pdb-myName","","")],[],[],"aarch64-linux","/bin/sh",["-c","echo hello > $out"],[("out","/nix/store/qmzs40qikw90r1lrqhhgyppspvv19pdb-myName")])'';
 }
 error:
        … while calling the 'toFile' builtin
@@ -429,14 +379,15 @@ error:
          at «string»:4:13:
 
             3|   name = "foo";
-            4|   drvPath = builtins.toFile "foo.drv" ''Derive([("out","/nix/store/r853x2wai95pp9c711j10srq10xryn8a-myName","","")],[],[],"aarch64-linux","/bin/sh",["-c","echo 'I AM FOO' > $out"],[("out","/nix/store/r853x2wai95pp9c711j10srq10xryn8a-myName")])'';
+            4|   drvPath = builtins.toFile "foo.drv" ''Derive([("out","/nix/store/qmzs40qikw90r1lrqhhgyppspvv19pdb-myName","","")],[],[],"aarch64-linux","/bin/sh",["-c","echo hello > $out"],[("out","/nix/store/qmzs40qikw90r1lrqhhgyppspvv19pdb-myName")])'';
              |             ^
             5| }
 
-       error: derivation '/nix/store/q43b7y9pcni5s8243zi83ljccw45xba7-foo.drv' has incorrect output '/nix/store/r853x2wai95pp9c711j10srq10xryn8a-myName', should be '/nix/store/znfqqq66463n8wkh3qlp5c2pfz91dhbs-foo'
+       error: derivation '/nix/store/ysnkprcgvr97kfajbhn1n15apkx1ywhf-foo.drv' has incorrect output '/nix/store/qmzs40qikw90r1lrqhhgyppspvv19pdb-myName', should be '/nix/store/588bzdljdnj4ja6kkwii56l4pyyvil4j-foo'
+
 ```
 
-Just like the "manual" example, Nix is telling us that the output path has the
+Just like the previous example, Nix is telling us that the output path has the
 wrong hash (and name, in this case!). Like before, it gives us the correct
 value, which we can copy into our string:
 
@@ -444,23 +395,128 @@ value, which we can copy into our string:
 nix-repl> :b {
   type = "derivation";
   name = "foo";
-  drvPath = builtins.toFile "foo.drv" ''Derive([("out","/nix/store/znfqqq66463n8wkh3qlp5c2pfz91dhbs-foo","","")],[],[],"aarch64-linux","/bin/sh",["-c","echo 'I AM FOO' > $out"],[("out","/nix/store/znfqqq66463n8wkh3qlp5c2pfz91dhbs-foo")])'';
+  drvPath = builtins.toFile "foo.drv" ''Derive([("out","/nix/store/588bzdljdnj4ja6kkwii56l4pyyvil4j-foo","","")],[],[],"aarch64-linux","/bin/sh",["-c","echo hello > $out"],[("out","/nix/store/588bzdljdnj4ja6kkwii56l4pyyvil4j-foo")])'';
 }
 
 This derivation produced the following outputs:
-  out -> /nix/store/znfqqq66463n8wkh3qlp5c2pfz91dhbs-foo
+  out -> /nix/store/588bzdljdnj4ja6kkwii56l4pyyvil4j-foo
 
 nix-repl> :q
-$ cat /nix/store/znfqqq66463n8wkh3qlp5c2pfz91dhbs-foo
-I AM FOO
+:q
+$ cat /nix/store/588bzdljdnj4ja6kkwii56l4pyyvil4j-foo
+hello
 ```
 
-Hence the `derivation` function isn't doing anything special: it's just using
-its arguments to write an appropriate string to an appropriately named `.drv`
-file, and returning an attribute set with the appropriate attributes filled in.
-In principle we could have even calculated the hashes ourselves (using the
-`builtins.hashString` and `builtins.hashFile` functions), but that's a bit
-too tedious, even for me!
+Again, we've made a working derivation. In principle we could have calculated
+the right hashes ourselves, using the `builtins.hashString` and
+`builtins.hashFile` functions, but that's a bit too tedious, even for me!
+
+#### Using the `builtins.derivation` function ####
+
+We've seen how to write a `.drv` file using shell commands, and how to perform
+the same steps using Nixlang. Next we'll look at a helper function called
+`builtins.derivation`, which takes care of all the boilerplate we had to
+hard-code above.
+
+I think it's time to leave the `nix repl` and put our Nixlang expressions into a
+file. Let's save the following in a file called `example.nix` (note that this
+isn't an output or `.drv` file, so it doesn't need to live in the Nix store):
+
+```nix
+builtins.derivation {
+  name = "myName";
+  system = "aarch64-linux";
+  builder = "/bin/sh";
+  args = [ "-c" "echo RUNNING >&2 && echo $message > $out" ];
+  message = "goodbye";
+}
+```
+
+This expression is a function call: the function is `builtins.derivation`{.nix}
+(i.e. the `derivation` attribute of the set bound to the `builtins`{.nix}
+variable) and the argument is an attribute set, containing various details we
+want in the derivation.
+
+We've not specified any output names, so `builtins.derivation` will default to
+using a single output called `out`; that will also appear as an environment
+variable, hence why our Bash snippet is writing to `$out`{.sh}. All of the
+attributes we pass in will also appear as environment variables, so we can give
+the command arbitrary data; in this case we're putting our desired output
+contents into an environment variable called `message`, and accessing it in our
+Bash code using `$message`{.sh}.
+
+If you're not on an `aarch64-linux` machine, you can replace that `system`
+value with the expression `builtins.currentSystem` instead...
+
+<details>
+<summary>The `system` attribute</summary>
+
+We can use any string for the `system`, but Nix will only run derivations whose
+`system` is supported on that installation. You can check yours by running the
+command `nix show-config system`, e.g. my PinePhone is `aarch64-linux`, an Intel
+Mac is `x86_64-darwin`, my old Thinkpad is `i686-linux`, etc. This value is also
+available in Nixlang as `builtins.currentSystem`, which is sometimes preferable
+to hard-coding a string; although keep in mind that will result in different
+hashes on different OS/CPU combinations!
+
+If you have a bunch of machines (real or virtual) with different `system`
+values, you can configure them as [Remote
+Builders](https://nixos.org/manual/nix/stable/advanced-topics/distributed-builds).
+That way, when Nix encounters derivations with an unsupported `system`, it can
+SSH into those other machines to do the build there!
+
+</summary>
+
+We can evaluate this `.nix` file to produce a `.drv` file by using the
+`nix-instantiate` command:
+
+```sh
+$ nix-instantiate example.nix
+warning: you did not specify '--add-root'; the result might be removed by the garbage collector
+/nix/store/xh3q9dd1r0nk87kyj2pqf9kscvqsip80-myName.drv
+```
+
+This is *much* better than having to mess around with hashes, or write files
+with strings of ATerm-formatted data, etc. In fact, pretty much all derivations
+specified using Nixlang (including those in the Nixpkgs repository) are
+ultimately calling this `builtins.derivation`{.nix} function behind the scenes.
+
+Again, we can "realise" this derivation, to build its output:
+
+```sh
+nix-store --realise /nix/store/xh3q9dd1r0nk87kyj2pqf9kscvqsip80-myName.drv
+this derivation will be built:
+  /nix/store/xh3q9dd1r0nk87kyj2pqf9kscvqsip80-myName.drv
+building '/nix/store/xh3q9dd1r0nk87kyj2pqf9kscvqsip80-myName.drv'...
+RUNNING
+warning: you did not specify '--add-root'; the result might be removed by the garbage collector
+/nix/store/l56ckxgxa4x50n3v4bamvdrrbqjyl7zm-myName
+$ cat /nix/store/l56ckxgxa4x50n3v4bamvdrrbqjyl7zm-myName
+goodbye
+```
+
+Whilst `nix-instantiate` and `nix-store --realise` are useful to make it clear
+what's going on (generating a `.drv` then getting its outputs), in practice we
+can just use the simpler `nix-build` command, which accepts either a `.drv` file
+or a `.nix` file (among other things!):
+
+```
+$ nix-build example.nix
+/nix/store/l56ckxgxa4x50n3v4bamvdrrbqjyl7zm-myName
+```
+
+Note that this time we did not get a `RUNNING` message, or anything mentioning
+"building" or "garbage collectors". That's because the output already exists, so
+Nix did not need to run anything!
+
+We can make life *even easier* by renaming our file to `default.nix`: that way,
+we can run `nix-build` without having to specify any filename!
+
+```sh
+$ mv example.nix default.nix
+$ nix-build
+/nix/store/l56ckxgxa4x50n3v4bamvdrrbqjyl7zm-myName
+```
 
 ## Going forward ##
 

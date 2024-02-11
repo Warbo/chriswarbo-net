@@ -388,3 +388,67 @@ Here are some of the most common:
    wrapper around `fetchTarball`, but is nicer to use since we can give it
    arguments like `owner` and `rev`, and it takes care of constructing the
    corresponding GitHub URL.
+
+<!--
+
+### Fixed points (`self` and `super`) ###
+
+Note that the names `self` and `super` are just function arguments: those are
+not keywords, like in other languages. This pattern of a function taking two
+arguments, conventionally named `self` and `super`, and returning an attribute
+set is very common across Nixpkgs as a way to specify overrides. You can imagine
+the `haskellPackages.extend` function using it something like
+`with rec { hp = haskellPackages // fixes hp haskellPackages; }; hp`{.nix}
+The `//` operator merges attribute sets, so the overall result `hp` consists of
+the original `haskellPackages` set, extended/overwritten by the result of
+calling `fixes`. That original `haskellPackages` set is also passed to `fixes`
+as its second argument (`super`), in case it wants to use any of the old
+definitions. The *first* argument (`self`) is more interesting, since it's being
+passed the overall result (`hp`) which *includes the return value of `fixes`*!
+This circularity is fine, since Nixlang is lazy; and it's a simple way to have
+overridable definitions. For example, the original `haskellPackages` set will
+includedefine lets us define
+
+-->
+
+<!--
+
+### Fixed-output derivations ###
+
+
+## Tips & Tricks ##
+
+I've been using these techniques successfully for years. Still, there are some
+approaches that will work better than others.
+
+### Invalidate Fixed-Output Derivations By Putting Hashes In Names ###
+
+A "fixed-output derivation" uses impure commands, which should nevertheless
+produce the same output every time. Downloading a static file over HTTP is a
+common example; another example is generating a "lock file" (e.g. using
+`mvn2nix`). The output of these derivations is checked against an expected hash,
+to make sure it worked as intended (e.g. no supply-chain attacks).
+
+One problem with using fixed-output derivations is that cached outputs will be
+used *even if the dependencies change*. For example, if we change our POM, but
+forget to change the expected hash, Nix will happily use its cached output from
+the old POM (since that has the requested hash!).
+
+I hate having to remember things, or carry out steps which could be
+automated. Thankfully, there's an easy way to avoid this: the function which
+calculates your "lock file" derivation should *also* take a hash of the input
+(e.g. the POM), and append that to the derivation's *name*. This way, when the
+POM gets changed, we'll be asking Nix for a different filename, which won't
+exist in its cache. If the expected hash is no longer valid (e.g. due to adding
+new dependencies in the POM), then Niz will tell us.
+
+### Normalise Inputs To Avoid Unnecessary Rebuiding ###
+
+It's very common to update a project's version number, which has no effect on
+its dependencies. To avoid rebuilding lock files unnecessarily, we can
+pre-process the config file to normalise such unnecessary details: for example,
+replace the project's version number with "unversioned" or 0.0.0. That way, its
+hash will be unaffected by such irrelevant updates.
+
+
+-->
