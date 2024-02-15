@@ -2,7 +2,7 @@
 title: Dependency solving in Nix
 ---
 
-I've [written a lot about the Nix build system](/projects/nixos) over the past
+I've [written a lot about the Nix build system](index.html) over the past
 decade, but one complaint I keep coming across is that Nix requires dependency
 constraints to be "solved manually".
 
@@ -47,8 +47,8 @@ I prefer to describe Nix as a tool to **GET SPECIFIED OUTPUTS**, where:
       to re-create a file/folder from just its hash!
 
 This is the *underlying model* of Nix, which I describe in more detail in
-[Nix from the bottom up](/projects/nixos/bottom_up.html). Nix is much more of a
-*build system* (like Make) rather than a package manager (like APT).
+[Nix from the bottom up](bottom_up.html). Nix is much more of a *build system*
+(like Make) rather than a *package manager* (like APT).
 
 This model is too cumbersome to interact with directly; instead, we use various
 shell commands and higher-level languages (similar to how we use the `git` CLI,
@@ -56,8 +56,8 @@ rather than writing trees and blobs by hand). The most common/popular interfaces
 for Nix are the original Nix CLI (`nix-build`, `nix-store`, etc.) and the "new"
 `nix` CLI (technically still 'experimental', but pretty stable). For both of
 those CLIs, we specify what we want using the
-[Nix Expression Language (or "Nixlang")](/projects/nixos/glossary.html). Many of
-the code examples in this post are written in Nixlang.
+[Nix Expression Language (or "Nixlang")](glossary.html). Many of the code
+examples in this post are written in Nixlang.
 
 ## Building Up By Example ##
 
@@ -158,8 +158,8 @@ consists of *functions*, which take various dependencies as arguments and return
 an output with their paths spliced in as appropriate. Using functions makes it
 trivial for dependencies to be replaced/overridden/updated/etc. (just call it
 with different arguments!). See
-[my Nixlang glossary](/projects/nixos/glossary.html) for (opinionated) advice on
-making your Nixlang definitions flexible, whilst keeping them simple.
+[my Nixlang glossary](glossary.html) for (opinionated) advice on making your
+Nixlang definitions flexible, whilst keeping them simple.
 
 ### Reading Files ###
 
@@ -218,8 +218,8 @@ So far we've seen outputs specified by hash, either with contents written
 verbatim, or calculated as a Nixlang string. Now we'll specify an output using
 a *derivation* instead. Nixlang represents a derivation as an attrset
 ("attribute set"; think JSON object), containing certain attributes (name/value
-pairs). We can write the attrset for a derivation directly, but [it's pretty
-tedious](/projects/nixos/bottom_up.html#derivations-in-the-nix-expression-language),
+pairs). We can write the attrset for a derivation directly, but
+[it's pretty tedious](bottom_up.html#derivations-in-the-nix-expression-language)
 so we can instead call the `builtins.derivation` function to handle the
 boilerplate for us:
 
@@ -260,10 +260,10 @@ line; the rest are from stderr). Dumping the contents of that path shows us that
 it contains our desired `message`!
 
 For a more thorough explanation of what's going on underneath, see
-[Nix from the bottom up](/projects/nixos/bottom_up.html). In practice, nobody
-specifies the contents of `.drv` files in such a low-level way like this!
-Instead we use helper functions, like those provided by Nixpkgs (a git
-repository containing many Nixlang definitions).
+[Nix from the bottom up](bottom_up.html). In practice, nobody specifies the
+contents of `.drv` files in such a low-level way like this! Instead we use
+helper functions, like those provided by Nixpkgs (a git repository containing
+many Nixlang definitions).
 
 ### Using Nixpkgs ###
 
@@ -298,18 +298,14 @@ nix-repl> import (builtins.fetchTarball {
 «lambda @ /nix/store/b492a6w85dja0nrzvcp8g48drypzzqp8-nixpkgs2311/pkgs/top-level/impure.nix:14:1»
 ```
 
-Notice that the result is a *function* (AKA a `lambda`; the `14` and `1` are the
-line and column numbers of where in the file it's defined, which is handy for
-opening it directly in an editor!).
-
-The reason Nixpkgs provides a *function* as its main interface is to let us
-specify details like the desired system architecture (e.g. if we're on a Mac but
-want to specify Linux packages), which licenses to allow, etc. We can call this
-function with an empty attribute set `{}` to use its default values, however
-some of those defaults are "impure", since they depend on environment variables,
-the contents of our home directory, etc. which can vary over time and between
-different machines. We want reproducible results so we'll provide our own values
-for the `config` and `overlays` attributes (whose defaults depend on `$HOME`).
+The result is a *function* (AKA a `lambda`), to let us specify details like the
+desired system architecture (e.g. if we're on a Mac but want to specify Linux
+packages), which licenses to allow, etc. We can call this function with an empty
+attribute set `{}` to use its default values, however some of those defaults are
+"impure", since they depend on environment variables, the contents of our home
+directory, etc. which can vary over time and between different machines. We want
+reproducible results so we'll provide our own values for the `config` and
+`overlays` attributes (whose defaults depend on `$HOME`).
 
 **WARNING:** This function returns an attribute set with tens of thousands of
 values, so it's unwise to try printing the whole thing! Instead, we'll just pick
@@ -415,7 +411,7 @@ This example is based on
 from [my nix-helpers repo](/git/nix-helpers), although I've removed a bunch of
 abstraction to simplify the presentation (for advice on writing *maintainable*
 Nix code you can read
-[my (opinionated) Nixlang glossary](/projects/nixos/glossary.html))!
+[my (opinionated) Nixlang glossary](glossary.html))!
 
 These definitions have evolved over the years, but trace their origins back to
 [around 2015](https://github.com/Warbo/nix-config/blob/9883680d593bef355d3499c5c67fb9f9369e88b2/imports/nixFromCabal.nix)
@@ -441,9 +437,9 @@ PyPI, etc.) so I'm guessing most readers have encountered something like this
 before.
 
 For this example we'll need a Haskell project to build; I'm going to use my
-[Panpipe](http://www.chriswarbo.net/git/panpipe) project, since it's pretty
-simple but has non-trivial dependencies. We'll ignore the fact that its repo
-already includes perfectly good Nix build instructions!
+[Panpipe](/git/panpipe) project, since it's pretty simple but has non-trivial
+dependencies. We'll ignore the fact that its repo already includes perfectly
+good Nix build instructions!
 
 Let's start by defining the source code we want to build:
 

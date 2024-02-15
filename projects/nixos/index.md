@@ -10,6 +10,9 @@ some (opinionated) guides and explanations:
    Nix, and what it's actually doing under the hood.
  - [Nixlang glossary](glossary.html) gives a rough overview of the Nix
    Expression Language, which can be used to specify what Nix should build.
+ - [Dependency solving in Nix](nix_dependencies.html) shows how Nix can wrap
+   legacy tools to build projects securely and reproducibly, including solving
+   version constraints and resolving names to artifacts.
  - [Nix Packages](packages.html) describes how Nix provides a similar
    user/sysadmin experience to a traditional Linux package manager.
 
