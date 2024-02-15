@@ -1,7 +1,7 @@
 { applyPatches, attrsToDirs', bash, buildEnv, cacert, coq, fail, git
 , glibcLocales, haskellPackages, jq, lib, libxslt, mkBin, nix
 , nix-helpers-source, nixpkgs, nixpkgs1803, pandoc, panhandle, panpipe, python3
-, racketWithPackages, replace, suffixedFilesIn, wget, withNix, xidel }:
+, racketWithPackages, replace, suffixedFilesIn, wget, xidel }:
 
 with builtins;
 with lib;
@@ -12,7 +12,10 @@ with rec {
     SSL_CERT_FILE = "${cacert}/etc/ssl/certs/ca-bundle.crt";
   };
 
-  nixVars = gitVars // withNix { CALLING_NIX_RECURSIVELY = "1"; };
+  nixVars = gitVars // {
+    NIX_REMOTE = getEnv "NIX_REMOTE";
+    NIX_PATH = getEnv "NIX_PATH";
+  };
 
   includingDeps = xs:
     filter (x: x != null) (xs ++ concatMap (x: x.propagatedNativeBuildInputs) xs
