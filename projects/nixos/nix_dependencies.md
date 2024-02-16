@@ -272,10 +272,11 @@ Nixlang's `builtins.fetchGit`{.nix} function to (surprise surprise) fetch a
 git repository. Specifically, it outputs a directory containing a specified
 commit, without a `.git` folder. However, in the specific case of Nixpkgs this
 can be a bad idea, since it has *so many* commits that fetching the metadata can
-be very slow. Instead, GitHub.com provides tarballs containing just the desired
-commit; which we can fetch using (surprise surprise)
-`builtins.fetchTarball`{.nix}. Since HTTP lacks the cryptographic validation
-provided by git, we also provide a SHA256 hash of the expected content:
+be very slow. Thankfully, many Git hosts provide tarballs of individual commits,
+and GitHub.com is no exception. We can fetch such a tarball using (surprise
+surprise) `builtins.fetchTarball`{.nix}. Since HTTP lacks the cryptographic
+validation provided by git, we also provide a SHA256 hash of the expected
+content:
 
 ```nix
 nix-repl> builtins.fetchTarball {
@@ -518,9 +519,10 @@ Thankfully there is an alternative source for the same information called
 [all-cabal-hashes](https://github.com/commercialhaskell/all-cabal-hashes), which
 is maintained as a git repository. This is preferable, since we can use commit
 IDs to fetch any historical version and we can verify that the contents are what
-we expect. GitHub can provide a `.tar.gz` of any commit, which avoids us having
-to download all of the repo metadata (which is *a lot*, for this repo!). What's
-more, Nixpkgs already provides such a tarball of `all-cabal-hashes` we can use!
+we expect. Similar to Nixpkgs, we can download a `.tar.gz` of a particular
+commit, which avoids us having to download all of the repo metadata (which is *a
+lot*, for this repo!). What's more, Nixpkgs already provides such a tarball of
+`all-cabal-hashes` we can use!
 
 ```nix
   nixpkgs =
