@@ -69,7 +69,8 @@ files" found in legacy systems).
 
 Functions always have exactly one argument, which is separated from their return
 value by writing a `:`, like `myArg: myArg + myArg`{.nix}. Function calls use a
-space, like `myFunction 123`{.nix} (which will return `246`{.nix}).
+space, like `myFunction 123`{.nix} (if `myFunction` refers to the previous
+example, then this will return `246`{.nix}).
 
 Functions are also referred to as "lambdas". When generating error messages, Nix
 will refer to a function using the name of the variable that was used to access
@@ -125,7 +126,7 @@ functions can be written with a nicer syntax, like `{x, y}: x + y`{.nix}, but
 keep in mind that this is still *one* argument (an attrset containing two
 attributes). This syntax also allows *default arguments* to be specified, e.g.
 `{x, y ? 42}: x + y`{.nix}. In this example, if there is no `y`{.nix} attribute
-then it defaults to using `y = 42;`; e.g.
+then it defaults to using `y = 42;`, e.g.
 `({x, y ? 42}: x + y) { x = 2; }`{.nix} returns `44`{.nix}. Such argument sets
 are automatically recursive (like an attrset with the `rec` keyword), for
 example:
@@ -166,8 +167,7 @@ nixpkgs.someHelperFunction {
 
 Commands like `nix-build` will automatically call such functions, giving them an
 empty attrset `{}`{.nix} so all the default values will be used; yet we're free
-to can swap
-out all of the pieces if we
+to override those by giving a non-empty attrset if we like.
 
 ### Attribute sets ###
 
@@ -271,7 +271,7 @@ For example:
  - `builtins.toString { outPath = "hi"; }`{.nix} evaluates to `"hi"`{.nix}
  - `builtins.toString { outPath = /etc/profile; }`{.nix} evaluates to
    `"/etc/profile"`{.nix}
- - `"${{ outPath = "ho"; }}"`{.nix} evaluates to `"hi"`{.nix}
+ - `"${{ outPath = "ho"; }}"`{.nix} evaluates to `"ho"`{.nix}
  - `"${{ outPath = /etc/profile; }}"`{.nix} evaluates to
    `"/nix/store/bjkf9xibayibcf26dm00h4045anka6hh-profile"`{.nix}
 
@@ -324,10 +324,6 @@ always correspond to the exact string contents. For example:
    will contain two attributes (like
    `"/nix/store/5n87wr3p63g647zgqqdxj6ip0yc3f1is-bashrc"`{.nix} and
    `"/nix/store/bjkf9xibayibcf26dm00h4045anka6hh-profile"`{.nix})
- - Taking a substring doesn't affect the context, so an expression like
-    returns a
-   string containing `hello` (since we're appending a substring of length `0`,
-   AKA an empty string) but with a *context* containing that `profile` path!
 
 #### Personal recommendations ####
 
@@ -362,11 +358,12 @@ from HTTP downloads, Git checkouts, etc.; and Nixpkgs defines helper functions
 to fetch from even more places. It can sometimes be confusing which one to use.
 Here are some of the most common:
 
- - The `fetchurl` helper from Nixpkgs. This is basically the same as
-   `builtins.fetchurl`{.nix}, but it's been around longer. It's also a pain to
-   use since we first need to fetch Nixpkgs (causing a "bootstrapping" problem)!
-   Consider it deprecated.
- - The `fetchgit` helper from Nixpkgs is likewise deprecated now that we have
+ - The `fetchurl` helper from Nixpkgs. This does the same basic job as
+   `builtins.fetchurl`{.nix}, but it's been around longer. It also has a
+   "bootstrap" problem, since we need something *else* to fetch Nixpkgs first.
+   It's useful if we want to use mirrors, or to supply a `postFetch` command
+   script (e.g. to prevent unwanted parts entering the Nix store).
+ - The `fetchgit` helper from Nixpkgs is essentially deprecated now that we have
    `builtins.fetchGit`{.nix}.
  - `builtins.fetchGit`{.nix} will fetch a specific commit of a Git repo (or
    `HEAD` if none is specified; though I recommend against this). This is
