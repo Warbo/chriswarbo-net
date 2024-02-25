@@ -10,8 +10,8 @@ accessible, but their associated static pages were no longer being generated via
 post-receive hook.
 
 I've finally got around to implementing a new update process for those pages:
-I've ripped all of the SSH commands out of
-[my pushGitPages script](http://www.chriswarbo.net/git/warbo-utilities/git/branches/master/raw/pushGitPages.sh.raw.html),
+I've ripped all of the SSH commands out of [my pushGitPages
+script](/git/warbo-utilities/git/branches/master/raw/pushGitPages.sh.raw.html),
 and am now using [rclone](https://rclone.org) to mount the /git folder locally.
 This has the advantage of not needing extra bare repos, like I had on my
 Thinkpad (which is nice since my Pinephone doesn't have as much storage), whilst
