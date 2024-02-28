@@ -1,5 +1,5 @@
 ---
-title: "SK logic in egglog: part 1"
+title: "SK logic in egglog: part 1, encoding and reduction"
 packages: [ 'egglog', 'graphviz' ]
 ---
 
@@ -101,11 +101,18 @@ Now we can tell when a value is our `C` constant, since it will contain the
 string `"C"`{.python}. This can be seen if we ask egglog to draw its "database"
 of known values, using the `--to-svg` argument:
 
+```{pipe="cat > svg && chmod +x svg"}
+egglog --to-svg "$1.egg" 1>&2
+{
+  printf '<img alt="%s" src="data:image/svg+xml;base64,' "$2"
+  basenc -w0 --base64 < "$1.svg"
+  printf '"/>'
+} | pandoc -f html -t json
+rm "$1.svg"
+```
+
 ```{.unwrap pipe="sh"}
-set -x
-egglog --to-svg id-string.egg 1>&2
-cat id-string.svg | pandoc -f html -t json
-rm id-string.svg
+./svg id-string 'E-graph database containing constant C'
 ```
 
 The inner box (labelled `E("C")`) is the constant value we defined using `let`.
@@ -179,9 +186,7 @@ egglog doesn't know it's equal to `C`. We'll see why our `rewrite` rule hasn't
 been applied in the next section; first we'll take a look at egglog's database:
 
 ```{.unwrap pipe="sh"}
-egglog --to-svg id-string-unrun-query.egg 1>&2
-cat id-string-unrun-query.svg | pandoc -f html -t json
-rm id-string-unrun-query.svg
+./svg id-string-unrun-query 'E-graph database with unreduced value thrice'
 ```
 
 There are now multiple values and multiple (equivalence) classes. Those values
@@ -208,8 +213,9 @@ between expressions.
 The reason our `rewrite` rule didn't change anything is that we didn't tell
 egglog to run! We do this by calling `run`, but we have to decide *how much* to
 run: egglog rules can cause expressions to grow and grow, so we need to provide
-a cutoff. Since our `rewrite` rule results in smaller expressions (unwrapping an
-`Id` call each time) we only need to use `(run 1)`{.scheme}:
+a cutoff. Due to egglog's unification/canonicalisation mechanism, we'll see that
+only a single application of our `rewrite` rule will be needed, which we can do
+with `(run 1)`{.scheme}:
 
 ```{pipe="sh"}
 echo '(run 1)' | ./show id-string.egg > id-run.egg
@@ -245,9 +251,7 @@ egglog id-string.egg 2>&1
 Success! Now let's look at the database:
 
 ```{.unwrap pipe="sh"}
-egglog --to-svg id-string.egg 1>&2
-cat id-string.svg | pandoc -f html -t json
-rm id-string.svg
+./svg id-string 'E-graph database with reduced expression'
 ```
 
 Now that egglog has run our rewrite rule, it's discovered that *all* of the
@@ -262,9 +266,11 @@ number of wrappers around `C`, showing them all to be equivalent!
 ## A larger example: SK logic ##
 
 Now we've seen the basics of egglog, we can use it for a *real* programming
-language; specifically [SK combinatory logic](TODO)! This time we'll use a binary
-constructor `App`, to represent the application of one combinator to another;
-and use the same `String` trick to represent two constants `S` and `K`:
+language; specifically
+[SK combinatory logic](https://news.ycombinator.com/item?id=22270327)! This time
+we'll use a binary constructor `App`, to represent the application of one
+combinator to another; and use the same `String` trick to represent two
+constants `S` and `K`:
 
 ```{.scheme pipe="./show sk.egg"}
 (datatype Com
@@ -314,7 +320,7 @@ We'll test these using the following expression:
     (App (App (App IF (App I FALSE)) S) (App K TRUE)))
 ```
 
-```{.scheme pipe="sh"}
+```{pipe="sh"}
 cp sk.egg sk-test1.egg
 ```
 
@@ -326,7 +332,7 @@ definitions of each correct:
  - `(App IF FALSE)`{.scheme} should accept two arguments and return the second,
    like the "else branch" in other languages.
  - In this case that "else branch" is `(App K TRUE)`{.scheme}
- - `(App K True)`{.scheme} won't reduce any more (since it doesn't have enough
+ - `(App K TRUE)`{.scheme} won't reduce any more (since it doesn't have enough
    arguments), so it should be the final result (or equivalent).
 
 Before running anything, let's query the initial value of `test` and take a look
@@ -335,24 +341,11 @@ at the database:
 ```{pipe="sh"}
 cp sk.egg sk-test.egg
 echo '(query-extract test)' | ./hide sk-test.egg
-egglog --to-svg sk-test.egg 2>&1
-# [INFO ] Declared sort Com.
-# [INFO ] Declared function App.
-# [INFO ] Declared function C.
-# [INFO ] Declared rule (rewrite (App (App K x) y) x).
-# [INFO ] Declared rule (rewrite (App (App (App S x) y) z) (App (App x z) (App y z))).
-# [INFO ] Ran schedule (repeat 1 (run)).
-# [INFO ] Report: Rule (rule ((= v5___ (App...: search 0.000s, apply 0.000s
-#     Rule (rule ((= v10___ (Ap...: search 0.000s, apply 0.000s
-#     Ruleset : search 0.000s, apply 0.000s, rebuild 0.000s
-#
-# [INFO ] extracted with cost 14: (App (App (App (C "IF") (App (C "IF") (C "FALSE"))) (C "TRUE")) (C "S"))
-# (App (App (App (C "IF") (App (C "IF") (C "FALSE"))) (C "TRUE")) (C "S"))
+egglog sk-test.egg 2>&1
 ```
 
 ```{.unwrap pipe="sh"}
-cat sk-test.svg | pandoc -f html -t json
-rm sk-test.svg
+./svg sk-test 'Initial e-graph database of SK values'
 ```
 
 **Note:** Calls with multiple inputs are shown with multiple arrows emerging;
@@ -371,23 +364,16 @@ cp sk.egg sk-test1.egg
   echo '(run 1)'
   echo '(query-extract test)'
 } | ./hide sk-test1.egg
-egglog --to-svg sk-test1.egg 2>&1
+egglog sk-test1.egg 2>&1
 ```
 
 ```{.unwrap pipe="sh"}
-cat sk-test1.svg | pandoc -f html -t json
-rm sk-test1.svg
+./svg sk-test1 'SK database after running for 1 step'
 ```
 
 A little simplification has occurred, combining some of the `App` calls (e.g.
 look at those which apply `I`), but the changes are not significant enough to
-affect the value of `test`. I believe this is due to egglog assigning a "cost"
-to various operations: in our `Expr` example, the result of rewriting was always
-an *existing* sub-expression, so the database didn't grow and the cost was low;
-that's also the case for our `K` rule, but our `S` rule introduces *new*
-expressions, which grow the database and incur a cost.
-
-Let's try again with `(run 2)`{.scheme}:
+affect the value of `test`. Let's try again with `(run 2)`{.scheme}:
 
 ```{pipe="sh"}
 cp sk.egg sk-test2.egg
@@ -395,12 +381,11 @@ cp sk.egg sk-test2.egg
   echo '(run 2)'
   echo '(query-extract test)'
 } | ./hide sk-test2.egg
-egglog --to-svg sk-test2.egg 2>&1
+egglog sk-test2.egg 2>&1
 ```
 
 ```{.unwrap pipe="sh"}
-cat sk-test2.svg | pandoc -f html -t json
-rm sk-test2.svg
+./svg sk-test2 'SK database after running for 2 steps'
 ```
 
 Again, some more simplification has occurred: this time the `IF` expression has
@@ -419,12 +404,11 @@ cp sk.egg sk-test3.egg
   echo '(run 3)'
   echo '(query-extract test)'
 } | ./hide sk-test3.egg
-egglog --to-svg sk-test3.egg 2>&1
+egglog sk-test3.egg 2>&1
 ```
 
 ```{.unwrap pipe="sh"}
-cat sk-test3.svg | pandoc -f html -t json
-rm sk-test3.svg
+./svg sk-test3 'SK database after running for 3 steps'
 ```
 
 Finally `(run 4)` is able to fully reduce `test`. The database seems to be
@@ -436,12 +420,11 @@ cp sk.egg sk-test4.egg
   echo '(run 4)'
   echo '(query-extract test)'
 } | ./hide sk-test4.egg
-egglog --to-svg sk-test4.egg 2>&1
+egglog sk-test4.egg 2>&1
 ```
 
 ```{.unwrap pipe="sh"}
-cat sk-test4.svg | pandoc -f html -t json
-rm sk-test4.svg
+./svg sk-test4 'SK database after running for 4 steps'
 ```
 
 ### Beyond β-equivalence ###
@@ -452,13 +435,21 @@ Our rewrite rules for reducing `S` and `K` expressions correspond to the
 `(App S S)`{.scheme} (and vice-versa). There are other forms of equivalence we
 might want to implement, although the α-equivalence and η-equivalence of
 λ-calculus aren't directly applicable to SK logic (since it lacks names and
-abstractions). I am particularly interested in implementing *extensional
-equivalence*, which holds for two expressions which return equal results when
-applied to any argument; e.g. if `(App f x)`{.scheme} is equivalent to
-`(App g x)`{.scheme} regardless of `x`, then `f` and `g` are extensionally
-equivalent.
+abstractions).
 
-However, my attempts to capture this in egglog so far have ended up collapsing
-the entire SK language into one big equivalence class, which is not particularly
-useful. Hence I've decided to punt on that for now, and stick a "part 1" in the
-title!
+I am particularly interested in implementing *extensional equivalence*, which
+holds for two expressions which return equal results when applied to any
+argument; e.g. if `(App f x)`{.scheme} is equivalent to `(App g x)`{.scheme}
+regardless of `x`, then `f` and `g` are extensionally equivalent. In the example
+above, the expressions `(App FALSE K)`{.scheme} and `(App FALSE S)`{.scheme}
+are extensionally-equivalent; in fact, *all* expressions of the form
+`(App FALSE something)`{.scheme} are equivalent, since `FALSE` (defined as
+`(App S K)`{.scheme}) will entirely ignore its first argument. Whilst
+`(App FALSE K)`{.scheme} appears in the same equivalence class as `I`, egglog
+hasn't put `(App FALSE S)`{.scheme} in that class.
+
+Unfortunately my attempts to capture this in egglog so far have ended up
+collapsing the entire SK language into one big equivalence class, which is not
+particularly useful. Hence I've decided to punt on that for now, and stick a
+"part 1" in the title. If I can get that working soon, I'll be sure to write a
+part 2!
