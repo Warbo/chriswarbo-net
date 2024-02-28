@@ -77,9 +77,9 @@ changing sign whenever a pair of *neighbouring* units are swapped:
 ```scheme
 (= (× i₀ h₁ d₀ i₀ h₁)
    i₀h₁d₀i₀h₁         ;; Shorthand for this product, in the same order
-   -i₀h₁i₀d₀h₁        ;; Swap d₀i₀ to -i₀d₀
+  -i₀h₁i₀d₀h₁         ;; Swap d₀i₀ to -i₀d₀
    i₀i₀h₁d₀h₁         ;; Swap -h₁i₀ to i₀h₁
-   -h₁d₀h₁            ;; Since (= i₀i₀ -1), by definition of imaginary units
+  -h₁d₀h₁             ;; Since (= i₀i₀ -1), by definition of imaginary units
    d₀h₁h₁             ;; Swap -h₁d₀ to d₀h₁
    d₀)                ;; Since (= h₁h₁ 1), by definition of hyperbolic units
 ```
