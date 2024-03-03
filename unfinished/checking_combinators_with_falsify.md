@@ -50,6 +50,7 @@ Still, I wanted a bit more confidence, so I wrote a little Haskell program using
 ```{.haskell pipe="./show Main.hs"}
 module Main (main) where
 
+import Control.Monad (guard)
 import Data.Foldable
 import Data.List.NonEmpty (NonEmpty(..))
 import Data.Map.Strict (Map)
@@ -158,13 +159,12 @@ argument which decreases as we progress through a computation; when it hits
 zero, we bail out:
 
 ```{.haskell pipe="./show Main.hs"}
--- | Step the given Com to see if it's in normal form: if so, return it; else
--- | recurse on the reduced form. Gives Nothing if we hit n recursive calls.
+-- | Step the given Com until it reaches normal form. Gives Nothing if more than
+-- | n steps are required.
 reduceN :: Natural -> Com -> Maybe Com
-reduceN 0 _ = Nothing
 reduceN n c = case step c of
-  Just c'  -> reduceN (n-1) c'
   Nothing  -> pure c
+  Just c'  -> guard (n > 0) *> reduceN (n - 1) c'
 ```
 
 We'll also extend the `==`{.haskell} check that Haskell derived for us, to try
