@@ -1,6 +1,6 @@
 ---
-title: Checking combinators with `falsify`
-packages: [ 'haskellWithFalsify' ]
+title: Checking assumptions with automated tests
+packages: [ 'ghcWithFalsify' ]
 ---
 
 ```{pipe="cat > show && chmod +x show"}
