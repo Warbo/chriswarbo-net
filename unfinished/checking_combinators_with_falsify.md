@@ -14,19 +14,18 @@ echo >> "$1"
 ./show "$@" > /dev/null
 ```
 
-## Background ##
 
-I've been playing around with [SK combinatory logic]() recently as a way to
-learn [egglog](). I want to implement extensional equivalence, but that requires
-*universal quantification*, which egglog isn't suited for. My idea is to
-approximate it using symbolic computation, but my initial attempts were not
-giving correct results.
 
-This made me doubt my assumption that symbolic variables could be used in place
-of universally-quantified expressions; so I decided to check if I was wrong,
-using a familiar tool: [property-based testing](). I recently learned about
-[the falsify framework for Haskell](), and this seemed like a good way to try it
-out!
+Recently I was [playing around with the egglog
+language/database](/blog/2024-02-25-sk_logic_in_egglog_1.html), when I started
+getting results that were so unexpected and confusing that it made me question
+some of the assumptions I'd been making about the system I was modelling: a
+small programming language called
+[SK (combinatory) logic](https://doisinkidney.com/posts/2020-10-17-ski.html).
+I'm no stranger to being wrong about my code, but I had chosen SK since it's
+*very* simple and *very* familiar: implementing SK is like writing
+"hello world", something I've done countless times in all sorts of languages and
+paradigms (hence why it was an obvious choice when I wanted to learn egglog).
 
 ### Extensional equivalence '''
 
