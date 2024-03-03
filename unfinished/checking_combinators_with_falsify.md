@@ -44,7 +44,7 @@ regardless of what input we use.
 Still, I wanted a bit more confidence, so I wrote a little Haskell program using
 [the falsify package]() to look for counterexamples.
 
-<details>
+<details class="odd">
 <summary>Preamble boilerplate...</summary>
 
 ```{pipe="./show Main.hs"}
