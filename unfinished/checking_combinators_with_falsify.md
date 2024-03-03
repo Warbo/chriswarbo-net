@@ -14,6 +14,18 @@ echo >> "$1"
 ./show "$@" > /dev/null
 ```
 
+```{pipe="cat > run && chmod +x run"}
+#!/bin/sh
+set -eo pipefail
+cp Main.hs "$1"
+echo >> "$1"
+{
+  echo '```haskell'
+  tee -a "$1"
+  printf '\n```\n\n```{pipe="sh"}\ncp root/%s ./\nrunhaskell %s%s\n```\n' \
+    "$1" "$1" "$2"
+} | pandoc -f markdown -t json | panpipe
+```
 
 
 Recently I was [playing around with the egglog
@@ -85,6 +97,7 @@ in its package database:
 ```{.haskell pipe="./show Main.hs"}
 module Main (main) where
 
+import Control.Exception (assert)
 import Control.Monad (guard)
 import Data.Foldable
 import Data.List.NonEmpty (NonEmpty(..))
@@ -97,12 +110,6 @@ import qualified Test.Falsify.Generator as Gen
 import Test.Falsify.Predicate ((.$))
 import qualified Test.Falsify.Predicate as Predicate
 import qualified Test.Falsify.Range as Range
-import Test.Tasty
-import Test.Tasty.Falsify
-
-main :: IO ()
-main = defaultMain $ testGroup "Extensionality"
-    [ testProperty "Equal for symbol implies equal for any" prop_notUniversal ]
 ```
 
 </details>
@@ -230,6 +237,11 @@ test_valueIsEqualNToItself = case equalN n x x of
     _             -> False
   where (n, x) = (0, k)
 ```
+
+```{.unwrap pipe="./run test_valueIsEqualNToItself"}
+main = assert test_valueIsEqualNToItself (putStrLn "PASS")
+```
+
 ### Data generators ###
 
 We'll search for counterexamples by generating random data. `falsify` provides a
