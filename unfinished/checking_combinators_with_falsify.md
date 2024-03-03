@@ -47,8 +47,7 @@ Still, I wanted a bit more confidence, so I wrote a little Haskell program using
 <details class="odd">
 <summary>Preamble boilerplate...</summary>
 
-```{pipe="./show Main.hs"}
-#!/usr/bin/env runhaskell
+```{.haskell pipe="./show Main.hs"}
 module Main (main) where
 
 import Data.Foldable
