@@ -25,6 +25,8 @@ with rec {
     # Avoids depending on GTK, Gnome, etc.
     coqNoIde = coq.override { buildIde = false; };
 
+    ghcWithFalsify = haskellPackages.ghcWithPackages (h: [ h.falsify ]);
+
     ghcWithQuickCheck =
       haskellPackages.ghcWithPackages (h: [ h.QuickCheck h.tasty-quickcheck ]);
 
