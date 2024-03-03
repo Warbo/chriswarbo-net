@@ -342,6 +342,46 @@ a counterexample to show us why:
 main = run prop_equalNIsReflexive (pair genNat genCom)
 ```
 
+The precise counterexample `falsify` finds varies depending on the random seed,
+but they'll all have the following in common: the fuel will be `0`{.haskell},
+whilst the `Com` expression will not be in normal form. For example, it may
+produce `KS(SS)` (the Haskell value `App (App k s) (App s s)`{.haskell}).
+Since that applies `K` to two values, it can be reduced to the first (`S`) in
+one step. The value `KS(SS)` *is* equal to itself (as we expect), but it
+requires more than `0`{.haskell} steps to normalise; hence claiming to hold for
+*any* number of steps (i.e. universal quantification) was incorrect.
+
+We could alter our claim to *existentially* quantify the number of steps: that
+for any SK expression `x`{.haskell}, there is *some* value of `n`{.haskell}
+where `equalN n x x` holds. However, that is also false, since there are
+infinite loops which have no normal form. There is no way to bound the required
+value of `n`{.haskell} (as a function of `x`{.haskell}), since it grows [faster
+than any computable function](https://en.wikipedia.org/wiki/Busy_beaver)!
+
+The correct way to fix our claim is to keep both universal quantifiers, but add
+two negations to our proposition: instead of claiming every expression is equal
+to itself, we claim that *no* expression is *unequal* to itself:
+
+```{.haskell pipe="./show Main.hs"}
+prop_noComUnequalsItself (n, x) = case equalN n x x of
+  Just (Right _) -> False
+  _              -> True
+```
+
+```{.unwrap pipe="./run prop_noComUnequalsItself"}
+main = run prop_noComUnequalsItself (pair genNat genCom)
+```
+
+You may have learned in school that [double-negatives are
+redundant](https://en.wikipedia.org/wiki/Double_negation_elimination): that
+anything "not false" must be "true" (the
+[law of the excluded middle](https://en.wikipedia.org/wiki/Law_of_excluded_middle)).
+However, we're not dealing with the true/false ideals of
+[classical logic](https://en.wikipedia.org/wiki/Classical_logic), which ignore
+computation and its associated undecidability. All we have are the more
+pragmatic falsified/unfalsified results of a property checker, where there are
+non-excluded middles such as "don't know", "timed out" and "gave up"!
+
 ```{.haskell pipe="./show Main.hs"}
 -- | Like genComN, but reduces its outputs to normal form. The fuel
 -- | bounds the size of the initial expression (before it's reduced), and
