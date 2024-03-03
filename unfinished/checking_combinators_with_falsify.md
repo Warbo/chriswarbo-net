@@ -171,13 +171,15 @@ We'll also extend the `==`{.haskell} check that Haskell derived for us, to try
 normalising the given expressions first:
 
 ```{.haskell pipe="./show Main.hs"}
--- | Check whether two Com values are equal, after normalising for n steps. When
--- | their normal forms match it's returned as 'Just (Left _)'; unequal normal
--- | forms returned in 'Just (Right (_, _))'; Nothing if they didn't normalise.
-equalN n x y = case (reduceN n x, reduceN n y) of
-  (Just x', Just y') | x' == y'  -> Just (Left x')         -- Both equal
-  (Just x', Just y') | otherwise -> Just (Right (x', y'))  -- Distinct values
-  _                              -> Nothing                -- Timeout
+-- | Combines a pair of individual results into an individual pair result.
+pair :: Applicative f => f a -> f b -> f (a, b)
+pair x y = (,) <$> x <*> y
+
+-- | Try normalising the given Com values for the given number of steps. If the
+-- | results are == return it in Left; otherwise return both in Right.
+equalN :: Natural -> Com -> Com -> Maybe (Either Com (Com, Com))
+equalN n x y = choose <$> pair (reduceN n x) (reduceN n y)
+  where choose (x', y') = if x' == y' then Left x' else Right (x', y')
 ```
 
 ### Data generators ###
