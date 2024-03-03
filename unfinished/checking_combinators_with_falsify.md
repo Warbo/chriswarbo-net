@@ -242,12 +242,41 @@ test_valueIsEqualNToItself = case equalN n x x of
 main = assert test_valueIsEqualNToItself (putStrLn "PASS")
 ```
 
+Yet this is is a bit contrived. We really we want to assert that *every* value
+is `equalN`{.haskell} to itself (we say `equalN`{.haskell} is
+[reflexive](https://en.wikipedia.org/wiki/Reflexive_relation)). Talking about
+"every value" is known as [universal
+quantification](https://en.wikipedia.org/wiki/Universal_quantification), and
+universally-quantified assertions are called "properties". We can represent such
+properties as *functions*, which take their quantified variables as arguments:
+
+```{.haskell pipe="./show Main.hs"}
+prop_equalNIsReflexive (n, x) = case equalN n x x of
+  Just (Left _) -> True
+  _             -> False
+```
+
+Properties are a *specification* for our software which is useful for many tasks
+including documentation, verification, and testing. To perform such
+property-based testing, we give our properties to a "property checker" which
+searches for *counterexamples*: argument values which cause the assertion to
+fail. If no counterexample can be found, the test passes. Search techniques
+range from [simple enumeration](https://hackage.haskell.org/package/smallcheck)
+all the way up to [sophisticated AI
+algorithms](https://en.wikipedia.org/wiki/American_Fuzzy_Lop_(software)).
+Haskell has many property checkers, beginning with the wonderful
+[QuickCheck package](https://hackage.haskell.org/package/QuickCheck). We'll use
+the state-of-the-art for 2024, which is
+[falsify](https://hackage.haskell.org/package/falsify).
+
 ### Data generators ###
 
-We'll search for counterexamples by generating random data. `falsify` provides a
-useful `Range` type for picking random numbers, but it's slightly incompatible
-with `Natural` (since the former requires fixnums and the latter is a bignum).
-The following generator provides the necessary conversions:
+`falsify` chooses argument values *randomly* from a given "generator", with the
+Haskell type `Gen a`{.haskell} representing a generator for values of some type
+`a`{.haskell}. These are usually written as combinations of other generators,
+ultimately taking fixnums from a particular `Range`{.haskell}. For example, the
+following generator for `Natural` is based on `Gen.inRange`{.haskell} (with a
+few type conversions, since `Natural`{.haskell} is a bignum not a fixnum):
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Adapts falsify's Range to work for Natural numbers
@@ -256,10 +285,10 @@ natRange (lo, hi) = mkNatural . pure <$>
   Gen.inRange (Range.between (fromIntegral lo, fromIntegral hi))
 ```
 
-We'll generate `Com` expressions using a "fuel" parameter, which gets divided
-(*unevenly*) between recursive calls for the children of an `App`. Once the
-fuel gets too low, we choose an `S` or `K` instead. Note that we won't generate
-any other "base" combinators, and in particular we will never generate `v`!
+We'll generate `Com`{.haskell} values using the same "fuel" trick as before: to
+generate a value with `App`{.haskell} we need to call ourselves recursively
+*twice*, so we divide up the fuel (at random) between those calls. Once the fuel
+gets too low to divide, we choose between `S` and `K` instead:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Generate a Com, with (roughly) the given number of leaves
@@ -271,12 +300,12 @@ genComN n         = do
 ```
 
 This "dividing of fuel" approach is my preferred way to generate recursive
-datastructures, which I've used in falsify, QuickCheck, ScalaCheck, Hypothesis,
-etc.. This is because it gives control over the rough "size" of the output. In
-contrast, naïve recursion without a "fuel" parameter produces outputs of
-*exponential* size: either blowing up memory (if `App` is likely to be chosen)
-or being limited to a handful of tiny values (if `App` is unlikely to be
-chosen).
+datastructures, which I've used in `falsify`, `QuickCheck`, `ScalaCheck`,
+`Hypothesis`, etc. because it gives control over the rough "size" of generated
+values. In contrast, naïve recursion without a "fuel" parameter generates values
+of *exponential* size: either blowing up memory (if recursive calls like
+`App`{.haskell} are likely to be chosen) or being limited to a handful of tiny
+values (if recursive calls are unlikely to be chosen).
 
 We won't actually use this generator directly, since it can produce `Com` values
 which aren't in normal form (or which *don't have* a normal form). Instead, the
