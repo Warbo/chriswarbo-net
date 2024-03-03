@@ -27,6 +27,10 @@ echo >> "$1"
 } | pandoc -f markdown -t json | panpipe
 ```
 
+```{pipe="cat > fail && chmod +x fail"}
+#!/bin/sh
+./run "$@" ' 2>&1 && exit 1 || true'
+```
 
 Recently I was [playing around with the egglog
 language/database](/blog/2024-02-25-sk_logic_in_egglog_1.html), when I started
@@ -106,7 +110,9 @@ import qualified Data.Map.Strict as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 import GHC.Natural (Natural, mkNatural)
+import Test.Falsify.Generator (Gen)
 import qualified Test.Falsify.Generator as Gen
+import Test.Falsify.Interactive (shrink)
 import Test.Falsify.Predicate ((.$))
 import qualified Test.Falsify.Predicate as Predicate
 import qualified Test.Falsify.Range as Range
@@ -281,8 +287,12 @@ few type conversions, since `Natural`{.haskell} is a bignum not a fixnum):
 ```{.haskell pipe="./show Main.hs"}
 -- | Adapts falsify's Range to work for Natural numbers
 natRange :: (Natural, Natural) -> Gen Natural
-natRange (lo, hi) = mkNatural . pure <$>
-  Gen.inRange (Range.between (fromIntegral lo, fromIntegral hi))
+natRange (lo, hi) = do
+  n <- Gen.inRange (Range.between (fromIntegral lo, fromIntegral hi))
+  return (mkNatural [n])
+
+-- | Generates (relatively small) Natural numbers
+genNat = natRange (0, 20)
 ```
 
 We'll generate `Com`{.haskell} values using the same "fuel" trick as before: to
@@ -293,10 +303,13 @@ gets too low to divide, we choose between `S` and `K` instead:
 ```{.haskell pipe="./show Main.hs"}
 -- | Generate a Com, with (roughly) the given number of leaves
 genComN :: Natural -> Gen Com
-genComN n | n < 2 = Gen.oneof (pure s :| [pure k])
-genComN n         = do
-  left <- natRange (1, n - 1)
-  App <$> genComN left <*> genComN (n - left)
+genComN size | size < 2 = Gen.oneof (pure s :| [pure k])
+genComN size            = do
+  left <- natRange (1, size - 1)
+  App <$> genComN left <*> genComN (size - left)
+
+-- | Generate a Com with a relatively small number of leaves
+genCom = genNat >>= genComN
 ```
 
 This "dividing of fuel" approach is my preferred way to generate recursive
@@ -307,19 +320,36 @@ of *exponential* size: either blowing up memory (if recursive calls like
 `App`{.haskell} are likely to be chosen) or being limited to a handful of tiny
 values (if recursive calls are unlikely to be chosen).
 
-We won't actually use this generator directly, since it can produce `Com` values
-which aren't in normal form (or which *don't have* a normal form). Instead, the
-following generator will attempt to normalise the results of `genComN`, and
-retry if it finds one that times out:
+Normally we would plug `falsify` generators into properties using Haskell's
+`tasty` test framework, but we'll be a bit more direct with the following
+function:
+
+```{.haskell pipe="./show Main.hs"}
+-- | Prints "PASS" if 'prop' holds for inputs sampled from 'gen'; otherwise
+-- | prints a counterexample and fails.
+run :: Show a => (a -> Bool) -> Gen a -> IO ()
+run prop gen = shrink prop gen >>= maybe (putStrLn "PASS") abort
+  where abort counterexample = fail ("FAIL: " ++ show counterexample)
+```
+
+### Included middles ###
+
+The observant among you may have noticed that the property
+`prop_equalNIsReflexive`{.haskell} is in fact **false**! `falsify` can generate
+a counterexample to show us why:
+
+```{.unwrap pipe="./fail prop_equalNIsReflexive"}
+main = run prop_equalNIsReflexive (pair genNat genCom)
+```
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Like genComN, but reduces its outputs to normal form. The fuel
--- | is the size of the generated expression, and (arbitrarily) half
--- | of the attempted normalisation steps.
+-- | bounds the size of the initial expression (before it's reduced), and
+-- | the number of steps to attempt when normalising.
 genNormalN :: Natural -> Gen Com
 genNormalN fuel = do
   c <- natRange (0, fuel) >>= genComN
-  case reduceN (2 * fuel) c of
+  case reduceN fuel c of
     Just c' -> pure c'
     Nothing -> genNormalN fuel
 ```
@@ -540,10 +570,6 @@ Augmenting the above with `collect` shows reasonable statistics, for example:
    against a reasonable amount of example inputs.
 
 ## Results ##
-
-```{pipe="sh"}
-./Main.hs
-```
 
 ## Conclusion ##
 
