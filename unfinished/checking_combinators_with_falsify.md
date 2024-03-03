@@ -27,22 +27,11 @@ I'm no stranger to being wrong about my code, but I had chosen SK since it's
 "hello world", something I've done countless times in all sorts of languages and
 paradigms (hence why it was an obvious choice when I wanted to learn egglog).
 
-### Extensional equivalence '''
 
-I was *pretty sure* that the leap from "equal on an unspecified symbol" to
-"equal on all possible inputs" is justified, since the symbolic input itself
-cannot contribute to the reduction/computation of the result. So, however those
-two results end up equal, it does not depend on that input, and hence it holds
-regardless of what input we use.
 
-### Symbolic computation ###
 
-### Property-based testing ###
+## The setup ##
 
-## Implementation ##
-
-Still, I wanted a bit more confidence, so I wrote a little Haskell program using
-[the falsify package]() to look for counterexamples.
 
 <details class="odd">
 <summary>Preamble boilerplate...</summary>
@@ -182,6 +171,19 @@ equalN n x y = choose <$> pair (reduceN n x) (reduceN n y)
   where choose (x', y') = if x' == y' then Left x' else Right (x', y')
 ```
 
+## Property-based testing ##
+
+Let's test this `equalN`{.haskell} function, to see whether it actually behaves
+in the way our theory of SK predicts it should. We could start by writing *unit
+tests*, but those are limited to [existential quantification](); for example, we
+can assert that *some* value is `equalN`{.haskell} to itself:
+
+```{.haskell pipe="./show Main.hs"}
+test_valueIsEqualNToItself = case equalN n x x of
+    Just (Left _) -> True
+    _             -> False
+  where (n, x) = (0, k)
+```
 ### Data generators ###
 
 We'll search for counterexamples by generating random data. `falsify` provides a
