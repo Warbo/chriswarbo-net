@@ -27,14 +27,60 @@ I'm no stranger to being wrong about my code, but I had chosen SK since it's
 "hello world", something I've done countless times in all sorts of languages and
 paradigms (hence why it was an obvious choice when I wanted to learn egglog).
 
+It only took a few minutes to learn enough syntax to make a working interpreter,
+and not much longer to try out some different types and representations (indeed,
+a more complicated form of combinatory logic even appears in
+[egglog's `examples/`
+folder](https://github.com/egraphs-good/egglog/blob/main/tests/combinators.egg)!).
+However, an innocuous-looking one-line extension brought the whole thing
+crashing down: all structure vanished and every term collapsed into one big
+blob, where everything equalled everything else (**note for non-logicians:**
+That's [not good](https://en.wikipedia.org/wiki/Principle_of_explosion)!).
 
+Despite several rewrites, various different encodings, and much scouring of
+[egglog's Rust
+source](https://github.com/egraphs-good/egglog/blob/main/src/ast/mod.rs), I kept
+running into the same behaviour. This made me seriously doubt my understanding
+of free variables. If I could spend years immersed in the worlds of mathematics,
+computer science, post-graduate academia, and software development; yet fail to
+grasp such a fundamental aspect in all that time; then what *else* might I be
+wrong about? Am I a complete fraud?
 
+Thankfully I also trained as a physicist, so I know what to do when theoretical
+understanding goes awry: **experiment**! In software engineering we call our
+theories "libraries", and the experiments which ground them in real-world
+observations are called "tests". I decided to take a break from egglog to
+thoroughly test the assumptions I was making; this time in the more familiar
+context of Haskell, using my favourite hammer: [property-based
+testing](https://increment.com/testing/in-praise-of-property-based-testing/).
+This would also let me try out the new
+[falsify framework](https://hackage.haskell.org/package/falsify), which
+[I've blogged about before](/blog/2024-01-19-lazy_test_generators.html).
 
 ## The setup ##
 
+I'll explain some of this jargon below, but in short: that problematic line of
+code was my attempt to implement
+[extensional equality](https://en.wikipedia.org/wiki/Extensionality); the idea
+that if two things always behave the same then they are equal. To specify what
+"always" means, we need some notion of [universal
+quantification](https://en.wikipedia.org/wiki/Universal_quantification). That
+doesn't quite fit into the formal system of egglog, so my idea was to
+*approximate* universally-quantified variables using
+[symbolic execution](https://en.wikipedia.org/wiki/Symbolic_execution). This
+*should* be a conservative approach: never mistakenly claiming two things to be
+equal, but also failing to spot many real equalities. Instead, it seemed to do
+the extreme opposite: *always* claiming that *everything* is equal!
 
 <details class="odd">
 <summary>Preamble boilerplate...</summary>
+
+This page defines the entire contents of a test script using
+[active code](/projects/activecode). For more details, see [this page's Markdown
+source](/git/chriswarbo-net/git/branches/master/unfinished/checking_combinators_with_falsify.html).
+
+Here's the initial boilerplate for the script; it just needs GHC with `falsify`
+in its package database:
 
 ```{.haskell pipe="./show Main.hs"}
 module Main (main) where
