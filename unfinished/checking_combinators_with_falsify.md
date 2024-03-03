@@ -398,14 +398,14 @@ both *flaky* and, when it does work, it doesn't give us much *confidence*. These
 problems come from the underlying statistics, and are evident in output like
 `19 successful tests (discarded 521)`:
 
- - It's quite unlikely to generate suitable values for `f` and `g`, which
-   just-so-happen to reduce `v` to the same value. Hence all of those discarded
-   runs. The test harness will give up if too many runs are discarded, which
-   makes the test flaky.
+ - It's quite unlikely to generate suitable values for `f`{.haskell} and
+   `g`{.haskell}, which just-so-happen to reduce `v`{.haskell} to the same
+   value. Hence all of those discarded runs. The test harness will give up if
+   too many runs are discarded, which makes the test flaky.
  - When we *do* generate a pair of suitable values, they are often ones that
-   were already tested in a prior run. For example, using `collect` to gather
-   statistics about suitable values shows them to be `K` 16% of the time and
-   `S` 11% of the time (this varies between test invocations). This wastes
+   were already tested in a prior run. For example, using `collect`{.haskell} to
+   gather statistics about suitable values shows them to be `K` 16% of the time
+   and `S` 11% of the time (this varies between test invocations). This wastes
    resources and makes the "successful tests" number misleadingly inflated.
  - When we *do* happen to generate a successful pair of values, we're only
    checking them on a *single* argument, which isn't very thorough.
@@ -418,14 +418,15 @@ subject our assumption to a *much* more thorough barrage of checks.
 
 #### Smarter generators to avoid discarding ####
 
-The pattern-match in `prop_simplisticTest` will `discard` the test unless very
-specific requirements are met. One is that `f /= g` (i.e. `f` and `g` should not
-be equal). Discarding an entire test run is a pretty wasteful way of ensuring
-this precondition: especially since we *already have* the value of `f` when we
-generate `g`! Here's a smarter generator, which keeps retrying until it makes a
-value that's different from the given argument:
+The pattern-match in `prop_simplisticTest`{.haskell} will `discard`{.haskell}
+the test unless very specific requirements are met. One is that
+`f /= g`{.haskell} (i.e. `f`{.haskell} and `g`{.haskell} should not be
+equal). Discarding an entire test run is a pretty wasteful way of ensuring this
+precondition: especially since we *already have* the value of `f`{.haskell} when
+we generate `g`{.haskell}! Here's a smarter generator, which keeps retrying
+until it makes a value that's different from the given argument:
 
-```{pipe="./show Main.hs"}
+```{.haskell pipe="./show Main.hs"}
 -- | Generate a Com value that is not equal to the given argument.
 genUnequal :: Com -> Gen Com
 genUnequal x = do
@@ -440,33 +441,35 @@ technique to be aware of when writing property-based tests.
 
 #### Generate *collections* to increase chance of collisions ####
 
-The real problem is that a pair of values `f` and `g` are very unlikely to be
-related in the way we need (that they reduce the input `v` to the same value).
-However, the structure of our test is quite wasteful of the opportunities it
-has: when a test run is discarded, we *also* discard the generated values of `f`
-and `g` values; let's call them `f1` and `g1`. On the next iteration we generate
-a fresh pair, say `f2` and `g2`; but we only compare those new values to each
-other, and ignore the discarded values.
+The real problem is that a pair of values `f`{.haskell} and `g`{.haskell} are
+very unlikely to be related in the way we need (that they reduce the input
+`v`{.haskell} to the same value).  However, the structure of our test is quite
+wasteful of the opportunities it has: when a test run is discarded, we *also*
+discard the generated values of `f`{.haskell} and `g`{.haskell} values; let's
+call them `f1`{.haskell} and `g1`{.haskell}. On the next iteration we generate a
+fresh pair, say `f2`{.haskell} and `g2`{.haskell}; but we only compare those new
+values to each other, and ignore the discarded values.
 
-What if we *also* compared `f2` with `f1`, and `f2` with `g1`, and `g2` with
-`f1` and `g2` with `g1`? There are a total of *six* possible relationships
-between the values we've generated; but we're currently only checking ⅓ of them.
-If we also discard that second pair and generate a fresh `f3` and `g3`, that's
-*fifteen* possible relationships between the values we've generated, of which
-we're only checking ⅕. Indeed, as we generate more and more values the number of
-possible pairings follows
+What if we *also* compared `f2`{.haskell} with `f1`{.haskell}, and
+`f2`{.haskell} with `g1`{.haskell}, and `g2`{.haskell} with `f1`{.haskell} and
+`g2`{.haskell} with `g1`{.haskell}? There are a total of *six* possible
+relationships between the values we've generated; but we're currently only
+checking ⅓ of them.  If we also discard that second pair and generate a fresh
+`f3`{.haskell} and `g3`{.haskell}, that's *fifteen* possible relationships
+between the values we've generated, of which we're only checking ⅕. Indeed, as
+we generate more and more values the number of possible pairings follows
 [sequence A000217 of the OEIS](https://oeis.org/A000217/graph). Hence the lesson
 is *not* to generate individual pairs of values; but to *accumulate* values as
 they're generated, so later values can be compared against *all* prior ones.
 
-The first step is to generalise the definition of `genUnequal` to take a `Set`
-of arbitrarily-many values which our generated `Com` should be distinct from.
-(Note that this may get stuck if the `Set` already contains all values that can
-be generated from the chosen amount of `fuel`; since the number of such values
-grows exponentially with the amount of fuel, we're unlikely to hit this problem
-except for very small cases)
+The first step is to generalise the definition of `genUnequal`{.haskell} to take
+a `Set`{.haskell} of arbitrarily-many values which our generated `Com`{.haskell}
+should be distinct from.  (Note that this may get stuck if the `Set`{.haskell}
+already contains all values that can be generated from the chosen amount of
+`fuel`{.haskell}; since the number of such values grows exponentially with the
+amount of fuel, we're unlikely to hit this problem except for very small cases)
 
-```{pipe="./show Main.hs"}
+```{.haskell pipe="./show Main.hs"}
 -- | Generate a Com, in normal form, which does not appear in the given Set
 genDistinctFrom :: Natural -> Set Com -> Gen Com
 genDistinctFrom fuel cs = do
@@ -483,12 +486,13 @@ relationships explains the so-called ["birthday paradox"](), and is how
 #### Keep generating until we find what we need ####
 
 We can make use of the above generator in the following, which produces what we
-originally wanted: pairs of `Com` values which reduce `v` to the same thing.
-Since we don't know, up front, which of our many generated values will end up in
-such pairs, we put them all in a big `Map`; keyed on the value they reduce `v`
-to (so it only has to calculated once per value).
+originally wanted: pairs of `Com`{.haskell} values which reduce `v`{.haskell} to
+the same thing.  Since we don't know, up front, which of our many generated
+values will end up in such pairs, we put them all in a big `Map`{.haskell};
+keyed on the value they reduce `v`{.haskell} to (so it only has to calculated
+once per value).
 
-```{pipe="./show Main.hs"}
+```{.haskell pipe="./show Main.hs"}
 -- | Generate distinct, normal Com values which have equal normal forms when
 -- | applied to the symbolic input 'v'. The result contains two parts: the first
 -- | groups together Com values 'f' based on the normal form of 'App f v'; only
@@ -516,15 +520,15 @@ genEqual fuel = go Map.empty
 ```
 
 Notice that the unpaired values aren't discarded at the end: instead, they're
-all merged into one big `Set`, which we use for the final part.
+all merged into one big `Set`{.haskell}, which we use for the final part.
 
 #### Checking on more than one input ####
 
 The final problem we can solve is to check the behaviour of each pair on *many*
 values, rather than just one. Thankfully, we've *already generated* many values!
-That's why we return the `Set` of all values we generated in the course of
-finding suitable pairs. Our test can loop through all those values, using them
-as inputs to each related pair and check whether they match.
+That's why we return the `Set`{.haskell} of all values we generated in the
+course of finding suitable pairs. Our test can loop through all those values,
+using them as inputs to each related pair and check whether they match.
 
 ### Combining all these improvements ###
 
@@ -550,21 +554,22 @@ assertNoDiff fuel all equal =
         checkPair (f, g) = traverse_ (assertEqualOn fuel f g) all
 ```
 
-This test is more reliable than the first, since it does not `discard` any runs.
-It can take longer, e.g. on the order of minutes rather than seconds (at least
-for the constants above), since each of the 100 runs is generating and checking
-many more values. Thankfully, we know that this effort is being spent on useful
-work, rather than duplicate or discarded results.
+This test is more reliable than the first, since it does not `discard`{.haskell}
+any runs.  It can take longer, e.g. on the order of minutes rather than seconds
+(at least for the constants above), since each of the 100 runs is generating and
+checking many more values. Thankfully, we know that this effort is being spent
+on useful work, rather than duplicate or discarded results.
 
-Augmenting the above with `collect` shows reasonable statistics, for example:
+Augmenting the above with `collect`{.haskell} shows reasonable statistics, for
+example:
 
  - Equality checks do not timeout much (e.g. happening in only around 6% of
    runs). In contrast, *every* run contains some successful equality checks.
  - There is a reasonable spread of group sizes (the number of generated values
-   which reduce `v` to the same normal form). Most runs (around 80%) found
-   groups of size two (i.e. an individual pair); around 25% found groups of size
-   three; ~20% of size four; and so on, up to sizes around 15. Larger groups
-   give rise to more pairwise relationships we can check.
+   which reduce `v`{.haskell} to the same normal form). Most runs (around 80%)
+   found groups of size two (i.e. an individual pair); around 25% found groups
+   of size three; ~20% of size four; and so on, up to sizes around 15. Larger
+   groups give rise to more pairwise relationships we can check.
  - The total number of generated terms accumulated per run is roughly uniform,
    from around 15 to around 115. Hence each candidate pair is being checked
    against a reasonable amount of example inputs.
