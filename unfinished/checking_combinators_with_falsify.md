@@ -71,7 +71,7 @@ main = defaultMain $ testGroup "Extensionality"
 
 </details>
 
-### Implementing combinatory logic ###
+## Combinatory logic ##
 
 We represent combinators in the same way as in egglog. The `deriving` clause
 asks Haskell to automatically implement some useful interfaces:
@@ -87,15 +87,15 @@ asks Haskell to automatically implement some useful interfaces:
 data Com = C Char | App Com Com deriving (Eq, Ord, Show)
 ```
 
-Here are our `S` and `K` combinators (Haskell requires the initial letter of a
-value name to be lowercase). The `v` combinator will be our "uninterpreted
-symbol":
+We use the `C`{.haskell} constructor to represent symbols, distinguished by a
+`Char`{.haskell} value like `'S'`{.haskell} or `'K'`{.haskell}:
 
 ```{.haskell pipe="./show Main.hs"}
-s, k, v :: Com
+-- | Our "base" combinators. Haskell requires the initial letter of a value name
+-- | to be lowercase.
+s, k :: Com
 s = C 'S'
 k = C 'K'
-v = C 'V'  -- Represents an unknown variable
 ```
 
 Here are the reduction rules for `S` and `K`. Unlike egglog, we have to
