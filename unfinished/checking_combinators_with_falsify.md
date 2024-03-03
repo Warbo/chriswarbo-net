@@ -73,18 +73,15 @@ main = defaultMain $ testGroup "Extensionality"
 
 ## Combinatory logic ##
 
-We represent combinators in the same way as in egglog. The `deriving` clause
-asks Haskell to automatically implement some useful interfaces:
-
- - `Eq` provides the `==` function. The auto-generated implementation will only
-   check whether two `Com` values are identical.
- - `Ord` provides comparisons like `<`. Haskell will generate a lexicographic
-   implementation for us, but the details aren't important; having *some*
-   implementation of `Ord` lets us use efficient `Set` datastructures.
- - `Show` provides the `show` function, for printing any counterexamples.
+Combinatory logic (which I'll shamelessly abbreviate as "SK") is a particularly
+simple programming language, which can be written entirely with two symbols,
+traditionally called `S` and `K`, along with parentheses for grouping symbols
+together. We'll represent SK expressions using the following Haskell datatype
+which we call `Com`{.haskell} (this representation also matches my definition in
+egglog):
 
 ```{.haskell pipe="./show Main.hs"}
-data Com = C Char | App Com Com deriving (Eq, Ord, Show)
+data Com = C Char | App Com Com deriving (Eq, Ord)
 ```
 
 We use the `C`{.haskell} constructor to represent symbols, distinguished by a
@@ -98,14 +95,36 @@ s = C 'S'
 k = C 'K'
 ```
 
-Here are the reduction rules for `S` and `K`. Unlike egglog, we have to
-explicitly recurse into children of an `App` too. Notice that *any* `Com` value
-can be passed around and rearranged, via the Haskell variables `x`, `y`, `z`,
-`x'` and `y'`; but only `App`, `C 'K'` and `C 'S'` have any effect on the
-output.
+We can group expressions together two at a time using `App`{.haskell}: this is a
+little cumbersome, compared to e.g. implementing `s`{.haskell} and `k`{.haskell}
+as Haskell functions, but it gives us more control over their evaluation (e.g.
+to bound their recurive calls).
 
-We use `Maybe` to indicate whether any reduction actually took place, which lets
-us know when an expression has reached a normal form:
+The `deriving`{.haskell} clause asks Haskell to automatically implement some
+useful interfaces:
+
+ - `Eq`{.haskell} provides the `==`{.haskell} function. The auto-generated
+   implementation will check whether two `Com`{.haskell} values are identical
+   (same structure and same `Char`{.haskell} data).
+ - `Ord`{.haskell} provides comparisons like `<`{.haskell}. Haskell will
+   generate a lexicographic implementation for us, but the details aren't
+   important. Having *some* implementation of `Ord`{.haskell} lets us use
+   efficient `Set`{.haskell} datastructures.
+
+We'll implement the `Show`{.haskell} interface ourselves, for more compact
+output:
+
+```{.haskell pipe="./show Main.hs"}
+instance Show Com where
+  show (C c)             = [c]
+  show (App x (App y z)) = show x ++ "(" ++ show (App y z) ++ ")"
+  show (App x y)         = show x ++ show y
+```
+
+We can "run" an SK program/expression using this `step`{.haskell} function,
+which looks for a certain pattern involving a `K`, or a certain pattern
+involving an `S`. Remarkably, these two transformations make SK a complete,
+universal programming language!
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Attempt to reduce a K or S combinator, or one child of an App. Nothing if
@@ -120,10 +139,23 @@ step (App x y) = case (step x, step y) of
 step _ = Nothing
 ```
 
-Since SK logic is a universal programming language, we have to account for
-infinite loops, long-running computations, exponential memory usage, etc. We do
-this by parameterising various functions with "fuel": a `Natural` number which
-decrements whenever we recurse, and cuts-off the computation when it hits zero:
+There are a few things to note about this implementation. Unlike in egglog, we
+have to explicitly tell Haskell to recursively `step`{.haskell} the children of
+an `App`{.haskell} constructor. We also use `Maybe`{.haskell} to indicate
+whether any reduction actually took place: this tells us immediately if an
+expression has reached a normal form, without having to compare the input to the
+output. Finally, notice that *any* `Com`{.haskell} value can be passed around
+and rearranged, via the Haskell variables `x`{.haskell}, `y`{.haskell},
+`z`{.haskell}, `x'`{.haskell} and `y'`{.haskell}; but only `App`{.haskell}, `C
+'K'`{.haskell} and `C 'S'`{.haskell} have any effect on the output (this will be
+important for our symbolic execution!).
+
+Next we'll need to *iterate* the `step`{.haskell} function, but that's tricky
+since SK is a universal programming language, so we have to account for infinite
+loops, long-running computations, exponential memory usage, etc. We do this by
+parameterising various functions with "fuel": a `Natural`{.haskell} number
+argument which decreases as we progress through a computation; when it hits
+zero, we bail out:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Step the given Com to see if it's in normal form: if so, return it; else
@@ -135,8 +167,8 @@ reduceN n c = case step c of
   Nothing  -> pure c
 ```
 
-We can also extend the `==` check, to try normalising the terms for a given
-number of steps and comparing the results:
+We'll also extend the `==`{.haskell} check that Haskell derived for us, to try
+normalising the given expressions first:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Check whether two Com values are equal, after normalising for n steps. When
