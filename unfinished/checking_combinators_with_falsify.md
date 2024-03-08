@@ -235,11 +235,28 @@ step c = stepK c <|> stepS c <|> a l' r' <|> a l' r <|> a l  r'
   where a        = liftA2 App
         (l , r ) = (left c    , right c   )
         (l', r') = (l >>= step, r >>= step)
--- | Step the given Com until it reaches normal form. Gives Nothing if more than
--- | n steps are required.
-reduceN :: Natural -> Com -> Maybe Com
+```
+
+```{.haskell pipe="./show Main.hs"}
+-- | Wraps Com values which are assumed to be in normal form
+newtype Normal = Normal { toCom :: Com } deriving (Eq, Ord)
+
+instance Show Normal where
+  show = show . toCom
+
+-- | Wraps the argument in Normal iff it is in normal form
+asNormal :: Com -> Maybe Normal
+asNormal c = maybe (Just (Normal c)) (const Nothing) (step c)
+```
+
+```{.haskell pipe="./show Main.hs"}
+ type Fuel = Word
+
+ -- | Step the given Com until it reaches normal form. Gives Nothing if more than
+ -- | n steps are required.
+reduceN :: Fuel -> Com -> Maybe Normal
 reduceN n c = case step c of
-  Nothing  -> pure c
+  Nothing  -> asNormal c
   Just c'  -> guard (n > 0) *> reduceN (n - 1) c'
 ```
 
