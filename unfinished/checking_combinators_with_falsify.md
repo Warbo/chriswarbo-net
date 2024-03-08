@@ -289,6 +289,11 @@ parameter:
 -- | Result of comparing two values (which may be the same)
 data Compared a = Same a | Diff a a
 
+same (Same _)   = True
+same _          = False
+diff (Diff _ _) = True
+diff _          = False
+
 -- | Uses (==) to find identical values
 comparer :: Eq a => a -> a -> Compared a
 comparer x y = if x == y then Same x else Diff x y
@@ -311,9 +316,7 @@ to itself:
 
 ```{.haskell pipe="./show Main.hs"}
 normalEqNToItself :: (Fuel, Com) -> Bool
-normalEqNToItself (n, x) = case normalEqN n x x of
-    Just (Same _) -> True
-    _             -> False
+normalEqNToItself (n, x) = maybe False same (normalEqN n x x)
 ```
 
 We can turn this predicate into a general statement by *quantifying* its
@@ -470,9 +473,7 @@ we claim that every expression is *not unequal* to itself (regardless of
 
 ```{.haskell pipe="./show Main.hs"}
 notUnnormalEqNToItself :: (Fuel, Com) -> Bool
-notUnnormalEqNToItself (n, x) = case normalEqN n x x of
-  Just (Diff _ _) -> False
-  _               -> True
+notUnnormalEqNToItself (n, x) = not (maybe False diff (normalEqN n x x))
 ```
 
 ```{.unwrap pipe="./run notUnnormalEqNToItself"}
@@ -574,9 +575,9 @@ Everything that satisfies `normalEqN`{.haskell} should also satisfy
 ```{.haskell pipe="./show Main.hs"}
 normalEqNImpliesAgreeN :: (Fuel, Com, Com, InputValues) -> Bool
 normalEqNImpliesAgreeN (n, f, g, xs) =
-  case (normalEqN n f g, agreeN n f g xs) of
-    (Just (Same _), Just (Diff _ _)) -> False
-    _                                -> True
+  case pair (normalEqN n f g) (agreeN n f g xs) of
+    Just (Same _, Diff _ _) -> False
+    _                       -> True
 ```
 
 ```{.unwrap pipe="./run normalEqNImpliesAgreeN"}
@@ -592,9 +593,8 @@ and `S(K(SK))(KK)` agree on two inputs; which we can test by asserting that they
 
 ```{.haskell pipe="./show Main.hs"}
 skNeverDisagreesWithSKSKKK :: (Fuel, InputValue, InputValue) -> Bool
-skNeverDisagreesWithSKSKKK (n, x, y) = case agreeN n f g [x, y] of
-    Just (Diff _ _) -> False
-    _               -> True
+skNeverDisagreesWithSKSKKK (n, x, y) =
+    not (maybe False diff (agreeN n f g [x, y]))
   where f = App s k
         g = App (App s (App k (App s k))) (App k k)
 ```
@@ -620,9 +620,9 @@ genComs = genFuel >>= genComsN
 -- | False iff the Com values agree on xs but not xs++ys
 agreementIsMonotonic :: (Fuel, (Com, Com), (InputValues, InputValues)) -> Bool
 agreementIsMonotonic (n, (f, g), (xs, ys)) =
-  case (agreeN n f g xs, agreeN n f g (xs ++ ys)) of
-    (Just (Same _), Just (Diff _ _)) -> False
-    _                                -> True
+  case pair (agreeN n f g xs) (agreeN n f g (xs ++ ys)) of
+    Just (Same _, Diff _ _) -> False
+    _                       -> True
 ```
 
 ```{.unwrap pipe="./run agreementIsMonotonic"}
