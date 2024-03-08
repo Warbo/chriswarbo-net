@@ -113,16 +113,19 @@ in its package database:
 ```{.haskell pipe="./show Main.hs"}
 module Main (main) where
 
+import Control.Applicative ((<|>), liftA2)
 import Control.Exception (assert)
 import Control.Monad (guard)
 import Data.Foldable
+import Data.List (inits)
 import Data.List.NonEmpty (NonEmpty(..))
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
+import Data.Maybe (catMaybes)
 import Data.Set (Set)
 import qualified Data.Set as Set
 import GHC.Natural (Natural, mkNatural)
-import Test.Falsify.Generator (Gen)
+import Test.Falsify.Generator (Gen, Tree(..))
 import qualified Test.Falsify.Generator as Gen
 import Test.Falsify.Interactive (shrink)
 import Test.Falsify.Predicate ((.$))
@@ -143,6 +146,12 @@ egglog):
 
 ```{.haskell pipe="./show Main.hs"}
 data Com = C Char | App Com Com deriving (Eq, Ord)
+
+left, right :: Com -> Maybe Com
+left  (App x _) = Just x
+left  _         = Nothing
+right (App _ y) = Just y
+right _         = Nothing
 ```
 
 We use the `C`{.haskell} constructor to represent symbols, distinguished by a
@@ -187,18 +196,6 @@ which looks for a certain pattern involving a `K`, or a certain pattern
 involving an `S`. Remarkably, these two transformations make SK a complete,
 universal programming language!
 
-```{.haskell pipe="./show Main.hs"}
--- | Attempt to reduce a K or S combinator, or one child of an App. Nothing if
--- | the argument is in normal form.
-step :: Com -> Maybe Com
-step      (App (App (C 'K') x) _)    = Just x
-step (App (App (App (C 'S') x) y) z) = Just (App (App x z) (App y z))
-step (App x y) = case (step x, step y) of
-  (Just x', _      ) -> Just (App x' y )
-  (_      , Just y') -> Just (App x  y')
-  _                  -> Nothing
-step _ = Nothing
-```
 
 There are a few things to note about this implementation. Unlike in egglog, we
 have to explicitly tell Haskell to recursively `step`{.haskell} the children of
@@ -219,6 +216,25 @@ argument which decreases as we progress through a computation; when it hits
 zero, we bail out:
 
 ```{.haskell pipe="./show Main.hs"}
+-- | Replaces Kxy with x, otherwise Nothing
+stepK :: Com -> Maybe Com
+stepK (App (App (C 'K') x) _) = Just x
+stepK _ = Nothing
+
+-- | Replaces Sxyz with xz(yz), otherwise Nothing
+stepS :: Com -> Maybe Com
+stepS (App (App (App (C 'S') x) y) z) = Just (App (App x z) (App y z))
+stepS _ = Nothing
+```
+
+```{.haskell pipe="./show Main.hs"}
+-- | Attempt to reduce a K or S combinator, or the children of an App. Nothing
+-- | if the argument is in normal form.
+step :: Com -> Maybe Com
+step c = stepK c <|> stepS c <|> a l' r' <|> a l' r <|> a l  r'
+  where a        = liftA2 App
+        (l , r ) = (left c    , right c   )
+        (l', r') = (l >>= step, r >>= step)
 -- | Step the given Com until it reaches normal form. Gives Nothing if more than
 -- | n steps are required.
 reduceN :: Natural -> Com -> Maybe Com
