@@ -1,5 +1,5 @@
 ---
-title: Checking assumptions with automated tests
+title: "SK logic in egglog: part 1½, checking assumptions with automated tests"
 packages: [ 'ghcWithFalsify' ]
 ---
 
