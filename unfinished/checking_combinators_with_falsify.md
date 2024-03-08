@@ -494,9 +494,9 @@ run prop gen = shrink prop gen >>= maybe (putStrLn "PASS") abort
 
 ### Included middles ###
 
-The observant among you may have noticed that `normalEqNToItself`{.haskell} **does
-not** hold for all argument values! `falsify` can generate a counterexample to
-show us why:
+The observant among you may have noticed that `normalEqNToItself`{.haskell}
+**does not** hold for all argument values! `falsify` can generate a
+counterexample to show us why:
 
 ```{.unwrap pipe="./fail normalEqNToItself"}
 main = run normalEqNToItself (pair genFuel genCom)
@@ -745,6 +745,46 @@ may depend on the particular `Inputs`{.haskell} it gets applied to. There's no
 way, in general, to decide whether part of an SK expression will influence its
 reduction, or whether it will end up being discarded by the `stepK`{.haskell}
 rule. Instead, we'll limit our ambitions to spotting a few simple situations.
+
+#### Symbolic agreement implies extensional equality ####
+
+Expressions which agree on symbolic inputs will agree on *all* inputs, since
+symbols do not reduce, and hence those inputs must have been irrelevant for the
+reductions which lead to the agreement. Unlike property-checking, where we rely
+on double-negatives to "fail to disprove agreement", this is real positive proof
+that expressions will *always* agree, and are hence extensionally equal.
+
+We don't need to implement this check specially, since we can reuse
+`agreeN`{.haskell}, just using symbolic values as our inputs instead of concrete
+SK expressions. The following `agreeSymN` function applies two expressions to
+more and more symbolic inputs, to see if they reduce to the same
+`Normal`{.haskell} form:
+
+```{.haskell pipe="./show Main.hs"}
+-- | All values 'C x', except s and k, for use as uninterpreted symbols
+symbols :: InputValues
+symbols = filter (/= k) . filter (/= s) . map C $ [minBound..maxBound]
+
+-- | Checks whether two Com values agree on symbolic input values. Since
+-- | agreement is monotonic, applying more inputs will find more agreements; but
+-- | it also causes more timeouts. To maximise the number of agreements found,
+-- | we try zero inputs, one input, two inputs, and so on up to the given Fuel;
+-- | hence we return a list of results. The full amount of Fuel is used when
+-- | trying to normalise each entry; those which timeout are discarded.
+agreeSymN :: Fuel -> Com -> Com -> [Compared Normal]
+agreeSymN n f g = catMaybes              -- Discard timeouts
+                . take (fromIntegral n)  -- Limit how many checks we do
+                . map (agreeN n f g)     -- Check for agreement on each prefix
+                $ inits symbols          -- Takes longer prefixes of symbols
+```
+
+We can santity check this in a few ways. It should always spot expressions which
+are normally equivalent:
+
+```{.haskell pipe="./show Main.hs"}
+normalEqNImpliesAgreeSymN :: (Fuel, Com, Com) -> Bool
+normalEqNImpliesAgreeSymN (n, x, y) = any same (agreeSymN n x y)
+```
 
 ```{.unwrap pipe="./run extensionallyEqNImpliesAgreeN"}
 main = run extensionallyEqNImpliesAgreeN (triple genCom genCom genComs)
