@@ -301,10 +301,13 @@ normalEqN n x y = comparer <$> reduceN n x <*> reduceN n y
 
 ## Property-based testing ##
 
-Let's test this `equalN`{.haskell} function, to see whether it actually behaves
-in the way our theory of SK predicts it should. We could start by writing *unit
-tests*, but those are limited to [existential quantification](); for example, we
-can assert that *some* value is `equalN`{.haskell} to itself:
+Let's test this `normalEqN`{.haskell} function, to see whether it actually behaves
+in the way our theory of SK predicts it should. For example, every equality
+relation should have the
+["reflexive property"](https://en.wikipedia.org/wiki/Reflexive_relation),
+meaning that values should be equal to themselves. The following predicate
+(function returning a boolean) checks whether its argument is `normalEqN`{.haskell}
+to itself:
 
 ```{.haskell pipe="./show Main.hs"}
 normalEqNToItself :: (Fuel, Com) -> Bool
@@ -313,25 +316,28 @@ normalEqNToItself (n, x) = case normalEqN n x x of
     _             -> False
 ```
 
+We can turn this predicate into a general statement by *quantifying* its
+argument. It's common to use [existential
+quantification](https://en.wikipedia.org/wiki/Existential_quantification), which
+asserts that *some* argument satisfies `normalEqNToItself`{.haskell}. This is the
+widely practiced "example-based" approach to automated testing. For example:
+
 ```{.unwrap pipe="./run kIsNormalEqNToItself"}
 main = assert (normalEqNToItself (0, k)) (putStrLn "PASS")
 ```
 
-Yet this is is a bit contrived. We really we want to assert that *every* value
-is `equalN`{.haskell} to itself (we say `equalN`{.haskell} is
-[reflexive](https://en.wikipedia.org/wiki/Reflexive_relation)). Talking about
-"every value" is known as [universal
-quantification](https://en.wikipedia.org/wiki/Universal_quantification), and
-universally-quantified assertions are called "properties". We can represent such
-properties as *functions*, which take their quantified variables as arguments:
+However, that isn't really what we want to say: reflexivity doesn't just apply
+to a few hand-picked examples, it means that *every argument* satisfies
+`normalEqNToItself`{.haskell}. Talking about "every argument" is [universal
+quantification](https://en.wikipedia.org/wiki/Universal_quantification).
+Universally-quantified assertions are called "properties", so this approach is
+known as property-based testing.
 
-Properties are a *specification* for our software which is useful for many tasks
-including documentation, verification, and testing. To perform such
-property-based testing, we give our properties to a "property checker" which
-searches for *counterexamples*: argument values which cause the assertion to
-fail. If no counterexample can be found, the test passes. Search techniques
-range from [simple enumeration](https://hackage.haskell.org/package/smallcheck)
-all the way up to [sophisticated AI
+To test a property, we give it to a "property checker" which searches for
+*counterexamples*: argument values which cause the assertion to fail. If no
+counterexample can be found, the test passes. Search techniques range from
+[simple enumeration](https://hackage.haskell.org/package/smallcheck) all the way
+up to [sophisticated AI
 algorithms](https://en.wikipedia.org/wiki/American_Fuzzy_Lop_(software)).
 Haskell has many property checkers, beginning with the wonderful
 [QuickCheck package](https://hackage.haskell.org/package/QuickCheck). We'll use
@@ -340,12 +346,10 @@ the state-of-the-art for 2024, which is
 
 ### Data generators ###
 
-`falsify` chooses argument values *randomly* from a given "generator", with the
-Haskell type `Gen a`{.haskell} representing a generator for values of some type
-`a`{.haskell}. These are usually written as combinations of other generators,
-ultimately taking fixnums from a particular `Range`{.haskell}. For example, the
-following generator for `Natural` is based on `Gen.inRange`{.haskell} (with a
-few type conversions, since `Natural`{.haskell} is a bignum not a fixnum):
+`falsify` searches through argument values *at random*, sampling them from a
+given "generator" with the Haskell type `Gen a`{.haskell} (for generating values
+of some type `a`{.haskell}). We can build up generators using familiar
+interfaces like `Applicative`{.haskell}, `Monad`{.haskell}, etc.
 
 ```{.haskell pipe="./show Main.hs"}
 -- Combine individual results into a single tuple result. Works for any
@@ -361,10 +365,9 @@ quad :: Applicative f => f a -> f b -> f c -> f d -> f (a, b, c, d)
 quad a b c d = (,,,) <$> a <*> b <*> c <*> d
 ```
 
-We'll generate `Com`{.haskell} values using the same "fuel" trick as before: to
-generate a value with `App`{.haskell} we need to call ourselves recursively
-*twice*, so we divide up the fuel (at random) between those calls. Once the fuel
-gets too low to divide, we choose between `S` and `K` instead:
+`falsify` also provides useful primitives to get started, such as
+`Gen.inRange`{.haskell} which samples fixnums from a `Range`{.haskell}. This is
+perfect for generating `Fuel`{.haskell}:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Generates up to a certain amount of Fuel
@@ -380,13 +383,20 @@ limit = 20
 genFuel = genFuelN limit
 ```
 
-This "dividing of fuel" approach is my preferred way to generate recursive
-datastructures, which I've used in `falsify`, `QuickCheck`, `ScalaCheck`,
-`Hypothesis`, etc. because it gives control over the rough "size" of generated
-values. In contrast, naïve recursion without a "fuel" parameter generates values
-of *exponential* size: either blowing up memory (if recursive calls like
-`App`{.haskell} are likely to be chosen) or being limited to a handful of tiny
-values (if recursive calls are unlikely to be chosen).
+Generating `Com`{.haskell} values is more tricky, since they are recursive. A
+naïve generator that simply calls itself recursively will make `Com`{.haskell}
+values of *exponential* size: either blowing up memory (if the recursive case
+`App`{.haskell} is likely to be chosen) or being limited to a handful of tiny
+values (if the recursive case is unlikely to be chosen). To generate a diverse
+spread of values, without risking out-of-memory conditions, we can use the same
+`Fuel`{.haskell} trick as above; this time dividing it up (unevenly) between
+recursive calls.
+
+This is such a useful approach that I've implemented it for `QuickCheck`,
+`ScalaCheck`, `Hypothesis`, etc. over the years. In contrast, `falsify` provides
+it out-of-the-box! The `Gen.tree`{.haskell} function generates binary
+`Tree`{.haskell} values of a given size, so we just need to transform those into
+the `Com`{.haskell} values we need:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Create a Com from a binary Tree (with unit values () at the nodes)
@@ -417,7 +427,7 @@ Normally we would plug `falsify` generators into properties using Haskell's
 function:
 
 ```{.haskell pipe="./show Main.hs"}
--- | Prints "PASS" if 'prop' holds for inputs sampled from 'gen'; otherwise
+-- | Prints "PASS" if 'prop' holds for values sampled from 'gen'; otherwise
 -- | prints a counterexample and fails.
 run :: Show a => (a -> Bool) -> Gen a -> IO ()
 run prop gen = shrink prop gen >>= maybe (putStrLn "PASS") abort
@@ -426,33 +436,37 @@ run prop gen = shrink prop gen >>= maybe (putStrLn "PASS") abort
 
 ### Included middles ###
 
-The observant among you may have noticed that the property
-`prop_equalNIsReflexive`{.haskell} is in fact **false**! `falsify` can generate
-a counterexample to show us why:
+The observant among you may have noticed that `normalEqNToItself`{.haskell} **does
+not** hold for all argument values! `falsify` can generate a counterexample to
+show us why:
 
-```{.unwrap pipe="./fail prop_equalNIsReflexive"}
-main = run prop_equalNIsReflexive (pair genNat genCom)
+```{.unwrap pipe="./fail normalEqNToItself"}
+main = run normalEqNToItself (pair genFuel genCom)
 ```
 
-The precise counterexample `falsify` finds varies depending on the random seed,
-but they'll all have the following in common: the fuel will be `0`{.haskell},
-whilst the `Com` expression will not be in normal form. For example, it may
-produce `KS(SS)` (the Haskell value `App (App k s) (App s s)`{.haskell}).
-Since that applies `K` to two values, it can be reduced to the first (`S`) in
-one step. The value `KS(SS)` *is* equal to itself (as we expect), but it
-requires more than `0`{.haskell} steps to normalise; hence claiming to hold for
-*any* number of steps (i.e. universal quantification) was incorrect.
+The precise counterexample `falsify` finds may vary depending on the random
+seed, but they'll all have the following in common: the `Fuel`{.haskell} will be
+`0`{.haskell}, whilst the `Com` expression will not be in normal form. For
+example, it may produce `KKK` (the Haskell value `App (App k k) k`{.haskell}).
+`stepK`{.haskell} will reduce that to a single `K`, so whilst the value
+`KKK` *is* equal to itself (as we expect), `normalEqN`{.haskell} will fail to show
+this for *some* `Fuel`{.haskell} parameters: in particular, when given
+`0`{.haskell} `Fuel`{.haskell}. This disproves our claim that *any* amount of
+`Fuel`{.haskell} will work.
 
-We could alter our claim to *existentially* quantify the number of steps: that
-for any SK expression `x`{.haskell}, there is *some* value of `n`{.haskell}
-where `equalN n x x` holds. However, that is also false, since there are
-infinite loops which have no normal form. There is no way to bound the required
-value of `n`{.haskell} (as a function of `x`{.haskell}), since it grows [faster
-than any computable function](https://en.wikipedia.org/wiki/Busy_beaver)!
+We could alter our claim to *existentially* quantify the amount of
+`Fuel`{.haskell}: that for any SK expression `x`{.haskell}, there is *some*
+value of `n`{.haskell} where `normalEqN n x x` holds. However, that is also false,
+since there are infinite loops which have no normal form, regardless of how much
+`Fuel`{.haskell} we use. When a normal form *does* exist, there is no way to
+bound [the amount of `Fuel`{.haskell} required to find
+it](https://en.wikipedia.org/wiki/Busy_beaver).
 
-The correct way to fix our claim is to keep both universal quantifiers, but add
-two negations to our proposition: instead of claiming every expression is equal
-to itself, we claim that *no* expression is *unequal* to itself:
+The correct way to fix our claim is to universally quantify `x`{.haskell} and
+`n`{.haskell} as before, but add two negations to our predicate: instead of
+claiming every expression is equal to itself (regardless of `Fuel`{.haskell}),
+we claim that every expression is *not unequal* to itself (regardless of
+`Fuel`{.haskell}):
 
 ```{.haskell pipe="./show Main.hs"}
 notUnnormalEqNToItself :: (Fuel, Com) -> Bool
@@ -475,10 +489,24 @@ computation and its associated undecidability. All we have are the more
 pragmatic falsified/unfalsified results of a property checker, where there are
 non-excluded middles such as "don't know", "timed out" and "gave up"!
 
+### Smarter generators ###
+
+It's usually a good idea to write simple, straightforward properties like
+`notUnnormalEqNToItself`{.haskell}, which make strong claims over a broad
+space of input values. Sometimes it's a good idea to *also* have more specific
+properties tailored to important cases. For example, the predicate
+`normalEqNToItself`{.haskell} is actually `True`{.haskell} for the
+`Normal`{.haskell} subset of `Com`{.haskell}:
+
 ```{.haskell pipe="./show Main.hs"}
 normalNormalEqNToItself :: (Fuel, Normal) -> Bool
 normalNormalEqNToItself (n, x) = normalEqNToItself (n, toCom x)
 ```
+
+Checking this requires a generator which only produces `Normal`{.haskell}
+values. That's actually much easier than our attempts to normalise values
+*inside* a property, since generators are free to discard problematic values and
+try again!
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Like genComN, but reduces its outputs to normal form. The fuel
@@ -496,8 +524,6 @@ genNormal :: Gen Normal
 genNormal = genFuel >>= genNormalN
 ```
 
-We can now plug in a "reasonable" amount of fuel, to make a simple `genCom`
-generator:
 ```{.unwrap pipe="./run normalNormalEqNToItself"}
 main = run normalNormalEqNToItself (pair genFuel genNormal)
 ```
