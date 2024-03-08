@@ -315,7 +315,7 @@ Here's a Church-encoding of booleans and if/then/else:
 
 We'll test these using the following expression:
 
-```{pipe="./show sk.egg"}
+```{.scheme pipe="./show sk.egg"}
 (let test
     (App (App (App IF (App I FALSE)) S) (App K TRUE)))
 ```
