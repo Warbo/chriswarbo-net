@@ -264,15 +264,17 @@ We'll also extend the `==`{.haskell} check that Haskell derived for us, to try
 normalising the given expressions first:
 
 ```{.haskell pipe="./show Main.hs"}
--- | Combines a pair of individual results into an individual pair result.
-pair :: Applicative f => f a -> f b -> f (a, b)
-pair x y = (,) <$> x <*> y
+-- | Result of comparing two values (which may be the same)
+data Compared a = Same a | Diff a a
+
+-- | Uses (==) to find identical values
+comparer :: Eq a => a -> a -> Compared a
+comparer x y = if x == y then Same x else Diff x y
 
 -- | Try normalising the given Com values for the given number of steps. If the
 -- | results are == return it in Left; otherwise return both in Right.
-equalN :: Natural -> Com -> Com -> Maybe (Either Com (Com, Com))
-equalN n x y = choose <$> pair (reduceN n x) (reduceN n y)
-  where choose (x', y') = if x' == y' then Left x' else Right (x', y')
+normalEqN :: Fuel -> Com -> Com -> Maybe (Compared Normal)
+normalEqN n x y = comparer <$> reduceN n x <*> reduceN n y
 ```
 
 ## Property-based testing ##
@@ -283,14 +285,14 @@ tests*, but those are limited to [existential quantification](); for example, we
 can assert that *some* value is `equalN`{.haskell} to itself:
 
 ```{.haskell pipe="./show Main.hs"}
-test_valueIsEqualNToItself = case equalN n x x of
-    Just (Left _) -> True
+normalEqNToItself :: (Fuel, Com) -> Bool
+normalEqNToItself (n, x) = case normalEqN n x x of
+    Just (Same _) -> True
     _             -> False
-  where (n, x) = (0, k)
 ```
 
-```{.unwrap pipe="./run test_valueIsEqualNToItself"}
-main = assert test_valueIsEqualNToItself (putStrLn "PASS")
+```{.unwrap pipe="./run kIsNormalEqNToItself"}
+main = assert (normalEqNToItself (0, k)) (putStrLn "PASS")
 ```
 
 Yet this is is a bit contrived. We really we want to assert that *every* value
@@ -300,12 +302,6 @@ is `equalN`{.haskell} to itself (we say `equalN`{.haskell} is
 quantification](https://en.wikipedia.org/wiki/Universal_quantification), and
 universally-quantified assertions are called "properties". We can represent such
 properties as *functions*, which take their quantified variables as arguments:
-
-```{.haskell pipe="./show Main.hs"}
-prop_equalNIsReflexive (n, x) = case equalN n x x of
-  Just (Left _) -> True
-  _             -> False
-```
 
 Properties are a *specification* for our software which is useful for many tasks
 including documentation, verification, and testing. To perform such
@@ -330,14 +326,17 @@ following generator for `Natural` is based on `Gen.inRange`{.haskell} (with a
 few type conversions, since `Natural`{.haskell} is a bignum not a fixnum):
 
 ```{.haskell pipe="./show Main.hs"}
--- | Adapts falsify's Range to work for Natural numbers
-natRange :: (Natural, Natural) -> Gen Natural
-natRange (lo, hi) = do
-  n <- Gen.inRange (Range.between (fromIntegral lo, fromIntegral hi))
-  return (mkNatural [n])
+-- Combine individual results into a single tuple result. Works for any
+-- Applicative, including Gen, Maybe, etc.
 
--- | Generates (relatively small) Natural numbers
-genNat = natRange (0, 20)
+pair :: Applicative f => f a -> f b -> f (a, b)
+pair a b = (,) <$> a <*> b
+
+triple :: Applicative f => f a -> f b -> f c -> f (a, b, c)
+triple a b c = (,,) <$> a <*> b <*> c
+
+quad :: Applicative f => f a -> f b -> f c -> f d -> f (a, b, c, d)
+quad a b c d = (,,,) <$> a <*> b <*> c <*> d
 ```
 
 We'll generate `Com`{.haskell} values using the same "fuel" trick as before: to
@@ -346,15 +345,17 @@ generate a value with `App`{.haskell} we need to call ourselves recursively
 gets too low to divide, we choose between `S` and `K` instead:
 
 ```{.haskell pipe="./show Main.hs"}
--- | Generate a Com, with (roughly) the given number of leaves
-genComN :: Natural -> Gen Com
-genComN size | size < 2 = Gen.oneof (pure s :| [pure k])
-genComN size            = do
-  left <- natRange (1, size - 1)
-  App <$> genComN left <*> genComN (size - left)
+-- | Generates up to a certain amount of Fuel
+genFuelN :: Fuel -> Gen Fuel
+genFuelN max = Gen.inRange (Range.between (0, max))
 
--- | Generate a Com with a relatively small number of leaves
-genCom = genNat >>= genComN
+-- | A reasonable default for procedures requiring Fuel. Small enough to keep
+-- | exponentially-growing terms from blowing up.
+limit :: Fuel
+limit = 20
+
+-- | Generates a (relatively small) amount of Fuel
+genFuel = genFuelN limit
 ```
 
 This "dividing of fuel" approach is my preferred way to generate recursive
@@ -364,6 +365,30 @@ values. In contrast, naïve recursion without a "fuel" parameter generates value
 of *exponential* size: either blowing up memory (if recursive calls like
 `App`{.haskell} are likely to be chosen) or being limited to a handful of tiny
 values (if recursive calls are unlikely to be chosen).
+
+```{.haskell pipe="./show Main.hs"}
+-- | Create a Com from a binary Tree (with unit values () at the nodes)
+treeToCom :: Tree () -> Com
+treeToCom t = case t of
+  -- The smallest Trees have one and two leaves. Turn them into K, since that
+  -- has the simplest step rule.
+  Leaf               -> k
+  Branch _ Leaf Leaf -> k
+
+  -- There are two Trees with three leaves. Turn those into S.
+  Branch _ Leaf (Branch _ Leaf Leaf) -> s
+  Branch _ (Branch _ Leaf Leaf) Leaf -> s
+
+  -- For larger Trees, we recurse on their children and combine using App
+  Branch _ l r -> App (treeToCom l) (treeToCom r)
+
+-- | Generate a Com, with size bounded by the given Fuel
+genComN :: Fuel -> Gen Com
+genComN n = treeToCom <$> Gen.tree (Range.between (0, n)) (pure ())
+
+-- | Generate (relatively small) Com values
+genCom = genFuel >>= genComN
+```
 
 Normally we would plug `falsify` generators into properties using Haskell's
 `tasty` test framework, but we'll be a bit more direct with the following
@@ -408,13 +433,14 @@ two negations to our proposition: instead of claiming every expression is equal
 to itself, we claim that *no* expression is *unequal* to itself:
 
 ```{.haskell pipe="./show Main.hs"}
-prop_noComUnequalsItself (n, x) = case equalN n x x of
-  Just (Right _) -> False
-  _              -> True
+notUnnormalEqNToItself :: (Fuel, Com) -> Bool
+notUnnormalEqNToItself (n, x) = case normalEqN n x x of
+  Just (Diff _ _) -> False
+  _               -> True
 ```
 
-```{.unwrap pipe="./run prop_noComUnequalsItself"}
-main = run prop_noComUnequalsItself (pair genNat genCom)
+```{.unwrap pipe="./run notUnnormalEqNToItself"}
+main = run notUnnormalEqNToItself (pair genFuel genCom)
 ```
 
 You may have learned in school that [double-negatives are
@@ -428,23 +454,34 @@ pragmatic falsified/unfalsified results of a property checker, where there are
 non-excluded middles such as "don't know", "timed out" and "gave up"!
 
 ```{.haskell pipe="./show Main.hs"}
+normalNormalEqNToItself :: (Fuel, Normal) -> Bool
+normalNormalEqNToItself (n, x) = normalEqNToItself (n, toCom x)
+```
+
+```{.haskell pipe="./show Main.hs"}
 -- | Like genComN, but reduces its outputs to normal form. The fuel
 -- | bounds the size of the initial expression (before it's reduced), and
 -- | the number of steps to attempt when normalising.
-genNormalN :: Natural -> Gen Com
+genNormalN :: Fuel -> Gen Normal
 genNormalN fuel = do
-  c <- natRange (0, fuel) >>= genComN
-  case reduceN fuel c of
-    Just c' -> pure c'
-    Nothing -> genNormalN fuel
+  c <- genComN fuel        -- Generate a Com value c
+  maybe (genNormalN fuel)  -- Retry if c didn't finish reducing
+        return             -- Return the Normal value if reduction finished
+        (reduceN fuel c)   -- Try to reduce c to a Normal value
+
+-- | Generates (relatively small) Normal values
+genNormal :: Gen Normal
+genNormal = genFuel >>= genNormalN
 ```
 
 We can now plug in a "reasonable" amount of fuel, to make a simple `genCom`
 generator:
+```{.unwrap pipe="./run normalNormalEqNToItself"}
+main = run normalNormalEqNToItself (pair genFuel genNormal)
+```
+
 
 ```{.haskell pipe="./show Main.hs"}
--- | Reasonably sized Com values
-genCom = natRange (0, 20) >>= genComN
 ```
 
 ### A simplistic first attempt ###
