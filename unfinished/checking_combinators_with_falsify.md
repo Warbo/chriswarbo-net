@@ -305,10 +305,10 @@ with `Fuel`{.haskell}: a natural number argument which decreases as we progress
 through a computation; when it hits zero, we bail out:
 
 ```{.haskell pipe="./show Main.hs"}
- type Fuel = Word
+type Fuel = Word
 
- -- | Step the given Com until it reaches normal form. Gives Nothing if more than
- -- | n steps are required.
+-- | Step the given Com until it reaches normal form. Gives Nothing if more than
+-- | n steps are required.
 reduceN :: Fuel -> Com -> Maybe Normal
 reduceN n c = case step c of
   Nothing  -> asNormal c
@@ -778,12 +778,158 @@ agreeSymN n f g = catMaybes              -- Discard timeouts
                 $ inits symbols          -- Takes longer prefixes of symbols
 ```
 
-We can santity check this in a few ways. It should always spot expressions which
-are normally equivalent:
+We can sanity check this in a couple of ways. It should always spot expressions
+which are normally equivalent:
 
 ```{.haskell pipe="./show Main.hs"}
 normalEqNImpliesAgreeSymN :: (Fuel, Com, Com) -> Bool
-normalEqNImpliesAgreeSymN (n, x, y) = any same (agreeSymN n x y)
+normalEqNImpliesAgreeSymN (n, x, y) = case normalEqN n x y of
+  Just (Same _) -> any same (agreeSymN n x y)
+  _             -> True
+```
+
+```{.unwrap pipe="./run normalEqNImpliesAgreeSymN"}
+main = run normalEqNImpliesAgreeSymN (triple genFuel genCom genCom)
+```
+
+It should also be monotonic:
+
+```{.haskell pipe="./show Main.hs"}
+agreeSymNIsMonotonic :: (Fuel, Fuel, Com, Com) -> Bool
+agreeSymNIsMonotonic (n, m, x, y) =
+    case (any same smaller, any same larger) of
+      (True, False) -> False
+      _             -> True
+  where smaller = agreeSymN n       x y
+        larger  = agreeSymN (n + m) x y
+```
+
+```{.unwrap pipe="./run agreeSymNIsMonotonic"}
+main = run agreeSymNIsMonotonic (quad genFuel genFuel genCom genCom)
+```
+
+#### Different symbolic heads prove disagreement ####
+
+The head of an expression determines how it will reduce. When a symbolic input
+appears as the head, the expression's `Normal`{.haskell} form depends entirely
+on that input. Expressions with *different* symbolic inputs as their heads
+depend on separate inputs, and can hence be forced to disagree. For example, say
+`Xab` is some concrete SK expression applied to two symbolic inputs, which
+happens to reduce to `aS`; hence its result depends on the *first* input. If
+some other expression `Yab` reduces those inputs to `bS`, its result depends on
+the *second* input. We can force them to disagree on a pair of inputs, by using
+the first to control the result of `X` and the second to control the result of
+`Y`. In this case we could use input values `KS` and `KK`, which `X` will reduce
+to `S` and `Y` reduces to `K`, hence disagreeing.
+
+The following function will spot when two expressions have different symbols in
+head position:
+
+```{.haskell pipe="./show Main.hs"}
+-- | Return the head (left-most leaf) of the given Com
+headPos :: Com -> Com
+headPos (C c)     = C c
+headPos (App l r) = headPos l
+
+-- | Whether the given Com is an uninterpreted symbol used by symbolic execution
+isSym :: Com -> Bool
+isSym c@(C _) = c /= s && c /= k
+isSym _       = False
+
+-- | Whether the given Com values have distinct symbolic values in head position
+distinctSymbolicHeads :: Com -> Com -> Bool
+distinctSymbolicHeads x y = isSym hX && isSym hY && hX /= hY
+  where (hX, hY) = (headPos x, headPos y)
+```
+
+#### Different numbers of arguments prove disagreement ####
+
+Expressions whose heads are *the same* symbolic input, but applied to a
+different number of arguments, can also be forced to disagree. For example, if
+`Xab` reduces to `aSb` and `Yab` reduces to `aS`, then
+`distinctSymbolicHeads`{.haskell} can't be sure if they're different. Yet we can
+still force them to disagree, by giving them *three* inputs (`a`, `b` and `c`):
+we choose a value for `a` which consumes two arguments and reduces to the
+second, such as `SK`; we give `b` the value `Kd` (where `d` is a symbol); and we
+leave `c` symbolic. `X` and `Y` will reduce these inputs as follows:
+
+```
+X(SK)(Kd)       c    |    Y(SK)(Kd)c        | Xabc and Yabc
+  SKS(Kd)       c    |      SKS    c        | Reduced per example
+   K (Kd)(S(Kd))c    |       K     c(Sc)    | Applied S rule to each
+      Kd        c    |             c        | Applied K rule to each
+       d             |             c        | Applied K rule again to first
+```
+
+Hence `X` and `Y` can be reduced to different symbols, so we can force them to
+disagree by replacing the symbols `c` and `d` with unequal values, say `S` and
+`K`.
+
+The following `unequalArgCount`{.haskell} function will spot when two
+expressions apply a symbol to an unequal number of arguments:
+
+```{.haskell pipe="./show Main.hs"}
+-- | Split a Com value into its head and any arguments that's applied to
+headAndArgs :: Com -> (Com, [Com])
+headAndArgs x@(C _) = (x, [])
+headAndArgs (App l r) = case headAndArgs l of
+  (h, args) -> (h, args ++ [r])
+
+-- | True iff the given expressions have the same symbol in their head, but
+-- | applied to a different number of arguments.
+unequalArgCount :: Com -> Com -> Bool
+unequalArgCount x y = isSym headX
+                   && headX == headY
+                   && length argsX /= length argsY
+  where (headX, argsX) = headAndArgs x
+        (headY, argsY) = headAndArgs y
+```
+
+#### Disagreeing arguments prove disagreement ####
+
+Finally, if symbolic heads are given the same *number* of arguments, we will see
+if their *values* disagree; in which case, we can choose input values which
+propagate such disagreements to the top-level. For example, let's say `Xabc`
+reduces to `ab` and `Yabc` reduces to `ac`: these are unequal, but our
+`distinctSymbolicHeads`{.haskell} function can't tell (since their heads have
+the same symbol, `a`); and our `unequalArgCount`{.haskell} function can't tell
+(since they apply `a` to the same number of arguments, one). However, we *can*
+tell that those argument *values* are unequal (since one is `b` and the other is
+`c`, which `distinctSymbolicHeads`{.haskell} can tell are unequal).
+
+In this case we can force a disagreement between `X` and `Y` by choosing a value
+for the first input which reduces to its first argument, say `SKK`. Then
+`X(SKK)bc` reduces to `b` and `Y(SKK)bc` reduces to `c`, which we can force to
+disagree using unequal input values like `S` and `K`.
+
+The following function checks for the situation described above, using a given
+function to check whether two arguments are unequal:
+
+```{.haskell pipe="./show Main.hs"}
+-- | Whether the given Com values have matching symbols in their heads, but
+-- | applied to unequal values (determined by the given function)
+symbolGivenUnequalArgs :: (Com -> Com -> Bool) -> Com -> Com -> Bool
+symbolGivenUnequalArgs unEq x y = isSym headX
+                               && headX == headY
+                               && any id (zipWith unEq argsX argsY)
+  where (headX, argsX) = headAndArgs x
+        (headY, argsY) = headAndArgs y
+```
+
+#### Combining our disagreement provers ####
+
+We can never spot *all* disagreements, but the simple checks above can be
+combined into a single, reasonably-useful function. Not only is this easier to
+use than the individual checks, but we can also use it as the `unEq`{.haskell}
+argument of the `symbolGivenUnequalArgs`{.function}, which lets us recurse
+through the given expressions looking for disagreement at any depth!
+
+```{.haskell pipe="./show Main.hs"}
+provablyDisagree :: Com -> Com -> Bool
+provablyDisagree x y = distinctSymbolicHeads                   x y
+                    || unequalArgCount                         x y
+                    || symbolGivenUnequalArgs provablyDisagree x y
+```
 ```
 
 ```{.unwrap pipe="./run extensionallyEqNImpliesAgreeN"}
