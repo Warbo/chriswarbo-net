@@ -260,8 +260,30 @@ reduceN n c = case step c of
   Just c'  -> guard (n > 0) *> reduceN (n - 1) c'
 ```
 
-We'll also extend the `==`{.haskell} check that Haskell derived for us, to try
-normalising the given expressions first:
+### Normal equivalence ###
+
+The rules of SK are
+[confluent](https://en.wikipedia.org/wiki/Confluence_(abstract_rewriting)),
+meaning that every expression has at most one `Normal`{.haskell} form, and
+applying the reduction rules in any order, to any parts of an expression, will
+not change its `Normal`{.haskell} form or the ability to reach it using those
+rules. As a consequence, all SK expressions with the same `Normal`{.haskell}
+form are equivalent and interchangable.
+
+To see this, consider two expressions $X$ and $Y$ with the same
+`Normal`{.haskell} form $N$. Whenever $X$ occurs inside a larger expression,
+confluence allows us to replace $X$ with $N$ without affecting the overall
+result. Now imagine we instead replace $X$ with $Y$: whatever that gives us, it
+will be unaffected (thanks to confluence) if we reduce $Y$ to its
+`Normal`{.haskell} form. Since the `Normal`{.haskell} form of $Y$ is also $N$,
+and we already deduced that using $N$ is equivalent to using $X$, the result of
+using $Y$ must *also* be equivalent to using $X$. Hence any expressions with the
+same `Normal`{.haskell} form are equivalent, in the sense that they can be
+interchanged inside any expression without altering its `Normal`{.haskell} form.
+
+We'll call this relationship "`Normal`{.haskell} equivalence". Whilst it's
+undecidable in general, we can approximate it using a `Fuel`{.haskell}
+parameter:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Result of comparing two values (which may be the same)
