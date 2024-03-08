@@ -17,19 +17,31 @@ echo >> "$1"
 ```{pipe="cat > run && chmod +x run"}
 #!/bin/sh
 set -eo pipefail
+rm -f "$1"
 cp Main.hs "$1"
 echo >> "$1"
-{
-  echo '```haskell'
-  tee -a "$1"
-  printf '\n```\n\n```{pipe="sh"}\ncp root/%s ./\nrunhaskell %s%s\n```\n' \
-    "$1" "$1" "$2"
-} | pandoc -f markdown -t json | panpipe
+
+# Retry a few times, in case falsify random sampling fails to find a
+# counterexample we wanted to show!
+for RETRY in seq 1 10
+do
+  if GOT=$({
+    echo '```haskell'
+    tee -a "$1"
+    printf '\n```\n\n```{pipe="sh"}\ncp root/%s ./\nrunhaskell %s%s\n```\n' \
+      "$1" "$1" "$2"
+  } | pandoc -f markdown -t json | panpipe)
+  then
+    echo "$GOT"
+    exit 0
+  fi
+done
+exit 1
 ```
 
 ```{pipe="cat > fail && chmod +x fail"}
 #!/bin/sh
-./run "$@" ' 2>&1 && exit 1 || true'
+exec ./run "$@" ' 2>&1 && exit 1 || true'
 ```
 
 Recently I was [playing around with the egglog
