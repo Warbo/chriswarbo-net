@@ -44,7 +44,7 @@ exit 1
 exec ./run "$@" ' 2>&1 && exit 1 || true'
 ```
 
-Recently I was [playing around with the egglog
+In [part 1 I played around with the egglog
 language/database](/blog/2024-02-25-sk_logic_in_egglog_1.html), when I started
 getting results that were so unexpected and confusing that it made me question
 some of the assumptions I'd been making about the system I was modelling: a
@@ -191,29 +191,58 @@ instance Show Com where
   show (App x y)         = show x ++ show y
 ```
 
-We can "run" an SK program/expression using this `step`{.haskell} function,
-which looks for a certain pattern involving a `K`, or a certain pattern
-involving an `S`. Remarkably, these two transformations make SK a complete,
-universal programming language!
+### Anatomy of SK expressions ###
 
+We can refer to various parts of an SK expression using the following
+terminology:
 
-There are a few things to note about this implementation. Unlike in egglog, we
-have to explicitly tell Haskell to recursively `step`{.haskell} the children of
-an `App`{.haskell} constructor. We also use `Maybe`{.haskell} to indicate
-whether any reduction actually took place: this tells us immediately if an
-expression has reached a normal form, without having to compare the input to the
-output. Finally, notice that *any* `Com`{.haskell} value can be passed around
-and rearranged, via the Haskell variables `x`{.haskell}, `y`{.haskell},
-`z`{.haskell}, `x'`{.haskell} and `y'`{.haskell}; but only `App`{.haskell}, `C
-'K'`{.haskell} and `C 'S'`{.haskell} have any effect on the output (this will be
-important for our symbolic execution!).
+ - The "root" is the top-most constructor.
+ - The "head" is the left-most leaf. If the expression itself is a leaf, like
+   `S` or `K`, then that expression is its own head (and root!).
+ - The "spine" is the chain of left-nested `App` constructors between the head
+   and the root. If the expression is a leaf, its spine is empty.
+ - The "arguments" (or "args") of that head are the right-hand children hanging
+   off the spine, ordered from the head to the root. If the spine is empty,
+   there are no arguments.
 
-Next we'll need to *iterate* the `step`{.haskell} function, but that's tricky
-since SK is a universal programming language, so we have to account for infinite
-loops, long-running computations, exponential memory usage, etc. We do this by
-parameterising various functions with "fuel": a `Natural`{.haskell} number
-argument which decreases as we progress through a computation; when it hits
-zero, we bail out:
+<figure>
+
+```
+          𝔸𝕡𝕡
+         ╔═╝─┐
+        App  S
+     ╔═══╝───┐
+    App     App
+   ╔═╝─┐   ┌─┴─┐
+   Ⓢ   K  App  S
+         ┌─┴─┐
+         K   K
+```
+
+<figcaption>Structure of the expression `SK(KKS)S`, represented by the Haskell
+value `App (App (App s k) (App (App k k) s)) s`{.haskell}. The root and spine
+are double-struck; the head is shown as `Ⓢ`, and its arguments are `K`, `KKS`
+and `S`.
+</figure>
+
+The figure above shows the expression `SK(KKS)S` rendered as a tree. Its head is
+`S`, and args are `K`, `KKS` and `S`. Each of those args can be broken down in
+the same way: the head of `K` is `K` and it has no args; the head of `S` is `S`,
+and it has no args; the head of `KKS` is `K` and it has args `K` and `S`, which
+can again be broken down; and so on. We will sometimes describe an expression as
+"applying 〈its head〉 to 〈its arguments〉".
+
+### Running SK expressions ###
+
+We can "run" SK expressions using two rewriting rules:
+
+ - An expression applying `K` to two args can be replaced by the first arg.
+ - An expression applying `S` to three args can be replaced by an expression
+   which applies the first arg to the third arg and «the second applied to the
+   third».
+
+We can implement these as Haskell functions, returning `Nothing`{.haskell} if
+the rule didn't match:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Replaces Kxy with x, otherwise Nothing
@@ -227,6 +256,20 @@ stepS (App (App (App (C 'S') x) y) z) = Just (App (App x z) (App y z))
 stepS _ = Nothing
 ```
 
+Notice that arguments can be *any* `Com`{.haskell} value, represented using the
+Haskell variables `x`{.haskell}, `y`{.haskell} and `z`{.haskell}; but only
+`App`{.haskell}, `s`{.haskell} and `k`{.haskell} have any effect on the output
+(this will be important for symbolic execution later!).
+
+Remarkably, these two rules make SK a Turing-complete, universal programming
+language! The following `step` function tries to apply both of these rules. It
+also applies the rules recursively to sub-expressions of `App`{.haskell}: note
+that we try stepping both children at once, to prevent an reducible expressions
+getting "stuck" waiting for their sibling to finish. `Nothing`{.haskell} is
+returned when neither rule matched and no sub-expressions were rewritten; we say
+the expression is in [normal
+form](https://en.wikipedia.org/wiki/Normal_form_(abstract_rewriting)):
+
 ```{.haskell pipe="./show Main.hs"}
 -- | Attempt to reduce a K or S combinator, or the children of an App. Nothing
 -- | if the argument is in normal form.
@@ -236,6 +279,12 @@ step c = stepK c <|> stepS c <|> a l' r' <|> a l' r <|> a l  r'
         (l , r ) = (left c    , right c   )
         (l', r') = (l >>= step, r >>= step)
 ```
+
+Next we'll need to *iterate* the `step`{.haskell} function until its argument
+reaches normal form. We'll distinguish normalised expressions using the type
+`Normal`{.haskell} (we could encapsulate this in a separate module to prevent
+unnormalised `Com`{.haskell} values being wrapped in `Normal`{.haskell}, but
+I'll be sticking to one big module today):
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Wraps Com values which are assumed to be in normal form
@@ -248,6 +297,12 @@ instance Show Normal where
 asNormal :: Com -> Maybe Normal
 asNormal c = maybe (Just (Normal c)) (const Nothing) (step c)
 ```
+
+Iterating `step`{.haskell} is tricky since SK is a universal programming
+language, so we have to account for infinite loops, long-running computations,
+exponential memory usage, etc. We'll do this by parameterising various functions
+with `Fuel`{.haskell}: a natural number argument which decreases as we progress
+through a computation; when it hits zero, we bail out:
 
 ```{.haskell pipe="./show Main.hs"}
  type Fuel = Word
