@@ -652,6 +652,45 @@ equality difficult to determine:
 In order to make more definitive assertions about extensional equality, we need
 to borrow techniques from the world of formal methods!
 
+## Symbolic execution ##
+
+The reason I like property-checking is that it can provide a lot of confidence
+for relatively little effort, compared to e.g. example-based testing (less
+confidence for a similar effort), manual testing (less confidence for more
+effort) or formal verification (more confidence for more effort). However, there
+are occasions when the scales tip in favour of other approaches, and extensional
+equality checking turns out to be particularly suited to a formal method called
+[symbolic execution](https://en.wikipedia.org/wiki/Symbolic_execution).
+
+In this approach, we avoid using real, "concrete" SK expressions for our input
+values; and instead use
+[abstract symbols](https://en.wikipedia.org/wiki/Symbol_(formal)). These can be
+copied, discarded or rearranged during program execution; which is perfect for
+seeing where different inputs end up in the resulting `Normal`{.haskell} form.
+They are otherwise inert or "uninterpreted": causing reduction to stop if it
+would depend on the particular value of an input.
+
+Implementing symbolic execution can often be laborious, but our definition of
+`Com`{.haskell} actually makes it trivial to graft on top: we can represent
+abstract symbols using the `C`{.haskell} constructor applied to any
+`Char`{.haskell} (*except* `'S'`{.haskell} or `'K'`{.haskell}, which we're
+treating specially). Execution of the `stepK`{.haskell} and `stepS`{.haskell}
+functions will treat these as
+[atomic symbols](https://en.wikipedia.org/wiki/Symbol_(programming)), to be
+copied, discarded and rearranged as needed.
+
+### Interpreting symbolic expressions ###
+
+We can now give a meaning, semantics, or [abstract
+interpretation](https://en.wikipedia.org/wiki/Abstract_interpretation) to SK
+expressions containing symbols. Since we're using each symbol to represent a
+distinct input, the way they appear in `Normal`{.haskell} forms tells us
+something about the overall behaviour of the expression and, crucially, how it
+may depend on the particular `Inputs`{.haskell} it gets applied to. There's no
+way, in general, to decide whether part of an SK expression will influence its
+reduction, or whether it will end up being discarded by the `stepK`{.haskell}
+rule. Instead, we'll limit our ambitions to spotting a few simple situations.
+
 ```{.unwrap pipe="./run extensionallyEqNImpliesAgreeN"}
 main = run extensionallyEqNImpliesAgreeN (triple genCom genCom genComs)
 ```
