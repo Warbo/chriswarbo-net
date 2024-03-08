@@ -528,8 +528,132 @@ genNormal = genFuel >>= genNormalN
 main = run normalNormalEqNToItself (pair genFuel genNormal)
 ```
 
+## Extensional equality ##
+
+My problems arose when trying to extend the equality of SK expressions even
+further to include
+[extensional equality](https://en.wikipedia.org/wiki/Extensionality).
+
+### Inputs and agreement ###
+
+To clarify what we're about to do, we'll start by defining some more
+terminology. An "input value" is some particular SK value, which another
+expression will be applied to. For example, applying the expression `KSK` to the
+input value `S` results in `KSKS`. Input values are hence just the right-most
+arguments of such results; but it's useful to give them a more specific name,
+since they are precisely those arguments in the result which are *separate* from
+the first expression. Note that in this example, the result has head `K` and
+arguments `S`, `K` and `S`; yet only the last of those was an input value.
 
 ```{.haskell pipe="./show Main.hs"}
+-- Handy synonyms, to clarify the role of certain expressions
+
+type InputValue  = Com
+type InputValues = [InputValue]
+```
+
+If we apply two expressions to the same input value, and the results reduce to
+the same `Normal`{.haskell} form, we say those two expressions "agree on" that
+input value. For example, `KK` and `SKK` agree on the input value `K`, since
+`KKK` reduces to `K`; and `SKKK` reduces to `KK(KK)` then to `K`. Note that they
+*disagree* on the input value `S`, since `KKS` reduces to `K`; whilst `SKKS`
+reduces to `KS(KS)` then to `S`. Expressions can also agree on a *sequence* of
+input values, where we begin by applying them both to the first value, then
+apply those results to the second value, and so on:
+
+```{.haskell pipe="./show Main.hs"}
+-- | Apply the Coms to the InputValues, see if they reach the same Normal form
+agreeN :: Fuel -> Com -> Com -> InputValues -> Maybe (Compared Normal)
+agreeN n f g (iv:ivs) = agreeN n (App f iv) (App g iv) ivs  -- Apply 1 & recurse
+agreeN n f g []       = normalEqN n f g                     -- No more IVs, test
+```
+
+Everything that satisfies `normalEqN`{.haskell} should also satisfy
+`agreeN`{.haskell}, which we can state with the following property:
+
+```{.haskell pipe="./show Main.hs"}
+normalEqNImpliesAgreeN :: (Fuel, Com, Com, InputValues) -> Bool
+normalEqNImpliesAgreeN (n, f, g, xs) =
+  case (normalEqN n f g, agreeN n f g xs) of
+    (Just (Same _), Just (Diff _ _)) -> False
+    _                                -> True
+```
+
+```{.unwrap pipe="./run normalEqNImpliesAgreeN"}
+main = run normalEqNImpliesAgreeN (quad genFuel genCom genCom genComs)
+```
+
+An "input" is a universally-quantified input value, i.e. it can be *any* SK
+expression, rather than one in particular. When expressions "agree on $N$
+inputs", it means that applying them to *any* sequence of $N$ input values will
+produce results that have the same `Normal`{.haskell} form. For example, `SK`
+and `S(K(SK))(KK)` agree on two inputs; which we can test by asserting that they
+*never disagree*:
+
+```{.haskell pipe="./show Main.hs"}
+skNeverDisagreesWithSKSKKK :: (Fuel, InputValue, InputValue) -> Bool
+skNeverDisagreesWithSKSKKK (n, x, y) = case agreeN n f g [x, y] of
+    Just (Diff _ _) -> False
+    _               -> True
+  where f = App s k
+        g = App (App s (App k (App s k))) (App k k)
+```
+
+```{.unwrap pipe="./run skNeverDisagreesWithSKSKKK"}
+main = run skNeverDisagreesWithSKSKKK (triple genFuel genCom genCom)
+```
+
+Note that any expressions which agree on $N$ inputs also agree on $N+1$ inputs
+(and so on), since the left child of each root has the same `Normal`{.haskell}
+form (by definition of agreement on $N$ inputs).
+
+```{.haskell pipe="./show Main.hs"}
+-- | Generate a list of Com values, with length and element size bounded by Fuel
+genComsN :: Fuel -> Gen [Com]
+genComsN fuel = do max <- genFuelN fuel
+                   Gen.list (Range.between (0, max)) (genComN fuel)
+
+-- | Generate (relatively small) lists of Com values
+genComs :: Gen InputValues
+genComs = genFuel >>= genComsN
+
+-- | False iff the Com values agree on xs but not xs++ys
+agreementIsMonotonic :: (Fuel, (Com, Com), (InputValues, InputValues)) -> Bool
+agreementIsMonotonic (n, (f, g), (xs, ys)) =
+  case (agreeN n f g xs, agreeN n f g (xs ++ ys)) of
+    (Just (Same _), Just (Diff _ _)) -> False
+    _                                -> True
+```
+
+```{.unwrap pipe="./run agreementIsMonotonic"}
+main = run agreementIsMonotonic (triple genFuel
+                                        (pair genCom  genCom )
+                                        (pair genComs genComs))
+```
+
+### Extensionality ###
+
+Now we've defined inputs and agreement, extensional equality becomes quite
+simple: SK expressions are extensionally equal iff they agree on *some* number
+of inputs. We saw that `SK` and `S(K(SK))(KK)` agree on *some* number of inputs
+(namely: on two inputs), so they are extensionally equal.
+
+Notice that the *number* of inputs is existentially-quantified, whilst the
+*values* of those inputs are universally-quantified. This makes extensional
+equality difficult to determine:
+
+ - If we compare two expressions on $N$ input values and see that they *agree*,
+   that doesn't mean they're extensionally equal; since there might be other
+   input values of length $N$ for which they disagree.
+ - If we compare two expressions on $N$ input values and see that they
+   *disagree*, that doesn't mean they're *not* extensionally equal; since they
+   might only agree on inputs longer than $N$.
+
+In order to make more definitive assertions about extensional equality, we need
+to borrow techniques from the world of formal methods!
+
+```{.unwrap pipe="./run extensionallyEqNImpliesAgreeN"}
+main = run extensionallyEqNImpliesAgreeN (triple genCom genCom genComs)
 ```
 
 ### A simplistic first attempt ###
