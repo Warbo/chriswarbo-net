@@ -20,28 +20,28 @@ set -eo pipefail
 rm -f "$1"
 cp Main.hs "$1"
 echo >> "$1"
-
-# Retry a few times, in case falsify random sampling fails to find a
-# counterexample we wanted to show!
-for RETRY in seq 1 10
-do
-  if GOT=$({
-    echo '```haskell'
-    tee -a "$1"
-    printf '\n```\n\n```{pipe="sh"}\ncp root/%s ./\nrunhaskell %s%s\n```\n' \
-      "$1" "$1" "$2"
-  } | pandoc -f markdown -t json | panpipe)
-  then
-    echo "$GOT"
-    exit 0
-  fi
-done
-exit 1
+{
+  echo '```haskell'
+  tee -a "$1"
+  printf '\n```\n\n```{pipe="sh"}\ncp root/%s ./\nrunhaskell %s%s\n```\n' \
+    "$1" "$1" "$2"
+} | pandoc -f markdown -t json | panpipe
 ```
 
 ```{pipe="cat > fail && chmod +x fail"}
 #!/bin/sh
-exec ./run "$@" ' 2>&1 && exit 1 || true'
+# Retry a few times, in case falsify random sampling fails to find a
+# counterexample we wanted to show!
+GIVEN=$(cat)
+for RETRY in seq 1 100
+do
+  if GOT=$(echo "$GIVEN" | ./run "$@" ' 2>&1 && exit 1 || true')
+  then
+    echo "$GOT"
+    exit 0
+  fi
+  done
+exit 1
 ```
 
 In [part 1 I played around with the egglog
