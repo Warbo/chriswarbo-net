@@ -116,6 +116,7 @@ module Main (main) where
 import Control.Applicative ((<|>), liftA2)
 import Control.Exception (assert)
 import Control.Monad (guard)
+import Data.Char (chr, ord)
 import Data.Foldable
 import Data.List (inits)
 import Data.List.NonEmpty (NonEmpty(..))
@@ -125,11 +126,12 @@ import Data.Maybe (catMaybes)
 import Data.Set (Set)
 import qualified Data.Set as Set
 import GHC.Natural (Natural, mkNatural)
-import Test.Falsify.Generator (Gen, Tree(..))
+import Test.Falsify.Generator (Gen, Tree(..), (:->))
 import qualified Test.Falsify.Generator as Gen
 import Test.Falsify.Interactive (shrink)
 import Test.Falsify.Predicate ((.$))
 import qualified Test.Falsify.Predicate as Predicate
+import Test.Falsify.Range (Range)
 import qualified Test.Falsify.Range as Range
 ```
 
@@ -428,17 +430,25 @@ quad a b c d = (,,,) <$> a <*> b <*> c <*> d
 perfect for generating `Fuel`{.haskell}:
 
 ```{.haskell pipe="./show Main.hs"}
--- | Generates up to a certain amount of Fuel
-genFuelN :: Fuel -> Gen Fuel
-genFuelN max = Gen.inRange (Range.between (0, max))
-
 -- | A reasonable default for procedures requiring Fuel. Small enough to keep
 -- | exponentially-growing terms from blowing up.
 limit :: Fuel
 limit = 20
 
+-- | We usually want Ranges from zero upwards
+to :: Fuel -> Range Fuel
+to = Range.between . (0,)
+
+-- | A reasonable Range of Fuel to use in tests
+small :: Range Fuel
+small = to limit
+
+-- | Generates up to a certain amount of Fuel
+genFuelN :: Fuel -> Gen Fuel
+genFuelN = Gen.inRange . to
+
 -- | Generates a (relatively small) amount of Fuel
-genFuel = genFuelN limit
+genFuel = Gen.inRange small
 ```
 
 Generating `Com`{.haskell} values is more tricky, since they are recursive. A
@@ -633,6 +643,15 @@ normalEqNImpliesAgreeN (n, f, g, xs) =
   case pair (normalEqN n f g) (agreeN n f g xs) of
     Just (Same _, Diff _ _) -> False
     _                       -> True
+
+-- | Generate a list of Com values, with length and element size bounded by Fuel
+genComsN :: Fuel -> Gen [Com]
+genComsN fuel = do max <- genFuelN fuel
+                   Gen.list (Range.between (0, max)) (genComN fuel)
+
+-- | Generate (relatively small) lists of Com values
+genComs :: Gen InputValues
+genComs = genFuel >>= genComsN
 ```
 
 ```{.unwrap pipe="./run normalEqNImpliesAgreeN"}
@@ -663,15 +682,6 @@ Note that any expressions which agree on $N$ inputs also agree on $N+1$ inputs
 form (by definition of agreement on $N$ inputs).
 
 ```{.haskell pipe="./show Main.hs"}
--- | Generate a list of Com values, with length and element size bounded by Fuel
-genComsN :: Fuel -> Gen [Com]
-genComsN fuel = do max <- genFuelN fuel
-                   Gen.list (Range.between (0, max)) (genComN fuel)
-
--- | Generate (relatively small) lists of Com values
-genComs :: Gen InputValues
-genComs = genFuel >>= genComsN
-
 -- | False iff the Com values agree on xs but not xs++ys
 agreementIsMonotonic :: (Fuel, (Com, Com), (InputValues, InputValues)) -> Bool
 agreementIsMonotonic (n, (f, g), (xs, ys)) =
@@ -772,10 +782,10 @@ symbols = filter (/= k) . filter (/= s) . map C $ [minBound..maxBound]
 -- | hence we return a list of results. The full amount of Fuel is used when
 -- | trying to normalise each entry; those which timeout are discarded.
 agreeSymN :: Fuel -> Com -> Com -> [Compared Normal]
-agreeSymN n f g = catMaybes              -- Discard timeouts
-                . take (fromIntegral n)  -- Limit how many checks we do
-                . map (agreeN n f g)     -- Check for agreement on each prefix
-                $ inits symbols          -- Takes longer prefixes of symbols
+agreeSymN n f g = catMaybes                  -- Discard timeouts
+                . take (fromIntegral n + 1)  -- Limit how many checks we do
+                . map (agreeN n f g)         -- Check agreement on each prefix
+                $ inits symbols              -- Takes longer prefixes of symbols
 ```
 
 We can sanity check this in a couple of ways. It should always spot expressions
@@ -840,6 +850,33 @@ isSym _       = False
 distinctSymbolicHeads :: Com -> Com -> Bool
 distinctSymbolicHeads x y = isSym hX && isSym hY && hX /= hY
   where (hX, hY) = (headPos x, headPos y)
+
+-- | Generate any Char value
+genChar :: Gen Char
+genChar = chr <$> Gen.inRange charRange
+  where charRange  = Range.between (ord minBound, ord maxBound)
+
+-- | Generate Com values which may also contain symbols
+genSymComN :: Fuel -> Gen Com
+genSymComN n = toSymCom <$> Gen.tree (Range.between (0, n)) genChar
+  where toSymCom t = case t of
+          Leaf                               -> k
+          Branch _ Leaf Leaf                 -> k
+          Branch _ Leaf (Branch _ Leaf Leaf) -> s
+          Branch c (Branch _ Leaf Leaf) Leaf -> C c
+          Branch _ l r                       -> App (toSymCom l) (toSymCom r)
+
+-- | Generate (relatively small) Com values which may contain symbols
+genSymCom = genFuel >>= genSymComN
+
+-- | Shouldn't matter which order we compare two Com values
+distinctSymbolicHeadsCommutes :: (Com, Com) -> Bool
+distinctSymbolicHeadsCommutes (x, y) = distinctSymbolicHeads x y
+                                    == distinctSymbolicHeads y x
+```
+
+```{.unwrap pipe="./run distinctSymbolicHeadsCommutes"}
+main = run distinctSymbolicHeadsCommutes (pair genSymCom genSymCom)
 ```
 
 #### Different numbers of arguments prove disagreement ####
@@ -883,6 +920,15 @@ unequalArgCount x y = isSym headX
                    && length argsX /= length argsY
   where (headX, argsX) = headAndArgs x
         (headY, argsY) = headAndArgs y
+
+-- | Order of Com values shouldn't affect result
+unequalArgCountCommutes :: (Com, Com) -> Bool
+unequalArgCountCommutes (x, y) = unequalArgCount x y
+                              == unequalArgCount y x
+```
+
+```{.unwrap pipe="./run unequalArgCountCommutes"}
+main = run distinctSymbolicHeadsCommutes (pair genSymCom genSymCom)
 ```
 
 #### Disagreeing arguments prove disagreement ####
@@ -907,13 +953,19 @@ function to check whether two arguments are unequal:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Whether the given Com values have matching symbols in their heads, but
--- | applied to unequal values (determined by the given function)
+-- | applied to unequal values (determined by the given unEq function)
 symbolGivenUnequalArgs :: (Com -> Com -> Bool) -> Com -> Com -> Bool
 symbolGivenUnequalArgs unEq x y = isSym headX
                                && headX == headY
-                               && any id (zipWith unEq argsX argsY)
+                               && any id (zipWith unEq' argsX argsY)
   where (headX, argsX) = headAndArgs x
         (headY, argsY) = headAndArgs y
+        unEq' a b      = unEq a b || unEq b a  -- Compare both ways round
+
+-- | The order of arguments shouldn't alter the result
+symbolGivenUnequalArgsCommutes :: (Com -> Com -> Bool) -> Com -> Com -> Bool
+symbolGivenUnequalArgsCommutes f x y = symbolGivenUnequalArgs f x y
+                                    == symbolGivenUnequalArgs f y x
 ```
 
 #### Combining our disagreement provers ####
@@ -929,7 +981,15 @@ provablyDisagree :: Com -> Com -> Bool
 provablyDisagree x y = distinctSymbolicHeads                   x y
                     || unequalArgCount                         x y
                     || symbolGivenUnequalArgs provablyDisagree x y
+
+provablyDisagreeCommutes :: (Com, Com) -> Bool
+provablyDisagreeCommutes (x, y) = provablyDisagree x y == provablyDisagree y x
 ```
+
+```{.unwrap pipe="./run provablyDisagreeCommutes"}
+main = run provablyDisagreeCommutes (pair genSymCom genSymCom)
+```
+
 ```
 
 ```{.unwrap pipe="./run extensionallyEqNImpliesAgreeN"}
