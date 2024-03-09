@@ -969,6 +969,188 @@ symbolGivenUnequalArgsCommutes f x y = symbolGivenUnequalArgs f x y
                                     == symbolGivenUnequalArgs f y x
 ```
 
+<details class="odd">
+<summary>How to generate a function which accepts `Com`{.haskell}
+arguments...</summary>
+
+The `symbolGivenUnequalArgs`{.haskell} function doesn't care *how* arguments are
+deemed to be unequal, so it lets the caller decide by passing in a function. The
+choice of function shouldn't affect commutativity, so the property
+`symbolGivenUnequalArgsCommutes`{.haskell} is universally quantified over that
+choice; allowing a counterexample search to try many different functions.
+
+This may seem surprising if you've not encountered it before, but we can
+generate a function value just as easily as a "data-like" value. For example, we
+can generate functions which look up their arguments in a (generated) lookup
+table:
+
+```{.haskell pipe="./show Main.hs"}
+genViaTable :: Eq a => Range Fuel -> Gen a -> Gen b -> Gen (a -> b)
+genViaTable range genA genB = do
+  def   <- genB
+  pairs <- Gen.list range (pair genA genB)
+  pure (maybe def id . (`lookup` pairs))
+```
+
+However, such ordinary function values are opaque "black boxes", which makes
+them less useful for property-checking: firstly, it's hard to `show`{.haskell}
+them (e.g. if they form part of a counterexample); and secondly it's hard to
+shrink them (to look for "simpler" alternatives). Property-checkers avoid these
+problems by replacing ordinary functions `a -> b`{.haskell} with their own
+alternative, whose constructors 'remember' how to `show`{.haskell} and shrink
+themselves.  In `falsify` this alternative is `Gen.Fun a b`{.haskell}, so we'll
+need to convert the `Com -> Com -> Bool` argument of
+`symbolGivenUnequalArgsCommutes`{.haskell} into either
+`Fun Com (Fun Com Bool)`{.haskell}
+([curried](https://en.wikipedia.org/wiki/Currying) form) or, equivalently,
+`Fun (Com, Com) Bool`{.haskell} (uncurried form). We'll use the uncurried form,
+since the tuples will be handled automatically by type class instance
+resolution. The following helpers let `symbolGivenUnequalArgsCommutes`{.haskell}
+take a `Fun` as argument:
+
+```{.haskell pipe="./show Main.hs"}
+-- | Transform a higher-order function to take a Fun instead
+liftFun :: ((a -> b) -> c) -> Gen.Fun a b -> c
+liftFun f = f . Gen.applyFun
+
+-- | Lift a function with binary argument to take an uncurried Fun instead
+liftFun2 :: ((a -> b -> c) -> d) -> Gen.Fun (a, b) c -> d
+liftFun2 f = liftFun (f . curry)
+
+-- | Like 'uncurry', but for three arguments
+uncurry3 :: (a -> b -> c -> d) -> (a, b, c) -> d
+uncurry3 f (a, b, c) = f a b c
+```
+
+To check (the lifted version of) `symbolGivenUnequalArgsCommutes`{.haskell}, we
+need a generator of type `Gen (Fun (Com, Com) Bool`{.haskell}. We can get one
+from `Gen.fun`{.haskell}, but that requires an instance of
+`Gen.Function (Com, Com)`{.haskell}. There's an existing instance for tuples,
+but we still need to implement `Gen.Function Com`{.haskell} ourselves:
+
+```{.haskell pipe="./show Main.hs"}
+instance Gen.Function Com where
+  function gen = Gen.functionMap comToPre preToCom <$> Gen.function gen
+```
+
+This is piggybacking on an existing instance (the `Gen.function gen`{.haskell}
+call at the end) by converting our `Com`{.haskell} values back-and-forth to
+another type that already implements `Gen.Function`{.haskell}. The type I've
+chosen is `[Maybe (Either Bool Char)]`{.haskell}, and the conversions are
+implemented by `comToPre`{.haskell} & `preToCom`{.haskell}:
+
+```{.haskell pipe="./show Main.hs"}
+-- | Prefix notation for expressions. `Nothing` represents an 'apply' operation.
+type Prefix = [Maybe (Either Bool Char)]
+
+-- | Converts expressions from "applicative style" Com to "prefix style" Prefix.
+comToPre :: Com -> Prefix
+comToPre x = case x of
+  -- Treat K and S specially, so they're more likely to be generated
+  _ | x == k -> [Just (Left False)]
+  _ | x == s -> [Just (Left True )]
+  -- Any other symbol
+  C c        -> [Just (Right c)]
+  -- Nothing acts like an apply operator for two expressions that follow it
+  App l r    -> [Nothing] ++ comToPre l ++ comToPre r
+
+-- | Parses "prefix style" Prefix back into an "applicative style" Com.
+preToCom :: Prefix -> Com
+preToCom = fst . go          -- Discard any remaining suffix
+  where go []     = (k, [])  -- Makes preToCom total, but overlaps 'Left False'
+        go (x:xs) = case x of
+          Just (Left False) -> (k  , xs)
+          Just (Left True ) -> (s  , xs)
+          Just (Right c   ) -> (C c, xs)
+          Nothing           -> let (l, ys) = go xs
+                                   (r, zs) = go ys
+                                in (App l r, zs)
+
+comToPreRoundtrips :: Com -> Bool
+comToPreRoundtrips c = preToCom (comToPre c) == c
+```
+
+```{.haskell pipe="./run comToPreRoundtrips"}
+main = run comToPreRoundtrips genCom
+```
+
+```{.haskell pipe="./show Main.hs"}
+preToComRoundtrips :: Prefix -> Bool
+preToComRoundtrips p = comToPre (preToCom p') == p'
+  where p' = comToPre (preToCom p)  -- Extra roundtrip to avoid extra suffix
+
+genPre :: Gen Prefix
+genPre = Gen.list small genEntry
+  where genEntry = Gen.choose (Just <$> genLeaf) (pure Nothing)
+        genLeaf  = Gen.choose (Left <$> Gen.bool False) (Right <$> genChar)
+```
+
+```{.haskell pipe="./run preToComRoundtrips"}
+main = run preToComRoundtrips genPre
+```
+
+The `Prefix`{.haskell} is a
+[prefix form](https://en.wikipedia.org/wiki/Polish_notation) for expressions, as
+opposed to the "applicative form" of `Com`{.haskell}. They're equivalent, but
+the structure of an expression is less obvious in prefix form, which is why it
+only appears in this hidden section. This is the encoding used in [binary
+combinatory logic](https://en.wikipedia.org/wiki/Binary_combinatory_logic),
+although we're allowing arbitrary `Char`{.haskell} values rather than just `S`
+and `K`.
+
+The functions `preToCom`{.haskell} and `comToPre`{.haskell} don't *quite* form
+an [isomorphism](https://en.wikipedia.org/wiki/Isomorphism). This is essentially
+due to `Prefix`{.haskell} being a [prefix(-free)
+code](https://en.wikipedia.org/wiki/Prefix_code):
+
+ - The empty list `[]`{.haskell} does not correspond to a particular
+   `Com`{.haskell} value. It a valid *prefix*, since appending it with anything
+   will either form a complete expression or another valid prefix; but that's
+   not so useful for `preToCom`{.haskell}, which might have only been given a
+   *finite* list and needs to return a `Com`{.haskell}. In this case, it just
+   returns `K` (arbitrarily).
+ - `Prefix`{.haskell} values may contain "too many" `Nothing`{.haskell} values.
+   These act like `App`{.haskell}, indicating that the following expression is
+   applied to the one after. That "following expression" may itself use
+   `Nothing`{.haskell} to consume subsequent list elements, and so on;
+   corresponding to the arbitrary nesting which `App`{.haskell} allows. However,
+   the given `Prefix`{.haskell} may "run out" before specifying what those
+   following elements should be! Again, that's a perfectly good *prefix*, but
+   not a complete value. When this happens, we will hit the same `[]`{.haskell}
+   case as above, and simply return `K` (potentially many times, as the
+   applications get "popped off the stack").
+ - Expressions encoded as `Prefix`{.haskell} values are self-delimiting, meaning
+   that the encoding itself tells us when to finish parsing: if the value we
+   parsed was `Just _`{.haskell}, we have finished that expression; if the value
+   is `Nothing`{.haskell} we can finish after parsing exactly two more
+   expressions. Hence any elements appearing *after* a correctly-encoded
+   expression will be completely ignored, resulting in the same `Com`{.haskell}.
+ - Our hacky use of `K` as a fallback for empty `Prefix`{.haskell} values
+   introduces some ambiguity, since an expression like `KK` could be encoded as
+   `[Nothing, Just (Left False), Just (Left False)]`{.haskell} (the "correct"
+   way); or as `[Nothing, Just (Left False)]`{.haskell} (relying on the fallback
+   behaviour to introduce another `K`); or indeed as `[Nothing]`{.haskell}
+   (relying on the fallback for *both* `K` expressions). Hence the fallback
+   behaviour should not be relied upon; also, it breaks when composing
+   expressions together (since missing `K` values will only be introduced at the
+   end of a list).
+ - There's also some redundancy between
+   `Left False`{.haskell}/`Left True`{.haskell} and
+   `Right 'K'`{.haskell}/`Right 'S'`{.haskell}. This was a deliberate choice, to
+   make `falsify` generate more `S` and `K` expressions.
+
+These aren't a problem for our use of `Prefix`{.haskell} in generating values;
+but you may need to keep them in mind when using this encoding for other
+purposes (in which case I'd recommend *embracing* its nature as a prefix(-free)
+code, since it has all sorts of cool applications!)
+
+</details>
+
+```{.unwrap pipe="./run symbolGivenUnequalArgsCommutes"}
+main = run (uncurry3 (liftFun2 symbolGivenUnequalArgsCommutes))
+           (triple (Gen.fun (Gen.bool False)) genSymCom genSymCom)
+```
+
 ### Combining disagreement provers ###
 
 We can never spot *all* disagreements, but the simple checks above can be
