@@ -295,26 +295,62 @@ newtype Normal = Normal { toCom :: Com } deriving (Eq, Ord)
 instance Show Normal where
   show = show . toCom
 
--- | Wraps the argument in Normal iff it is in normal form
-asNormal :: Com -> Maybe Normal
-asNormal c = maybe (Just (Normal c)) (const Nothing) (step c)
+-- | Tries to step the given Com: if it worked, returns that in Left; otherwise
+-- | returns the original value (now Normal) in Right.
+toNormal :: Com -> Either Com Normal
+toNormal c = case step c of
+  Nothing -> Right (Normal c)
+  Just c' -> Left c'
 ```
 
-Iterating `step`{.haskell} is tricky since SK is a universal programming
-language, so we have to account for infinite loops, long-running computations,
-exponential memory usage, etc. We'll do this by parameterising various functions
-with `Fuel`{.haskell}: a natural number argument which decreases as we progress
-through a computation; when it hits zero, we bail out:
+`toNormal`{.haskell} tells us when to stop iterating, but since SK is a
+universal programming language, there's no way to know beforehand if it ever
+will. We'll account for this by wrapping such undecidable computations in
+[a `Delay`
+type](http://www.chriswarbo.net/blog/2014-12-04-Nat_like_types.html#delay-t):
 
 ```{.haskell pipe="./show Main.hs"}
+data Delay a = Now a | Later (Delay a) deriving (Eq, Functor, Ord, Show)
+
+instance Applicative Delay where
+  (Now   f) <*> x =        f <$> x
+  (Later f) <*> x = Later (f <*> x)
+  pure            = Now
+
+instance Monad Delay where
+  (Now   x) >>= f = f x
+  (Later x) >>= f = Later (x >>= f)
+```
+
+Since `Delay`{.haskell} could be a never-ending chain of `Later`{.haskell}
+wrappers, any attempt to extract a value from one must eventually give up. We
+can represent this using parameters of type `Fuel`{.haskell} (a synonym for
+natural numbers):
+
+```{.haskell pipe="./show Main.hs"}
+-- | Represents a parameter for "when to give up"
 type Fuel = Word
 
--- | Step the given Com until it reaches normal form. Gives Nothing if more than
--- | n steps are required.
-reduceN :: Fuel -> Com -> Maybe Normal
-reduceN n c = case step c of
-  Nothing  -> asNormal c
-  Just c'  -> guard (n > 0) *> reduceN (n - 1) c'
+-- | Try to extract a value from the given 'Delay'
+delayed :: Fuel -> Delay a -> Maybe a
+delayed n x = case x of
+  Now   x' -> Just x'
+  Later x' -> guard (n > 0) *> delayed (n - 1) x'
+
+-- | Try to extract a value from the given 'Delay', or use the given default
+delayedOr :: Fuel -> a -> Delay a -> a
+delayedOr n def x = maybe def id (delayed n x)
+```
+
+Now we can iterate the `toNormal`{.haskell} function, hiding each recursive call
+safely beneath a `Later`{.haskell} wrapper:
+
+```{.haskell pipe="./show Main.hs"}
+-- | Step the given Com until it reaches normal form.
+reduce :: Com -> Delay Normal
+reduce c = case toNormal c of
+  Right n -> Now n
+  Left c' -> Later (reduce c')
 ```
 
 ### Normal equivalence ###
@@ -357,38 +393,38 @@ comparer x y = if x == y then Same x else Diff x y
 
 -- | Try normalising the given Com values for the given number of steps. If the
 -- | results are == return it in Left; otherwise return both in Right.
-normalEqN :: Fuel -> Com -> Com -> Maybe (Compared Normal)
-normalEqN n x y = comparer <$> reduceN n x <*> reduceN n y
+normalEq :: Com -> Com -> Delay (Compared Normal)
+normalEq x y = comparer <$> reduce x <*> reduce y
 ```
 
 ## Property-based testing ##
 
-Let's test this `normalEqN`{.haskell} function, to see whether it actually behaves
+Let's test this `normalEq`{.haskell} function, to see whether it actually behaves
 in the way our theory of SK predicts it should. For example, every equality
 relation should have the
 ["reflexive property"](https://en.wikipedia.org/wiki/Reflexive_relation),
 meaning that values should be equal to themselves. The following predicate
-(function returning a boolean) checks whether its argument is `normalEqN`{.haskell}
+(function returning a boolean) checks whether its argument is `normalEq`{.haskell}
 to itself:
 
 ```{.haskell pipe="./show Main.hs"}
-normalEqNToItself :: (Fuel, Com) -> Bool
-normalEqNToItself (n, x) = maybe False same (normalEqN n x x)
+normalEqToItself :: (Fuel, Com) -> Bool
+normalEqToItself (n, x) = delayedOr n False (same <$> normalEq x x)
 ```
 
 We can turn this predicate into a general statement by *quantifying* its
 argument. It's common to use [existential
 quantification](https://en.wikipedia.org/wiki/Existential_quantification), which
-asserts that *some* argument satisfies `normalEqNToItself`{.haskell}. This is the
+asserts that *some* argument satisfies `normalEqToItself`{.haskell}. This is the
 widely practiced "example-based" approach to automated testing. For example:
 
-```{.unwrap pipe="./run kIsNormalEqNToItself"}
-main = assert (normalEqNToItself (0, k)) (putStrLn "PASS")
+```{.unwrap pipe="./run kIsNormalEqToItself"}
+main = assert (normalEqToItself (0, k)) (putStrLn "PASS")
 ```
 
 However, that isn't really what we want to say: reflexivity doesn't just apply
 to a few hand-picked examples, it means that *every argument* satisfies
-`normalEqNToItself`{.haskell}. Talking about "every argument" is [universal
+`normalEqToItself`{.haskell}. Talking about "every argument" is [universal
 quantification](https://en.wikipedia.org/wiki/Universal_quantification).
 Universally-quantified assertions are called "properties", so this approach is
 known as property-based testing.
@@ -504,12 +540,12 @@ run prop gen = shrink prop gen >>= maybe (putStrLn "PASS") abort
 
 ### Included middles ###
 
-The observant among you may have noticed that `normalEqNToItself`{.haskell}
+The observant among you may have noticed that `normalEqToItself`{.haskell}
 **does not** hold for all argument values! `falsify` can generate a
 counterexample to show us why:
 
-```{.unwrap pipe="./fail normalEqNToItself"}
-main = run normalEqNToItself (pair genFuel genCom)
+```{.unwrap pipe="./fail normalEqToItself"}
+main = run normalEqToItself (pair genFuel genCom)
 ```
 
 The precise counterexample `falsify` finds may vary depending on the random
@@ -517,17 +553,20 @@ seed, but they'll all have the following in common: the `Fuel`{.haskell} will be
 `0`{.haskell}, whilst the `Com` expression will not be in normal form. For
 example, it may produce `KKK` (the Haskell value `App (App k k) k`{.haskell}).
 `stepK`{.haskell} will reduce that to a single `K`, so whilst the value
-`KKK` *is* equal to itself (as we expect), `normalEqN`{.haskell} will fail to show
-this for *some* `Fuel`{.haskell} parameters: in particular, when given
-`0`{.haskell} `Fuel`{.haskell}. This disproves our claim that *any* amount of
-`Fuel`{.haskell} will work.
+`KKK` *is* equal to itself (as we expect), `normalEq`{.haskell} wraps it in a
+`Later`{.haskell} constructor, which may cause `normalEqToItself`{.haskell} to
+give up *some* `Fuel`{.haskell} parameters: in particular, when given
+`0`{.haskell} `Fuel`{.haskell}. This disproves our claim that the property holds
+for *any* amount of `Fuel`{.haskell}.
 
 We could alter our claim to *existentially* quantify the amount of
 `Fuel`{.haskell}: that for any SK expression `x`{.haskell}, there is *some*
-value of `n`{.haskell} where `normalEqN n x x` holds. However, that is also false,
-since there are infinite loops which have no normal form, regardless of how much
-`Fuel`{.haskell} we use. When a normal form *does* exist, there is no way to
-bound [the amount of `Fuel`{.haskell} required to find
+value of `n`{.haskell} where `delayed n (normalEq x x)`{.haskell} holds. However
+that is *also* false, since there are infinite loops which have no
+`Normal`{.haskell} form; hence never produce a `Now` value; and therefore cannot
+have a result extracted regardless of how much `Fuel`{.haskell} we use. Even
+when a `Normal`{.haskell} form *does* exist, there is no way to bound
+[the amount of `Fuel`{.haskell} required to find
 it](https://en.wikipedia.org/wiki/Busy_beaver).
 
 The correct way to fix our claim is to universally quantify `x`{.haskell} and
@@ -537,12 +576,12 @@ we claim that every expression is *not unequal* to itself (regardless of
 `Fuel`{.haskell}):
 
 ```{.haskell pipe="./show Main.hs"}
-notUnnormalEqNToItself :: (Fuel, Com) -> Bool
-notUnnormalEqNToItself (n, x) = not (maybe False diff (normalEqN n x x))
+notUnnormalEqToItself :: (Fuel, Com) -> Bool
+notUnnormalEqToItself (n, x) = delayedOr n True (not . diff <$> normalEq x x)
 ```
 
-```{.unwrap pipe="./run notUnnormalEqNToItself"}
-main = run notUnnormalEqNToItself (pair genFuel genCom)
+```{.unwrap pipe="./run notUnnormalEqToItself"}
+main = run notUnnormalEqToItself (pair genFuel genCom)
 ```
 
 You may have learned in school that [double-negatives are
@@ -558,15 +597,15 @@ non-excluded middles such as "don't know", "timed out" and "gave up"!
 ### Smarter generators ###
 
 It's usually a good idea to write simple, straightforward properties like
-`notUnnormalEqNToItself`{.haskell}, which make strong claims over a broad
+`notUnnormalEqToItself`{.haskell}, which make strong claims over a broad
 space of input values. Sometimes it's a good idea to *also* have more specific
 properties tailored to important cases. For example, the predicate
-`normalEqNToItself`{.haskell} is actually `True`{.haskell} for the
+`normalEqToItself`{.haskell} is actually `True`{.haskell} for the
 `Normal`{.haskell} subset of `Com`{.haskell}:
 
 ```{.haskell pipe="./show Main.hs"}
-normalNormalEqNToItself :: (Fuel, Normal) -> Bool
-normalNormalEqNToItself (n, x) = normalEqNToItself (n, toCom x)
+normalsAreNormalEqToThemselves :: (Fuel, Normal) -> Bool
+normalsAreNormalEqToThemselves (n, x) = normalEqToItself (n, toCom x)
 ```
 
 Checking this requires a generator which only produces `Normal`{.haskell}
@@ -579,19 +618,19 @@ try again!
 -- | bounds the size of the initial expression (before it's reduced), and
 -- | the number of steps to attempt when normalising.
 genNormalN :: Fuel -> Gen Normal
-genNormalN fuel = do
-  c <- genComN fuel        -- Generate a Com value c
-  maybe (genNormalN fuel)  -- Retry if c didn't finish reducing
-        return             -- Return the Normal value if reduction finished
-        (reduceN fuel c)   -- Try to reduce c to a Normal value
+genNormalN n = do
+  c <- genComN n                -- Generate a Com value c
+  maybe (genNormalN n)          -- Retry if c didn't finish reducing
+        return                  -- Return the Normal value if reduction finished
+        (delayed n (reduce c))  -- Try to reduce c to a Normal value
 
 -- | Generates (relatively small) Normal values
 genNormal :: Gen Normal
 genNormal = genFuel >>= genNormalN
 ```
 
-```{.unwrap pipe="./run normalNormalEqNToItself"}
-main = run normalNormalEqNToItself (pair genFuel genNormal)
+```{.unwrap pipe="./run normalsAreNormalEqToThemselves"}
+main = run normalsAreNormalEqToThemselves (pair genFuel genNormal)
 ```
 
 ## Extensional equality ##
@@ -629,18 +668,18 @@ apply those results to the second value, and so on:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Apply the Coms to the InputValues, see if they reach the same Normal form
-agreeN :: Fuel -> Com -> Com -> InputValues -> Maybe (Compared Normal)
-agreeN n f g (iv:ivs) = agreeN n (App f iv) (App g iv) ivs  -- Apply 1 & recurse
-agreeN n f g []       = normalEqN n f g                     -- No more IVs, test
+agree :: Com -> Com -> InputValues -> Delay (Compared Normal)
+agree f g (iv:ivs) = agree (App f iv) (App g iv) ivs  -- Apply an input, recurse
+agree f g []       = normalEq f g                     -- No more inputs, check
 ```
 
-Everything that satisfies `normalEqN`{.haskell} should also satisfy
-`agreeN`{.haskell}, which we can state with the following property:
+Everything that satisfies `normalEq`{.haskell} should also satisfy
+`agree`{.haskell}, which we can state with the following property:
 
 ```{.haskell pipe="./show Main.hs"}
-normalEqNImpliesAgreeN :: (Fuel, Com, Com, InputValues) -> Bool
-normalEqNImpliesAgreeN (n, f, g, xs) =
-  case pair (normalEqN n f g) (agreeN n f g xs) of
+normalEqImpliesAgree :: (Fuel, Com, Com, InputValues) -> Bool
+normalEqImpliesAgree (n, f, g, xs) =
+  case delayed n (pair (normalEq f g) (agree f g xs)) of
     Just (Same _, Diff _ _) -> False
     _                       -> True
 
@@ -654,8 +693,8 @@ genComs :: Gen InputValues
 genComs = genFuel >>= genComsN
 ```
 
-```{.unwrap pipe="./run normalEqNImpliesAgreeN"}
-main = run normalEqNImpliesAgreeN (quad genFuel genCom genCom genComs)
+```{.unwrap pipe="./run normalEqImpliesAgree"}
+main = run normalEqImpliesAgree (quad genFuel genCom genCom genComs)
 ```
 
 An "input" is a universally-quantified input value, i.e. it can be *any* SK
@@ -668,7 +707,7 @@ and `S(K(SK))(KK)` agree on two inputs; which we can test by asserting that they
 ```{.haskell pipe="./show Main.hs"}
 skNeverDisagreesWithSKSKKK :: (Fuel, InputValue, InputValue) -> Bool
 skNeverDisagreesWithSKSKKK (n, x, y) =
-    not (maybe False diff (agreeN n f g [x, y]))
+    delayedOr n True (not . diff <$> agree f g [x, y])
   where f = App s k
         g = App (App s (App k (App s k))) (App k k)
 ```
@@ -685,7 +724,7 @@ form (by definition of agreement on $N$ inputs).
 -- | False iff the Com values agree on xs but not xs++ys
 agreementIsMonotonic :: (Fuel, (Com, Com), (InputValues, InputValues)) -> Bool
 agreementIsMonotonic (n, (f, g), (xs, ys)) =
-  case pair (agreeN n f g xs) (agreeN n f g (xs ++ ys)) of
+  case delayed n (pair (agree f g xs) (agree f g (xs ++ ys))) of
     Just (Same _, Diff _ _) -> False
     _                       -> True
 ```
@@ -765,8 +804,8 @@ that expressions will *always* agree, and hence we can claim definitively that
 they *are* extensionally equal.
 
 We don't need to implement this check specially, since we can reuse
-`agreeN`{.haskell}, just using symbolic values as our inputs instead of concrete
-SK expressions. The following `agreeSymN` function applies two expressions to
+`agree`{.haskell}, just using symbolic values as our inputs instead of concrete
+SK expressions. The following `agreeSym` function applies two expressions to
 more and more symbolic inputs, to see if they reduce to the same
 `Normal`{.haskell} form:
 
@@ -775,48 +814,44 @@ more and more symbolic inputs, to see if they reduce to the same
 symbols :: InputValues
 symbols = filter (/= k) . filter (/= s) . map C $ [minBound..maxBound]
 
--- | Checks whether two Com values agree on symbolic input values. Since
--- | agreement is monotonic, applying more inputs will find more agreements; but
--- | it also causes more timeouts. To maximise the number of agreements found,
--- | we try zero inputs, one input, two inputs, and so on up to the given Fuel;
--- | hence we return a list of results. The full amount of Fuel is used when
--- | trying to normalise each entry; those which timeout are discarded.
-agreeSymN :: Fuel -> Com -> Com -> [Compared Normal]
-agreeSymN n f g = catMaybes                  -- Discard timeouts
-                . take (fromIntegral n + 1)  -- Limit how many checks we do
-                . map (agreeN n f g)         -- Check agreement on each prefix
-                $ inits symbols              -- Takes longer prefixes of symbols
+-- | Checks whether two Com values agree on more and more symbolic input values.
+agreeSym :: Com -> Com -> [Delay (Compared Normal)]
+agreeSym f g = agree f g <$> inits symbols
 ```
 
 Here are a couple of sanity checks. Firstly, it should always spot expressions
 which are normally equivalent (since they agree on zero inputs):
 
 ```{.haskell pipe="./show Main.hs"}
-normalEqNImpliesAgreeSymN :: (Fuel, Com, Com) -> Bool
-normalEqNImpliesAgreeSymN (n, x, y) = case normalEqN n x y of
-  Just (Same _) -> any same (agreeSymN n x y)
-  _             -> True
+-- | Try to extract values from the first few list elements.
+delayeds :: Fuel -> [Delay a] -> [a]
+delayeds n = catMaybes . take (fromIntegral n + 1) . map (delayed n)
+
+normalEqImpliesAgreeSym :: (Fuel, Com, Com) -> Bool
+normalEqImpliesAgreeSym (n, x, y) =
+    if delayedOr n False (same <$> normalEq x y)
+       then any same (delayeds n (agreeSym x y))
+       else True
 ```
 
-```{.unwrap pipe="./run normalEqNImpliesAgreeSymN"}
-main = run normalEqNImpliesAgreeSymN (triple genFuel genCom genCom)
+```{.unwrap pipe="./run normalEqImpliesAgreeSym"}
+main = run normalEqImpliesAgreeSym (triple genFuel genCom genCom)
 ```
 
-This check should also be monotonic, i.e. providing more `Fuel`{.haskell} should
-never *prevent* an agreement being found:
+This check should also be monotonic, i.e. checking with more `Fuel`{.haskell}
+should never *prevent* an agreement being found:
 
 ```{.haskell pipe="./show Main.hs"}
-agreeSymNIsMonotonic :: (Fuel, Fuel, Com, Com) -> Bool
-agreeSymNIsMonotonic (n, m, x, y) =
-    case (any same smaller, any same larger) of
-      (True, False) -> False
-      _             -> True
-  where smaller = agreeSymN n       x y
-        larger  = agreeSymN (n + m) x y
+agreeSymIsMonotonic :: (Fuel, Fuel, Com, Com) -> Bool
+agreeSymIsMonotonic (n, m, x, y) =
+    if any same (results n)
+       then any same (results (n + m))
+       else True
+  where results = (`delayeds` agreeSym x y)
 ```
 
-```{.unwrap pipe="./run agreeSymNIsMonotonic"}
-main = run agreeSymNIsMonotonic (quad genFuel genFuel genCom genCom)
+```{.unwrap pipe="./run agreeSymIsMonotonic"}
+main = run agreeSymIsMonotonic (quad genFuel genFuel genCom genCom)
 ```
 
 ### Different symbolic heads prove disagreement ###
@@ -1175,8 +1210,8 @@ main = run provablyDisagreeCommutes (pair genSymCom genSymCom)
 
 ```
 
-```{.unwrap pipe="./run extensionallyEqNImpliesAgreeN"}
-main = run extensionallyEqNImpliesAgreeN (triple genCom genCom genComs)
+```{.unwrap pipe="./run extensionallyEqImpliesAgree"}
+main = run extensionallyEqImpliesAgree (triple genCom genCom genComs)
 ```
 
 ### A simplistic first attempt ###
@@ -1187,8 +1222,8 @@ imply equal results on all inputs, like like this:
 ```{.haskell pipe="./show Main.hs"}
 -- | Asserts that the first two Com values give equal results when applied to
 -- | the third. First argument limits the number of steps attempted.
-assertEqualOn n f g x = case equalN n fx gx of
-  (Just (Right (fx', gx'))) -> testFailed
+assertEqualOn n f g x = case delayed n (normalEq fx gx) of
+  Just (Right (fx', gx')) -> testFailed
     (concat [show fx, " -> ", show fx', "\n", show gx, " -> ", show gx'])
   _ -> pure ()
   where fx = App f x
@@ -1198,16 +1233,17 @@ assertEqualOn n f g x = case equalN n fx gx of
 -- | to a symbolic variable: check that they agree for a third Com value too.
 prop_simplisticTest = do
     -- Generate a couple of Com values
-    f <- gen genCom
-    g <- gen genCom
-    case equalN steps (App f v) (App g v) of
+    f <- genCom
+    g <- genCom
+    case delayed steps (normalEq (App f v) (App g v)) of
       -- When f and g are distinct and agree for v, try them on another input
       Just (Left _) | f /= g -> do
-        x <- gen genCom
+        x <- genCom
         assertEqualOn steps f g x
       -- When f and g disagree, discard them and try again
       _ -> discard
   where steps = 100
+        genCom = gen (natRange (0, 20) >>= genComN)
 ```
 
 Whilst this test is *logically* correct, it's not very good. In particular it's
@@ -1245,11 +1281,11 @@ until it makes a value that's different from the given argument:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Generate a Com value that is not equal to the given argument.
-genUnequal :: Com -> Gen Com
-genUnequal x = do
-  c <- genCom
+genUnequal :: Natural -> Com -> Gen Com
+genUnequal n x = do
+  c <- genComN n
   if c == x
-    then genUnequal x
+    then genUnequal n x
     else pure c
 ```
 
@@ -1326,7 +1362,7 @@ genEqual fuel = go Map.empty
                             , Set.unions elems )
         go result n = do
           c <- genDistinctFrom fuel (Set.unions (Map.elems result))
-          case reduceN (2 * fuel) (App c v) of
+          case delayed (2 * fuel) (reduce (App c v)) of
             -- If we don't hit a normal form, skip this Com and recurse
             Nothing  -> go result n
             Just key ->
