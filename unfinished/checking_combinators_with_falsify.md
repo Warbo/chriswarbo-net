@@ -744,25 +744,25 @@ functions will treat these as
 [atomic symbols](https://en.wikipedia.org/wiki/Symbol_(programming)), to be
 copied, discarded and rearranged as needed.
 
-### Interpreting symbolic expressions ###
-
-We can now give a meaning, semantics, or [abstract
-interpretation](https://en.wikipedia.org/wiki/Abstract_interpretation) to SK
-expressions containing symbols. Since we're using each symbol to represent a
+Once we've normalised a `Com`{.haskell} value containing symbols, we need a
+semantics, or [abstract
+interpretation](https://en.wikipedia.org/wiki/Abstract_interpretation), to
+understand what they mean. Since we're using each symbol to represent a
 distinct input, the way they appear in `Normal`{.haskell} forms tells us
 something about the overall behaviour of the expression and, crucially, how it
-may depend on the particular `Inputs`{.haskell} it gets applied to. There's no
-way, in general, to decide whether part of an SK expression will influence its
-reduction, or whether it will end up being discarded by the `stepK`{.haskell}
-rule. Instead, we'll limit our ambitions to spotting a few simple situations.
+depends on the particular *concrete* `Inputs`{.haskell} it may be applied to.
+It's undecidable whether part of an SK expression will influence its reduction
+(or just get discarded by the `stepK`{.haskell} rule), so we'll limit our
+ambitions to understanding a few simple situations.
 
-#### Symbolic agreement implies extensional equality ####
+### Symbolic agreement proves extensional equality ###
 
 Expressions which agree on symbolic inputs will agree on *all* inputs, since
 symbols do not reduce, and hence those inputs must have been irrelevant for the
 reductions which lead to the agreement. Unlike property-checking, where we rely
 on double-negatives to "fail to disprove agreement", this is real positive proof
-that expressions will *always* agree, and are hence extensionally equal.
+that expressions will *always* agree, and hence we can claim definitively that
+they *are* extensionally equal.
 
 We don't need to implement this check specially, since we can reuse
 `agreeN`{.haskell}, just using symbolic values as our inputs instead of concrete
@@ -788,8 +788,8 @@ agreeSymN n f g = catMaybes                  -- Discard timeouts
                 $ inits symbols              -- Takes longer prefixes of symbols
 ```
 
-We can sanity check this in a couple of ways. It should always spot expressions
-which are normally equivalent:
+Here are a couple of sanity checks. Firstly, it should always spot expressions
+which are normally equivalent (since they agree on zero inputs):
 
 ```{.haskell pipe="./show Main.hs"}
 normalEqNImpliesAgreeSymN :: (Fuel, Com, Com) -> Bool
@@ -802,7 +802,8 @@ normalEqNImpliesAgreeSymN (n, x, y) = case normalEqN n x y of
 main = run normalEqNImpliesAgreeSymN (triple genFuel genCom genCom)
 ```
 
-It should also be monotonic:
+This check should also be monotonic, i.e. providing more `Fuel`{.haskell} should
+never *prevent* an agreement being found:
 
 ```{.haskell pipe="./show Main.hs"}
 agreeSymNIsMonotonic :: (Fuel, Fuel, Com, Com) -> Bool
@@ -818,7 +819,7 @@ agreeSymNIsMonotonic (n, m, x, y) =
 main = run agreeSymNIsMonotonic (quad genFuel genFuel genCom genCom)
 ```
 
-#### Different symbolic heads prove disagreement ####
+### Different symbolic heads prove disagreement ###
 
 The head of an expression determines how it will reduce. When a symbolic input
 appears as the head, the expression's `Normal`{.haskell} form depends entirely
@@ -879,7 +880,7 @@ distinctSymbolicHeadsCommutes (x, y) = distinctSymbolicHeads x y
 main = run distinctSymbolicHeadsCommutes (pair genSymCom genSymCom)
 ```
 
-#### Different numbers of arguments prove disagreement ####
+### Different numbers of arguments prove disagreement ###
 
 Expressions whose heads are *the same* symbolic input, but applied to a
 different number of arguments, can also be forced to disagree. For example, if
@@ -931,7 +932,7 @@ unequalArgCountCommutes (x, y) = unequalArgCount x y
 main = run distinctSymbolicHeadsCommutes (pair genSymCom genSymCom)
 ```
 
-#### Disagreeing arguments prove disagreement ####
+### Disagreeing arguments prove disagreement ###
 
 Finally, if symbolic heads are given the same *number* of arguments, we will see
 if their *values* disagree; in which case, we can choose input values which
@@ -968,7 +969,7 @@ symbolGivenUnequalArgsCommutes f x y = symbolGivenUnequalArgs f x y
                                     == symbolGivenUnequalArgs f y x
 ```
 
-#### Combining our disagreement provers ####
+### Combining disagreement provers ###
 
 We can never spot *all* disagreements, but the simple checks above can be
 combined into a single, reasonably-useful function. Not only is this easier to
