@@ -147,7 +147,7 @@ which we call `Com`{.haskell} (this representation also matches my definition in
 egglog):
 
 ```{.haskell pipe="./show Main.hs"}
-data Com = C Char | App Com Com deriving (Eq, Ord)
+data Com = C String | App Com Com deriving (Eq, Ord)
 
 left, right :: Com -> Maybe Com
 left  (App x _) = Just x
@@ -157,14 +157,14 @@ right _         = Nothing
 ```
 
 We use the `C`{.haskell} constructor to represent symbols, distinguished by a
-`Char`{.haskell} value like `'S'`{.haskell} or `'K'`{.haskell}:
+`String`{.haskell} value like `"S"`{.haskell} or `"K"`{.haskell}:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Our "base" combinators. Haskell requires the initial letter of a value name
 -- | to be lowercase.
 s, k :: Com
-s = C 'S'
-k = C 'K'
+s = C "S"
+k = C "K"
 ```
 
 We can group expressions together two at a time using `App`{.haskell}: this is a
@@ -177,7 +177,7 @@ useful interfaces:
 
  - `Eq`{.haskell} provides the `==`{.haskell} function. The auto-generated
    implementation will check whether two `Com`{.haskell} values are identical
-   (same structure and same `Char`{.haskell} data).
+   (same structure and same `String`{.haskell} data).
  - `Ord`{.haskell} provides comparisons like `<`{.haskell}. Haskell will
    generate a lexicographic implementation for us, but the details aren't
    important. Having *some* implementation of `Ord`{.haskell} lets us use
@@ -188,7 +188,7 @@ output:
 
 ```{.haskell pipe="./show Main.hs"}
 instance Show Com where
-  show (C c)             = [c]
+  show (C c)             = c
   show (App x (App y z)) = show x ++ "(" ++ show (App y z) ++ ")"
   show (App x y)         = show x ++ show y
 ```
@@ -249,12 +249,12 @@ the rule didn't match:
 ```{.haskell pipe="./show Main.hs"}
 -- | Replaces Kxy with x, otherwise Nothing
 stepK :: Com -> Maybe Com
-stepK (App (App (C 'K') x) _) = Just x
+stepK (App (App (C "K") x) _) = Just x
 stepK _ = Nothing
 
 -- | Replaces Sxyz with xz(yz), otherwise Nothing
 stepS :: Com -> Maybe Com
-stepS (App (App (App (C 'S') x) y) z) = Just (App (App x z) (App y z))
+stepS (App (App (App (C "S") x) y) z) = Just (App (App x z) (App y z))
 stepS _ = Nothing
 ```
 
@@ -777,7 +777,7 @@ would depend on the particular value of an input.
 Implementing symbolic execution can often be laborious, but our definition of
 `Com`{.haskell} actually makes it trivial to graft on top: we can represent
 abstract symbols using the `C`{.haskell} constructor applied to any
-`Char`{.haskell} (*except* `'S'`{.haskell} or `'K'`{.haskell}, which we're
+`String`{.haskell} (*except* `"S"`{.haskell} or `"K"`{.haskell}, which we're
 treating specially). Execution of the `stepK`{.haskell} and `stepS`{.haskell}
 functions will treat these as
 [atomic symbols](https://en.wikipedia.org/wiki/Symbol_(programming)), to be
@@ -812,7 +812,7 @@ more and more symbolic inputs, to see if they reduce to the same
 ```{.haskell pipe="./show Main.hs"}
 -- | All values 'C x', except s and k, for use as uninterpreted symbols
 symbols :: InputValues
-symbols = filter (/= k) . filter (/= s) . map C $ [minBound..maxBound]
+symbols = filter (/= k) . filter (/= s) . map (C . pure) $ [minBound..maxBound]
 
 -- | Checks whether two Com values agree on more and more symbolic input values.
 agreeSym :: Com -> Com -> [Delay (Compared Normal)]
@@ -873,14 +873,13 @@ head position:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Return the head (left-most leaf) of the given Com
-headPos :: Com -> Com
-headPos (C c)     = C c
+headPos :: Com -> String
+headPos (C c)     = c
 headPos (App l r) = headPos l
 
--- | Whether the given Com is an uninterpreted symbol used by symbolic execution
-isSym :: Com -> Bool
-isSym c@(C _) = c /= s && c /= k
-isSym _       = False
+-- | Whether a String represents an uninterpreted symbol (i.e. not S or K)
+isSym :: String -> Bool
+isSym s = s /= "S" && s /= "K"
 
 -- | Whether the given Com values have distinct symbolic values in head position
 distinctSymbolicHeads :: Com -> Com -> Bool
@@ -1130,7 +1129,7 @@ opposed to the "applicative form" of `Com`{.haskell}. They're equivalent, but
 the structure of an expression is less obvious in prefix form, which is why it
 only appears in this hidden section. This is the encoding used in [binary
 combinatory logic](https://en.wikipedia.org/wiki/Binary_combinatory_logic),
-although we're allowing arbitrary `Char`{.haskell} values rather than just `S`
+although we're allowing arbitrary `String`{.haskell} values rather than just `S`
 and `K`.
 
 The functions `preToCom`{.haskell} and `comToPre`{.haskell} don't *quite* form
@@ -1171,7 +1170,7 @@ code](https://en.wikipedia.org/wiki/Prefix_code):
    end of a list).
  - There's also some redundancy between
    `Left False`{.haskell}/`Left True`{.haskell} and
-   `Right 'K'`{.haskell}/`Right 'S'`{.haskell}. This was a deliberate choice, to
+   `Right "K"`{.haskell}/`Right "S"`{.haskell}. This was a deliberate choice, to
    make `falsify` generate more `S` and `K` expressions.
 
 These aren't a problem for our use of `Prefix`{.haskell} in generating values;
