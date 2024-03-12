@@ -1,5 +1,5 @@
 ---
-title: "SK logic in egglog: part 1½, checking assumptions with automated tests"
+title: Falsifying myself
 packages: [ 'ghcWithFalsify' ]
 ---
 
@@ -44,55 +44,58 @@ do
 exit 1
 ```
 
-In [part 1 I played around with the egglog
-language/database](/blog/2024-02-25-sk_logic_in_egglog_1.html), when I started
-getting results that were so unexpected and confusing that it made me question
-some of the assumptions I'd been making about the system I was modelling: a
-small programming language called
-[SK (combinatory) logic](https://doisinkidney.com/posts/2020-10-17-ski.html).
-I'm no stranger to being wrong about my code, but I had chosen SK since it's
-*very* simple and *very* familiar: implementing SK is like writing
-"hello world", something I've done countless times in all sorts of languages and
-paradigms (hence why it was an obvious choice when I wanted to learn egglog).
+This follows on from [part 1 of my experiments with SK logic in
+egglog](/blog/2024-02-25-sk_logic_in_egglog_1.html), but is self-contained
+(although that gives *motivation* for this post). This is the result of a
+rabbit hole I entered, after getting results that were so unexpected and
+confusing that it made me question some of the assumptions I'd been making in
+those experiments.
 
-It only took a few minutes to learn enough syntax to make a working interpreter,
-and not much longer to try out some different types and representations (indeed,
-a more complicated form of combinatory logic even appears in
-[egglog's `examples/`
-folder](https://github.com/egraphs-good/egglog/blob/main/tests/combinators.egg)!).
+I was modelling a small programming language called
+[SK (combinatory) logic](https://doisinkidney.com/posts/2020-10-17-ski.html);
+and whilst I'm no stranger to being wrong about my code, I had chosen SK since
+it's *very* simple and *very* familiar. Implementing SK is like writing
+"hello world": something I've done countless times in all sorts of languages and
+paradigms, hence why it was an obvious choice when I wanted to learn egglog. In
+fact, [combinatory logic even appears in egglog's `examples/`
+folder](https://github.com/egraphs-good/egglog/blob/main/tests/combinators.egg)!
 However, an innocuous-looking one-line extension brought the whole thing
 crashing down: all structure vanished and every term collapsed into one big
-blob, where everything equalled everything else (**note for non-logicians:**
-That's [not good](https://en.wikipedia.org/wiki/Principle_of_explosion)!).
+blob, where everything equalled everything else.
 
-Despite several rewrites, various different encodings, and much scouring of
-[egglog's Rust
+**Note for non-logicians:** That's
+[not good](https://en.wikipedia.org/wiki/Principle_of_explosion)!
+
+Despite several rewrites, trying various different encodings, and much scouring
+of [egglog's Rust
 source](https://github.com/egraphs-good/egglog/blob/main/src/ast/mod.rs), I kept
-running into the same behaviour. This made me seriously doubt my understanding
-of free variables. If I could spend years immersed in the worlds of mathematics,
-computer science, post-graduate academia, and software development; yet fail to
-grasp such a fundamental aspect in all that time; then what *else* might I be
-wrong about? Am I a complete fraud?
+running into the same problem. This made me seriously doubt my understanding,
+particularly of [free
+variables](https://en.wikipedia.org/wiki/Free_variables_and_bound_variables). If
+I could spend years immersed in the worlds of mathematics, computer science,
+post-graduate academia, and software development; yet fail to grasp such a
+fundamental aspect in all that time; then what *else* might I be wrong about? Am
+I a complete fraud?
 
 Thankfully I also trained as a physicist, so I know what to do when theoretical
-understanding goes awry: **experiment**! In software engineering we call our
-theories "libraries", and the experiments which ground them in real-world
-observations are called "tests". I decided to take a break from egglog to
-thoroughly test the assumptions I was making; this time in the more familiar
-context of Haskell, using my favourite hammer: [property-based
-testing](https://increment.com/testing/in-praise-of-property-based-testing/).
+understanding goes awry: **experiment**! Or, as software engineers call it,
+**test**! I wanted to thoroughly test the assumptions I was making in those
+egglog experiments, so I went crawling back to the comfort of Haskell where I
+could use my favourite hammer: [property-based
+testing](https://increment.com/testing/in-praise-of-property-based-testing).
 This would also let me try out the new
-[falsify framework](https://hackage.haskell.org/package/falsify), which
-[I've blogged about before](/blog/2024-01-19-lazy_test_generators.html).
+[falsify package](https://hackage.haskell.org/package/falsify) (which
+[I've blogged about before](/blog/2024-01-19-lazy_test_generators.html)): in
+essence, to try and "falsify myself", to figure out what I'd done wrong.
 
 ## The setup ##
 
 I'll explain some of this jargon below, but in short: that problematic line of
-code was my attempt to implement
+code which broke everything was my attempt to implement
 [extensional equality](https://en.wikipedia.org/wiki/Extensionality); the idea
-that if two things always behave the same then they are equal. To specify what
-"always" means, we need some notion of [universal
-quantification](https://en.wikipedia.org/wiki/Universal_quantification). That
+that if two things always behave in the same way, then we can consider them
+equal. To specify what "always" means, we need some notion of [universal
+quantification](https://en.wikipedia.org/wiki/Universal_quantification): that
 doesn't quite fit into the formal system of egglog, so my idea was to
 *approximate* universally-quantified variables using
 [symbolic execution](https://en.wikipedia.org/wiki/Symbolic_execution). This
@@ -106,7 +109,6 @@ the extreme opposite: *always* claiming that *everything* is equal!
 This page defines the entire contents of a test script using
 [active code](/projects/activecode). For more details, see [this page's Markdown
 source](/git/chriswarbo-net/git/branches/master/unfinished/checking_combinators_with_falsify.html).
-
 Here's the initial boilerplate for the script; it just needs GHC with `falsify`
 in its package database:
 
