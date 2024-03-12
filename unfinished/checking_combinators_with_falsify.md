@@ -959,11 +959,11 @@ head position:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Return the head (left-most leaf) of the given Com
-headPos :: Com -> String
+headPos :: Com -> Symbol
 headPos (C c)     = c
 headPos (App l r) = headPos l
 
--- | Whether a String represents an uninterpreted symbol (i.e. not S or K)
+-- | Whether a String represents an uninterpreted Symbol (i.e. not S or K)
 isSym :: String -> Bool
 isSym s = s /= "S" && s /= "K"
 
@@ -971,20 +971,27 @@ isSym s = s /= "S" && s /= "K"
 distinctSymbolicHeads :: Com -> Com -> Bool
 distinctSymbolicHeads x y = isSym hX && isSym hY && hX /= hY
   where (hX, hY) = (headPos x, headPos y)
+```
 
--- | Generate any Char value
-genChar :: Gen Char
-genChar = chr <$> Gen.inRange charRange
-  where charRange  = Range.between (ord minBound, ord maxBound)
+We can perform a few sanity checks, to confirm that our argument above holds:
+
+```{.haskell pipe="./show Main.hs"}
+-- | Generate String values to represent uninterpreted symbolic values
+genSymN :: Fuel -> Gen Symbol
+genSymN n = (`sAt` symbols) <$> genFuelN n
+
+-- | Generate (relatively small) symbolic values
+genSym :: Gen Symbol
+genSym = genSymN limit
 
 -- | Generate Com values which may also contain symbols
 genSymComN :: Fuel -> Gen Com
-genSymComN n = toSymCom <$> Gen.tree (Range.between (0, n)) genChar
+genSymComN n = toSymCom <$> Gen.tree (to n) (genSymN n)
   where toSymCom t = case t of
           Leaf                               -> k
           Branch _ Leaf Leaf                 -> k
           Branch _ Leaf (Branch _ Leaf Leaf) -> s
-          Branch c (Branch _ Leaf Leaf) Leaf -> C c
+          Branch s (Branch _ Leaf Leaf) Leaf -> C s
           Branch _ l r                       -> App (toSymCom l) (toSymCom r)
 
 -- | Generate (relatively small) Com values which may contain symbols
@@ -1028,12 +1035,12 @@ expressions apply a symbol to an unequal number of arguments:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Split a Com value into its head and any arguments that's applied to
-headAndArgs :: Com -> (Com, [Com])
-headAndArgs x@(C _) = (x, [])
+headAndArgs :: Com -> (String, [Com])
+headAndArgs (C x) = (x, [])
 headAndArgs (App l r) = case headAndArgs l of
   (h, args) -> (h, args ++ [r])
 
--- | True iff the given expressions have the same symbol in their head, but
+-- | True iff the given expressions have the same Symbol in their head, but
 -- | applied to a different number of arguments.
 unequalArgCount :: Com -> Com -> Bool
 unequalArgCount x y = isSym headX
@@ -1139,7 +1146,7 @@ liftFun2 f = liftFun (f . curry)
 ```
 
 To check (the lifted version of) `symbolGivenUnequalArgsCommutes`{.haskell}, we
-need a generator of type `Gen (Fun (Com, Com) Bool`{.haskell}. We can get one
+need a generator of type `Gen (Fun (Com, Com) Bool)`{.haskell}. We can get one
 from `Gen.fun`{.haskell}, but that requires an instance of
 `Gen.Function (Com, Com)`{.haskell}. There's an existing instance for tuples,
 but we still need to implement `Gen.Function Com`{.haskell} ourselves:
@@ -1152,12 +1159,12 @@ instance Gen.Function Com where
 This is piggybacking on an existing instance (the `Gen.function gen`{.haskell}
 call at the end) by converting our `Com`{.haskell} values back-and-forth to
 another type that already implements `Gen.Function`{.haskell}. The type I've
-chosen is `[Maybe (Either Bool Char)]`{.haskell}, and the conversions are
+chosen is `[Maybe (Either Bool Symbol)]`{.haskell}, and the conversions are
 implemented by `comToPre`{.haskell} & `preToCom`{.haskell}:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Prefix notation for expressions. `Nothing` represents an 'apply' operation.
-type Prefix = [Maybe (Either Bool Char)]
+type Prefix = [Maybe (Either Bool Symbol)]
 
 -- | Converts expressions from "applicative style" Com to "prefix style" Prefix.
 comToPre :: Com -> Prefix
@@ -1186,32 +1193,32 @@ comToPreRoundtrips :: Com -> Bool
 comToPreRoundtrips c = preToCom (comToPre c) == c
 ```
 
-```{.haskell pipe="./run comToPreRoundtrips"}
+```{.unwrap pipe="./run comToPreRoundtrips"}
 main = run comToPreRoundtrips genCom
 ```
 
 ```{.haskell pipe="./show Main.hs"}
-preToComRoundtrips :: Prefix -> Bool
-preToComRoundtrips p = comToPre (preToCom p') == p'
-  where p' = comToPre (preToCom p)  -- Extra roundtrip to avoid extra suffix
+preToComAlmostRoundtrips :: Prefix -> Bool
+preToComAlmostRoundtrips p = comToPre (preToCom p') == p'
+  where p' = comToPre (preToCom p)  -- Extra roundtrip to make p "correct"
 
 genPre :: Gen Prefix
 genPre = Gen.list small genEntry
   where genEntry = Gen.choose (Just <$> genLeaf) (pure Nothing)
-        genLeaf  = Gen.choose (Left <$> Gen.bool False) (Right <$> genChar)
+        genLeaf  = Gen.choose (Left <$> Gen.bool False) (Right <$> genSym)
 ```
 
-```{.haskell pipe="./run preToComRoundtrips"}
-main = run preToComRoundtrips genPre
+```{.unwrap pipe="./run preToComAlmostRoundtrips"}
+main = run preToComAlmostRoundtrips genPre
 ```
 
-The `Prefix`{.haskell} is a
+The `Prefix`{.haskell} type is a
 [prefix form](https://en.wikipedia.org/wiki/Polish_notation) for expressions, as
 opposed to the "applicative form" of `Com`{.haskell}. They're equivalent, but
 the structure of an expression is less obvious in prefix form, which is why it
 only appears in this hidden section. This is the encoding used in [binary
 combinatory logic](https://en.wikipedia.org/wiki/Binary_combinatory_logic),
-although we're allowing arbitrary `String`{.haskell} values rather than just `S`
+although we're allowing arbitrary `Symbol`{.haskell} values rather than just `S`
 and `K`.
 
 The functions `preToCom`{.haskell} and `comToPre`{.haskell} don't *quite* form
