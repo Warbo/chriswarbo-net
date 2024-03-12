@@ -566,10 +566,10 @@ treeToCom t = case t of
 
 -- | Generate a Com, with size bounded by the given Fuel
 genComN :: Fuel -> Gen Com
-genComN n = treeToCom <$> Gen.tree (Range.between (0, n)) (pure ())
+genComN n = treeToCom <$> Gen.tree (to n) (pure ())
 
 -- | Generate (relatively small) Com values
-genCom = genFuel >>= genComN
+genCom = genComN limit
 ```
 
 Normally we would plug `falsify` generators into properties using Haskell's
@@ -673,7 +673,7 @@ genNormalN n = do
 
 -- | Generates (relatively small) Normal values
 genNormal :: Gen Normal
-genNormal = genFuel >>= genNormalN
+genNormal = genNormalN limit
 ```
 
 ```{.unwrap pipe="./run normalsAreNormalEqToThemselves"}
@@ -732,12 +732,11 @@ normalEqImpliesAgree (n, f, g, xs) =
 
 -- | Generate a list of Com values, with length and element size bounded by Fuel
 genComsN :: Fuel -> Gen [Com]
-genComsN fuel = do max <- genFuelN fuel
-                   Gen.list (Range.between (0, max)) (genComN fuel)
+genComsN fuel = Gen.list (to fuel) (genComN fuel)
 
 -- | Generate (relatively small) lists of Com values
 genComs :: Gen InputValues
-genComs = genFuel >>= genComsN
+genComs = genComsN limit
 ```
 
 ```{.unwrap pipe="./run normalEqImpliesAgree"}
@@ -989,7 +988,7 @@ genSymComN n = toSymCom <$> Gen.tree (Range.between (0, n)) genChar
           Branch _ l r                       -> App (toSymCom l) (toSymCom r)
 
 -- | Generate (relatively small) Com values which may contain symbols
-genSymCom = genFuel >>= genSymComN
+genSymCom = genSymComN limit
 
 -- | Shouldn't matter which order we compare two Com values
 distinctSymbolicHeadsCommutes :: (Com, Com) -> Bool
