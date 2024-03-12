@@ -141,6 +141,42 @@ import qualified Test.Falsify.Range as Range
 uncurry3 :: (a -> b -> c -> d) -> (a, b, c) -> d
 uncurry3 f (a, b, c) = f a b c
 
+-- | Like a list, but never ends.
+data Stream a = Cons !a (Stream a) deriving (Functor)
+
+sPrefix :: [a] -> Stream a -> Stream a
+sPrefix []     ys = ys
+sPrefix (x:xs) ys = Cons x (sPrefix xs ys)
+
+-- | Drop elements from a 'Stream' which don't satisfy the given predicate.
+sFilter :: (a -> Bool) -> Stream a -> Stream a
+sFilter p (Cons x xs) = (if p x then Cons x else id) (sFilter p xs)
+
+-- | The first 'n 'elements of the given 'Stream', as a list.
+sTake :: Integral n => n -> Stream a -> [a]
+sTake n = fst . sSplitAt n
+
+-- | Split the first 'n' elements off a 'Stream'.
+sSplitAt :: Integral n => n -> Stream a -> ([a], Stream a)
+sSplitAt = go []
+  where go acc n         xs | n <= 0 = (reverse acc, xs)
+        go acc n (Cons x xs)         = go (x:acc) (n - 1) xs
+
+-- | Extract the nth element of a 'Stream'.
+sAt :: Integral n => n -> Stream a -> a
+sAt i (Cons x xs) = if i <= 0 then x else sAt (i - 1) xs
+
+-- | All prefixes of the given Stream, e.g. [], [x], [x, y], [x, y, z], ...
+sInits :: Stream a -> Stream [a]
+sInits (Cons x xs) = Cons [] ((x:) <$> sInits xs)
+
+-- | All String values, in order of length
+allStrings :: Stream String
+allStrings = go 0
+  where strs 0 = [""]
+        strs n = [c:s | c <- [minBound..maxBound], s <- strs (n - 1)]
+        go   n = sPrefix (strs n) (go (n + 1))
+
 -- | Like a list, but only stores data at the end. Useful for representing
 -- | general recursion.
 data Delay a = Now a | Later (Delay a) deriving (Eq, Functor, Ord, Show)
@@ -816,54 +852,94 @@ they *are* extensionally equal.
 
 We don't need to implement this check specially, since we can reuse
 `agree`{.haskell}, just using symbolic values as our inputs instead of concrete
-SK expressions. The following `agreeSym` function applies two expressions to
-more and more symbolic inputs, to see if they reduce to the same
-`Normal`{.haskell} form:
+SK expressions. We don't want to artificially limit the amount of symbols
+available, so we'll take them from a `Stream`{.haskell}, which is like a list
+except there is no "nil" case, so it goes on forever:
 
 ```{.haskell pipe="./show Main.hs"}
--- | All values 'C x', except s and k, for use as uninterpreted symbols
-symbols :: InputValues
-symbols = filter (/= k) . filter (/= s) . map (C . pure) $ [minBound..maxBound]
+-- | Synonym to indicate when we're dealing with uninterpreted symbolic values
+type Symbol = String
 
+-- | All Symbols except "S", "K" and "" (which doesn't show well)
+symbols :: Stream Symbol
+symbols = sFilter keep allStrings
+  where keep s = s /= "" && s /= "S" && s /= "K"
+```
+
+The following `agreeSym`{.haskell} function applies two expressions to more and
+more symbolic inputs, to see if they reduce to the same `Normal`{.haskell} form:
+
+```{.haskell pipe="./show Main.hs"}
 -- | Checks whether two Com values agree on more and more symbolic input values.
-agreeSym :: Com -> Com -> [Delay (Compared Normal)]
-agreeSym f g = agree f g <$> inits symbols
+agreeSym :: Com -> Com -> Stream (Delay (Compared Normal))
+agreeSym f g = agree f g <$> sInits (C <$> symbols)
 ```
 
-Here are a couple of sanity checks. Firstly, it should always spot expressions
-which are normally equivalent (since they agree on zero inputs):
+The return type of `agreeSym`{.haskell} is a little awkward, since it's "two
+dimensional": travelling further along the `Stream`{.haskell} applies more and
+more symbolic inputs; travelling further along any of those `Delay`{.haskell}
+values applies more and more steps to that expression. To get at the results
+inside (assuming any of those expressions has a `Normal`{.haskell} form) we need
+a linear path which traverses this structure. We can't use breadth-first search
+since the `Stream`{.haskell} never ends; we also can't use depth-first search,
+since a `Delay`{.haskell} might never end. The following `race`{.haskell}
+function is a bit smarter: it acts like a round-robin scheduler, each iteration
+running more expressions for longer time-slices, until one of them finishes (if
+ever):
 
 ```{.haskell pipe="./show Main.hs"}
--- | Try to extract values from the first few list elements.
-delayeds :: Fuel -> [Delay a] -> [a]
-delayeds n = catMaybes . take (fromIntegral n + 1) . map (delayed n)
-
-normalEqImpliesAgreeSym :: (Fuel, Com, Com) -> Bool
-normalEqImpliesAgreeSym (n, x, y) =
-    if delayedOr n False (same <$> normalEq x y)
-       then any same (delayeds n (agreeSym x y))
-       else True
+-- | Runs every 'Delay' element in an interleaved fashion until one of them
+-- | produces a 'Now'. Returns that result, its index in the 'Stream', and a
+-- | 'Stream' of the remaining 'Delay' elements.
+race :: Stream (Delay a) -> Delay (a, Natural, Stream (Delay a))
+race s = go 1 ([], s)
+  where go !n ([]        , ys) = Later (go    1 (sSplitAt n               ys))
+        go !n (Now   x:xs, ys) = Now   (x,  n-1, sPrefix xs               ys)
+        go !n (Later x:xs, ys) =        go (n+1) (xs, Cons (runDelay n x) ys)
 ```
 
-```{.unwrap pipe="./run normalEqImpliesAgreeSym"}
-main = run normalEqImpliesAgreeSym (triple genFuel genCom genCom)
-```
-
-This check should also be monotonic, i.e. checking with more `Fuel`{.haskell}
-should never *prevent* an agreement being found:
+We can use `race`{.haskell} to check whether two expressions ever agree, and
+therefore whether they're extensionally equal:
 
 ```{.haskell pipe="./show Main.hs"}
-agreeSymIsMonotonic :: (Fuel, Fuel, Com, Com) -> Bool
-agreeSymIsMonotonic (n, m, x, y) =
-    if any same (results n)
-       then any same (results (n + m))
-       else True
-  where results = (`delayeds` agreeSym x y)
+-- | 'True' iff the given expressions ever agree for any number of inputs.
+everAgree :: Com -> Com -> Delay Bool
+everAgree x y = race (agreeSym x y) >>= go
+  where go (Same _  , _, _) = Now True
+        go (Diff _ _, _, s) = race s >>= go
 ```
 
-```{.unwrap pipe="./run agreeSymIsMonotonic"}
-main = run agreeSymIsMonotonic (quad genFuel genFuel genCom genCom)
+Note that `everAgree`{.haskell} is more general than `normalEq`{.haskell}, since
+the latter only checks for agreement on $0$ inputs:
+
+```{.haskell pipe="./show Main.hs"}
+normalEqImpliesEverAgree :: (Fuel, Com, Com) -> Bool
+normalEqImpliesEverAgree (n, x, y) =
+  if runDelayOr n False (same <$> normalEq x y)
+     then runDelayOr n False (everAgree x y)
+     else True
 ```
+
+```{.unwrap pipe="./run normalEqImpliesEverAgree"}
+main = run normalEqImpliesEverAgree (triple genFuel genCom genCom)
+```
+
+However, `everAgree`{.haskell} is not yet a predicate for checking extensional
+equality, since the `Compared`{.haskell} values returned by `agreeSym`{.haskell}
+don't represent "equal/unequal"; only "equal/unsure". Hence the
+`everAgree`{.haskell} function *claims* to return `Delay Bool`{.haskell}, which
+we can think of as "at most one boolean". Yet its result is not really a
+boolean, since it can never be `False`{.haskell}! It would be more accurate to
+return a unit value `Now ()`{.haskell}, of type `Delay ()`{.haskell}. That type
+is [isomorphic to the natural numbers](/blog/2014-12-04-Nat_like_types.html),
+counting how long it took to prove equality. That can't be a predicate, since it
+[begs the question](https://en.wikipedia.org/wiki/Begging_the_question)!
+
+A *useful* predicate for extensional equality not only needs to return
+`True`{.haskell} for some inputs it's sure are equal; but *also* return
+`False`{.haskell} for some inputs it's sure are unequal. When it's unsure (which
+is unavoidable due to undecidability), it can use a never-ending chain of
+`Later`{.haskell} wrappers to avoid ever returning at all!
 
 ### Different symbolic heads prove disagreement ###
 
