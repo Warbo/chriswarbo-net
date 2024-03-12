@@ -230,13 +230,15 @@ We can refer to various parts of an SK expression using the following
 terminology:
 
  - The "root" is the top-most constructor.
- - The "head" is the left-most leaf. If the expression itself is a leaf, like
-   `S` or `K`, then that expression is its own head (and root!).
+ - The "head" is the left-most leaf.
  - The "spine" is the chain of left-nested `App` constructors between the head
    and the root. If the expression is a leaf, its spine is empty.
  - The "arguments" (or "args") of that head are the right-hand children hanging
    off the spine, ordered from the head to the root. If the spine is empty,
    there are no arguments.
+
+Examples can be seen in the figure below. We will often describe an expression
+as "applying 〈its head〉 to 〈its arguments〉".
 
 <figure>
 
@@ -247,23 +249,27 @@ terminology:
      ╔═══╝───┐
     App     App
    ╔═╝─┐   ┌─┴─┐
-   Ⓢ   K  App  S
+   𝑺   K  App  S
          ┌─┴─┐
          K   K
 ```
 
-<figcaption>Structure of the expression `SK(KKS)S`, represented by the Haskell
-value `App (App (App s k) (App (App k k) s)) s`{.haskell}. The root and spine
-are double-struck; the head is shown as `Ⓢ`, and its arguments are `K`, `KKS`
-and `S`.
-</figure>
+```
+    𝔸𝕡𝕡
+   ╔═╝─┐
+  App  S
+ ╔═╝─┐
+ 𝑲   K
+```
 
-The figure above shows the expression `SK(KKS)S` rendered as a tree. Its head is
-`S`, and args are `K`, `KKS` and `S`. Each of those args can be broken down in
-the same way: the head of `K` is `K` and it has no args; the head of `S` is `S`,
-and it has no args; the head of `KKS` is `K` and it has args `K` and `S`, which
-can again be broken down; and so on. We will sometimes describe an expression as
-"applying 〈its head〉 to 〈its arguments〉".
+<figcaption>Structure of SK expressions: the head is shown in `𝙞𝙩𝙖𝙡𝙞𝙘`, the root
+is `𝕕𝕠𝕦𝕓𝕝𝕖-𝕤𝕥𝕣𝕦𝕔𝕜` and the spine is shown with a double═line. **Top:** Structure
+of the expression `SK(KKS)S`, represented by the Haskell value
+`App (App (App s k) (App (App k k) s)) s`{.haskell}. The head is `𝑺` and
+arguments are `K`, `KKS` and `S`. **Bottom:** Structure of that second argument,
+`KKS`; with head `𝑲` and arguments `K` and `S`. Leaf expressions (`K` and `S`)
+are their own root and head, with no spine or arguments.</figcaption>
+</figure>
 
 ### Running SK expressions ###
 
@@ -403,13 +409,13 @@ normalEq x y = comparer <$> reduce x <*> reduce y
 
 ## Property-based testing ##
 
-Let's test this `normalEq`{.haskell} function, to see whether it actually behaves
-in the way our theory of SK predicts it should. For example, every equality
-relation should have the
+Let's test this `normalEq`{.haskell} function, to see whether it actually
+behaves in the way our theory of SK predicts it should. For example, every
+equality relation should have the
 ["reflexive property"](https://en.wikipedia.org/wiki/Reflexive_relation),
 meaning that values should be equal to themselves. The following predicate
-(function returning a boolean) checks whether its argument is `normalEq`{.haskell}
-to itself:
+(function returning a boolean) checks whether its argument is
+`normalEq`{.haskell} to itself:
 
 ```{.haskell pipe="./show Main.hs"}
 normalEqToItself :: (Fuel, Com) -> Bool
@@ -559,7 +565,7 @@ example, it may produce `KKK` (the Haskell value `App (App k k) k`{.haskell}).
 `stepK`{.haskell} will reduce that to a single `K`, so whilst the value
 `KKK` *is* equal to itself (as we expect), `normalEq`{.haskell} wraps it in a
 `Later`{.haskell} constructor, which may cause `normalEqToItself`{.haskell} to
-give up *some* `Fuel`{.haskell} parameters: in particular, when given
+give up for *some* `Fuel`{.haskell} parameters: in particular, when given
 `0`{.haskell} `Fuel`{.haskell}. This disproves our claim that the property holds
 for *any* amount of `Fuel`{.haskell}.
 
@@ -668,8 +674,8 @@ input value. For example, `KK` and `SKK` agree on the input value `K`, since
 `KKK` reduces to `K`; and `SKKK` reduces to `KK(KK)` then to `K`. Note that they
 *disagree* on the input value `S`, since `KKS` reduces to `K`; whilst `SKKS`
 reduces to `KS(KS)` then to `S`. Expressions can also agree on a *sequence* of
-input values, where we begin by applying them both to the first value, then
-apply those results to the second value, and so on:
+input values, where we apply them both to the first value, then apply those
+results to the second value, and so on:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Apply the Coms to the InputValues, see if they reach the same Normal form
@@ -702,12 +708,10 @@ genComs = genFuel >>= genComsN
 main = run normalEqImpliesAgree (quad genFuel genCom genCom genComs)
 ```
 
-An "input" is a universally-quantified input value, i.e. it can be *any* SK
-expression, rather than one in particular. When expressions "agree on $N$
-inputs", it means that applying them to *any* sequence of $N$ input values will
-produce results that have the same `Normal`{.haskell} form. For example, `SK`
-and `S(K(SK))(KK)` agree on two inputs; which we can test by asserting that they
-*never disagree*:
+We say expressions "agree on $N$ inputs" when they agree on *every* sequence of
+$N$ input values; i.e. the input values are universally-quantified, but the
+length of the sequence is not. For example, `SK` and `S(K(SK))(KK)` agree on two
+inputs; which we can test by asserting that they *never disagree*:
 
 ```{.haskell pipe="./show Main.hs"}
 skNeverDisagreesWithSKSKKK :: (Fuel, InputValue, InputValue) -> Bool
@@ -745,7 +749,9 @@ main = run agreementIsMonotonic (triple genFuel
 Now we've defined inputs and agreement, extensional equality becomes quite
 simple: SK expressions are extensionally equal iff they agree on *some* number
 of inputs. We saw that `SK` and `S(K(SK))(KK)` agree on *some* number of inputs
-(namely: on two inputs), so they are extensionally equal.
+(namely: on two inputs), so they are extensionally equal. Expressions which are
+normally equivalent are also extensionally equal, since they agree on zero
+inputs.
 
 Notice that the *number* of inputs is existentially-quantified, whilst the
 *values* of those inputs are universally-quantified. This makes extensional
