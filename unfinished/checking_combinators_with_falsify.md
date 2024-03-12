@@ -113,7 +113,7 @@ in its package database:
 ```{.haskell pipe="./show Main.hs"}
 module Main (main) where
 
-import Control.Applicative ((<|>), liftA2)
+import Control.Applicative ((<|>))
 import Control.Exception (assert)
 import Control.Monad (guard)
 import Data.Char (chr, ord)
@@ -349,8 +349,8 @@ form](https://en.wikipedia.org/wiki/Normal_form_(abstract_rewriting)):
 -- | Attempt to reduce a K or S combinator, or the children of an App. Nothing
 -- | if the argument is in normal form.
 step :: Com -> Maybe Com
-step c = stepK c <|> stepS c <|> a l' r' <|> a l' r <|> a l  r'
-  where a        = liftA2 App
+step c = stepK c <|> stepS c <|> a l' r' <|> a l' r <|> a l r'
+  where a x y    = App <$> x <*> y
         (l , r ) = (left c    , right c   )
         (l', r') = (l >>= step, r >>= step)
 ```
