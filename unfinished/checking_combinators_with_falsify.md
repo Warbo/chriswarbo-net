@@ -117,22 +117,16 @@ module Main (main) where
 
 import Control.Applicative ((<|>))
 import Control.Exception (assert)
-import Control.Monad (guard)
-import Data.Char (chr, ord)
 import Data.Foldable
-import Data.List (inits)
-import Data.List.NonEmpty (NonEmpty(..))
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
-import Data.Maybe (catMaybes)
+import Data.Maybe (isJust)
 import Data.Set (Set)
 import qualified Data.Set as Set
-import GHC.Natural (Natural, mkNatural)
-import Test.Falsify.Generator (Gen, Tree(..), (:->))
+import GHC.Natural (Natural)
+import Test.Falsify.Generator (Gen, Tree(..))
 import qualified Test.Falsify.Generator as Gen
 import Test.Falsify.Interactive (shrink)
-import Test.Falsify.Predicate ((.$))
-import qualified Test.Falsify.Predicate as Predicate
 import Test.Falsify.Range (Range)
 import qualified Test.Falsify.Range as Range
 
