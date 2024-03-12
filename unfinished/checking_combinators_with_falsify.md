@@ -133,6 +133,33 @@ import Test.Falsify.Predicate ((.$))
 import qualified Test.Falsify.Predicate as Predicate
 import Test.Falsify.Range (Range)
 import qualified Test.Falsify.Range as Range
+
+-- Useful helpers. These are available in libraries, but I want this code to be
+-- self-contained (other than falsify)
+
+-- | Like a list, but only stores data at the end. Useful for representing
+-- | general recursion.
+data Delay a = Now a | Later (Delay a) deriving (Eq, Functor, Ord, Show)
+
+instance Applicative Delay where
+  (Now   f) <*> x =        f <$> x
+  (Later f) <*> x = Later (f <*> x)
+  pure            = Now
+
+instance Monad Delay where
+  (Now   x) >>= f = f x
+  (Later x) >>= f = Later (x >>= f)
+
+-- | Unwrap (up to) a given number of 'Later' wrappers from a 'Delay' value.
+runDelay :: Integral n => n -> Delay a -> Delay a
+runDelay _ (Now   x) = Now x
+runDelay n (Later x) = (if n <= 0 then id else runDelay (n - 1)) x
+
+-- | Try to extract a value from the given 'Delay', or use the given default
+runDelayOr :: Integral n => n -> a -> Delay a -> a
+runDelayOr n def x = case runDelay n x of
+  Now   x' -> x'
+  Later _  -> def
 ```
 
 </details>
@@ -306,44 +333,7 @@ toNormal c = case step c of
 `toNormal`{.haskell} tells us when to stop iterating, but since SK is a
 universal programming language, there's no way to know beforehand if it ever
 will. We'll account for this by wrapping such undecidable computations in
-[a `Delay`
-type](http://www.chriswarbo.net/blog/2014-12-04-Nat_like_types.html#delay-t):
-
-```{.haskell pipe="./show Main.hs"}
-data Delay a = Now a | Later (Delay a) deriving (Eq, Functor, Ord, Show)
-
-instance Applicative Delay where
-  (Now   f) <*> x =        f <$> x
-  (Later f) <*> x = Later (f <*> x)
-  pure            = Now
-
-instance Monad Delay where
-  (Now   x) >>= f = f x
-  (Later x) >>= f = Later (x >>= f)
-```
-
-Since `Delay`{.haskell} could be a never-ending chain of `Later`{.haskell}
-wrappers, any attempt to extract a value from one must eventually give up. We
-can represent this using parameters of type `Fuel`{.haskell} (a synonym for
-natural numbers):
-
-```{.haskell pipe="./show Main.hs"}
--- | Represents a parameter for "when to give up"
-type Fuel = Word
-
--- | Try to extract a value from the given 'Delay'
-delayed :: Fuel -> Delay a -> Maybe a
-delayed n x = case x of
-  Now   x' -> Just x'
-  Later x' -> guard (n > 0) *> delayed (n - 1) x'
-
--- | Try to extract a value from the given 'Delay', or use the given default
-delayedOr :: Fuel -> a -> Delay a -> a
-delayedOr n def x = maybe def id (delayed n x)
-```
-
-Now we can iterate the `toNormal`{.haskell} function, hiding each recursive call
-safely beneath a `Later`{.haskell} wrapper:
+[a `Delay` type](/blog/2014-12-04-Nat_like_types.html#delay-t):
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Step the given Com until it reaches normal form.
@@ -351,6 +341,16 @@ reduce :: Com -> Delay Normal
 reduce c = case toNormal c of
   Right n -> Now n
   Left c' -> Later (reduce c')
+```
+
+Since such `Delay`{.haskell} values could be a never-ending chain of
+`Later`{.haskell} wrappers (like `loop = Later loop`{.haskell}), any attempt to
+extract a value from one must eventually give up. We'll represent this using
+parameters of type `Fuel`{.haskell} (a synonym for natural numbers):
+
+```{.haskell pipe="./show Main.hs"}
+-- | Represents a parameter for "when to give up"
+type Fuel = Word
 ```
 
 ### Normal equivalence ###
@@ -409,7 +409,7 @@ to itself:
 
 ```{.haskell pipe="./show Main.hs"}
 normalEqToItself :: (Fuel, Com) -> Bool
-normalEqToItself (n, x) = delayedOr n False (same <$> normalEq x x)
+normalEqToItself (n, x) = runDelayOr n False (same <$> normalEq x x)
 ```
 
 We can turn this predicate into a general statement by *quantifying* its
@@ -561,7 +561,8 @@ for *any* amount of `Fuel`{.haskell}.
 
 We could alter our claim to *existentially* quantify the amount of
 `Fuel`{.haskell}: that for any SK expression `x`{.haskell}, there is *some*
-value of `n`{.haskell} where `delayed n (normalEq x x)`{.haskell} holds. However
+value of `n`{.haskell} where
+`runDelayOr n False (same <$> normalEq x x)`{.haskell} holds. However
 that is *also* false, since there are infinite loops which have no
 `Normal`{.haskell} form; hence never produce a `Now` value; and therefore cannot
 have a result extracted regardless of how much `Fuel`{.haskell} we use. Even
@@ -577,7 +578,7 @@ we claim that every expression is *not unequal* to itself (regardless of
 
 ```{.haskell pipe="./show Main.hs"}
 notUnnormalEqToItself :: (Fuel, Com) -> Bool
-notUnnormalEqToItself (n, x) = delayedOr n True (not . diff <$> normalEq x x)
+notUnnormalEqToItself (n, x) = runDelayOr n True (not . diff <$> normalEq x x)
 ```
 
 ```{.unwrap pipe="./run notUnnormalEqToItself"}
@@ -619,10 +620,10 @@ try again!
 -- | the number of steps to attempt when normalising.
 genNormalN :: Fuel -> Gen Normal
 genNormalN n = do
-  c <- genComN n                -- Generate a Com value c
-  maybe (genNormalN n)          -- Retry if c didn't finish reducing
-        return                  -- Return the Normal value if reduction finished
-        (delayed n (reduce c))  -- Try to reduce c to a Normal value
+  c <- genComN n                    -- Generate a Com value c
+  runDelayOr n                    -- Give up after n steps
+               (genNormalN n)       -- Fall back to generating a fresh Com
+               (pure <$> reduce c)  -- Try to reduce c to a Normal value
 
 -- | Generates (relatively small) Normal values
 genNormal :: Gen Normal
@@ -679,9 +680,9 @@ Everything that satisfies `normalEq`{.haskell} should also satisfy
 ```{.haskell pipe="./show Main.hs"}
 normalEqImpliesAgree :: (Fuel, Com, Com, InputValues) -> Bool
 normalEqImpliesAgree (n, f, g, xs) =
-  case delayed n (pair (normalEq f g) (agree f g xs)) of
-    Just (Same _, Diff _ _) -> False
-    _                       -> True
+  case runDelay n (pair (normalEq f g) (agree f g xs)) of
+    Now (Same _, Diff _ _) -> False
+    _                      -> True
 
 -- | Generate a list of Com values, with length and element size bounded by Fuel
 genComsN :: Fuel -> Gen [Com]
@@ -707,7 +708,7 @@ and `S(K(SK))(KK)` agree on two inputs; which we can test by asserting that they
 ```{.haskell pipe="./show Main.hs"}
 skNeverDisagreesWithSKSKKK :: (Fuel, InputValue, InputValue) -> Bool
 skNeverDisagreesWithSKSKKK (n, x, y) =
-    delayedOr n True (not . diff <$> agree f g [x, y])
+    runDelayOr n True (not . diff <$> agree f g [x, y])
   where f = App s k
         g = App (App s (App k (App s k))) (App k k)
 ```
@@ -724,9 +725,9 @@ form (by definition of agreement on $N$ inputs).
 -- | False iff the Com values agree on xs but not xs++ys
 agreementIsMonotonic :: (Fuel, (Com, Com), (InputValues, InputValues)) -> Bool
 agreementIsMonotonic (n, (f, g), (xs, ys)) =
-  case delayed n (pair (agree f g xs) (agree f g (xs ++ ys))) of
-    Just (Same _, Diff _ _) -> False
-    _                       -> True
+  case runDelay n (pair (agree f g xs) (agree f g (xs ++ ys))) of
+    Now (Same _, Diff _ _) -> False
+    _                      -> True
 ```
 
 ```{.unwrap pipe="./run agreementIsMonotonic"}
@@ -1221,8 +1222,8 @@ imply equal results on all inputs, like like this:
 ```{.haskell pipe="./show Main.hs"}
 -- | Asserts that the first two Com values give equal results when applied to
 -- | the third. First argument limits the number of steps attempted.
-assertEqualOn n f g x = case delayed n (normalEq fx gx) of
-  Just (Right (fx', gx')) -> testFailed
+assertEqualOn n f g x = case runDelay n (normalEq fx gx) of
+  Now (Right (fx', gx')) -> testFailed
     (concat [show fx, " -> ", show fx', "\n", show gx, " -> ", show gx'])
   _ -> pure ()
   where fx = App f x
@@ -1234,9 +1235,9 @@ prop_simplisticTest = do
     -- Generate a couple of Com values
     f <- genCom
     g <- genCom
-    case delayed steps (normalEq (App f v) (App g v)) of
+    case runDelay steps (normalEq (App f v) (App g v)) of
       -- When f and g are distinct and agree for v, try them on another input
-      Just (Left _) | f /= g -> do
+      Now (Left _) | f /= g -> do
         x <- genCom
         assertEqualOn steps f g x
       -- When f and g disagree, discard them and try again
@@ -1361,10 +1362,10 @@ genEqual fuel = go Map.empty
                             , Set.unions elems )
         go result n = do
           c <- genDistinctFrom fuel (Set.unions (Map.elems result))
-          case delayed (2 * fuel) (reduce (App c v)) of
+          case runDelay (2 * fuel) (reduce (App c v)) of
             -- If we don't hit a normal form, skip this Com and recurse
-            Nothing  -> go result n
-            Just key ->
+            Later _ -> go result n
+            Now key ->
               let single  = Set.singleton c
                   result' = Map.insertWith Set.union key single result
                   matches = Set.toList (Map.findWithDefault single key result')
