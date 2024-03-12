@@ -137,6 +137,10 @@ import qualified Test.Falsify.Range as Range
 -- Useful helpers. These are available in libraries, but I want this code to be
 -- self-contained (other than falsify)
 
+-- | Like 'uncurry', but for three arguments
+uncurry3 :: (a -> b -> c -> d) -> (a, b, c) -> d
+uncurry3 f (a, b, c) = f a b c
+
 -- | Like a list, but only stores data at the end. Useful for representing
 -- | general recursion.
 data Delay a = Now a | Later (Delay a) deriving (Eq, Functor, Ord, Show)
@@ -1051,10 +1055,6 @@ liftFun f = f . Gen.applyFun
 -- | Lift a function with binary argument to take an uncurried Fun instead
 liftFun2 :: ((a -> b -> c) -> d) -> Gen.Fun (a, b) c -> d
 liftFun2 f = liftFun (f . curry)
-
--- | Like 'uncurry', but for three arguments
-uncurry3 :: (a -> b -> c -> d) -> (a, b, c) -> d
-uncurry3 f (a, b, c) = f a b c
 ```
 
 To check (the lifted version of) `symbolGivenUnequalArgsCommutes`{.haskell}, we
