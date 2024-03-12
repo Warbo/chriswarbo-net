@@ -1323,13 +1323,54 @@ provablyDisagreeCommutes (x, y) = provablyDisagree x y == provablyDisagree y x
 main = run provablyDisagreeCommutes (pair genSymCom genSymCom)
 ```
 
+### Approximating extensional equality ###
+
+Now we have ways to spot both extensional equality *and* inequality (in certain
+situations), we can fold them over the result of `agreeSym`{.haskell}. We'll
+begin by extracting the numerical index provided by `race`{.haskell}:
+
+```{.haskell pipe="./show Main.hs"}
+-- | 'Just n' if the given expressions agree on 'n' inputs (they might also
+-- | agree on fewer). 'Nothing' if it is determined that they won't agree; if
+-- | that cannot be determined, the 'Delay' will never end.
+extensionalInputs :: Com -> Com -> Delay (Maybe Natural)
+extensionalInputs x y = race (agreeSym x y) >>= go 0
+  where go !n (Same _                    , m, _) = Now (Just (n+m))
+        go !n (Diff (Normal a) (Normal b), _, s) = if provablyDisagree a b
+                                                      then Now Nothing
+                                                      else race s >>= go (n+1)
 ```
 
-```{.unwrap pipe="./run extensionallyEqImpliesAgree"}
-main = run extensionallyEqImpliesAgree (triple genCom genCom genComs)
+This is easy to transform into a legitimate predicate for testing extensional
+equality, that's able to answer both `True`{.haskell} and `False`{.haskell} (at
+least, some of the time):
+
+```{.haskell pipe="./show Main.hs"}
+-- | Whether the given expressions are extensionally equal, i.e. cannot be
+-- | distinguished by an SK expression.
+extensionalEq :: Com -> Com -> Delay Bool
+extensionalEq x y = isJust <$> extensionalInputs x y
 ```
 
-### A simplistic first attempt ###
+Testing `extensionalEq`{.haskell} is tricky: whilst SK expressions cannot
+observe any difference between extensionally-equal values, our Haskell code can,
+by reading their syntax. We can reduce them down to the same `Normal`{.haskell}
+form, by only after applying them to `extensionalInputs`{.haskell} inputs:
+
+```{.haskell pipe="./show Main.hs"}
+agreeOnExtensionalInputs :: (Fuel, Com, Com, InputValues) -> Bool
+agreeOnExtensionalInputs (n, x, y, pre) =
+    runDelayOr n True (extensionalInputs x y >>= check)
+  where check Nothing  = Now True
+        check (Just i) = same <$> agree x y (sTake i inputs)
+        inputs         = sPrefix pre (C <$> symbols)
+```
+
+```{.unwrap pipe="./run agreeOnExtensionalInputs"}
+main = run agreeOnExtensionalInputs (quad genFuel genCom genCom genComs)
+```
+
+## Falsifying myself ##
 
 We can now *directly* test our assumption that equal results on a symbolic input
 imply equal results on all inputs, like like this:
