@@ -140,6 +140,18 @@ import qualified Test.Falsify.Range as Range
 uncurry3 :: (a -> b -> c -> d) -> (a, b, c) -> d
 uncurry3 f (a, b, c) = f a b c
 
+-- | Combine two results into a pair
+pair :: Applicative f => f a -> f b -> f (a, b)
+pair a b = (,) <$> a <*> b
+
+-- | Combine three results into a triple
+triple :: Applicative f => f a -> f b -> f c -> f (a, b, c)
+triple a b c = (,,) <$> a <*> b <*> c
+
+-- | Combine four results into a quad
+quad :: Applicative f => f a -> f b -> f c -> f d -> f (a, b, c, d)
+quad a b c d = (,,,) <$> a <*> b <*> c <*> d
+
 -- | Like a list, but never ends.
 data Stream a = Cons !a (Stream a) deriving (Functor)
 
@@ -489,27 +501,18 @@ the state-of-the-art for 2024, which is
 `falsify` searches through argument values *at random*, sampling them from a
 given "generator" with the Haskell type `Gen a`{.haskell} (for generating values
 of some type `a`{.haskell}). We can build up generators using familiar
-interfaces like `Applicative`{.haskell}, `Monad`{.haskell}, etc.
+interfaces (`Applicative`{.haskell}, `Monad`{.haskell}, etc.) from primitives;
+such as `Gen.inRange`{.haskell}, which samples fixnums from a `Range`{.haskell}
+and is perfect for generating `Fuel`{.haskell}:
 
 ```{.haskell pipe="./show Main.hs"}
--- Combine individual results into a single tuple result. Works for any
--- Applicative, including Gen, Maybe, etc.
+-- | Generates a (relatively small) amount of Fuel
+genFuel = genFuelN limit
 
-pair :: Applicative f => f a -> f b -> f (a, b)
-pair a b = (,) <$> a <*> b
+-- | Generates up to a certain amount of Fuel
+genFuelN :: Fuel -> Gen Fuel
+genFuelN = Gen.inRange . to
 
-triple :: Applicative f => f a -> f b -> f c -> f (a, b, c)
-triple a b c = (,,) <$> a <*> b <*> c
-
-quad :: Applicative f => f a -> f b -> f c -> f d -> f (a, b, c, d)
-quad a b c d = (,,,) <$> a <*> b <*> c <*> d
-```
-
-`falsify` also provides useful primitives to get started, such as
-`Gen.inRange`{.haskell} which samples fixnums from a `Range`{.haskell}. This is
-perfect for generating `Fuel`{.haskell}:
-
-```{.haskell pipe="./show Main.hs"}
 -- | A reasonable default for procedures requiring Fuel. Small enough to keep
 -- | exponentially-growing terms from blowing up.
 limit :: Fuel
@@ -522,13 +525,6 @@ to = Range.between . (0,)
 -- | A reasonable Range of Fuel to use in tests
 small :: Range Fuel
 small = to limit
-
--- | Generates up to a certain amount of Fuel
-genFuelN :: Fuel -> Gen Fuel
-genFuelN = Gen.inRange . to
-
--- | Generates a (relatively small) amount of Fuel
-genFuel = Gen.inRange small
 ```
 
 Generating `Com`{.haskell} values is more tricky, since they are recursive. A
