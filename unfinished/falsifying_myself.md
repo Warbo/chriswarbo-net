@@ -417,16 +417,6 @@ reduce c = case toNormal c of
   Right n -> Now n
 ```
 
-Since such `Delay`{.haskell} values could be a never-ending chain of
-`Later`{.haskell} wrappers (like `loop = Later loop`{.haskell}), any attempt to
-extract a value from one must eventually give up. We'll represent this using
-parameters of type `Fuel`{.haskell} (a synonym for natural numbers):
-
-```{.haskell pipe="./show Main.hs"}
--- | Represents a parameter for "when to give up"
-type Fuel = Word
-```
-
 #### Normal equivalence ####
 
 The rules of SK are
@@ -478,6 +468,18 @@ equality relation should have the
 ["reflexive property"](https://en.wikipedia.org/wiki/Reflexive_relation),
 meaning that values should be equal to themselves; so any call like
 `normalEq foo foo`{.haskell} should always result in `True`{.haskell}.
+Unfortunately, such results are buried in a `Delay`{.haskell} which prevents us
+testing them directly. `Delay`{.haskell} values *could* be a never-ending chain
+of `Later`{.haskell} wrappers (like `loop = Later loop`{.haskell}), so any
+attempt to extract a result from them must eventually give up. We'll work around
+this using a parameter that counts down until we give up; this approach is
+usually called
+[fuel](http://blog.ezyang.com/2011/06/debugging-compilers-with-optimization-fuel):
+
+```{.haskell pipe="./show Main.hs"}
+-- | Represents a parameter for "when to give up"
+type Fuel = Word
+```
 
 Now we can write a predicate (a function returning a boolean) to check whether
 its argument is `normalEq`{.haskell} to itself, before its `Fuel`{.haskell} runs
