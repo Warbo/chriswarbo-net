@@ -404,6 +404,40 @@ toNormal c = case step c of
   Nothing -> Right (N c)
 ```
 
+<details class="odd">
+<summary>Understanding `Normal`{.haskell}…</summary>
+
+The `Normal`{.haskell} type has the
+[invariant](https://en.wikipedia.org/wiki/Invariant_(mathematics)#Invariants_in_computer_science)
+that it only contains `Com`{.haskell} values which are in normal form. More
+specifically, we can say `step . toCom`{.haskell} is (extensionally) equal to
+`const Nothing`{.haskell}. Values of type `Normal`{.haskell} act as
+[evidence](https://cs-syd.eu/posts/2016-07-24-overcoming-boolean-blindness-evidence.html)
+that the `Com`{.haskell} they contain is in normal form (i.e. that it will
+return `Nothing`{.haskell} when given to `step`{.haskell}).
+
+This invariant is not *guaranteed* to be the case; e.g. we can violate it by
+writing code like `N (App (App k s) k)`{.haskell} (since `KSK` reduces to `S`
+via the `stepK`{.haskell} rule). To prevent such violations, we avoid using the
+`N`{.haskell} constructor directly: instead always using the
+`toNormal`{.haskell} function, which only returns a `Normal`{.haskell} value
+when it is found to return `Nothing`{.haskell} from `step`{.haskell} (i.e. when
+our invariant holds).
+
+`toNormal`{.haskell} is a
+[smart constructor](https://kowainik.github.io/posts/haskell-mini-patterns#smart-constructor):
+a function which only returns values of the desired type when it's checked
+they're valid. Ideally we would *enforce* usage of `toNormal`{.haskell}, by
+[encapsulating](https://en.wikipedia.org/wiki/Encapsulation_(computer_programming))
+the `N`{.haskell} constructor, making the `Normal`{.haskell} type
+[opaque](https://en.wikipedia.org/wiki/Opaque_data_type). That's usually
+achieved in Haskell using
+[modules](https://en.wikipedia.org/wiki/Modular_programming), but I want the
+code for this post to all live in one module (to make compilation and execution
+easier).
+
+</details>
+
 `toNormal`{.haskell} tells us when to stop iterating, but since SK is a
 universal programming language, there's no way to know beforehand if it ever
 will. We'll account for this by wrapping such undecidable computations in
