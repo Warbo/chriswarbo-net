@@ -107,7 +107,7 @@ equal, but also failing to spot many real equalities. Instead, it seemed to do
 the extreme opposite: *always* claiming that *everything* is equal!
 
 <details class="odd">
-<summary>Preamble boilerplate...</summary>
+<summary>Preamble boilerplate…</summary>
 
 This page defines the entire contents of a test script using
 [active code](/projects/activecode). For more details, see [this page's Markdown
@@ -1124,7 +1124,7 @@ symbolGivenUnequalArgsCommutes f x y = symbolGivenUnequalArgs f x y
 ```
 
 <details class="odd">
-<summary>Generating `unEq`{.haskell} functions to test this...</summary>
+<summary>Generating `unEq`{.haskell} functions to test with…</summary>
 
 The `symbolGivenUnequalArgs`{.haskell} function doesn't care *how* arguments are
 deemed to be unequal, so it lets the caller decide by passing in a function. The
