@@ -226,49 +226,54 @@ egglog):
 
 ```{.haskell pipe="./show Main.hs"}
 data Com = C String | App Com Com deriving (Eq, Ord)
-
-left, right :: Com -> Maybe Com
-left  (App x _) = Just x
-left  _         = Nothing
-right (App _ y) = Just y
-right _         = Nothing
 ```
 
-We use the `C`{.haskell} constructor to represent symbols, distinguished by a
-`String`{.haskell} value like `"S"`{.haskell} or `"K"`{.haskell}:
-
-```{.haskell pipe="./show Main.hs"}
--- | Our "base" combinators. Haskell requires the initial letter of a value name
--- | to be lowercase.
-s, k :: Com
-s = C "S"
-k = C "K"
-```
-
-We can group expressions together two at a time using `App`{.haskell}: this is a
-little cumbersome, compared to e.g. implementing `s`{.haskell} and `k`{.haskell}
-as Haskell functions, but it gives us more control over their evaluation (e.g.
-to bound their recurive calls).
-
-The `deriving`{.haskell} clause asks Haskell to automatically implement some
+That `deriving`{.haskell} clause asks Haskell to automatically implement some
 useful interfaces:
 
- - `Eq`{.haskell} provides the `==`{.haskell} function. The auto-generated
-   implementation will check whether two `Com`{.haskell} values are identical
-   (same structure and same `String`{.haskell} data).
- - `Ord`{.haskell} provides comparisons like `<`{.haskell}. Haskell will
-   generate a lexicographic implementation for us, but the details aren't
-   important. Having *some* implementation of `Ord`{.haskell} lets us use
-   efficient `Set`{.haskell} datastructures.
+ - `Eq`{.haskell} provides the `==`{.haskell} function. Deriving this lets us
+   check whether two `Com`{.haskell} values are identical (same structure and
+   same `String`{.haskell} data).
+ - `Ord`{.haskell} provides comparisons like `<`{.haskell}. Deriving this gives
+   us a
+   [lexicographic ordering](https://en.wikipedia.org/wiki/Lexicographic_order),
+   but the details aren't important: as long as we have *some* implementation of
+   `Ord`{.haskell}, we can use efficient `Set`{.haskell} datastructures.
 
-We'll implement the `Show`{.haskell} interface ourselves, for more compact
-output:
+We'll implement the `Show`{.haskell} interface ourselves, to render expressions
+in traditional SK notation:
 
 ```{.haskell pipe="./show Main.hs"}
 instance Show Com where
   show (C c)             = c
   show (App x (App y z)) = show x ++ "(" ++ show (App y z) ++ ")"
   show (App x y)         = show x ++ show y
+```
+
+We represent the "primitives" `S` and `K` using the `C`{.haskell} constructor
+(annoyingly, value names in Haskell must begin with a lowercase letter; so we
+call these `s`{.haskell} and `k`{.haskell} instead):
+
+```{.haskell pipe="./show Main.hs"}
+-- | Primitive SK expressions
+s, k :: Com
+s = C "S"
+k = C "K"
+```
+
+`App`{.haskell} groups expressions together two at a time, like a pair of
+parentheses. Traditional SK notation only shows parentheses "on the right", e.g.
+`App s (App s k)`{.haskell} is written `S(SK)`, but `App (App s k) k`{.haskell}
+is simply `SKK`. The following functions extract the left and right children of
+an `App`{.haskell} value (returning `Maybe`{.haskell}, in case they're given a
+primitive expression):
+
+```{.haskell pipe="./show Main.hs"}
+left, right :: Com -> Maybe Com
+left  (App x _) = Just x
+left  _         = Nothing
+right (App _ y) = Just y
+right _         = Nothing
 ```
 
 #### Anatomy of SK expressions ####
@@ -332,15 +337,15 @@ We can implement these as Haskell functions, returning `Nothing`{.haskell} if
 the rule didn't match:
 
 ```{.haskell pipe="./show Main.hs"}
--- | Replaces Kxy with x, otherwise Nothing
+-- | Replaces Kxy with x, otherwise 'Nothing'
 stepK :: Com -> Maybe Com
 stepK (App (App (C "K") x) _) = Just x
-stepK _ = Nothing
+stepK _                       = Nothing
 
--- | Replaces Sxyz with xz(yz), otherwise Nothing
+-- | Replaces Sxyz with xz(yz), otherwise 'Nothing'
 stepS :: Com -> Maybe Com
 stepS (App (App (App (C "S") x) y) z) = Just (App (App x z) (App y z))
-stepS _ = Nothing
+stepS _                               = Nothing
 ```
 
 Notice that arguments can be *any* `Com`{.haskell} value, represented using the
@@ -359,34 +364,35 @@ sub-expressions were rewritten; we say the expression is in [normal
 form](https://en.wikipedia.org/wiki/Normal_form_(abstract_rewriting)):
 
 ```{.haskell pipe="./show Main.hs"}
--- | Attempt to reduce a K or S combinator, or the children of an App. Nothing
--- | if the argument is in normal form.
+-- | Attempt to reduce a K or S combinator, or the children of an 'App'.
+-- | 'Nothing' if the argument is in normal form.
 step :: Com -> Maybe Com
-step c = stepK c <|> stepS c <|> a l' r' <|> a l' r <|> a l r'
-  where a x y    = App <$> x <*> y
+step c = stepK c <|> stepS c <|> app l' r' <|> app l' r <|> app l r'
+  where app x y  = App <$> x <*> y
         (l , r ) = (left c    , right c   )
         (l', r') = (l >>= step, r >>= step)
 ```
 
 Next we'll need to *iterate* the `step`{.haskell} function until its argument
-reaches normal form. We'll distinguish normalised expressions using the type
-`Normal`{.haskell} (we could encapsulate this in a separate module to prevent
-unnormalised `Com`{.haskell} values being wrapped in `Normal`{.haskell}, but
-I'll be sticking to one big module today):
+reaches normal form. We'll distinguish normalised expressions using a separate
+type called `Normal`{.haskell}:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Wraps Com values which are assumed to be in normal form
-newtype Normal = Normal { toCom :: Com } deriving (Eq, Ord)
+newtype Normal = N Com deriving (Eq, Ord)
 
 instance Show Normal where
   show = show . toCom
 
--- | Tries to step the given Com: if it worked, returns that in Left; otherwise
--- | returns the original value (now Normal) in Right.
+-- | Coerce a 'Normal' back to a 'Com', i.e. forget that it's in normal form.
+toCom (N c) = c
+
+-- | 'step' the given 'Com': if it worked, returns that in 'Left'; otherwise
+-- | returns the original value (now 'Normal') in 'Right'.
 toNormal :: Com -> Either Com Normal
 toNormal c = case step c of
-  Nothing -> Right (Normal c)
-  Just c' -> Left c'
+  Just c' -> Left     c'
+  Nothing -> Right (N c)
 ```
 
 `toNormal`{.haskell} tells us when to stop iterating, but since SK is a
@@ -395,10 +401,11 @@ will. We'll account for this by wrapping such undecidable computations in
 [a `Delay` type](/blog/2014-12-04-Nat_like_types.html#delay-t):
 
 ```{.haskell pipe="./show Main.hs"}
--- | Step the given Com until it reaches normal form.
+-- | Step the given 'Com' until it reaches 'Normal' form.
 reduce :: Com -> Delay Normal
 reduce c = case toNormal c of
   Left c' -> Later (reduce c')
+  Right n -> Now n
 ```
 
 Since such `Delay`{.haskell} values could be a never-ending chain of
@@ -436,9 +443,10 @@ We'll call this relationship "`Normal`{.haskell} equivalence". It's
 undecidable in general, so it also gets wrapped in `Delay`{.haskell}:
 
 ```{.haskell pipe="./show Main.hs"}
--- | Result of comparing two values (which may be the same)
+-- | Result of comparing two values
 data Compared a = Same a | Diff a a
 
+same, diff :: Compared a -> Bool
 same (Same _)   = True
 same _          = False
 diff (Diff _ _) = True
@@ -448,8 +456,7 @@ diff _          = False
 comparer :: Eq a => a -> a -> Compared a
 comparer x y = if x == y then Same x else Diff x y
 
--- | Try normalising the given Com values for the given number of steps. If the
--- | results are == return it in Left; otherwise return both in Right.
+-- | Compare the 'Normal' forms of the given 'Com' values.
 normalEq :: Com -> Com -> Delay (Compared Normal)
 normalEq x y = comparer <$> reduce x <*> reduce y
 ```
@@ -460,9 +467,12 @@ Let's test this `normalEq`{.haskell} function, to see whether it actually
 behaves in the way our theory of SK predicts it should. For example, every
 equality relation should have the
 ["reflexive property"](https://en.wikipedia.org/wiki/Reflexive_relation),
-meaning that values should be equal to themselves. The following predicate
-(function returning a boolean) checks whether its argument is
-`normalEq`{.haskell} to itself:
+meaning that values should be equal to themselves; so any call like
+`normalEq foo foo`{.haskell} should always result in `True`{.haskell}.
+
+Now we can write a predicate (a function returning a boolean) to check whether
+its argument is `normalEq`{.haskell} to itself, before its `Fuel`{.haskell} runs
+out:
 
 ```{.haskell pipe="./show Main.hs"}
 normalEqToItself :: (Fuel, Com) -> Bool
