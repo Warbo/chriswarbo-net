@@ -216,8 +216,8 @@ runDelay _ (Now   x) = Now x
 runDelay n (Later x) = (if n <= 0 then id else runDelay (n - 1)) x
 
 -- | Try to extract a value from the given 'Delay', or use the given default
-runDelayOr :: Integral n => n -> a -> Delay a -> a
-runDelayOr n def x = case runDelay n x of
+runDelayOr :: Integral n => a -> Delay a -> n -> a
+runDelayOr def x n = case runDelay n x of
   Now   x' -> x'
   Later _  -> def
 ```
@@ -485,7 +485,7 @@ out:
 
 ```{.haskell pipe="./show Main.hs"}
 normalEqToItself :: (Fuel, Com) -> Bool
-normalEqToItself (n, x) = runDelayOr n False (same <$> normalEq x x)
+normalEqToItself (n, x) = runDelayOr False (same <$> normalEq x x) n
 ```
 
 We can use this predicate to make statements, by *quantifying* its argument.
@@ -634,7 +634,7 @@ for *any* amount of `Fuel`{.haskell}.
 We could alter our claim to *existentially* quantify the amount of
 `Fuel`{.haskell}: that for any SK expression `x`{.haskell}, there is *some*
 value of `n`{.haskell} where
-`runDelayOr n False (same <$> normalEq x x)`{.haskell} holds. However
+`runDelayOr False (same <$> normalEq x x) n`{.haskell} holds. However
 that is *also* false, since there are infinite loops which have no
 `Normal`{.haskell} form; hence never produce a `Now` value; and therefore cannot
 have a result extracted regardless of how much `Fuel`{.haskell} we use. Even
@@ -650,7 +650,7 @@ we claim that every expression is *not unequal* to itself (regardless of
 
 ```{.haskell pipe="./show Main.hs"}
 notUnnormalEqToItself :: (Fuel, Com) -> Bool
-notUnnormalEqToItself (n, x) = runDelayOr n True (not . diff <$> normalEq x x)
+notUnnormalEqToItself (n, x) = runDelayOr True (not . diff <$> normalEq x x) n
 ```
 
 ```{.unwrap .pass pipe="NAME=notUnnormalEqToItself ./run"}
@@ -692,10 +692,10 @@ try again!
 -- | the number of steps to attempt when normalising.
 genNormalN :: Fuel -> Gen Normal
 genNormalN n = do
-  c <- genComN n                    -- Generate a Com value c
-  runDelayOr n                    -- Give up after n steps
-               (genNormalN n)       -- Fall back to generating a fresh Com
-               (pure <$> reduce c)  -- Try to reduce c to a Normal value
+  c <- genComN n                  -- Generate a Com value c
+  runDelayOr (genNormalN n)       -- Fall back to generating a fresh Com
+             (pure <$> reduce c)  -- Try to reduce c to a Normal value
+             n                    -- Give up after n steps
 
 -- | Generates (relatively small) Normal values
 genNormal :: Gen Normal
@@ -777,7 +777,7 @@ inputs; which we can test by asserting that they *never disagree*:
 ```{.haskell pipe="./show Main.hs"}
 skNeverDisagreesWithSKSKKK :: (Fuel, InputValue, InputValue) -> Bool
 skNeverDisagreesWithSKSKKK (n, x, y) =
-    runDelayOr n True (not . diff <$> agree f g [x, y])
+    runDelayOr True (not . diff <$> agree f g [x, y]) n
   where f = App s k
         g = App (App s (App k (App s k))) (App k k)
 ```
@@ -938,10 +938,10 @@ the latter only checks for agreement on $0$ inputs:
 
 ```{.haskell pipe="./show Main.hs"}
 normalEqImpliesEverAgree :: (Fuel, Com, Com) -> Bool
-normalEqImpliesEverAgree (n, x, y) =
-  if runDelayOr n False (same <$> normalEq x y)
-     then runDelayOr n False (everAgree x y)
-     else True
+normalEqImpliesEverAgree (n, x, y) = if      go (same <$> normalEq x y)
+                                        then go (        everAgree x y)
+                                        else True
+  where go d = runDelayOr False d n
 ```
 
 ```{.unwrap .pass pipe="NAME=normalEqImpliesEverAgree ./run"}
