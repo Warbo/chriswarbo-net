@@ -127,11 +127,15 @@ import Data.Maybe (isJust)
 import Data.Set (Set)
 import qualified Data.Set as Set
 import GHC.Natural (Natural)
+import System.Environment (getEnv)
 import Test.Falsify.Generator (Gen, Tree(..))
 import qualified Test.Falsify.Generator as Gen
-import Test.Falsify.Interactive (shrink)
+import Test.Falsify.Predicate (satisfies)
+import Test.Falsify.Property (Property, testGen)
 import Test.Falsify.Range (Range)
 import qualified Test.Falsify.Range as Range
+import Test.Tasty (defaultMain)
+import Test.Tasty.Falsify (testProperty)
 
 -- Useful helpers. These are available in libraries, but I want this code to be
 -- self-contained (other than falsify)
@@ -577,16 +581,28 @@ genComN n = treeToCom <$> Gen.tree (to n) (pure ())
 genCom = genComN limit
 ```
 
-Normally we would plug `falsify` generators into properties using Haskell's
-`tasty` test framework, but we'll be a bit more direct with the following
-function:
+`falsify` integrates with Haskell's `tasty` test framework. Normally a project
+would declare a big test suite to run all at once, but for this literate/active
+style we'll be testing things as we go, using the following functions:
 
 ```{.haskell pipe="./show Main.hs"}
--- | Prints "PASS" if 'prop' holds for values sampled from 'gen'; otherwise
--- | prints a counterexample and fails.
-run :: Show a => (a -> Bool) -> Gen a -> IO ()
-run prop gen = shrink prop gen >>= maybe (putStrLn "PASS") abort
-  where abort counterexample = fail ("FAIL: " ++ show counterexample)
+-- | Turn the given predicate into a falsify property, universally quantified
+-- | over the given generator's outputs. Check it on (at least) 100 samples.
+checkPred :: Show a => (a -> Bool) -> Gen a -> IO ()
+checkPred pred gen = do
+  name <- testName
+  check (testGen (satisfies (name, pred)) gen)
+
+-- | Check the given falsify 'Property' holds for (at least) 100 samples. Prints
+-- | a counterexample if found; or else some statistics about the search.
+check :: Property () -> IO ()
+check prop = do
+  name <- testName
+  defaultMain (testProperty name prop)
+
+-- | We'll put test names in an env var to avoid repetition
+testName :: IO String
+testName = getEnv "NAME"
 ```
 
 #### Included middles ####
@@ -596,7 +612,7 @@ The observant among you may have noticed that `normalEqToItself`{.haskell}
 counterexample to show us why:
 
 ```{.unwrap pipe="NAME=normalEqToItself ./fail"}
-main = run normalEqToItself (pair genFuel genCom)
+main = checkPred normalEqToItself (pair genFuel genCom)
 ```
 
 The precise counterexample `falsify` finds may vary depending on the random
@@ -633,7 +649,7 @@ notUnnormalEqToItself (n, x) = runDelayOr n True (not . diff <$> normalEq x x)
 ```
 
 ```{.unwrap pipe="NAME=notUnnormalEqToItself ./run"}
-main = run notUnnormalEqToItself (pair genFuel genCom)
+main = checkPred notUnnormalEqToItself (pair genFuel genCom)
 ```
 
 You may have learned in school that [double-negatives are
@@ -682,7 +698,7 @@ genNormal = genNormalN limit
 ```
 
 ```{.unwrap pipe="NAME=normalsAreNormalEqToThemselves ./run"}
-main = run normalsAreNormalEqToThemselves (pair genFuel genNormal)
+main = checkPred normalsAreNormalEqToThemselves (pair genFuel genNormal)
 ```
 
 ### Extensional equality ###
@@ -745,7 +761,7 @@ genComs = genComsN limit
 ```
 
 ```{.unwrap pipe="NAME=normalEqImpliesAgree ./run"}
-main = run normalEqImpliesAgree (quad genFuel genCom genCom genComs)
+main = checkPred normalEqImpliesAgree (quad genFuel genCom genCom genComs)
 ```
 
 We say expressions "agree on $N$ inputs" when they agree on *every* sequence of
@@ -762,7 +778,7 @@ skNeverDisagreesWithSKSKKK (n, x, y) =
 ```
 
 ```{.unwrap pipe="NAME=skNeverDisagreesWithSKSKKK ./run"}
-main = run skNeverDisagreesWithSKSKKK (triple genFuel genCom genCom)
+main = checkPred skNeverDisagreesWithSKSKKK (triple genFuel genCom genCom)
 ```
 
 Note that any expressions which agree on $N$ inputs also agree on $N+1$ inputs
@@ -779,9 +795,8 @@ agreementIsMonotonic (n, (f, g), (xs, ys)) =
 ```
 
 ```{.unwrap pipe="NAME=agreementIsMonotonic ./run"}
-main = run agreementIsMonotonic (triple genFuel
-                                        (pair genCom  genCom )
-                                        (pair genComs genComs))
+main = checkPred agreementIsMonotonic
+                 (triple genFuel (pair genCom genCom) (pair genComs genComs))
 ```
 
 #### Extensionality ####
@@ -925,7 +940,7 @@ normalEqImpliesEverAgree (n, x, y) =
 ```
 
 ```{.unwrap pipe="NAME=normalEqImpliesEverAgree ./run"}
-main = run normalEqImpliesEverAgree (triple genFuel genCom genCom)
+main = checkPred normalEqImpliesEverAgree (triple genFuel genCom genCom)
 ```
 
 However, `everAgree`{.haskell} is not yet a predicate for checking extensional
@@ -1025,7 +1040,7 @@ distinctSymbolicHeadsCommutes (x, y) = distinctSymbolicHeads x y
 ```
 
 ```{.unwrap pipe="NAME=distinctSymbolicHeadsCommutes ./run"}
-main = run distinctSymbolicHeadsCommutes (pair genSymCom genSymCom)
+main = checkPred distinctSymbolicHeadsCommutes (pair genSymCom genSymCom)
 ```
 
 #### Different numbers of arguments prove disagreement ####
@@ -1087,7 +1102,7 @@ unequalArgCountCommutes (x, y) = unequalArgCount x y
 ```
 
 ```{.unwrap pipe="NAME=unequalArgCountCommutes ./run"}
-main = run distinctSymbolicHeadsCommutes (pair genSymCom genSymCom)
+main = checkPred distinctSymbolicHeadsCommutes (pair genSymCom genSymCom)
 ```
 
 #### Disagreeing arguments prove disagreement ####
@@ -1226,7 +1241,7 @@ comToPreRoundtrips c = preToCom (comToPre c) == c
 ```
 
 ```{.unwrap pipe="NAME=comToPreRoundtrips ./run"}
-main = run comToPreRoundtrips genCom
+main = checkPred comToPreRoundtrips genCom
 ```
 
 ```{.haskell pipe="./show Main.hs"}
@@ -1241,7 +1256,7 @@ genPre = Gen.list small genEntry
 ```
 
 ```{.unwrap pipe="NAME=preToComAlmostRoundtrips ./run"}
-main = run preToComAlmostRoundtrips genPre
+main = checkPred preToComAlmostRoundtrips genPre
 ```
 
 The `Prefix`{.haskell} type is a
@@ -1302,8 +1317,8 @@ code, since it has all sorts of cool applications!)
 </details>
 
 ```{.unwrap pipe="NAME=symbolGivenUnequalArgsCommutes ./run"}
-main = run (uncurry3 (liftFun2 symbolGivenUnequalArgsCommutes))
-           (triple (Gen.fun (Gen.bool False)) genSymCom genSymCom)
+main = checkPred (uncurry3 (liftFun2 symbolGivenUnequalArgsCommutes))
+                 (triple (Gen.fun (Gen.bool False)) genSymCom genSymCom)
 ```
 
 #### Combining disagreement provers ####
@@ -1325,7 +1340,7 @@ provablyDisagreeCommutes (x, y) = provablyDisagree x y == provablyDisagree y x
 ```
 
 ```{.unwrap pipe="NAME=provablyDisagreeCommutes ./run"}
-main = run provablyDisagreeCommutes (pair genSymCom genSymCom)
+main = checkPred provablyDisagreeCommutes (pair genSymCom genSymCom)
 ```
 
 #### Approximating extensional equality ####
@@ -1342,10 +1357,21 @@ agreeing:
 -- | that cannot be determined, the 'Delay' will never end.
 extensionalInputs :: Com -> Com -> Delay (Maybe Natural)
 extensionalInputs x y = race (agreeSym x y) >>= go 0
-  where go !n (Same _                    , m, _) = Now (Just (n+m))
-        go !n (Diff (Normal a) (Normal b), _, s) = if provablyDisagree a b
-                                                      then Now Nothing
-                                                      else race s >>= go (n+1)
+  where go !n (Same _  , m, _) = Now (Just (n+m))
+        go !n (Diff a b, _, s) = if provablyDisagree (toCom a) (toCom b)
+                                    then Now Nothing
+                                    else race s >>= go (n+1)
+
+agreeOnExtensionalInputs :: (Fuel, Com, Com, InputValues) -> Bool
+agreeOnExtensionalInputs (n, x, y, pre) =
+    runDelayOr True (extensionalInputs x y >>= check) n
+  where check Nothing  = Now True
+        check (Just i) = same <$> agree x y (sTake i inputs)
+        inputs         = sPrefix pre (C <$> symbols)
+```
+
+```{.unwrap pipe="NAME=agreeOnExtensionalInputs ./run"}
+main = checkPred agreeOnExtensionalInputs (quad genFuel genCom genCom genComs)
 ```
 
 This is easy to transform into a legitimate predicate for testing extensional
@@ -1355,26 +1381,29 @@ least, some of the time):
 ```{.haskell pipe="./show Main.hs"}
 -- | Whether the given expressions are extensionally equal, i.e. cannot be
 -- | distinguished by an SK expression.
-extensionalEq :: Com -> Com -> Delay Bool
-extensionalEq x y = isJust <$> extensionalInputs x y
+extEq :: Com -> Com -> Delay Bool
+extEq x y = isJust <$> extensionalInputs x y
 ```
 
-Testing `extensionalEq`{.haskell} is tricky: whilst SK expressions cannot
-observe any difference between extensionally-equal values, our Haskell code can,
-by reading their syntax. We can reduce them down to the same `Normal`{.haskell}
-form, by only after applying them to `extensionalInputs`{.haskell} inputs:
+`extEq`{.haskell} is a generalisation of our previous checks:
 
 ```{.haskell pipe="./show Main.hs"}
-agreeOnExtensionalInputs :: (Fuel, Com, Com, InputValues) -> Bool
-agreeOnExtensionalInputs (n, x, y, pre) =
-    runDelayOr n True (extensionalInputs x y >>= check)
-  where check Nothing  = Now True
-        check (Just i) = same <$> agree x y (sTake i inputs)
-        inputs         = sPrefix pre (C <$> symbols)
+extEqGeneralisesEqAndNormalEqAndEverAgree :: (Fuel, Com, Com) -> Bool
+extEqGeneralisesEqAndNormalEqAndEverAgree (n, x, y) =
+    case ( go (extEq x y)
+         , go (    everAgree x y)
+         , go (     normalEq x y)
+         ,              (==) x y) of
+      (Now False, Now True, _       , _   ) -> False
+      (Now False, _       , Now True, _   ) -> False
+      (Now False, _       , _       , True) -> False
+      _                                     -> True
+  where go = runDelay n
 ```
 
-```{.unwrap pipe="NAME=agreeOnExtensionalInputs ./run"}
-main = run agreeOnExtensionalInputs (quad genFuel genCom genCom genComs)
+```{.unwrap pipe="NAME=extEqGeneralisesEqAndNormalEqAndEverAgree ./run"}
+main = checkPred extEqGeneralisesEqAndNormalEqAndEverAgree
+                 (triple genFuel genCom genCom)
 ```
 
 ## Falsifying myself ##
