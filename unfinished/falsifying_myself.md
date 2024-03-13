@@ -203,7 +203,7 @@ runDelayOr n def x = case runDelay n x of
 
 </details>
 
-## Combinatory logic ##
+### SK (combinatory logic) ###
 
 Combinatory logic (which I'll shamelessly abbreviate as "SK") is a particularly
 simple programming language, which can be written entirely with two symbols,
@@ -259,7 +259,7 @@ instance Show Com where
   show (App x y)         = show x ++ show y
 ```
 
-### Anatomy of SK expressions ###
+#### Anatomy of SK expressions ####
 
 We can refer to various parts of an SK expression using the following
 terminology:
@@ -306,7 +306,7 @@ arguments are `K`, `KKS` and `S`. **Bottom:** Structure of that second argument,
 are their own root and head, with no spine or arguments.</figcaption>
 </figure>
 
-### Running SK expressions ###
+#### Running SK expressions ####
 
 We can "run" SK expressions using two rewriting rules:
 
@@ -384,7 +384,6 @@ will. We'll account for this by wrapping such undecidable computations in
 -- | Step the given Com until it reaches normal form.
 reduce :: Com -> Delay Normal
 reduce c = case toNormal c of
-  Right n -> Now n
   Left c' -> Later (reduce c')
 ```
 
@@ -398,7 +397,7 @@ parameters of type `Fuel`{.haskell} (a synonym for natural numbers):
 type Fuel = Word
 ```
 
-### Normal equivalence ###
+#### Normal equivalence ####
 
 The rules of SK are
 [confluent](https://en.wikipedia.org/wiki/Confluence_(abstract_rewriting)),
@@ -442,7 +441,7 @@ normalEq :: Com -> Com -> Delay (Compared Normal)
 normalEq x y = comparer <$> reduce x <*> reduce y
 ```
 
-## Property-based testing ##
+### Property-based testing ###
 
 Let's test this `normalEq`{.haskell} function, to see whether it actually
 behaves in the way our theory of SK predicts it should. For example, every
@@ -485,7 +484,7 @@ Haskell has many property checkers, beginning with the wonderful
 the state-of-the-art for 2024, which is
 [falsify](https://hackage.haskell.org/package/falsify).
 
-### Data generators ###
+#### Data generators ####
 
 `falsify` searches through argument values *at random*, sampling them from a
 given "generator" with the Haskell type `Gen a`{.haskell} (for generating values
@@ -583,7 +582,7 @@ run prop gen = shrink prop gen >>= maybe (putStrLn "PASS") abort
   where abort counterexample = fail ("FAIL: " ++ show counterexample)
 ```
 
-### Included middles ###
+#### Included middles ####
 
 The observant among you may have noticed that `normalEqToItself`{.haskell}
 **does not** hold for all argument values! `falsify` can generate a
@@ -640,7 +639,7 @@ computation and its associated undecidability. All we have are the more
 pragmatic falsified/unfalsified results of a property checker, where there are
 non-excluded middles such as "don't know", "timed out" and "gave up"!
 
-### Smarter generators ###
+#### Smarter generators ####
 
 It's usually a good idea to write simple, straightforward properties like
 `notUnnormalEqToItself`{.haskell}, which make strong claims over a broad
@@ -679,13 +678,13 @@ genNormal = genNormalN limit
 main = run normalsAreNormalEqToThemselves (pair genFuel genNormal)
 ```
 
-## Extensional equality ##
+### Extensional equality ###
 
 My problems arose when trying to extend the equality of SK expressions even
 further to include
 [extensional equality](https://en.wikipedia.org/wiki/Extensionality).
 
-### Inputs and agreement ###
+#### Inputs and agreement ####
 
 To clarify what we're about to do, we'll start by defining some more
 terminology. An "input value" is some particular SK value, which another
@@ -778,7 +777,7 @@ main = run agreementIsMonotonic (triple genFuel
                                         (pair genComs genComs))
 ```
 
-### Extensionality ###
+#### Extensionality ####
 
 Now we've defined inputs and agreement, extensional equality becomes quite
 simple: SK expressions are extensionally equal iff they agree on *some* number
@@ -801,7 +800,7 @@ equality difficult to determine:
 In order to make more definitive assertions about extensional equality, we need
 to borrow techniques from the world of formal methods!
 
-## Symbolic execution ##
+### Symbolic execution ###
 
 The reason I like property-checking is that it can provide a lot of confidence
 for relatively little effort, compared to e.g. example-based testing (less
@@ -839,7 +838,7 @@ It's undecidable whether part of an SK expression will influence its reduction
 (or just get discarded by the `stepK`{.haskell} rule), so we'll limit our
 ambitions to understanding a few simple situations.
 
-### Symbolic agreement proves extensional equality ###
+#### Symbolic agreement proves extensional equality ####
 
 Expressions which agree on symbolic inputs will agree on *all* inputs, since
 symbols do not reduce, and hence those inputs must have been irrelevant for the
@@ -939,7 +938,7 @@ A *useful* predicate for extensional equality not only needs to return
 is unavoidable due to undecidability), it can use a never-ending chain of
 `Later`{.haskell} wrappers to avoid ever returning at all!
 
-### Different symbolic heads prove disagreement ###
+#### Different symbolic heads prove disagreement ####
 
 We can easily show that two expressions disagree for $N$ inputs, by checking if
 the $N$th element of `agreeSym`{.haskell} results in `Diff`{.haskell}. To be
@@ -1022,7 +1021,7 @@ distinctSymbolicHeadsCommutes (x, y) = distinctSymbolicHeads x y
 main = run distinctSymbolicHeadsCommutes (pair genSymCom genSymCom)
 ```
 
-### Different numbers of arguments prove disagreement ###
+#### Different numbers of arguments prove disagreement ####
 
 Expressions whose heads are *the same* symbolic input, but applied to a
 different number of arguments, can also be forced to disagree. For example, if
@@ -1084,7 +1083,7 @@ unequalArgCountCommutes (x, y) = unequalArgCount x y
 main = run distinctSymbolicHeadsCommutes (pair genSymCom genSymCom)
 ```
 
-### Disagreeing arguments prove disagreement ###
+#### Disagreeing arguments prove disagreement ####
 
 Finally, we can force expressions to disagree by forcing a disagreement *inside*
 them, then propagating it up to the overall result. This is useful, since it can
@@ -1300,7 +1299,7 @@ main = run (uncurry3 (liftFun2 symbolGivenUnequalArgsCommutes))
            (triple (Gen.fun (Gen.bool False)) genSymCom genSymCom)
 ```
 
-### Combining disagreement provers ###
+#### Combining disagreement provers ####
 
 We can never spot *all* disagreements, but the simple checks above can be
 combined into a single, reasonably-useful function. Not only is this easier to
@@ -1322,7 +1321,7 @@ provablyDisagreeCommutes (x, y) = provablyDisagree x y == provablyDisagree y x
 main = run provablyDisagreeCommutes (pair genSymCom genSymCom)
 ```
 
-### Approximating extensional equality ###
+#### Approximating extensional equality ####
 
 Now we have ways to spot both extensional equality *and* inequality (in certain
 situations), we can fold them over the result of `agreeSym`{.haskell}. We'll
