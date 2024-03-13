@@ -81,7 +81,7 @@ fundamental aspect in all that time; then what *else* might I be wrong about? Am
 I a complete fraud?
 
 Thankfully I also trained as a physicist, so I know what to do when theoretical
-understanding goes awry: **experiment**! Or, as software engineers call it,
+understanding goes awry: **experiment**! Or, as software engineers call it:
 **test**! I wanted to thoroughly test the assumptions I was making in those
 egglog experiments, so I went crawling back to the comfort of Haskell where I
 could use my favourite hammer: [property-based
@@ -89,7 +89,7 @@ testing](https://increment.com/testing/in-praise-of-property-based-testing).
 This would also let me try out the new
 [falsify package](https://hackage.haskell.org/package/falsify) (which
 [I've blogged about before](/blog/2024-01-19-lazy_test_generators.html)): in
-essence, to try and "falsify myself", to figure out what I'd done wrong.
+essence, to try and "falsify myself", to figure out what I'd misunderstood.
 
 ## The setup ##
 
@@ -102,9 +102,9 @@ quantification](https://en.wikipedia.org/wiki/Universal_quantification): that
 doesn't quite fit into the formal system of egglog, so my idea was to
 *approximate* universally-quantified variables using
 [symbolic execution](https://en.wikipedia.org/wiki/Symbolic_execution). This
-*should* be a conservative approach: never mistakenly claiming two things to be
-equal, but also failing to spot many real equalities. Instead, it seemed to do
-the extreme opposite: *always* claiming that *everything* is equal!
+*should* be a conservative approach: failing to spot some equalities, but never
+mistakenly claiming two things to be equal. Instead, it seemed to do the extreme
+opposite: *always* claiming that *everything* is equal!
 
 <details class="odd">
 <summary>Preamble boilerplate…</summary>
@@ -217,11 +217,11 @@ runDelayOr n def x = case runDelay n x of
 
 ### SK (combinatory logic) ###
 
-Combinatory logic (which I'll shamelessly abbreviate as "SK") is a particularly
-simple programming language, which can be written entirely with two symbols,
+Combinatory logic, which I'll shamelessly abbreviate as "SK", is a particularly
+simple programming language. It can be written entirely with two symbols,
 traditionally called `S` and `K`, along with parentheses for grouping symbols
 together. We'll represent SK expressions using the following Haskell datatype
-which we call `Com`{.haskell} (this representation also matches my definition in
+called `Com`{.haskell} (this representation also matches my definition in
 egglog):
 
 ```{.haskell pipe="./show Main.hs"}
@@ -320,7 +320,8 @@ are their own root and head, with no spine or arguments.</figcaption>
 
 #### Running SK expressions ####
 
-We can "run" SK expressions using two rewriting rules:
+We can "run" SK expressions using two
+[rewriting rules](https://en.wikipedia.org/wiki/Rewriting):
 
  - An expression applying `K` to two args can be replaced by the first arg.
  - An expression applying `S` to three args can be replaced by an expression
@@ -347,13 +348,14 @@ Haskell variables `x`{.haskell}, `y`{.haskell} and `z`{.haskell}; but only
 `App`{.haskell}, `s`{.haskell} and `k`{.haskell} have any effect on the output
 (this will be important for symbolic execution later!).
 
-Remarkably, these two rules make SK a Turing-complete, universal programming
-language! The following `step` function tries to apply both of these rules. It
-also applies the rules recursively to sub-expressions of `App`{.haskell}: note
-that we try stepping both children at once, to prevent an reducible expressions
-getting "stuck" waiting for their sibling to finish. `Nothing`{.haskell} is
-returned when neither rule matched and no sub-expressions were rewritten; we say
-the expression is in [normal
+Remarkably, these two rules make SK a [universal
+(Turing-complete)](https://en.wikipedia.org/wiki/Turing_completeness)
+programming language! The following `step` function tries to apply both of these
+rules. It also applies the rules recursively to sub-expressions of
+`App`{.haskell}: note that we try stepping both children at once, to prevent any
+reducible parts of an expression getting "stuck" waiting for their sibling to
+finish. `Nothing`{.haskell} is returned when neither rule matched and no
+sub-expressions were rewritten; we say the expression is in [normal
 form](https://en.wikipedia.org/wiki/Normal_form_(abstract_rewriting)):
 
 ```{.haskell pipe="./show Main.hs"}
@@ -430,9 +432,8 @@ using $Y$ must *also* be equivalent to using $X$. Hence any expressions with the
 same `Normal`{.haskell} form are equivalent, in the sense that they can be
 interchanged inside any expression without altering its `Normal`{.haskell} form.
 
-We'll call this relationship "`Normal`{.haskell} equivalence". Whilst it's
-undecidable in general, we can approximate it using a `Fuel`{.haskell}
-parameter:
+We'll call this relationship "`Normal`{.haskell} equivalence". It's
+undecidable in general, so it also gets wrapped in `Delay`{.haskell}:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Result of comparing two values (which may be the same)
@@ -468,21 +469,21 @@ normalEqToItself :: (Fuel, Com) -> Bool
 normalEqToItself (n, x) = runDelayOr n False (same <$> normalEq x x)
 ```
 
-We can turn this predicate into a general statement by *quantifying* its
-argument. It's common to use [existential
+We can use this predicate to make statements, by *quantifying* its argument.
+Tests commonly use [existential
 quantification](https://en.wikipedia.org/wiki/Existential_quantification), which
-asserts that *some* argument satisfies `normalEqToItself`{.haskell}. This is the
-widely practiced "example-based" approach to automated testing. For example:
+asserts that *some* argument satisfies `normalEqToItself`{.haskell} (AKA
+"example-based" testing). For example:
 
 ```{.unwrap pipe="NAME=kIsNormalEqToItself ./run"}
 main = assert (normalEqToItself (0, k)) (putStrLn "PASS")
 ```
 
 However, that isn't really what we want to say: reflexivity doesn't just apply
-to a few hand-picked examples, it means that *every argument* satisfies
+to a few hand-picked examples, it says that *every argument* satisfies
 `normalEqToItself`{.haskell}. Talking about "every argument" is [universal
 quantification](https://en.wikipedia.org/wiki/Universal_quantification).
-Universally-quantified assertions are called "properties", so this approach is
+Universally-quantified predicates are called "properties", so this approach is
 known as property-based testing.
 
 To test a property, we give it to a "property checker" which searches for
@@ -1321,7 +1322,9 @@ main = run provablyDisagreeCommutes (pair genSymCom genSymCom)
 
 Now we have ways to spot both extensional equality *and* inequality (in certain
 situations), we can fold them over the result of `agreeSym`{.haskell}. We'll
-begin by extracting the numerical index provided by `race`{.haskell}:
+begin by extracting the numerical index provided by `race`{.haskell}, which
+should tell us how many inputs it takes for the given expressions to start
+agreeing:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | 'Just n' if the given expressions agree on 'n' inputs (they might also
