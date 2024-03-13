@@ -16,26 +16,29 @@ echo >> "$1"
 
 ```{pipe="cat > run && chmod +x run"}
 #!/bin/sh
-set -eo pipefail
-rm -f "$1"
-cp Main.hs "$1"
-echo >> "$1"
+set -euo pipefail
+rm -f "$NAME"
+cp Main.hs "$NAME"
+echo >> "$NAME"
 {
   echo '```haskell'
-  tee -a "$1"
-  printf '\n```\n\n```{pipe="sh"}\ncp root/%s ./\nrunhaskell %s%s\n```\n' \
-    "$1" "$1" "$2"
+  tee -a "$NAME"
+  printf '\n```\n\n```{pipe="sh"}\n%s\n%s\n```\n' \
+    "cp root/$NAME ./" \
+    "runhaskell $NAME $*"
 } | pandoc -f markdown -t json | panpipe
 ```
 
 ```{pipe="cat > fail && chmod +x fail"}
 #!/bin/sh
+set -euo pipefail
+
 # Retry a few times, in case falsify random sampling fails to find a
 # counterexample we wanted to show!
 GIVEN=$(cat)
 for RETRY in seq 1 100
 do
-  if GOT=$(echo "$GIVEN" | ./run "$@" ' 2>&1 && exit 1 || true')
+  if GOT=$(echo "$GIVEN" | ./run "$@" '2>&1 && exit 1 || true')
   then
     echo "$GOT"
     exit 0
@@ -460,7 +463,7 @@ quantification](https://en.wikipedia.org/wiki/Existential_quantification), which
 asserts that *some* argument satisfies `normalEqToItself`{.haskell}. This is the
 widely practiced "example-based" approach to automated testing. For example:
 
-```{.unwrap pipe="./run kIsNormalEqToItself"}
+```{.unwrap pipe="NAME=kIsNormalEqToItself ./run"}
 main = assert (normalEqToItself (0, k)) (putStrLn "PASS")
 ```
 
@@ -586,7 +589,7 @@ The observant among you may have noticed that `normalEqToItself`{.haskell}
 **does not** hold for all argument values! `falsify` can generate a
 counterexample to show us why:
 
-```{.unwrap pipe="./fail normalEqToItself"}
+```{.unwrap pipe="NAME=normalEqToItself ./fail"}
 main = run normalEqToItself (pair genFuel genCom)
 ```
 
@@ -623,7 +626,7 @@ notUnnormalEqToItself :: (Fuel, Com) -> Bool
 notUnnormalEqToItself (n, x) = runDelayOr n True (not . diff <$> normalEq x x)
 ```
 
-```{.unwrap pipe="./run notUnnormalEqToItself"}
+```{.unwrap pipe="NAME=notUnnormalEqToItself ./run"}
 main = run notUnnormalEqToItself (pair genFuel genCom)
 ```
 
@@ -672,7 +675,7 @@ genNormal :: Gen Normal
 genNormal = genNormalN limit
 ```
 
-```{.unwrap pipe="./run normalsAreNormalEqToThemselves"}
+```{.unwrap pipe="NAME=normalsAreNormalEqToThemselves ./run"}
 main = run normalsAreNormalEqToThemselves (pair genFuel genNormal)
 ```
 
@@ -735,7 +738,7 @@ genComs :: Gen InputValues
 genComs = genComsN limit
 ```
 
-```{.unwrap pipe="./run normalEqImpliesAgree"}
+```{.unwrap pipe="NAME=normalEqImpliesAgree ./run"}
 main = run normalEqImpliesAgree (quad genFuel genCom genCom genComs)
 ```
 
@@ -752,7 +755,7 @@ skNeverDisagreesWithSKSKKK (n, x, y) =
         g = App (App s (App k (App s k))) (App k k)
 ```
 
-```{.unwrap pipe="./run skNeverDisagreesWithSKSKKK"}
+```{.unwrap pipe="NAME=skNeverDisagreesWithSKSKKK ./run"}
 main = run skNeverDisagreesWithSKSKKK (triple genFuel genCom genCom)
 ```
 
@@ -769,7 +772,7 @@ agreementIsMonotonic (n, (f, g), (xs, ys)) =
     _                      -> True
 ```
 
-```{.unwrap pipe="./run agreementIsMonotonic"}
+```{.unwrap pipe="NAME=agreementIsMonotonic ./run"}
 main = run agreementIsMonotonic (triple genFuel
                                         (pair genCom  genCom )
                                         (pair genComs genComs))
@@ -915,7 +918,7 @@ normalEqImpliesEverAgree (n, x, y) =
      else True
 ```
 
-```{.unwrap pipe="./run normalEqImpliesEverAgree"}
+```{.unwrap pipe="NAME=normalEqImpliesEverAgree ./run"}
 main = run normalEqImpliesEverAgree (triple genFuel genCom genCom)
 ```
 
@@ -1015,7 +1018,7 @@ distinctSymbolicHeadsCommutes (x, y) = distinctSymbolicHeads x y
                                     == distinctSymbolicHeads y x
 ```
 
-```{.unwrap pipe="./run distinctSymbolicHeadsCommutes"}
+```{.unwrap pipe="NAME=distinctSymbolicHeadsCommutes ./run"}
 main = run distinctSymbolicHeadsCommutes (pair genSymCom genSymCom)
 ```
 
@@ -1077,7 +1080,7 @@ unequalArgCountCommutes (x, y) = unequalArgCount x y
                               == unequalArgCount y x
 ```
 
-```{.unwrap pipe="./run unequalArgCountCommutes"}
+```{.unwrap pipe="NAME=unequalArgCountCommutes ./run"}
 main = run distinctSymbolicHeadsCommutes (pair genSymCom genSymCom)
 ```
 
@@ -1216,7 +1219,7 @@ comToPreRoundtrips :: Com -> Bool
 comToPreRoundtrips c = preToCom (comToPre c) == c
 ```
 
-```{.unwrap pipe="./run comToPreRoundtrips"}
+```{.unwrap pipe="NAME=comToPreRoundtrips ./run"}
 main = run comToPreRoundtrips genCom
 ```
 
@@ -1231,7 +1234,7 @@ genPre = Gen.list small genEntry
         genLeaf  = Gen.choose (Left <$> Gen.bool False) (Right <$> genSym)
 ```
 
-```{.unwrap pipe="./run preToComAlmostRoundtrips"}
+```{.unwrap pipe="NAME=preToComAlmostRoundtrips ./run"}
 main = run preToComAlmostRoundtrips genPre
 ```
 
@@ -1292,7 +1295,7 @@ code, since it has all sorts of cool applications!)
 
 </details>
 
-```{.unwrap pipe="./run symbolGivenUnequalArgsCommutes"}
+```{.unwrap pipe="NAME=symbolGivenUnequalArgsCommutes ./run"}
 main = run (uncurry3 (liftFun2 symbolGivenUnequalArgsCommutes))
            (triple (Gen.fun (Gen.bool False)) genSymCom genSymCom)
 ```
@@ -1315,7 +1318,7 @@ provablyDisagreeCommutes :: (Com, Com) -> Bool
 provablyDisagreeCommutes (x, y) = provablyDisagree x y == provablyDisagree y x
 ```
 
-```{.unwrap pipe="./run provablyDisagreeCommutes"}
+```{.unwrap pipe="NAME=provablyDisagreeCommutes ./run"}
 main = run provablyDisagreeCommutes (pair genSymCom genSymCom)
 ```
 
@@ -1362,7 +1365,7 @@ agreeOnExtensionalInputs (n, x, y, pre) =
         inputs         = sPrefix pre (C <$> symbols)
 ```
 
-```{.unwrap pipe="./run agreeOnExtensionalInputs"}
+```{.unwrap pipe="NAME=agreeOnExtensionalInputs ./run"}
 main = run agreeOnExtensionalInputs (quad genFuel genCom genCom genComs)
 ```
 
