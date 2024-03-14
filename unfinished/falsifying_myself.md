@@ -983,10 +983,11 @@ ever):
 -- | produces a 'Now'. Returns that result, its index in the 'Stream', and a
 -- | 'Stream' of the remaining 'Delay' elements.
 race :: Stream (Delay a) -> Delay (a, Natural, Stream (Delay a))
-race s = runDelay 1 $ go 1 ([], s)
-  where go !n ([]        , ys) = Later (go    1 (sSplitAt n               ys))
-        go !n (Now   x:xs, ys) = Now   (x,  n-1, sPrefix xs               ys)
-        go !n (Later x:xs, ys) =        go (n+1) (xs, Cons (runDelay n x) ys)
+race s = go 1 ([], s)
+  where go !n (  Now x:xs, ys) =   Now (x,  n-1, sPrefix xs               ys)
+        go !n (Later x:xs, ys) = Later (go (n+1) (xs, Cons (runDelay 1 x) ys))
+        go !n ([]        , ys) =        go    1  (sSplitAt n              ys )
+
 ```
 
 We can use `race`{.haskell} to check whether two expressions ever agree, and
