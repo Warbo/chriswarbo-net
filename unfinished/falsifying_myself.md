@@ -180,17 +180,17 @@ import Test.Tasty.Falsify (testProperty)
 uncurry3 :: (a -> b -> c -> d) -> (a, b, c) -> d
 uncurry3 f (a, b, c) = f a b c
 
--- | Combine two results into a pair
-pair :: Applicative f => f a -> f b -> f (a, b)
-pair a b = (,) <$> a <*> b
+-- | Combine two results into a single tuple
+tuple2 :: Applicative f => f a -> f b -> f (a, b)
+tuple2 a b = (,) <$> a <*> b
 
--- | Combine three results into a triple
-triple :: Applicative f => f a -> f b -> f c -> f (a, b, c)
-triple a b c = (,,) <$> a <*> b <*> c
+-- | Combine three results into a single tuple
+tuple3 :: Applicative f => f a -> f b -> f c -> f (a, b, c)
+tuple3 a b c = (,,) <$> a <*> b <*> c
 
--- | Combine four results into a quad
-quad :: Applicative f => f a -> f b -> f c -> f d -> f (a, b, c, d)
-quad a b c d = (,,,) <$> a <*> b <*> c <*> d
+-- | Combine four results into a single tuple
+tuple4 :: Applicative f => f a -> f b -> f c -> f d -> f (a, b, c, d)
+tuple4 a b c d = (,,,) <$> a <*> b <*> c <*> d
 
 -- | Like a list, but never ends.
 data Stream a = Cons { sHead :: !a, sTail :: Stream a } deriving (Functor)
@@ -687,7 +687,7 @@ The observant among you may have noticed that `normalEqToItself`{.haskell}
 counterexample to show us why:
 
 ```{.unwrap pipe="./fail"}
-main = checkPred normalEqToItself (pair genFuel genCom)
+main = checkPred normalEqToItself (tuple2 genFuel genCom)
 ```
 
 The precise counterexample `falsify` finds may vary depending on the random
@@ -724,7 +724,7 @@ notUnnormalEqToItself (n, x) = runDelayOr True (not . diff <$> normalEq x x) n
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred notUnnormalEqToItself (pair genFuel genCom)
+main = checkPred notUnnormalEqToItself (tuple2 genFuel genCom)
 ```
 
 You may have learned in school that [double-negatives are
@@ -773,7 +773,7 @@ genNormal = genNormalN limit
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred normalsAreNormalEqToThemselves (pair genFuel genNormal)
+main = checkPred normalsAreNormalEqToThemselves (tuple2 genFuel genNormal)
 ```
 
 ### Extensional equality ###
@@ -821,7 +821,7 @@ Everything that satisfies `normalEq`{.haskell} should also satisfy
 ```{.haskell pipe="./show Main.hs"}
 normalEqImpliesAgree :: (Fuel, Com, Com, InputValues) -> Bool
 normalEqImpliesAgree (n, f, g, xs) =
-  case runDelay n (pair (normalEq f g) (sHead (agree f g xs))) of
+  case runDelay n (tuple2 (normalEq f g) (sHead (agree f g xs))) of
     Now (Same _, Diff _ _) -> False
     _                      -> True
 
@@ -835,7 +835,7 @@ genComs = genComsN limit
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred normalEqImpliesAgree (quad genFuel genCom genCom genComs)
+main = checkPred normalEqImpliesAgree (tuple4 genFuel genCom genCom genComs)
 ```
 
 We say expressions "agree on $N$ inputs" when they agree on *every* sequence of
@@ -852,7 +852,7 @@ skNeverDisagreesWithSKSKKK (n, xs) =
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred skNeverDisagreesWithSKSKKK (pair genFuel genComs)
+main = checkPred skNeverDisagreesWithSKSKKK (tuple2 genFuel genComs)
 ```
 
 Note that any expressions which agree on $N$ inputs also agree on $N+1$ inputs
@@ -862,14 +862,15 @@ form (by definition of agreement on $N$ inputs).
 ```{.haskell pipe="./show Main.hs"}
 agreementIsMonotonic :: ((Fuel, Fuel), (Com, Com), InputValues) -> Bool
 agreementIsMonotonic ((n, m), (f, g), xs) =
-  case runDelay n (pair (sAt n (agree f g xs)) (sAt (n + m) (agree f g xs))) of
+  case runDelay n (tuple2 (sAt  n      (agree f g xs))
+                          (sAt (n + m) (agree f g xs))) of
     Now (Same _, Diff _ _) -> False
     _                      -> True
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred agreementIsMonotonic (triple (pair genFuel genFuel)
-                                              (pair genCom  genCom )
+main = checkPred agreementIsMonotonic (tuple3 (tuple2 genFuel genFuel)
+                                              (tuple2 genCom  genCom )
                                               genComs)
 ```
 
@@ -1011,7 +1012,7 @@ normalEqImpliesEverAgree (n, x, y) = if      go (same <$> normalEq x y)
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred normalEqImpliesEverAgree (triple genFuel genCom genCom)
+main = checkPred normalEqImpliesEverAgree (tuple3 genFuel genCom genCom)
 ```
 
 However, `everAgree`{.haskell} is not yet a predicate for checking extensional
@@ -1111,7 +1112,7 @@ distinctSymbolicHeadsCommutes (x, y) = distinctSymbolicHeads x y
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred distinctSymbolicHeadsCommutes (pair genSymCom genSymCom)
+main = checkPred distinctSymbolicHeadsCommutes (tuple2 genSymCom genSymCom)
 ```
 
 #### Different numbers of arguments prove disagreement ####
@@ -1173,7 +1174,7 @@ unequalArgCountCommutes (x, y) = unequalArgCount x y
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred distinctSymbolicHeadsCommutes (pair genSymCom genSymCom)
+main = checkPred distinctSymbolicHeadsCommutes (tuple2 genSymCom genSymCom)
 ```
 
 #### Disagreeing arguments prove disagreement ####
@@ -1233,7 +1234,7 @@ table:
 genViaTable :: Eq a => Range Fuel -> Gen a -> Gen b -> Gen (a -> b)
 genViaTable range genA genB = do
   def   <- genB
-  pairs <- Gen.list range (pair genA genB)
+  pairs <- Gen.list range (tuple2 genA genB)
   pure (maybe def id . (`lookup` pairs))
 ```
 
@@ -1389,7 +1390,7 @@ code, since it has all sorts of cool applications!)
 
 ```{.unwrap pipe="NAME=symbolGivenUnequalArgsCommutes ./run"}
 main = checkPred (uncurry3 (liftFun2 symbolGivenUnequalArgsCommutes))
-                 (triple (Gen.fun (Gen.bool False)) genSymCom genSymCom)
+                 (tuple3 (Gen.fun (Gen.bool False)) genSymCom genSymCom)
 ```
 
 #### Combining disagreement provers ####
@@ -1411,7 +1412,7 @@ provablyDisagreeCommutes (x, y) = provablyDisagree x y == provablyDisagree y x
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred provablyDisagreeCommutes (pair genSymCom genSymCom)
+main = checkPred provablyDisagreeCommutes (tuple2 genSymCom genSymCom)
 ```
 
 #### Approximating extensional equality ####
@@ -1441,7 +1442,7 @@ agreeOnExtensionalInputs (n, x, y, inputs) =
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred agreeOnExtensionalInputs (quad genFuel genCom genCom genComs)
+main = checkPred agreeOnExtensionalInputs (tuple4 genFuel genCom genCom genComs)
 ```
 
 This is easy to transform into a legitimate predicate for testing extensional
@@ -1473,7 +1474,7 @@ extEqGeneralisesEqAndNormalEqAndEverAgree (n, x, y) =
 
 ```{.unwrap pipe="./run"}
 main = checkPred extEqGeneralisesEqAndNormalEqAndEverAgree
-                 (triple genFuel genCom genCom)
+                 (tuple3 genFuel genCom genCom)
 ```
 
 ## Falsifying myself ##
