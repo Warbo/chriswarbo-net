@@ -193,7 +193,10 @@ quad :: Applicative f => f a -> f b -> f c -> f d -> f (a, b, c, d)
 quad a b c d = (,,,) <$> a <*> b <*> c <*> d
 
 -- | Like a list, but never ends.
-data Stream a = Cons !a (Stream a) deriving (Functor)
+data Stream a = Cons { sHead :: !a, sTail :: Stream a } deriving (Functor)
+
+instance Show a => Show (Stream a) where
+  show (Cons x _) = "[" ++ show x ++ ",...]"
 
 sPrefix :: [a] -> Stream a -> Stream a
 sPrefix []     ys = ys
@@ -777,25 +780,19 @@ main = checkPred normalsAreNormalEqToThemselves (pair genFuel genNormal)
 
 My problems arose when trying to extend the equality of SK expressions even
 further to include
-[extensional equality](https://en.wikipedia.org/wiki/Extensionality).
+[extensional equality](https://en.wikipedia.org/wiki/Extensionality). To explain
+how this works, we'll need a bit more terminology…
 
 #### Inputs and agreement ####
 
-To clarify what we're about to do, we'll start by defining some more
-terminology. An "input value" is some particular SK value, which another
-expression will be applied to. For example, applying the expression `KSK` to the
-input value `S` results in `KSKS`. Input values are hence just the right-most
-arguments of such results; but it's useful to give them a more specific name,
-since they are precisely those arguments in the result which are *separate* from
-the first expression. Note that in this example, the result has head `K` and
-arguments `S`, `K` and `S`; yet only the last of those was an input value.
-
-```{.haskell pipe="./show Main.hs"}
--- Handy synonyms, to clarify the role of certain expressions
-
-type InputValue  = Com
-type InputValues = [InputValue]
-```
+To understand the behaviour of a particular SK expression, we can see what
+happens when it's applied to other SK expressions. We'll call the latter "input
+values", to emphasise that they are not part of the original expression we're
+focused on. For example, we can understand how the expression `KS` behaves by
+applying it to an input value like `S`: giving `KSS` (which reduces to
+`Normal`{.haskell} form `S`). Note that `KS` contains head `K` and argument `S`;
+whilst the resulting expression `KSS` also contains the input value `S` as an
+extra argument.
 
 If we apply two expressions to the same input value, and the results reduce to
 the same `Normal`{.haskell} form, we say those two expressions "agree on" that
@@ -804,13 +801,18 @@ input value. For example, `KK` and `SKK` agree on the input value `K`, since
 *disagree* on the input value `S`, since `KKS` reduces to `K`; whilst `SKKS`
 reduces to `KS(KS)` then to `S`. Expressions can also agree on a *sequence* of
 input values, where we apply them both to the first value, then apply those
-results to the second value, and so on:
+results to the second value, and so on. We'll represent such sequences using a
+`Stream`{.haskell}, which is like a list except there is no "nil" case, so it
+goes on forever:
 
 ```{.haskell pipe="./show Main.hs"}
--- | Apply the Coms to the InputValues, see if they reach the same Normal form
-agree :: Com -> Com -> InputValues -> Delay (Compared Normal)
-agree f g (iv:ivs) = agree (App f iv) (App g iv) ivs  -- Apply an input, recurse
-agree f g []       = normalEq f g                     -- No more inputs, check
+type InputValue  = Com
+type InputValues = Stream InputValue
+
+-- | Apply the given 'Com' expressions to more and more of the 'InputValues',
+-- | checking whether they reach the same 'Normal' form.
+agree :: Com -> Com -> InputValues -> Stream (Delay (Compared Normal))
+agree f g (Cons x xs) = Cons (normalEq f g) (agree (App f x) (App g x) xs)
 ```
 
 Everything that satisfies `normalEq`{.haskell} should also satisfy
@@ -819,13 +821,13 @@ Everything that satisfies `normalEq`{.haskell} should also satisfy
 ```{.haskell pipe="./show Main.hs"}
 normalEqImpliesAgree :: (Fuel, Com, Com, InputValues) -> Bool
 normalEqImpliesAgree (n, f, g, xs) =
-  case runDelay n (pair (normalEq f g) (agree f g xs)) of
+  case runDelay n (pair (normalEq f g) (sHead (agree f g xs))) of
     Now (Same _, Diff _ _) -> False
     _                      -> True
 
--- | Generate a list of Com values, with length and element size bounded by Fuel
-genComsN :: Fuel -> Gen [Com]
-genComsN fuel = Gen.list (to fuel) (genComN fuel)
+-- | Generate a 'Stream' of Com values, with element size bounded by 'Fuel'
+genComsN :: Fuel -> Gen InputValues
+genComsN fuel = Cons <$> genComN fuel <*> genComsN fuel
 
 -- | Generate (relatively small) lists of Com values
 genComs :: Gen InputValues
@@ -842,15 +844,15 @@ length of the sequence is not. For example, `SK` and `S(K(SK))(KK)` agree on two
 inputs; which we can test by asserting that they *never disagree*:
 
 ```{.haskell pipe="./show Main.hs"}
-skNeverDisagreesWithSKSKKK :: (Fuel, InputValue, InputValue) -> Bool
-skNeverDisagreesWithSKSKKK (n, x, y) =
-    runDelayOr True (not . diff <$> agree f g [x, y]) n
+skNeverDisagreesWithSKSKKK :: (Fuel, InputValues) -> Bool
+skNeverDisagreesWithSKSKKK (n, xs) =
+    runDelayOr True (not . diff <$> sAt (2 + n)(agree f g xs)) n
   where f = App s k
         g = App (App s (App k (App s k))) (App k k)
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred skNeverDisagreesWithSKSKKK (triple genFuel genCom genCom)
+main = checkPred skNeverDisagreesWithSKSKKK (pair genFuel genComs)
 ```
 
 Note that any expressions which agree on $N$ inputs also agree on $N+1$ inputs
@@ -858,17 +860,17 @@ Note that any expressions which agree on $N$ inputs also agree on $N+1$ inputs
 form (by definition of agreement on $N$ inputs).
 
 ```{.haskell pipe="./show Main.hs"}
--- | False iff the Com values agree on xs but not xs++ys
-agreementIsMonotonic :: (Fuel, (Com, Com), (InputValues, InputValues)) -> Bool
-agreementIsMonotonic (n, (f, g), (xs, ys)) =
-  case runDelay n (pair (agree f g xs) (agree f g (xs ++ ys))) of
+agreementIsMonotonic :: ((Fuel, Fuel), (Com, Com), InputValues) -> Bool
+agreementIsMonotonic ((n, m), (f, g), xs) =
+  case runDelay n (pair (sAt n (agree f g xs)) (sAt (n + m) (agree f g xs))) of
     Now (Same _, Diff _ _) -> False
     _                      -> True
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred agreementIsMonotonic
-                 (triple genFuel (pair genCom genCom) (pair genComs genComs))
+main = checkPred agreementIsMonotonic (triple (pair genFuel genFuel)
+                                              (pair genCom  genCom )
+                                              genComs)
 ```
 
 #### Extensionality ####
@@ -943,9 +945,7 @@ they *are* extensionally equal.
 
 We don't need to implement this check specially, since we can reuse
 `agree`{.haskell}, just using symbolic values as our inputs instead of concrete
-SK expressions. We don't want to artificially limit the amount of symbols
-available, so we'll take them from a `Stream`{.haskell}, which is like a list
-except there is no "nil" case, so it goes on forever:
+SK expressions:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Synonym to indicate when we're dealing with uninterpreted symbolic values
@@ -963,7 +963,7 @@ more symbolic inputs, to see if they reduce to the same `Normal`{.haskell} form:
 ```{.haskell pipe="./show Main.hs"}
 -- | Checks whether two Com values agree on more and more symbolic input values.
 agreeSym :: Com -> Com -> Stream (Delay (Compared Normal))
-agreeSym f g = agree f g <$> sInits (C <$> symbols)
+agreeSym f g = agree f g (C <$> symbols)
 ```
 
 The return type of `agreeSym`{.haskell} is a little awkward, since it's "two
@@ -975,8 +975,7 @@ a linear path which traverses this structure. We can't use breadth-first search
 since the `Stream`{.haskell} never ends; we also can't use depth-first search,
 since a `Delay`{.haskell} might never end. The following `race`{.haskell}
 function is a bit smarter: it acts like a round-robin scheduler, each iteration
-running more expressions for longer time-slices, until one of them finishes (if
-ever):
+running more expressions until one of them finishes (if ever):
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Runs every 'Delay' element in an interleaved fashion until one of them
@@ -987,11 +986,10 @@ race s = go 1 ([], s)
   where go !n (  Now x:xs, ys) =   Now (x,  n-1, sPrefix xs               ys)
         go !n (Later x:xs, ys) = Later (go (n+1) (xs, Cons (runDelay 1 x) ys))
         go !n ([]        , ys) =        go    1  (sSplitAt n              ys )
-
 ```
 
-We can use `race`{.haskell} to check whether two expressions ever agree, and
-therefore whether they're extensionally equal:
+We can use `race`{.haskell} to check whether two expressions ever agree on
+symbolic inputs, and therefore whether they're extensionally equal:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | 'True' iff the given expressions ever agree for any number of inputs.
@@ -1436,11 +1434,10 @@ extensionalInputs x y = race (agreeSym x y) >>= go 0
                                     else race s >>= go (n+1)
 
 agreeOnExtensionalInputs :: (Fuel, Com, Com, InputValues) -> Bool
-agreeOnExtensionalInputs (n, x, y, pre) =
+agreeOnExtensionalInputs (n, x, y, inputs) =
     runDelayOr True (extensionalInputs x y >>= check) n
   where check Nothing  = Now True
-        check (Just i) = same <$> agree x y (sTake i inputs)
-        inputs         = sPrefix pre (C <$> symbols)
+        check (Just i) = same <$> sAt i (agree x y inputs)
 ```
 
 ```{.unwrap pipe="./run"}
