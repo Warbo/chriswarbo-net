@@ -1463,10 +1463,10 @@ extEq x y = isJust <$> extensionalInputs x y
 ```{.haskell pipe="./show Main.hs"}
 extEqGeneralisesEqAndNormalEqAndEverAgree :: (Fuel, Com, Com) -> Bool
 extEqGeneralisesEqAndNormalEqAndEverAgree (n, x, y) =
-    case ( go (extEq x y)
-         , go (    everAgree x y)
-         , go (     normalEq x y)
-         ,              (==) x y) of
+    case ( go (            extEq x y)
+         , go (        everAgree x y)
+         , go (same <$> normalEq x y)
+         ,                  (==) x y) of
       (Now False, Now True, _       , _   ) -> False
       (Now False, _       , Now True, _   ) -> False
       (Now False, _       , _       , True) -> False
