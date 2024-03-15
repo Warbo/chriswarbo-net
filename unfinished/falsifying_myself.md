@@ -755,45 +755,6 @@ computation and its associated undecidability. All we have are the more
 pragmatic falsified/unfalsified results of a property checker, where there are
 non-excluded middles such as "don't know", "timed out" and "gave up"!
 
-#### Smarter generators ####
-
-It's usually a good idea to write simple, straightforward properties like
-`notUnnormalEqToItself`{.haskell}, which make strong claims over a broad
-space of input values. Sometimes it's a good idea to *also* have more specific
-properties tailored to important cases. For example, the predicate
-`normalEqToItself`{.haskell} is actually `True`{.haskell} for the
-`Normal`{.haskell} subset of `Com`{.haskell}:
-
-```{.haskell pipe="./show Main.hs"}
-normalsAreNormalEqToThemselves :: (Fuel, Normal) -> Bool
-normalsAreNormalEqToThemselves (n, x) = normalEqToItself (n, toCom x)
-```
-
-Checking this requires a generator which only produces `Normal`{.haskell}
-values. That's actually much easier than our attempts to normalise values
-*inside* a property, since generators are free to discard problematic values and
-try again!
-
-```{.haskell pipe="./show Main.hs"}
--- | Like genComN, but reduces its outputs to normal form. The fuel
--- | bounds the size of the initial expression (before it's reduced), and
--- | the number of steps to attempt when normalising.
-genNormalN :: Fuel -> Gen Normal
-genNormalN n = do
-  c <- genComN n                  -- Generate a Com value c
-  runDelayOr (genNormalN n)       -- Fall back to generating a fresh Com
-             (pure <$> reduce c)  -- Try to reduce c to a Normal value
-             n                    -- Give up after n steps
-
--- | Generates (relatively small) Normal values
-genNormal :: Gen Normal
-genNormal = genNormalN limit
-```
-
-```{.unwrap pipe="./run"}
-main = checkPred normalsAreNormalEqToThemselves (tuple2 genFuel genNormal)
-```
-
 ### Extensional equality ###
 
 My problems arose when trying to extend the equality of SK expressions even
@@ -1755,6 +1716,46 @@ problems come from the underlying statistics, and are evident in output like
    resources and makes the "successful tests" number misleadingly inflated.
  - When we *do* happen to generate a successful pair of values, we're only
    checking them on a *single* argument, which isn't very thorough.
+
+### Smarter generators ###
+
+It's usually a good idea to write simple, straightforward properties like
+`notUnnormalEqToItself`{.haskell}, which make strong claims over a broad
+space of input values. Sometimes it's a good idea to *also* have more specific
+properties tailored to important cases. For example, the predicate
+`normalEqToItself`{.haskell} is actually `True`{.haskell} for the
+`Normal`{.haskell} subset of `Com`{.haskell}:
+
+```{.haskell pipe="./show Main.hs"}
+normalsAreNormalEqToThemselves :: (Fuel, Normal) -> Bool
+normalsAreNormalEqToThemselves (n, x) = normalEqToItself (n, toCom x)
+```
+
+Checking this requires a generator which only produces `Normal`{.haskell}
+values. That's actually much easier than our attempts to normalise values
+*inside* a property, since generators are free to discard problematic values and
+try again!
+
+```{.haskell pipe="./show Main.hs"}
+-- | Like genComN, but reduces its outputs to normal form. The fuel
+-- | bounds the size of the initial expression (before it's reduced), and
+-- | the number of steps to attempt when normalising.
+genNormalN :: Fuel -> Gen Normal
+genNormalN n = do
+  c <- genComN n                  -- Generate a Com value c
+  runDelayOr (genNormalN n)       -- Fall back to generating a fresh Com
+             (pure <$> reduce c)  -- Try to reduce c to a Normal value
+             n                    -- Give up after n steps
+
+-- | Generates (relatively small) Normal values
+genNormal :: Gen Normal
+genNormal = genNormalN limit
+```
+
+```{.unwrap pipe="./run"}
+main = checkPred normalsAreNormalEqToThemselves (tuple2 genFuel genNormal)
+```
+
 
 ### A more sophisticated test ###
 
