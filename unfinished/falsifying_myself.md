@@ -31,10 +31,9 @@ set -euo pipefail
 #  - $NAME: defaults to whatever word follows 'check' or 'checkPred'
 #  - $CLASS: defaults to 'pass'; added to both code blocks
 
-GIVEN=$(cat)
+cat > in
 [[ -n "${NAME:-}" ]] || {
-  NAME=$(echo "$GIVEN" |
-         sed -e 's/checkPred/check/g' |
+  NAME=$(< in sed -e 's/checkPred/check/g' |
          grep 'check '                |
          sed -e 's/^.*check \([^ ][^ ]*\).*$/\1/g')
 }
@@ -44,20 +43,38 @@ rm -f "$NAME"
 {
   cat Main.hs
   echo
-  echo "$GIVEN"
+  cat in
 } > "$NAME"
 {
   echo "<div class='$CLASS'>"
   echo
   printf '```haskell\n'
-  echo "$GIVEN"
-  printf '```\n\n```{pipe="sh"}\n'
+  cat in
+  printf '\n```\n\n```{pipe="sh"}\n'
   echo "cp root/$NAME ./"
-  echo "runhaskell $NAME $*"
+  echo "if runhaskell $NAME 1> out 2> err; then"
+  echo "${1:-cat out; cat err 1>&2; exit 0}; else"
+  echo "${2:-cat out err 1>&2; exit 1}; fi"
   echo '```'
   echo
   echo '</div>'
-} | pandoc -f markdown -t json | panpipe
+} > run.md
+if < run.md pandoc -f markdown -t json | panpipe 1> out 2> err
+then
+  cat err 1>&2
+  cat out
+  exit 0
+else
+  {
+    echo "BEGIN OUT"
+    cat out
+    echo "END OUT"
+    echo "BEGIN ERR"
+    cat err
+    echo "END ERR"
+    exit 1
+  } 1>&2
+fi
 ```
 
 ```{pipe="cat > fail && chmod +x fail"}
@@ -74,7 +91,8 @@ export CLASS='fail'
 GIVEN=$(cat)
 for RETRY in seq 1 100
 do
-  if GOT=$(echo "$GIVEN" | ./run "$@" '2>&1 && exit 1 || true')
+  if GOT=$(echo "$GIVEN" | ./run 'cat out err 1>&2 && exit 1' \
+                                 'cat out err 2>&1 && exit 0')
   then
     echo "$GOT"
     exit 0
