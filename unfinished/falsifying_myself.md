@@ -185,10 +185,10 @@ import System.Environment (getEnv)
 import Test.Falsify.Generator (Gen, Tree(..))
 import qualified Test.Falsify.Generator as Gen
 import Test.Falsify.Predicate (satisfies)
-import Test.Falsify.Property (Property, testGen)
+import Test.Falsify.Property (Property, discard, gen, label, testFailed, testGen)
 import Test.Falsify.Range (Range)
 import qualified Test.Falsify.Range as Range
-import Test.Tasty (defaultMain)
+import Test.Tasty (defaultMain, testGroup)
 import Test.Tasty.Falsify (testProperty)
 
 -- Useful helpers. These are available in libraries, but I want this code to be
@@ -529,7 +529,7 @@ undecidable in general, so it also gets wrapped in `Delay`{.haskell}:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Result of comparing two values
-data Compared a = Same a | Diff a a
+data Compared a = Same a | Diff a a deriving (Show)
 
 same, diff :: Compared a -> Bool
 same (Same _)   = True
@@ -864,7 +864,7 @@ inputs; which we can test by asserting that they *never disagree*:
 ```{.haskell pipe="./show Main.hs"}
 skNeverDisagreesWithSKSKKK :: (Fuel, InputValues) -> Bool
 skNeverDisagreesWithSKSKKK (n, xs) =
-    runDelayOr True (not . diff <$> sAt (2 + n)(agree f g xs)) n
+    runDelayOr True (not . diff <$> sAt (2 + n) (agree f g xs)) n
   where f = App s k
         g = App (App s (App k (App s k))) (App k k)
 ```
@@ -1497,10 +1497,222 @@ main = checkPred extEqGeneralisesEqAndNormalEqAndEverAgree
 
 ## Falsifying myself ##
 
-We can now *directly* test our assumption that equal results on a symbolic input
-imply equal results on all inputs, like like this:
+Now we've gone through the background, and built up our notion of equality from
+simple identity (`==`{.haskell}), through equivalence of `Normal`{.haskell}
+forms (`normalEq`{.haskell}) up to full extensional equality (`extEq`{.haskell})
+it's time to investigate these definition more thoroughly. Whilst the eventual
+aim is to find the mistake I had made in egglog, the best path forward is to
+question and test our understanding as a whole.
+
+### False confidence ###
+
+The properties we've written so far give us some confidence that our definitions
+make sense, and our theory of their behaviour holds up, since falsify was unable
+to disprove anything with a counterexample. However, our confidence shouldn't be
+*too* high, since most of those properties have two branches: the situation we
+care about (which may be quite rare), and a fallback which is trivially
+`True`{.haskell}.
+
+For example, consider `agreeOnExtensionalInputs (n, x, y, inputs)`{.haskell},
+which asserts that whenever `extensionalInputs`{.haskell} claims `x`{.haskell}
+and `y`{.haskell} are extensionally equal for `i`{.haskell} symbolic inputs,
+they agree on any sequence of `i`{.haskell} concrete input values. This
+assertion has many caveats:
+
+ - Unless `x`{.haskell} and `y`{.haskell} are extensioanlly equal, or happen to
+   match a form that `provablyDisagree`{.haskell} can recognise, then
+   `extensionalInputs x y`{.haskell} will never finish. In that case we are
+   merely asserting the fallback of `runDelayOr True`{.haskell}, not learning
+   anything about extensional equality.
+ - In those cases that `extensionalInputs x y`{.haskell} *would* finish, it must
+   take no more than `n`{.haskell} steps to avoid that fallback.
+ - When `x`{.haskell} and `y`{.haskell} `provablyDisagree`{.haskell},
+   `extensionalInputs`{.haskell} gives `Nothing`{.haskell} and we're merely
+   asserting the *other* fallback: `Now True`{.haskell}.
+ - When `extensionalInputs`{.haskell} gives `Just 0`{.haskell}, `x`{.haskell}
+   and `y`{.haskell} are `normalEq`{.haskell}, so our assertion overlaps with
+   other properties we've already established.
+
+None of these make the property *false*; but they weaken the evidence that it
+provides. We can see this more clearly by "labelling" each situation, and having
+`falsify` report statistics on how common each was. Unfortunately this requires
+us to return more than just a `Bool`{.haskell}, so we need to leave the world of
+simple predicates (and hence cross-framework compatibility). Every
+property-checker provides its own alternative implementations for such features:
+in `falsify` it's the `Property`{.haskell} type. Here's a pretty direct
+translation of `agreeOnExtensionalInputs`{.haskell} as a `Property`{.haskell},
+with each of the above cases labelled:
 
 ```{.haskell pipe="./show Main.hs"}
+agreeOnExtensionalInputsStats :: Property ()
+agreeOnExtensionalInputsStats = do
+    (n, x, y, inputs) <- gen (tuple4 genFuel genCom genCom genComs)
+    let check Nothing  = Now (Left "Not equal")
+        check (Just i) = Right . (i,) . same <$> sAt i (agree x y inputs)
+    label "Identical" [show (x == y)]
+    case runDelayOr (Left "Timeout") (extensionalInputs x y >>= check) n of
+      Left msg         -> label "result" [msg]
+      Right (i, True ) -> label "i" [show i] *> label "result" ["True"]
+      Right (i, False) -> fail ("Disagree on " ++ show (sTake i inputs))
+```
+
+```{.unwrap pipe="./run"}
+main = check agreeOnExtensionalInputsStats
+```
+
+The results will vary depending on the random seed (which changes every time
+this page gets rendered), but I've seen around ⅓ resulting in `Timeout`, around
+⅗ with `Not equal`, and only a handful resulting in `True`. Most of the latter
+already agreed on 0 inputs, making them `normalEq`{.haskell} and hence avoiding
+any need for symbolic execution. Thankfully `x`{.haskell} and `y`{.haskell} were
+hardly ever identical, which would be even less interesting!
+
+<details class="odd">
+<summary>Similar stats for other properties…</summary>
+
+```{.haskell pipe="./show Main.hs"}
+notUnnormalEqToItselfStats g =
+  testProperty "notUnnormalEqToItself" $ do
+    (n, x) <- gen g
+    case runDelayOr Nothing (Just <$> normalEq x x) n of
+      Nothing           -> label "result" ["Timeout"]
+      Just (Same _)     -> label "result" ["True"   ]
+      Just (Diff x' y') -> fail (show x' ++ " =/= " ++ show y')
+
+normalEqImpliesAgreeStats g =
+  testProperty "normalEqImpliesAgree" $ do
+    (n, f, g, xs) <- gen g
+    case runDelay n (tuple2 (normalEq f g) (sHead (agree f g xs))) of
+      Now got@(Same _  , Diff _ _) -> fail (show got)
+      Now     (Same _  , Same _  ) -> label "result" ["Same Same"]
+      Now     (Diff _ _, Same _  ) -> label "result" ["Diff Same"]
+      Now     (Diff _ _, Diff _ _) -> label "result" ["Diff Diff"]
+      Later   _                    -> label "result" ["Timeout"  ]
+
+skNeverDisagreesWithSKSKKKStats g =
+  testProperty "skNeverDisagreesWithSKSKKK" $ do
+    (n, xs) <- gen g
+    let f = App s k
+        g = App (App s (App k (App s k))) (App k k)
+    case runDelayOr Nothing (Just <$> sAt (2 + n) (agree f g xs)) n of
+      Nothing             -> label "result" ["Timeout"]
+      Just     (Same _  ) -> label "result" ["True"]
+      Just got@(Diff _ _) -> fail (show got)
+
+agreementIsMonotonicStats g =
+  testProperty "agreementIsMonotonic" $ do
+    ((n, m), (f, g), xs) <- gen g
+    case runDelay n (tuple2 (sAt  n      (agree f g xs))
+                            (sAt (n + m) (agree f g xs))) of
+      Now got@(Same _  , Diff _ _) -> fail (show got)
+      Now     (Same _  , Same _  ) -> label "result" ["Same Same"]
+      Now     (Diff _ _, Same _  ) -> label "result" ["Diff Same"]
+      Now     (Diff _ _, Diff _ _) -> label "result" ["Diff Diff"]
+      Later   _                    -> label "result" ["Timeout"  ]
+
+normalEqImpliesEverAgreeStats g =
+  testProperty "normalEqImpliesEverAgree" $ do
+    (n, x, y) <- gen g
+    let go d = runDelayOr Nothing (Just <$> d) n
+    case (go (same <$> normalEq x y), go (everAgree x y)) of
+      (Nothing   , _         ) -> label "result" ["Timeout"]
+      (Just False, _         ) -> label "result" ["Unequal"]
+      (Just True , Just True ) -> label "result" ["True"   ]
+      (Just True , Nothing   ) -> fail "everAgree timed out"
+      (Just True , Just False) -> fail "Didn't agree"
+
+commuteStats f g = do
+    (x, y) <- gen g
+    case (f x y, f y x) of
+      (True , True ) -> label "result" ["Both"   ]
+      (False, False) -> label "result" ["Neither"]
+      (True , False) -> fail "f(x, y) but not f(y, x)"
+      (False, True ) -> fail "f(y, x) but not f(x, y)"
+
+
+distinctSymbolicHeadsCommutesStats =
+  testProperty "distinctSymbolicHeadsCommutes" .
+    commuteStats distinctSymbolicHeads
+
+unequalArgCountCommutesStats =
+  testProperty "unequalArgCountCommutes" .
+    commuteStats unequalArgCount
+
+provablyDisagreeCommutesStats =
+  testProperty "provablyDisagreeCommutes" .
+    commuteStats provablyDisagree
+
+symbolGivenUnequalArgsCommutesStats g =
+  testProperty "symbolGivenUnequalArgsCommutes" $ do
+    (f, x, y) <- gen g
+    commuteStats (liftFun2 symbolGivenUnequalArgs f) (pure (x, y))
+
+extEqGeneralisesEqAndNormalEqAndEverAgreeStats g =
+  testProperty "extEqGeneralisesEqAndNormalEqAndEverAgree" $ do
+    (n, x, y) <- gen g
+    let go l d = case runDelay n d of
+          Now   b -> label l [show b   ] >> pure (Just b)
+          Later _ -> label l ["Timeout"] >> pure Nothing
+    ext <- go     "extEq" (            extEq x y)
+    evr <- go "everAgree" (        everAgree x y)
+    nml <- go  "normalEq" (same <$> normalEq x y)
+    eql <- go     "equal" (pure  $      (==) x y)
+    case ext of
+      Nothing    -> pure ()
+      Just True  -> label "result" ["Equal"]
+      Just False -> case (evr, nml, eql) of
+        (Just True, _        , _        ) -> fail "everAgree but not extEq"
+        (_        , Just True, _        ) -> fail  "normalEq but not extEq"
+        (_        , _        , Just True) -> fail        "== but not extEq"
+        (_        , _        , _        ) -> label "result" ["Unequal"]
+```
+
+```{.unwrap pipe="NAME=stats ./run"}
+main = defaultMain $ testGroup "Stats"
+  [ notUnnormalEqToItselfStats
+    (tuple2 genFuel genCom)
+
+  , normalEqImpliesAgreeStats
+    (tuple4 genFuel genCom genCom genComs)
+
+  , skNeverDisagreesWithSKSKKKStats
+    (tuple2 genFuel genComs)
+
+  , agreementIsMonotonicStats
+    (tuple3 (tuple2 genFuel genFuel) (tuple2 genCom genCom) genComs)
+
+  , normalEqImpliesEverAgreeStats
+    (tuple3 genFuel genCom genCom)
+
+  , distinctSymbolicHeadsCommutesStats
+    (tuple2 genSymCom genSymCom)
+
+  , unequalArgCountCommutesStats
+    (tuple2 genSymCom genSymCom)
+
+  , symbolGivenUnequalArgsCommutesStats
+    (tuple3 (Gen.fun (Gen.bool False)) genSymCom genSymCom)
+
+  , provablyDisagreeCommutesStats
+    (tuple2 genSymCom genSymCom)
+
+  , extEqGeneralisesEqAndNormalEqAndEverAgreeStats
+    (tuple3 genFuel genCom genCom)
+  ]
+```
+
+</details>
+
+TODO: Describe results
+
+TODO: Abandon reduction if it gets too big (e.g. > 100 nodes)?
+
+TODO: Measure size of terms?
+
+TODO: Use smart generators to get better stats
+
+```
+{.haskell pipe="./show Main.hs"}
 -- | Asserts that the first two Com values give equal results when applied to
 -- | the third. First argument limits the number of steps attempted.
 assertEqualOn n f g x = case runDelay n (normalEq fx gx) of
