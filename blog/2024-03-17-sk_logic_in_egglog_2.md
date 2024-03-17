@@ -1,5 +1,5 @@
 ---
-title: Falsifying myself
+title: "SK logic in egglog: part 2, property-checking extensionality"
 packages: [ 'ghcWithFalsify' ]
 ---
 
@@ -101,12 +101,12 @@ do
 exit 1
 ```
 
-This follows on from [part 1 of my experiments with SK logic in
-egglog](/blog/2024-02-25-sk_logic_in_egglog_1.html), but is self-contained
-(although that gives *motivation* for this post). This is the result of a
-rabbit hole I entered, after getting results that were so unexpected and
-confusing that it made me question some of the assumptions I'd been making in
-those experiments.
+This is a spiritual follow-on from [part 1 of my experiments with SK logic in
+egglog](/blog/2024-02-25-sk_logic_in_egglog_1.html): that post serves as the
+*motivation* for this one, but the content here is somewhat standalone. It's the
+result of a rabbit hole I entered, after getting results that were so unexpected
+and confusing that it made me question some of the assumptions I'd been making
+in those experiments.
 
 I was modelling a small programming language called
 [SK (combinatory) logic](https://doisinkidney.com/posts/2020-10-17-ski.html);
@@ -145,6 +145,10 @@ This would also let me try out the new
 [I've blogged about before](/blog/2024-01-19-lazy_test_generators.html)): in
 essence, to try and "falsify myself", to figure out what I'd misunderstood.
 
+This page gives the background of what I was attempting; along with executable
+Haskell code, properties it should satisfy, and `falsify` checks of those
+properties. The latter are defined using [active code](/projects/activecode).
+
 ## The setup ##
 
 I'll explain some of this jargon below, but in short: that problematic line of
@@ -163,11 +167,10 @@ opposite: *always* claiming that *everything* is equal!
 <details class="odd">
 <summary>Preamble boilerplate…</summary>
 
-This page defines the entire contents of a test script using
-[active code](/projects/activecode). For more details, see [this page's Markdown
-source](/git/chriswarbo-net/git/branches/master/unfinished/checking_combinators_with_falsify.html).
 Here's the initial boilerplate for the script; it just needs GHC with `falsify`
-in its package database:
+in its package database. For more details on how it's executed, see
+[this page's Markdown
+source](/git/chriswarbo-net/git/branches/master/unfinished/checking_combinators_with_falsify.html).
 
 ```{.haskell pipe="./show Main.hs"}
 module Main (main) where
@@ -1453,4 +1456,8 @@ main = checkPred extEqGeneralisesEqAndNormalEqAndEverAgree
                  (tuple3 genFuel genCom genCom)
 ```
 
+## Next time ##
 
+We've seen how extensional equality works *in theory*, so the next post will
+explore these definitions in more depth, to find out where I was going wrong in
+egglog.
