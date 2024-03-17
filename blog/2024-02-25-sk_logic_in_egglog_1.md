@@ -19,6 +19,8 @@ echo >> "$1"
 NAME=hide ./show "$@" > /dev/null
 ```
 
+**Update: I've now published [part 2](2024-03-17-sk_logic_in_egglog_2.html)**
+
 I've been really excited to try out
 [egglog](https://github.com/egraphs-good/egglog), since it seems like a great
 complement and application for the theory exploration systems I spent a few
@@ -451,5 +453,5 @@ hasn't put `(App FALSE S)`{.scheme} in that class.
 Unfortunately my attempts to capture this in egglog so far have ended up
 collapsing the entire SK language into one big equivalence class, which is not
 particularly useful. Hence I've decided to punt on that for now, and stick a
-"part 1" in the title. If I can get that working soon, I'll be sure to write a
-part 2!
+"part 1" in the title. [Part 2](2024-03-17-sk_logic_in_egglog_2.html) begins my
+investigation of this problem, using the excellent testing ecosystem of Haskell!
