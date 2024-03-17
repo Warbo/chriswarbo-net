@@ -684,14 +684,11 @@ style we'll be testing things as we go, using the following functions:
 checkPred :: Show a => (a -> Bool) -> Gen a -> IO ()
 checkPred pred gen = do
   name <- testName
-  check (testGen (satisfies (name, pred)) gen)
+  check (testProperty name (testGen (satisfies (name, pred)) gen))
 
 -- | Check the given falsify 'Property' holds for (at least) 100 samples. Prints
 -- | a counterexample if found; or else some statistics about the search.
-check :: Property () -> IO ()
-check prop = do
-  name <- testName
-  defaultMain (testProperty name prop)
+check prop = defaultMain
 
 -- | We'll put test names in an env var to avoid repetition
 testName :: IO String
@@ -1506,8 +1503,9 @@ with each of the above cases labelled:
 
 ```{.haskell pipe="./show Main.hs"}
 agreeOnExtensionalInputsStats :: Property ()
-agreeOnExtensionalInputsStats = do
-    (n, x, y, inputs) <- gen (tuple4 genFuel genCom genCom genComs)
+agreeOnExtensionalInputsStats g =
+  testProperty "agreeOnExtensionalInputs" $ do
+    (n, x, y, inputs) <- gen g
     let check Nothing  = Now (Left "Not equal")
         check (Just i) = Right . (i,) . same <$> sAt i (agree x y inputs)
     label "Identical" [show (x == y)]
@@ -1518,7 +1516,8 @@ agreeOnExtensionalInputsStats = do
 ```
 
 ```{.unwrap pipe="./run"}
-main = check agreeOnExtensionalInputsStats
+main = check (agreeOnExtensionalInputsStats
+               (tuple4 genFuel genCom genCom genComs))
 ```
 
 The results will vary depending on the random seed (which changes every time
@@ -1656,6 +1655,9 @@ main = defaultMain $ testGroup "Stats"
 
   , provablyDisagreeCommutesStats
     (tuple2 genSymCom genSymCom)
+
+  , agreeOnExtensionalInputsStats
+    (tuple4 genFuel genCom genCom genComs)
 
   , extEqGeneralisesEqAndNormalEqAndEverAgreeStats
     (tuple3 genFuel genCom genCom)
