@@ -691,7 +691,7 @@ checkPred pred gen = do
 
 -- | Check the given falsify 'Property' holds for (at least) 100 samples. Prints
 -- | a counterexample if found; or else some statistics about the search.
-check prop = defaultMain
+check = defaultMain
 
 -- | We'll put test names in an env var to avoid repetition
 testName :: IO String
