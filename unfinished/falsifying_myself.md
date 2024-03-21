@@ -403,6 +403,17 @@ avoided by making a handful of extra calls. Other tests struggled, needing over
 1000 extra calls to reach the 100 passes they required. Some also breached the
 limit of 100 discards in a row, and caused the overall test suite to fail.
 
+## Smarter generators ##
+
+One way to avoid excessive discards is to move logic into our data generators.
+This isn't a magic bullet, but it can be useful if acceptable values are
+reasonably common; if retrying a generator is faster than discarding a tests;
+and for retrying *parts* of an input, rather than starting from scratch.
+
+For example, the following generator only produces `Normal`{.haskell} values, by
+running `reduce`{.haskell} on generated `Com`{.haskell} values. That's
+undecidable from *within* a property, but actually quite easy in a generator,
+since we're free to discard problematic values and try again:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Like genComN, but reduces its outputs to normal form. The fuel
@@ -420,8 +431,68 @@ genNormal :: Gen Normal
 genNormal = genNormalN limit
 ```
 
+Since `Normal`{.haskell} values reduce immediately, their `normalEq`{.haskell}
+result is always `Now`{.haskell}, and hence they can be compared with any amount
+of `Fuel`{.haskell} without timing out. This fixes our very first property, that
+all values are `normalEq`{.haskell} to themselves!
+
+```{.haskell pipe="./show Main.hs"}
+normalsAreNormalEqToThemselves :: (Fuel, Normal) -> Bool
+normalsAreNormalEqToThemselves (n, x) = normalEqToItself (n, toCom x)
+```
+
 ```{.unwrap pipe="./run"}
-main = checkPred normalsAreNormalEqToThemselves (tuple2 genFuel genNormal)
+main = check normalsAreNormalEqToThemselves (tuple2 genFuel genNormal)
+```
+
+The following generator makes pairs of values which are `normalEq`{.haskell} to
+each other (but not identical). It's reasonably rare for independently-generated
+values to match that way, which caused a lot of the discarding above. However,
+our generator can be more efficient by accumulating values until *any* of them
+match (exploiting the so-called
+["birthday paradox"](https://en.wikipedia.org/wiki/Birthday_problem)):
+
+```{.haskell pipe="./import"}
+import Data.Set (Set)
+import qualified Data.Set as Set
+```
+
+```{.haskell pipe="./show Main.hs"}
+genNormalEqN :: Fuel -> Gen (Com, Com)
+genNormalEqN n = go Set.empty  -- Begin with no known values
+  where go xs = do
+          -- Check if a freshly generated value matches any we know
+          x <- genComN n
+          let (matched, unmatched) = Set.partition (match x) xs
+          case Set.toList matched of
+            y:_ -> pure (x, y)
+            []  -> go (Set.insert x unmatched) -- Remember value & try again
+
+        match x y = x /= y && runDelayOr False (same <$> normalEq x y) n
+
+genNormalEq :: Gen (Com, Com)
+genNormalEq = genNormalEqN limit
+```
+
+This generator greatly reduces discards for a property like
+`normalEqImpliesAgree`{.haskell}:
+
+```{.unwrap pipe="NAME=normalEqImpliesAgree ./run"}
+main = defaultMain . normalEqImpliesAgreeDiscard $ do
+  (x, y) <- genNormalEq
+  tuple4 genFuel (pure x) (pure y) genComs
+```
+
+Unlike `normalsAreNormalEqToThemselves`{.haskell}, which *relies* on
+`genNormal`{.haskell} to avoid timeout counterexamples, this is *purely* an
+optimisation. For that reason, I actually prefer to mix in a few inputs from the
+original "dumb" generator; that way, I don't need to assume the smart generator
+is completely covering the input space:
+
+```{.unwrap pipe="NAME=normalEqImpliesAgree ./run"}
+main = defaultMain . normalEqImpliesAgreeDiscard $ do
+  (x, y) <- Gen.choose genNormalEq (tuple2 genCom genCom)
+  tuple4 genFuel (pure x) (pure y) genComs
 ```
 
 
