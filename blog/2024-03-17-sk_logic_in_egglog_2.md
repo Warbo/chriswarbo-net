@@ -618,6 +618,9 @@ to :: Fuel -> Range Fuel
 to = Range.between . (0,)
 ```
 
+<details class="odd">
+<summary>Generating recursive `Com`{.haskell} values…</summary>
+
 Generating `Com`{.haskell} values is more tricky, since they are recursive. A
 naïve generator that simply calls itself recursively will make `Com`{.haskell}
 values of *exponential* size: either blowing up memory (if the recursive case
@@ -656,6 +659,8 @@ genComN n = treeToCom <$> Gen.tree (to n) (pure ())
 -- | Generate (relatively small) Com values
 genCom = genComN limit
 ```
+
+</details>
 
 `falsify` integrates with Haskell's `tasty` test framework. Normally a project
 would declare a big test suite to run all at once, but for this literate/active
