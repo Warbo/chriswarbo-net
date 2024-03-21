@@ -272,75 +272,137 @@ Again, the exact distribution of these tests will vary from run to run; but I've
 seen some that *always* time-out, or never satisfy the required preconditions,
 etc. There are a couple of ways to improve this.
 
-TODO: Abandon reduction if it gets too big (e.g. > 100 nodes)?
+## Discarding uninteresting cases ##
 
-TODO: Measure size of terms?
+Property-checkers, including `falsify`, allow tests to be "discarded": this
+aborts the current call, and another example input is tried instead. Discarded
+calls do not count towards the total (100 required successes, by default), so
+they result in more calls being made; which slows down the test suite. If the
+number of discarded calls reaches a predefined limit (100 in a row, by default)
+then the test is abandoned as a failure: this is useful to know when our
+precondition is too rare (or even impossible) to satisfy, and is preferable to
+an infinite loop or a result with low statistical power. We'll refactor our
+properties again (in the following fold-out section) to discard unwanted
+branches:
 
-TODO: Use smart generators to get better stats
-
-```
-{.haskell pipe="./show Main.hs"}
--- | Asserts that the first two Com values give equal results when applied to
--- | the third. First argument limits the number of steps attempted.
-assertEqualOn n f g x = case runDelay n (normalEq fx gx) of
-  Now (Right (fx', gx')) -> testFailed
-    (concat [show fx, " -> ", show fx', "\n", show gx, " -> ", show gx'])
-  _ -> pure ()
-  where fx = App f x
-        gx = App g x
-
--- | Generate two distinct Com values which normalise the same way when applied
--- | to a symbolic variable: check that they agree for a third Com value too.
-prop_simplisticTest = do
-    -- Generate a couple of Com values
-    f <- genCom
-    g <- genCom
-    case runDelay steps (normalEq (App f v) (App g v)) of
-      -- When f and g are distinct and agree for v, try them on another input
-      Now (Left _) | f /= g -> do
-        x <- genCom
-        assertEqualOn steps f g x
-      -- When f and g disagree, discard them and try again
-      _ -> discard
-  where steps = 100
-        genCom = gen (natRange (0, 20) >>= genComN)
-```
-
-Whilst this test is *logically* correct, it's not very good. In particular it's
-both *flaky* and, when it does work, it doesn't give us much *confidence*. These
-problems come from the underlying statistics, and are evident in output like
-`19 successful tests (discarded 521)`:
-
- - It's quite unlikely to generate suitable values for `f`{.haskell} and
-   `g`{.haskell}, which just-so-happen to reduce `v`{.haskell} to the same
-   value. Hence all of those discarded runs. The test harness will give up if
-   too many runs are discarded, which makes the test flaky.
- - When we *do* generate a pair of suitable values, they are often ones that
-   were already tested in a prior run. For example, using `collect`{.haskell} to
-   gather statistics about suitable values shows them to be `K` 16% of the time
-   and `S` 11% of the time (this varies between test invocations). This wastes
-   resources and makes the "successful tests" number misleadingly inflated.
- - When we *do* happen to generate a successful pair of values, we're only
-   checking them on a *single* argument, which isn't very thorough.
-
-### Smarter generators ###
-
-It's usually a good idea to write simple, straightforward properties like
-`notUnnormalEqToItself`{.haskell}, which make strong claims over a broad
-space of input values. Sometimes it's a good idea to *also* have more specific
-properties tailored to important cases. For example, the predicate
-`normalEqToItself`{.haskell} is actually `True`{.haskell} for the
-`Normal`{.haskell} subset of `Com`{.haskell}:
+<details class="odd">
+<summary>Properties which discard…</summary>
 
 ```{.haskell pipe="./show Main.hs"}
-normalsAreNormalEqToThemselves :: (Fuel, Normal) -> Bool
-normalsAreNormalEqToThemselves (n, x) = normalEqToItself (n, toCom x)
+notUnnormalEqToItselfDiscard g =
+  testProperty "notUnnormalEqToItself" $ do
+    (n, x) <- gen g
+    case runDelayOr Nothing (Just <$> normalEq x x) n of
+      Nothing           -> discard
+      Just (Same _)     -> pure ()
+      Just (Diff x' y') -> fail (show x' ++ " =/= " ++ show y')
+
+normalEqImpliesAgreeDiscard g =
+  testProperty "normalEqImpliesAgree" $ do
+    (n, f, g, xs) <- gen g
+    case runDelay n (tuple2 (normalEq f g) (sHead (agree f g xs))) of
+      Now got@(Same _  , Diff _ _) -> fail (show got)
+      Now     (Same _  , Same _  ) -> pure ()
+      Now     (Diff _ _, _       ) -> discard
+      Later   _                    -> discard
+
+skNeverDisagreesWithSKSKKKDiscard g =
+  testProperty "skNeverDisagreesWithSKSKKK" $ do
+    (n, xs) <- gen g
+    let f = App s k
+        g = App (App s (App k (App s k))) (App k k)
+    case runDelayOr Nothing (Just <$> sAt (2 + n) (agree f g xs)) n of
+      Nothing             -> discard
+      Just     (Same _  ) -> pure ()
+      Just got@(Diff _ _) -> fail (show got)
+
+agreementIsMonotonicDiscard g =
+  testProperty "agreementIsMonotonic" $ do
+    ((n, m), (f, g), xs) <- gen g
+    case runDelay n (tuple2 (sAt  n      (agree f g xs))
+                            (sAt (n + m) (agree f g xs))) of
+      Now got@(Same _  , Diff _ _) -> fail (show got)
+      Now     (Same _  , Same _  ) -> pure ()
+      Now     (Diff _ _, _       ) -> discard
+      Later   _                    -> discard
+
+normalEqImpliesEverAgreeDiscard g =
+  testProperty "normalEqImpliesEverAgree" $ do
+    (n, x, y) <- gen g
+    let go d = runDelayOr Nothing (Just <$> d) n
+    case (go (same <$> normalEq x y), go (everAgree x y)) of
+      (Nothing   , _         ) -> discard
+      (Just False, _         ) -> discard
+      (Just True , Just True ) -> pure ()
+      (Just True , Nothing   ) -> fail "everAgree timed out"
+      (Just True , Just False) -> fail "Didn't agree"
+
+agreeOnExtensionalInputsDiscard g =
+  testProperty "agreeOnExtensionalInputs" $ do
+    (n, x, y, ins) <- gen g
+    let check Nothing  = pure discard
+        check (Just i) = pure . (i,) . same <$> sAt i (agree x y ins)
+    if x == y
+       then discard
+       else do (i, b) <- runDelayOr discard (extensionalInputs x y >>= check) n
+               label "i" [show i]
+               if b
+                  then pure ()
+                  else fail ("Disagree on " ++ show (fst (sSplitAt i ins)))
+
+extEqGeneralisesEqAndNormalEqAndEverAgreeDiscard g =
+  testProperty "extEqGeneralisesEqAndNormalEqAndEverAgree" $ do
+    (n, x, y) <- gen g
+    let go l d = case runDelay n d of
+          Now   b -> label l [show b   ] >> pure (Just b)
+          Later _ -> label l ["Timeout"] >> pure Nothing
+    ext <- go     "extEq" (            extEq x y)
+    evr <- go "everAgree" (        everAgree x y)
+    nml <- go  "normalEq" (same <$> normalEq x y)
+    eql <- go     "equal" (pure  $      (==) x y)
+    case ext of
+      Nothing    -> discard
+      Just True  -> pure ()
+      Just False -> case (evr, nml, eql) of
+        (Just True, _        , _        ) -> fail "everAgree but not extEq"
+        (_        , Just True, _        ) -> fail  "normalEq but not extEq"
+        (_        , _        , Just True) -> fail        "== but not extEq"
+        (_        , _        , _        ) -> discard
 ```
 
-Checking this requires a generator which only produces `Normal`{.haskell}
-values. That's actually much easier than our attempts to normalise values
-*inside* a property, since generators are free to discard problematic values and
-try again!
+</details>
+
+```{.unwrap pipe="NAME=discard ./fail"}
+main = defaultMain $ testGroup "Discard"
+  [ notUnnormalEqToItselfDiscard
+    (tuple2 genFuel genCom)
+
+  , normalEqImpliesAgreeDiscard
+    (tuple4 genFuel genCom genCom genComs)
+
+  , skNeverDisagreesWithSKSKKKDiscard
+    (tuple2 genFuel genComs)
+
+  , agreementIsMonotonicDiscard
+    (tuple3 (tuple2 genFuel genFuel) (tuple2 genCom genCom) genComs)
+
+  , normalEqImpliesEverAgreeDiscard
+    (tuple3 genFuel genCom genCom)
+
+  , agreeOnExtensionalInputsDiscard
+    (tuple4 genFuel genCom genCom genComs)
+
+  , extEqGeneralisesEqAndNormalEqAndEverAgreeDiscard
+    (tuple3 genFuel genCom genCom)
+  ]
+```
+
+Discarding works very well for some tests, e.g.
+`notUnnormalEqToItself`{.haskell} only hit a few timeouts, which could be
+avoided by making a handful of extra calls. Other tests struggled, needing over
+1000 extra calls to reach the 100 passes they required. Some also breached the
+limit of 100 discards in a row, and caused the overall test suite to fail.
+
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Like genComN, but reduces its outputs to normal form. The fuel
