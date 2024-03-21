@@ -14,11 +14,6 @@ tee -a "$1"
 echo >> "$1"
 ```
 
-```{pipe="cat > hide && chmod +x hide"}
-#!/bin/sh
-./show "$@" > /dev/null
-```
-
 ```{pipe="cat > run && chmod +x run"}
 #!/bin/sh
 set -euo pipefail
@@ -177,21 +172,16 @@ module Main (main) where
 
 import Control.Applicative ((<|>))
 import Control.Exception (assert)
-import Data.Foldable
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
 import Data.Maybe (isJust)
-import Data.Set (Set)
-import qualified Data.Set as Set
 import GHC.Natural (Natural)
 import System.Environment (getEnv)
 import Test.Falsify.Generator (Gen, Tree(..))
 import qualified Test.Falsify.Generator as Gen
 import Test.Falsify.Predicate (satisfies)
-import Test.Falsify.Property (Property, discard, gen, label, testFailed, testGen)
+import Test.Falsify.Property (testGen)
 import Test.Falsify.Range (Range)
 import qualified Test.Falsify.Range as Range
-import Test.Tasty (defaultMain, testGroup)
+import Test.Tasty (defaultMain)
 import Test.Tasty.Falsify (testProperty)
 
 -- Useful helpers. These are available in libraries, but I want this code to be
@@ -226,10 +216,6 @@ sPrefix (x:xs) ys = Cons x (sPrefix xs ys)
 -- | Drop elements from a 'Stream' which don't satisfy the given predicate.
 sFilter :: (a -> Bool) -> Stream a -> Stream a
 sFilter p (Cons x xs) = (if p x then Cons x else id) (sFilter p xs)
-
--- | The first 'n 'elements of the given 'Stream', as a list.
-sTake :: Integral n => n -> Stream a -> [a]
-sTake n = fst . sSplitAt n
 
 -- | Split the first 'n' elements off a 'Stream'.
 sSplitAt :: Integral n => n -> Stream a -> ([a], Stream a)
@@ -632,10 +618,6 @@ limit = 20
 -- | We usually want Ranges from zero upwards
 to :: Fuel -> Range Fuel
 to = Range.between . (0,)
-
--- | A reasonable Range of Fuel to use in tests
-small :: Range Fuel
-small = to limit
 ```
 
 Generating `Com`{.haskell} values is more tricky, since they are recursive. A
