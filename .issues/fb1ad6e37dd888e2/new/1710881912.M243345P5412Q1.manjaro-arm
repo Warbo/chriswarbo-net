@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Tue, 19 Mar 2024 20:55:04 +0000
+State: new
+Subject: GHC Core to SK in egglog
+Message-Id: <fb1ad6e37dd888e2-0-artemis@manjaro-arm>
+
+A useful real-world corpus to play with. We can use AST-Plugin in the worst case
+but GHC might have a nicer API now.

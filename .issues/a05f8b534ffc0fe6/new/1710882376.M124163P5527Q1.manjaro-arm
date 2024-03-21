@@ -1,0 +1,10 @@
+From: Chris Warburton
+Date: Tue, 19 Mar 2024 20:59:15 +0000
+State: new
+Subject: Hash SK definitions to form a Merkle Tree
+Message-Id: <a05f8b534ffc0fe6-0-artemis@manjaro-arm>
+
+Might need a Rust function or something to implement the hashing. Question is
+how to serialise children in a sensible way.
+Might benefit from merge function in egglog, e.g. to pick one with smallest AST.
+Would cause cascading updates, but that might be a good thing.

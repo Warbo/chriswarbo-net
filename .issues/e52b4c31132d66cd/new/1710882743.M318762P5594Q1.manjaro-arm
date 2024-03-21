@@ -1,0 +1,11 @@
+From: Chris Warburton
+Date: Tue, 19 Mar 2024 21:06:30 +0000
+State: new
+Subject: egglog compiler for GHC Core to Core
+Message-Id: <e52b4c31132d66cd-0-artemis@manjaro-arm>
+
+Useful to inline everything (it's a DB!) and to bypass private module safeguards.
+
+Once we have a self-contained expression, we can send it to an interpreter (e.g.
+in Haskell) to explore. That interpreter can track sizes, etc. Could use Binary
+Lambda Calculus serialisation to count size (or BCL).
