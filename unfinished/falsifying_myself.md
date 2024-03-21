@@ -3,13 +3,13 @@ title: "SK logic in egglog: part 3, falsifying myself"
 packages: [ 'ghcWithFalsify' ]
 ---
 
-In the previous part we learned some background theory about SK logic, and built
-up our notion of equality from simple identity (`==`{.haskell}), through
-equivalence of `Normal`{.haskell} forms (`normalEq`{.haskell}) up to full
-extensional equality (`extEq`{.haskell}). In this post we'll investigate these
-definition more thoroughly. Whilst the eventual aim is to find the mistake I had
-made in egglog, the best path forward is to question and test our understanding
-as a whole.
+In [the previous part](/blog/2024-03-17-sk_logic_in_egglog_2.html) we learned
+some background theory about SK logic, and built up our notion of equality from
+simple identity (`==`{.haskell}), through equivalence of `Normal`{.haskell}
+forms (`normalEq`{.haskell}) up to full extensional equality
+(`extEq`{.haskell}). In this post we'll investigate these definitions more
+thoroughly. Whilst the eventual aim is to find the mistake I'd made in egglog,
+the best path forward is to question and test our understanding as a whole.
 
 ## False confidence ##
 
@@ -17,8 +17,8 @@ The properties we've written so far give us some confidence that our definitions
 make sense, and our theory of their behaviour holds up, since falsify was unable
 to disprove anything with a counterexample. However, our confidence shouldn't be
 *too* high, since most of those properties have two branches: the situation we
-care about (which may be quite rare), and a fallback which is trivially
-`True`{.haskell}.
+care about, and a fallback which is trivially `True`{.haskell}. If the former is
+quite rare, finding no counterexamples may not tell us very much.
 
 For example, consider `agreeOnExtensionalInputs (n, x, y, inputs)`{.haskell},
 which asserts that whenever `extensionalInputs`{.haskell} claims `x`{.haskell}
@@ -72,9 +72,9 @@ main = check (agreeOnExtensionalInputsStats
 The results will vary depending on the random seed (which changes every time
 this page gets rendered), but I've seen around ⅓ resulting in `Timeout`, around
 ⅗ with `Not equal`, and only a handful resulting in `True`. Most of the latter
-already agreed on 0 inputs, making them `normalEq`{.haskell} and hence avoiding
-any need for symbolic execution. Thankfully `x`{.haskell} and `y`{.haskell} were
-hardly ever identical, which would be even less interesting!
+agree on $0$ inputs, making them `normalEq`{.haskell} and hence bypassing the
+use of symbolic execution. The only good news is that `x`{.haskell} and
+`y`{.haskell} were hardly ever identical!
 
 <details class="odd">
 <summary>Similar stats for other properties…</summary>
