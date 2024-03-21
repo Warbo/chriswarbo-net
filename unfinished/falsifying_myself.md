@@ -1,7 +1,48 @@
 ---
 title: "SK logic in egglog: part 3, falsifying myself"
 packages: [ 'ghcWithFalsify' ]
+dependencies: [ 'blog/2024-03-17-sk_logic_in_egglog_2.md' ]
 ---
+
+<style>
+.pass { background: #00bb0022; }
+.fail { background: #bb000022; }
+</style>
+
+```{pipe="cat > chop && chmod +x chop"}
+#!/bin/sh
+set -eu
+
+# Iterates through lines of the "part 2" markdown: when $1 matches (via grep) we
+# output the following lines, until the end of a code-fence. This lets us re-use
+# the same definitions without copy/pasting.
+sed -n "/$1/,"' /^```$/p' < root/blog/2024-03-17-sk_logic_in_egglog_2.md |
+  grep -v '^```'
+```
+
+```{pipe="sh"}
+# Grab the Main.hs contents, as well as the scripts to append-to and run it
+./chop 'show Main.hs' > Main.hs
+./chop 'cat > show' > show && chmod +x show
+./chop 'cat > run'  > run  && chmod +x run
+./chop 'cat > fail' > fail && chmod +x fail
+```
+
+```{pipe="cat > import && chmod +x import"}
+#!/bin/sh
+set -eu
+
+# Appends stdin to Main.hs, after the first line (module declaration)
+{
+  head -n1 < Main.hs
+  echo
+  cat
+  echo
+  tail -n+2 < Main.hs
+} > temp.hs
+rm -f Main.hs
+mv temp.hs Main.hs
+```
 
 In [the previous part](/blog/2024-03-17-sk_logic_in_egglog_2.html) we learned
 some background theory about SK logic, and built up our notion of equality from
