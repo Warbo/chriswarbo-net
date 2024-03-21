@@ -23,14 +23,12 @@ set -euo pipefail
 # The behaviour can be controlled via the following variables:
 #  - $* will be spliced after the 'runhaskell' call; e.g. use ' && exit 1' to
 #    check for an expected failure.
-#  - $NAME: defaults to whatever word follows 'check' or 'checkPred'
+#  - $NAME: defaults to whatever word follows 'check'
 #  - $CLASS: defaults to 'pass'; added to both code blocks
 
 cat > in
 [[ -n "${NAME:-}" ]] || {
-  NAME=$(< in sed -e 's/checkPred/check/g' |
-         grep 'check '                |
-         sed -e 's/^.*check \([^ ][^ ]*\).*$/\1/g')
+  NAME=$(< in grep 'check ' | sed -e 's/^.*check \([^ ][^ ]*\).*$/\1/g')
 }
 export NAME
 CLASS="${CLASS:-pass}"
@@ -661,23 +659,15 @@ genCom = genComN limit
 
 `falsify` integrates with Haskell's `tasty` test framework. Normally a project
 would declare a big test suite to run all at once, but for this literate/active
-style we'll be testing things as we go, using the following functions:
+style we'll be testing things as we go, using the following function:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Turn the given predicate into a falsify property, universally quantified
 -- | over the given generator's outputs. Check it on (at least) 100 samples.
-checkPred :: Show a => (a -> Bool) -> Gen a -> IO ()
-checkPred pred gen = do
-  name <- testName
-  check (testProperty name (testGen (satisfies (name, pred)) gen))
-
--- | Check the given falsify 'Property' holds for (at least) 100 samples. Prints
--- | a counterexample if found; or else some statistics about the search.
-check = defaultMain
-
--- | We'll put test names in an env var to avoid repetition
-testName :: IO String
-testName = getEnv "NAME"
+check :: Show a => (a -> Bool) -> Gen a -> IO ()
+check pred gen = do
+  name <- getEnv "NAME" -- Avoids repetition
+  defaultMain (testProperty name (testGen (satisfies (name, pred)) gen))
 ```
 
 #### Included middles ####
@@ -687,7 +677,7 @@ The observant among you may have noticed that `normalEqToItself`{.haskell}
 counterexample to show us why:
 
 ```{.unwrap pipe="./fail"}
-main = checkPred normalEqToItself (tuple2 genFuel genCom)
+main = check normalEqToItself (tuple2 genFuel genCom)
 ```
 
 The precise counterexample `falsify` finds may vary depending on the random
@@ -724,7 +714,7 @@ notUnnormalEqToItself (n, x) = runDelayOr True (not . diff <$> normalEq x x) n
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred notUnnormalEqToItself (tuple2 genFuel genCom)
+main = check notUnnormalEqToItself (tuple2 genFuel genCom)
 ```
 
 You may have learned in school that [double-negatives are
@@ -796,7 +786,7 @@ genComs = genComsN limit
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred normalEqImpliesAgree (tuple4 genFuel genCom genCom genComs)
+main = check normalEqImpliesAgree (tuple4 genFuel genCom genCom genComs)
 ```
 
 We say expressions "agree on $N$ inputs" when they agree on *every* sequence of
@@ -813,7 +803,7 @@ skNeverDisagreesWithSKSKKK (n, xs) =
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred skNeverDisagreesWithSKSKKK (tuple2 genFuel genComs)
+main = check skNeverDisagreesWithSKSKKK (tuple2 genFuel genComs)
 ```
 
 Note that any expressions which agree on $N$ inputs also agree on $N+1$ inputs
@@ -830,9 +820,9 @@ agreementIsMonotonic ((n, m), (f, g), xs) =
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred agreementIsMonotonic (tuple3 (tuple2 genFuel genFuel)
-                                              (tuple2 genCom  genCom )
-                                              genComs)
+main = check agreementIsMonotonic (tuple3 (tuple2 genFuel genFuel)
+                                          (tuple2 genCom  genCom )
+                                          genComs)
 ```
 
 #### Extensionality ####
@@ -973,7 +963,7 @@ normalEqImpliesEverAgree (n, x, y) = if      go (same <$> normalEq x y)
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred normalEqImpliesEverAgree (tuple3 genFuel genCom genCom)
+main = check normalEqImpliesEverAgree (tuple3 genFuel genCom genCom)
 ```
 
 However, `everAgree`{.haskell} is not yet a predicate for checking extensional
@@ -1073,7 +1063,7 @@ distinctSymbolicHeadsCommutes (x, y) = distinctSymbolicHeads x y
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred distinctSymbolicHeadsCommutes (tuple2 genSymCom genSymCom)
+main = check distinctSymbolicHeadsCommutes (tuple2 genSymCom genSymCom)
 ```
 
 #### Different numbers of arguments prove disagreement ####
@@ -1135,7 +1125,7 @@ unequalArgCountCommutes (x, y) = unequalArgCount x y
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred distinctSymbolicHeadsCommutes (tuple2 genSymCom genSymCom)
+main = check distinctSymbolicHeadsCommutes (tuple2 genSymCom genSymCom)
 ```
 
 #### Disagreeing arguments prove disagreement ####
@@ -1274,7 +1264,7 @@ comToPreRoundtrips c = preToCom (comToPre c) == c
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred comToPreRoundtrips genCom
+main = check comToPreRoundtrips genCom
 ```
 
 ```{.haskell pipe="./show Main.hs"}
@@ -1283,13 +1273,13 @@ preToComAlmostRoundtrips p = comToPre (preToCom p') == p'
   where p' = comToPre (preToCom p)  -- Extra roundtrip to make p "correct"
 
 genPre :: Gen Prefix
-genPre = Gen.list small genEntry
+genPre = Gen.list (to limit) genEntry
   where genEntry = Gen.choose (Just <$> genLeaf) (pure Nothing)
         genLeaf  = Gen.choose (Left <$> Gen.bool False) (Right <$> genSym)
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred preToComAlmostRoundtrips genPre
+main = check preToComAlmostRoundtrips genPre
 ```
 
 The `Prefix`{.haskell} type is a
@@ -1350,8 +1340,8 @@ code, since it has all sorts of cool applications!)
 </details>
 
 ```{.unwrap pipe="NAME=symbolGivenUnequalArgsCommutes ./run"}
-main = checkPred (uncurry3 (liftFun2 symbolGivenUnequalArgsCommutes))
-                 (tuple3 (Gen.fun (Gen.bool False)) genSymCom genSymCom)
+main = check (uncurry3 (liftFun2 symbolGivenUnequalArgsCommutes))
+             (tuple3 (Gen.fun (Gen.bool False)) genSymCom genSymCom)
 ```
 
 #### Combining disagreement provers ####
@@ -1373,7 +1363,7 @@ provablyDisagreeCommutes (x, y) = provablyDisagree x y == provablyDisagree y x
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred provablyDisagreeCommutes (tuple2 genSymCom genSymCom)
+main = check provablyDisagreeCommutes (tuple2 genSymCom genSymCom)
 ```
 
 #### Approximating extensional equality ####
@@ -1403,7 +1393,7 @@ agreeOnExtensionalInputs (n, x, y, inputs) =
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred agreeOnExtensionalInputs (tuple4 genFuel genCom genCom genComs)
+main = check agreeOnExtensionalInputs (tuple4 genFuel genCom genCom genComs)
 ```
 
 This is easy to transform into a legitimate predicate for testing extensional
@@ -1434,8 +1424,8 @@ extEqGeneralisesEqAndNormalEqAndEverAgree (n, x, y) =
 ```
 
 ```{.unwrap pipe="./run"}
-main = checkPred extEqGeneralisesEqAndNormalEqAndEverAgree
-                 (tuple3 genFuel genCom genCom)
+main = check extEqGeneralisesEqAndNormalEqAndEverAgree
+             (tuple3 genFuel genCom genCom)
 ```
 
 ## Next time ##
