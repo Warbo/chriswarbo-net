@@ -91,23 +91,26 @@ in `falsify` it's the `Property`{.haskell} type. Here's a pretty direct
 translation of `agreeOnExtensionalInputs`{.haskell} as a `Property`{.haskell},
 with each of the above cases labelled:
 
+```{.haskell pipe="./import"}
+import Test.Falsify.Property (Property, discard, gen, label)
+```
+
 ```{.haskell pipe="./show Main.hs"}
-agreeOnExtensionalInputsStats :: Property ()
 agreeOnExtensionalInputsStats g =
   testProperty "agreeOnExtensionalInputs" $ do
-    (n, x, y, inputs) <- gen g
+    (n, x, y, ins) <- gen g
     let check Nothing  = Now (Left "Not equal")
-        check (Just i) = Right . (i,) . same <$> sAt i (agree x y inputs)
+        check (Just i) = Right . (i,) . same <$> sAt i (agree x y ins)
     label "Identical" [show (x == y)]
     case runDelayOr (Left "Timeout") (extensionalInputs x y >>= check) n of
       Left msg         -> label "result" [msg]
       Right (i, True ) -> label "i" [show i] *> label "result" ["True"]
-      Right (i, False) -> fail ("Disagree on " ++ show (sTake i inputs))
+      Right (i, False) -> fail ("Disagree on " ++ show (fst (sSplitAt i ins)))
 ```
 
-```{.unwrap pipe="./run"}
-main = check (agreeOnExtensionalInputsStats
-               (tuple4 genFuel genCom genCom genComs))
+```{.unwrap pipe="NAME=_ ./run"}
+main = defaultMain (agreeOnExtensionalInputsStats
+                     (tuple4 genFuel genCom genCom genComs))
 ```
 
 The results will vary depending on the random seed (which changes every time
@@ -117,8 +120,11 @@ agree on $0$ inputs, making them `normalEq`{.haskell} and hence bypassing the
 use of symbolic execution. The only good news is that `x`{.haskell} and
 `y`{.haskell} were hardly ever identical!
 
+Here are similar results for other properties (their definitions are hidden in
+the following fold-out section, since the logic hasn't changed):
+
 <details class="odd">
-<summary>Similar stats for other properties…</summary>
+<summary>Labelled properties…</summary>
 
 ```{.haskell pipe="./show Main.hs"}
 notUnnormalEqToItselfStats g =
@@ -208,13 +214,19 @@ extEqGeneralisesEqAndNormalEqAndEverAgreeStats g =
     nml <- go  "normalEq" (same <$> normalEq x y)
     eql <- go     "equal" (pure  $      (==) x y)
     case ext of
-      Nothing    -> pure ()
-      Just True  -> label "result" ["Equal"]
+      Nothing    -> label "result" ["Timeout"]
+      Just True  -> label "result" ["Equal"  ]
       Just False -> case (evr, nml, eql) of
         (Just True, _        , _        ) -> fail "everAgree but not extEq"
         (_        , Just True, _        ) -> fail  "normalEq but not extEq"
         (_        , _        , Just True) -> fail        "== but not extEq"
         (_        , _        , _        ) -> label "result" ["Unequal"]
+```
+
+</details>
+
+```{.haskell pipe="./import"}
+import Test.Tasty (testGroup)
 ```
 
 ```{.unwrap pipe="NAME=stats ./run"}
@@ -256,7 +268,9 @@ main = defaultMain $ testGroup "Stats"
 
 </details>
 
-TODO: Describe results
+Again, the exact distribution of these tests will vary from run to run; but I've
+seen some that *always* time-out, or never satisfy the required preconditions,
+etc. There are a couple of ways to improve this.
 
 TODO: Abandon reduction if it gets too big (e.g. > 100 nodes)?
 
