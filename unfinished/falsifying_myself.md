@@ -620,98 +620,116 @@ gave up even trying. Since the number of runs is configurable, we can choose a
 low number for a fast feedback cycle during development, and crank it up for a
 more thorough check like a pre-push git hook or a continuous integration server.
 
-#### Keep generating until we find what we need ####
+## Thoroughly checking extensionality ##
 
-We can make use of the above generator in the following, which produces what we
-originally wanted: pairs of `Com`{.haskell} values which reduce `v`{.haskell} to
-the same thing.  Since we don't know, up front, which of our many generated
-values will end up in such pairs, we put them all in a big `Map`{.haskell};
-keyed on the value they reduce `v`{.haskell} to (so it only has to calculated
-once per value).
+Most of the checks so far have been focused on implementation details, like the
+definition of "agreement" and the particular patterns of disagreement we're
+looking for. Now I want to focus on extensional equality itself, and its
+implications.
 
-```{.haskell pipe="./show Main.hs"}
--- | Generate distinct, normal Com values which have equal normal forms when
--- | applied to the symbolic input 'v'. The result contains two parts: the first
--- | groups together Com values 'f' based on the normal form of 'App f v'; only
--- | groups with more than one element are included. The second Set contains all
--- | of the Com values generated along the way (useful as a pool of distinct Com
--- | values for use in subsequent testing).
--- | The first argument is fuel for generating and normalising Com values. The
--- | second argument is the total number of grouped values to return.
-genEqual :: Natural -> Natural -> Gen (Set (Set Com), Set Com)
-genEqual fuel = go Map.empty
-  where go result 0 = let elems = Set.fromList (Map.elems result)
-                       in pure
-                            ( Set.filter ((> 1) . Set.size) elems
-                            , Set.unions elems )
-        go result n = do
-          c <- genDistinctFrom fuel (Set.unions (Map.elems result))
-          case runDelay (2 * fuel) (reduce (App c v)) of
-            -- If we don't hit a normal form, skip this Com and recurse
-            Later _ -> go result n
-            Now key ->
-              let single  = Set.singleton c
-                  result' = Map.insertWith Set.union key single result
-                  matches = Set.toList (Map.findWithDefault single key result')
-               in go result' (if length matches > 1 then n - 1 else n)
-```
+### Extensionally equal values are indistinguishable ###
 
-Notice that the unpaired values aren't discarded at the end: instead, they're
-all merged into one big `Set`{.haskell}, which we use for the final part.
+The main reason we care about extensional equality is that it's broad enough to
+relate all values which are indistinguishable *within* SK. This is also known as
+[observational
+equivalence](https://en.wikipedia.org/wiki/Observational_equivalence) (SK is
+such a simple language that these notions end up coinciding!).
 
-#### Checking on more than one input ####
+As a consequence, extensionally equal values are interchangable: swapping any
+part of an SK expression for an extensionally-equal alternative should make no
+observable difference to the result; i.e. the results should themselves be
+extensionally equal.
 
-The final problem we can solve is to check the behaviour of each pair on *many*
-values, rather than just one. Thankfully, we've *already generated* many values!
-That's why we return the `Set`{.haskell} of all values we generated in the
-course of finding suitable pairs. Our test can loop through all those values,
-using them as inputs to each related pair and check whether they match.
+This is difficult to test: the double-negative of being "not unequal" doesn't
+give us much confidence, since we can only prove inequality in certain specific
+cases; yet we don't know how many inputs it may take to prove equality, and
+hence how much `Fuel`{.haskell} would be needed.
 
-### Combining all these improvements ###
-
-Here is the final form of the test I came up with, using the above techniques:
+We'll work around this by *removing* the timeout: this is a bold move, since our
+test suite may run forever if we're wrong!
 
 ```{.haskell pipe="./show Main.hs"}
--- | Check that Com values that give equal results for a symbolic input, also
--- | give equal results for any other input.
-prop_symbolImpliesUniversal :: Property ()
-prop_symbolImpliesUniversal = do
-    size         <- gen (natRange (5, 10))        -- Max size of each Com value
-    count        <- gen (natRange (2, 2 * size))  -- How many values to generate
-    (equal, all) <- gen (genEqual size count)
-    forM_ equal (assertNoDiff steps all)
-  where steps = 100  -- Timeout for normalising on concrete arguments
-
--- | Check that all elements of the first set give equal results for each of the
--- | elements of the second set. First argument is a timeout when normalising.
-assertNoDiff :: Natural -> Set Com -> Set Com -> Property ()
-assertNoDiff fuel all equal =
-    traverse_ checkPair [(f, g) | f <- eqList, g <- eqList, f /= g]
-  where eqList = Set.toList equal
-        checkPair (f, g) = traverse_ (assertEqualOn fuel f g) all
+-- | Runs a 'Delay' value to completion. This may run forever!
+unsafeRunDelay :: Delay a -> a
+unsafeRunDelay (Now   x) = x
+unsafeRunDelay (Later x) = unsafeRunDelay x
 ```
 
-This test is more reliable than the first, since it does not `discard`{.haskell}
-any runs.  It can take longer, e.g. on the order of minutes rather than seconds
-(at least for the constants above), since each of the 100 runs is generating and
-checking many more values. Thankfully, we know that this effort is being spent
-on useful work, rather than duplicate or discarded results.
+To represent "swapping any part", we'll use a
+[zipper datastructure](https://en.wikipedia.org/wiki/Zipper_(data_structure)):
 
-Augmenting the above with `collect`{.haskell} shows reasonable statistics, for
-example:
+```{.haskell pipe="./show Main.hs"}
+-- | Represents a 'Com' with one of its sub-expressions "focused"
+type ComZipper = (Com, [Either Com Com])
 
- - Equality checks do not timeout much (e.g. happening in only around 6% of
-   runs). In contrast, *every* run contains some successful equality checks.
- - There is a reasonable spread of group sizes (the number of generated values
-   which reduce `v`{.haskell} to the same normal form). Most runs (around 80%)
-   found groups of size two (i.e. an individual pair); around 25% found groups
-   of size three; ~20% of size four; and so on, up to sizes around 15. Larger
-   groups give rise to more pairwise relationships we can check.
- - The total number of generated terms accumulated per run is roughly uniform,
-   from around 15 to around 115. Hence each candidate pair is being checked
-   against a reasonable amount of example inputs.
+-- | Turns a 'ComZipper' back into a 'Com'
+unzipCom :: ComZipper -> Com
+unzipCom (x, xs) = case xs of
+  []         -> x
+  Left  r:ys -> unzipCom (App x r, ys)
+  Right l:ys -> unzipCom (App l x, ys)
 
-## Results ##
+-- | A path down a binary tree
+type Path = [Either () ()]
+
+-- | Focus on a particular sub-expression of the given 'Com', at a position
+-- | identified by the given 'Path' (stopping if it hits a leaf).
+focus :: Com -> Path -> ComZipper
+focus x = go (x      , [])
+  where   go (App l r, xs) ( Left ():p) = go (l,  Left r:xs) p
+          go (App l r, xs) (Right ():p) = go (r, Right l:xs) p
+          go z             _            = z
+
+-- | Generate a 'Path' through a binary tree (e.g. 'Com').
+genPathN :: Fuel -> Gen Path
+genPathN n = Gen.list (to n) (go <$> Gen.bool False)
+  where go False =  Left ()
+        go True  = Right ()
+
+-- | Generate a reasonably small 'Path' through a binary tree (e.g. 'Com')
+genPath :: Gen Path
+genPath = genPathN limit
+```
+
+<details class="odd">
+<summary>Checking `ComZipper`{.haskell}…</summary>
+
+We'd better do some sanity checks on `ComZipper`{.haskell}, to make sure it
+behaves as we expect:
+
+```{.haskell pipe="./show Main.hs"}
+unzipComIgnoresLocation = testProperty "unzipComIgnoresLocation" $ do
+  c <- gen genCom
+  p <- gen genPath
+  let c' = unzipCom (focus c p)
+  if c == c' then pure () else fail (show (c, c'))
+```
+
+```{.unwrap pipe="NAME=unzipComIgnoresLocation ./run"}
+main = defaultMain unzipComIgnoresLocation
+```
+
+</details>
+
+```{.haskell pipe="./import"}
+import Data.Default (def)
+import Test.Tasty.Falsify (overrideNumTests, testPropertyWith)
+```
+
+```{.haskell pipe="./show Main.hs"}
+extEqAreInterchangable = testProperty "extEqAreInterchangable" $ do
+  -- Generate an expression in Normal form (to avoid infinite loops); focus on
+  -- an arbitrary Path inside it, and discard that focus (creating a "hole").
+  (_, zs) <- gen $ focus . toCom <$> genNormal <*> genPath
+  -- Generate extensionally-equal expressions, to plug that hole
+  (x, y ) <- gen genAgree
+  let (x', y') = (unzipCom (x, zs), unzipCom (y, zs))
+  if unsafeRunDelay (extEq x' y') then pure () else fail (show (x', y'))
+```
+
+```{.unwrap pipe="NAME=extEqAreInterchangable ./run"}
+main = defaultMain extEqAreInterchangable
+```
 
 ## Conclusion ##
 
