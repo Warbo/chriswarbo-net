@@ -358,10 +358,10 @@ normalEqImpliesAgreeDiscard g =
 
 skNeverDisagreesWithSKSKKKDiscard g =
   testProperty "skNeverDisagreesWithSKSKKK" $ do
-    (n, xs) <- gen g
+    (n, m, xs) <- gen g
     let f = App s k
         g = App (App s (App k (App s k))) (App k k)
-    case runDelayOr Nothing (Just <$> sAt (2 + n) (agree f g xs)) n of
+    case runDelayOr Nothing (Just <$> sAt (2 + n) (agree f g xs)) (m + n) of
       Nothing             -> discard
       Just     (Same _  ) -> pure ()
       Just got@(Diff _ _) -> fail (show got)
@@ -398,7 +398,7 @@ agreeOnExtensionalInputsDiscard g =
                label "i" [show i]
                if b
                   then pure ()
-                  else fail ("Disagree on " ++ show (fst (sSplitAt i ins)))
+                  else fail ("Disagree on " ++ show (sTake i ins))
 
 extEqGeneralisesEqAndNormalEqAndEverAgreeDiscard g =
   testProperty "extEqGeneralisesEqAndNormalEqAndEverAgree" $ do
@@ -431,10 +431,10 @@ main = defaultMain $ testGroup "Discard"
     (tuple4 genFuel genCom genCom genComs)
 
   , skNeverDisagreesWithSKSKKKDiscard
-    (tuple2 genFuel genComs)
+    (tuple3 genFuel genFuel genComs)
 
   , agreementIsMonotonicDiscard
-    (tuple3 (tuple2 genFuel genFuel) (tuple2 genCom genCom) genComs)
+    (tuple4 (tuple2 genFuel genFuel) genFuel (tuple2 genCom genCom) genComs)
 
   , normalEqImpliesEverAgreeDiscard
     (tuple3 genFuel genCom genCom)
@@ -479,6 +479,14 @@ genNormalN n = do
 -- | Generates (relatively small) Normal values
 genNormal :: Gen Normal
 genNormal = genNormalN limit
+
+-- | Generates a 'Stream' of 'Normal' values of the given size
+genNormalsN :: Fuel -> Gen (Stream Normal)
+genNormalsN n = Cons <$> genNormalN n <*> genNormalsN n
+
+-- | Generates a 'Stream' of reasonably-sized 'Normal' values
+genNormals :: Gen (Stream Normal)
+genNormals = genNormalsN limit
 ```
 
 Since `Normal`{.haskell} values reduce immediately, their `normalEq`{.haskell}
@@ -508,17 +516,22 @@ import qualified Data.Set as Set
 ```
 
 ```{.haskell pipe="./show Main.hs"}
-genNormalEqN :: Fuel -> Gen (Com, Com)
-genNormalEqN n = go Set.empty  -- Begin with no known values
+-- | Accumulate more and more values from the given 'Gen', until we find two
+-- | that satisfy the given relation. The 'i' parameter allows for flexibility.
+genMatching :: Ord o => (i -> Gen o) -> (i -> o -> o -> Bool) -> i -> Gen (o, o)
+genMatching g match i = go Set.empty  -- Begin with no known values
   where go xs = do
           -- Check if a freshly generated value matches any we know
-          x <- genComN n
-          let (matched, unmatched) = Set.partition (match x) xs
+          x <- g i
+          let (matched, unmatched) = Set.partition (match i x) xs
           case Set.toList matched of
             y:_ -> pure (x, y)
             []  -> go (Set.insert x unmatched) -- Remember value & try again
 
-        match x y = x /= y && runDelayOr False (same <$> normalEq x y) n
+-- | Generate pairs of unequal 'Com' values which have the same 'Normal' form.
+genNormalEqN :: Fuel -> Gen (Com, Com)
+genNormalEqN = genMatching genComN match
+  where match n x y = x /= y && runDelayOr False (same <$> normalEq x y) n
 
 genNormalEq :: Gen (Com, Com)
 genNormalEq = genNormalEqN limit
@@ -541,7 +554,9 @@ is completely covering the input space:
 
 ```{.unwrap pipe="NAME=normalEqImpliesAgree ./run"}
 main = defaultMain . normalEqImpliesAgreeDiscard $ do
-  (x, y) <- Gen.choose genNormalEq (tuple2 genCom genCom)
+  (x, y) <- Gen.frequency
+    [ (9, genNormalEq           )
+    , (1, (tuple2 genCom genCom)) ]
   tuple4 genFuel (pure x) (pure y) genComs
 ```
 
@@ -563,13 +578,21 @@ we generate `g`{.haskell}! Here's a smarter generator, which keeps retrying
 until it makes a value that's different from the given argument:
 
 ```{.haskell pipe="./show Main.hs"}
--- | Generate a Com value that is not equal to the given argument.
-genUnequal :: Natural -> Com -> Gen Com
-genUnequal n x = do
-  c <- genComN n
-  if c == x
-    then genUnequal n x
-    else pure c
+-- | Generate a pair of 'Com' values which agree on the given number of inputs,
+-- | within the given amount of 'Fuel'.
+genAgreeFromN :: Natural -> Fuel -> Gen (Com, Com)
+genAgreeFromN lo = genMatching genComN match
+  where match n x y = case runDelayOr Nothing (extensionalInputs x y) n of
+          Just i  -> i >= lo
+          Nothing -> False
+
+-- | Generate a pair of 'Com' values which agree on 1 or more inputs. This tends
+-- | to avoid values which agree on 0 inputs, i.e. with equal 'Normal' forms,
+-- | and hence exercise the symbolic execution more thoroughly.
+genAgreeN = genAgreeFromN 1
+
+-- | Generate pairs of reasonably sized values which agree on 1 or more inputs.
+genAgree = genAgreeN limit
 ```
 
 This won't prevent *most* of the discarding in this case, but it's a good
