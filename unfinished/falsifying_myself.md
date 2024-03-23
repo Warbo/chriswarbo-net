@@ -23,6 +23,7 @@ sed -n "/$1/,"' /^```$/p' < root/blog/2024-03-17-sk_logic_in_egglog_2.md |
 ```{pipe="sh"}
 # Grab the Main.hs contents, as well as the scripts to append-to and run it
 ./chop 'show Main.hs' > Main.hs
+./chop 'cat > name' > name && chmod +x name
 ./chop 'cat > show' > show && chmod +x show
 ./chop 'cat > run'  > run  && chmod +x run
 ./chop 'cat > fail' > fail && chmod +x fail
