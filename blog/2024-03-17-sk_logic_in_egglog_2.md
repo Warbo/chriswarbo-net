@@ -554,10 +554,15 @@ meaning that values should be equal to themselves; so any call like
 `normalEq foo foo`{.haskell} should always result in `True`{.haskell}.
 Unfortunately, such results are buried in a `Delay`{.haskell} which prevents us
 testing them directly. `Delay`{.haskell} values *could* be a never-ending chain
-of `Later`{.haskell} wrappers (like `loop = Later loop`{.haskell}), so any
-attempt to extract a result from them must eventually give up. We'll work around
-this using a parameter that counts down until we give up; this approach is
-usually called
+of `Later`{.haskell} wrappers, like the following:
+
+```{.haskell pipe="./show Main.hs"}
+loop :: Delay a
+loop = Later loop
+```
+Hence any attempt to extract a result from them must eventually give up. We'll
+work around this using a parameter that counts down until we give up; an
+approach known as
 [fuel](http://blog.ezyang.com/2011/06/debugging-compilers-with-optimization-fuel):
 
 ```{.haskell pipe="./show Main.hs"}
