@@ -368,9 +368,9 @@ skNeverDisagreesWithSKSKKKDiscard g =
 
 agreementIsMonotonicDiscard g =
   testProperty "agreementIsMonotonic" $ do
-    ((n, m), (f, g), xs) <- gen g
-    case runDelay n (tuple2 (sAt  n      (agree f g xs))
-                            (sAt (n + m) (agree f g xs))) of
+    ((i1, i2), n, (f, g), xs) <- gen g
+    case tuple2 (runDelay n (sAt  i1       (agree f g xs)))
+                (runDelay n (sAt (i1 + i2) (agree f g xs))) of
       Now got@(Same _  , Diff _ _) -> fail (show got)
       Now     (Same _  , Same _  ) -> pure ()
       Now     (Diff _ _, _       ) -> discard
