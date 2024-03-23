@@ -13,16 +13,16 @@ dependencies: [ 'blog/2024-03-17-sk_logic_in_egglog_2.md' ]
 #!/bin/sh
 set -eu
 
-# Iterates through lines of the "part 2" markdown: when $1 matches (via grep) we
-# output the following lines, until the end of a code-fence. This lets us re-use
-# the same definitions without copy/pasting.
+# Grab lines from the "part 2" markdown: when $1 matches (via regex) we output
+# the following lines, until the end of a code-fence. This lets us re-use the
+# same definitions without copy/pasting.
 sed -n "/$1/,"' /^```$/p' < root/blog/2024-03-17-sk_logic_in_egglog_2.md |
   grep -v '^```'
 ```
 
 ```{pipe="sh"}
 # Grab the Main.hs contents, as well as the scripts to append-to and run it
-./chop 'show Main.hs' > Main.hs
+./chop 'pipe=.*\..show' > Main.hs
 ./chop 'cat > name' > name && chmod +x name
 ./chop 'cat > show' > show && chmod +x show
 ./chop 'cat > run'  > run  && chmod +x run
