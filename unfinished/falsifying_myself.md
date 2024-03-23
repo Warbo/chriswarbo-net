@@ -324,16 +324,17 @@ main = defaultMain (agreementIsMonotonicFixed
 
 ## Discarding uninteresting cases ##
 
-Property-checkers, including `falsify`, allow tests to be "discarded": this
-aborts the current call, and another example input is tried instead. Discarded
-calls do not count towards the total (100 required successes, by default), so
-they result in more calls being made; which slows down the test suite. If the
-number of discarded calls reaches a predefined limit (100 in a row, by default)
-then the test is abandoned as a failure: this is useful to know when our
-precondition is too rare (or even impossible) to satisfy, and is preferable to
-an infinite loop or a result with low statistical power. We'll refactor our
-properties again (in the following fold-out section) to discard unwanted
-branches:
+Property-checkers, including `falsify`, allow us to "discard" uninteresting
+cases, which aborts the current call generates another input to check instead.
+Discarded calls do not count towards the reported total, so they avoid the false
+confidence issue we saw above. The downside is that extra calls make the test
+slower; and it will be abandoned entirely if too many are discarded (for
+`falsify`, the default limit is 100 in a row). Depending on the property checker
+that may be considered a test failure: `falsify` only considers abandoned tests
+to have failed if there were *no* successful calls.
+
+In the following fold-out section we refactor our properties again, to discard
+any branches that are "uninteresting", like timeouts:
 
 <details class="odd">
 <summary>Properties which discard…</summary>
@@ -448,16 +449,17 @@ main = defaultMain $ testGroup "Discard"
 ```
 
 Discarding works very well for some tests, e.g.
-`notUnnormalEqToItself`{.haskell} only hit a few timeouts, which could be
-avoided by making a handful of extra calls. Other tests struggled, needing over
-1000 extra calls to reach the 100 passes they required. Some also breached the
-limit of 100 discards in a row, and caused the overall test suite to fail.
+`notUnnormalEqToItself`{.haskell} only hit a few timeouts, which caused a
+handful of extra calls. Other tests struggled, making over 1000 extra calls;
+some were abandoned after reaching the limit of 100 discards in a row; and some
+of those gave up without a single success, causing the overall test suite to
+fail.
 
 ## Smarter generators ##
 
 One way to avoid excessive discards is to move logic into our data generators.
 This isn't a magic bullet, but it can be useful if acceptable values are
-reasonably common; if retrying a generator is faster than discarding a tests;
+reasonably common; if retrying a generator is faster than discarding a test;
 and for retrying *parts* of an input, rather than starting from scratch.
 
 For example, the following generator only produces `Normal`{.haskell} values, by
@@ -546,11 +548,18 @@ main = defaultMain . normalEqImpliesAgreeDiscard $ do
   tuple4 genFuel (pure x) (pure y) genComs
 ```
 
+### Hedging our bets ###
+
 Unlike `normalsAreNormalEqToThemselves`{.haskell}, which *relies* on
-`genNormal`{.haskell} to avoid timeout counterexamples, this is *purely* an
-optimisation. For that reason, I actually prefer to mix in a few inputs from the
-original "dumb" generator; that way, I don't need to assume the smart generator
-is completely covering the input space:
+`genNormal`{.haskell} to avoid timeout counterexamples, the smart generator for
+`normalEqImpliesAgree`{.haskell} is *purely* an optimisation. For that reason, I
+actually prefer to mix in a few inputs from the original "dumb" generator: that
+way, we don't need to trust the smart generator to completely cover the input
+space; and we leave open the possibility for the dumb generator to stumble on to
+a different form of counterexample. The simplest way to mix two generators is
+via the `Gen.choose`{.haskell} function, which uses each half of the time; but
+that would increase the number of discards more than I would like. Instead we'll
+use the more sophisticated `Gen.frequency`{.haskell}:
 
 ```{.unwrap pipe="NAME=normalEqImpliesAgree ./run"}
 main = defaultMain . normalEqImpliesAgreeDiscard $ do
