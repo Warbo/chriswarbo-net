@@ -261,8 +261,9 @@ instance Monad Delay where
 
 -- | Unwrap (up to) a given number of 'Later' wrappers from a 'Delay' value.
 runDelay :: Integral n => n -> Delay a -> Delay a
-runDelay _ (Now   x) = Now x
-runDelay n (Later x) = (if n <= 0 then id else runDelay (n - 1)) x
+runDelay n x | n <= 0 = x
+runDelay _ x@(Now _)  = x
+runDelay n (Later x)  = runDelay (n - 1) x
 
 -- | Try to extract a value from the given 'Delay', or use the given default
 runDelayOr :: Integral n => a -> Delay a -> n -> a
