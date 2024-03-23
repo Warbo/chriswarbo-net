@@ -106,7 +106,7 @@ agreeOnExtensionalInputsStats g =
     case runDelayOr (Left "Timeout") (extensionalInputs x y >>= check) n of
       Left msg         -> label "result" [msg]
       Right (i, True ) -> label "i" [show i] *> label "result" ["True"]
-      Right (i, False) -> fail ("Disagree on " ++ show (fst (sSplitAt i ins)))
+      Right (i, False) -> fail ("Disagree on " ++ show (sTake i ins))
 
 -- | Huet Zipper, focused on the nth element of a 'Stream'.
 sZipper :: Integral n => n -> Stream a -> ([a], Stream a)
