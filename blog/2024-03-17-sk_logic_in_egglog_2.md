@@ -14,6 +14,12 @@ tee -a "$1"
 echo >> "$1"
 ```
 
+```{pipe="cat > name && chmod +x name"}
+#!/bin/sh
+set -euo pipefail
+grep 'check ' | sed -e 's/^.*check \([^ ][^ ]*\).*$/\1/g'
+```
+
 ```{pipe="cat > run && chmod +x run"}
 #!/bin/sh
 set -euo pipefail
@@ -27,9 +33,7 @@ set -euo pipefail
 #  - $CLASS: defaults to 'pass'; added to both code blocks
 
 cat > in
-[[ -n "${NAME:-}" ]] || {
-  NAME=$(< in grep 'check ' | sed -e 's/^.*check \([^ ][^ ]*\).*$/\1/g')
-}
+[[ -n "${NAME:-}" ]] || NAME=$(./name < in)
 export NAME
 CLASS="${CLASS:-pass}"
 rm -f "$NAME"
@@ -82,6 +86,9 @@ export CLASS='fail'
 # Retry a few times, in case falsify random sampling fails to find a
 # counterexample we wanted to show!
 GIVEN=$(cat)
+[[ -n "${NAME:-}" ]] || NAME=$(echo "$GIVEN" | ./name)
+export NAME
+
 for RETRY in $(seq 1 100)
 do
   if GOT=$(echo "$GIVEN" | ./run 'cat out err 1>&2 && exit 1' \
@@ -91,6 +98,7 @@ do
     echo "$GOT"
     exit 0
   fi
+  echo "$NAME: attempt $RETRY" 1>&2
 done
 cat er 1>&2
 exit 1
