@@ -10,8 +10,8 @@ packages: [ 'ghcWithFalsify' ]
 
 ```{pipe="cat > show && chmod +x show"}
 #!/bin/sh
-tee -a "$1"
-echo >> "$1"
+tee -a Main.hs
+echo >> Main.hs
 ```
 
 ```{pipe="cat > name && chmod +x name"}
@@ -175,7 +175,7 @@ in its package database. For more details on how it's executed, see
 [this page's Markdown
 source](/git/chriswarbo-net/git/branches/master/unfinished/checking_combinators_with_falsify.html).
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 module Main (main) where
 
 import Control.Applicative ((<|>))
@@ -277,7 +277,7 @@ together. We'll represent SK expressions using the following Haskell datatype
 called `Com`{.haskell} (this representation also matches my definition in
 egglog):
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 data Com = C String | App Com Com deriving (Eq, Ord)
 ```
 
@@ -296,7 +296,7 @@ useful interfaces:
 We'll implement the `Show`{.haskell} interface ourselves, to render expressions
 in traditional SK notation:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 instance Show Com where
   show (C c)             = c
   show (App x (App y z)) = show x ++ "(" ++ show (App y z) ++ ")"
@@ -307,7 +307,7 @@ We represent the "primitives" `S` and `K` using the `C`{.haskell} constructor
 (annoyingly, value names in Haskell must begin with a lowercase letter; so we
 call these `s`{.haskell} and `k`{.haskell} instead):
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Primitive SK expressions
 s, k :: Com
 s = C "S"
@@ -321,7 +321,7 @@ is simply `SKK`. The following functions extract the left and right children of
 an `App`{.haskell} value (returning `Maybe`{.haskell}, in case they're given a
 primitive expression):
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 left, right :: Com -> Maybe Com
 left  (App x _) = Just x
 left  _         = Nothing
@@ -389,7 +389,7 @@ We can "run" SK expressions using two
 We can implement these as Haskell functions, returning `Nothing`{.haskell} if
 the rule didn't match:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Replaces Kxy with x, otherwise 'Nothing'
 stepK :: Com -> Maybe Com
 stepK (App (App (C "K") x) _) = Just x
@@ -416,7 +416,7 @@ finish. `Nothing`{.haskell} is returned when neither rule matched and no
 sub-expressions were rewritten; we say the expression is in [normal
 form](https://en.wikipedia.org/wiki/Normal_form_(abstract_rewriting)):
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Attempt to reduce a K or S combinator, or the children of an 'App'.
 -- | 'Nothing' if the argument is in normal form.
 step :: Com -> Maybe Com
@@ -430,7 +430,7 @@ Next we'll need to *iterate* the `step`{.haskell} function until its argument
 reaches normal form. We'll distinguish normalised expressions using a separate
 type called `Normal`{.haskell}:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Wraps Com values which are assumed to be in normal form
 newtype Normal = N Com deriving (Eq, Ord)
 
@@ -487,7 +487,7 @@ universal programming language, there's no way to know beforehand if it ever
 will. We'll account for this by wrapping such undecidable computations in
 [a `Delay` type](/blog/2014-12-04-Nat_like_types.html#delay-t):
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Step the given 'Com' until it reaches 'Normal' form.
 reduce :: Com -> Delay Normal
 reduce c = case toNormal c of
@@ -519,7 +519,7 @@ interchanged inside any expression without altering its `Normal`{.haskell} form.
 We'll call this relationship "`Normal`{.haskell} equivalence". It's
 undecidable in general, so it also gets wrapped in `Delay`{.haskell}:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Result of comparing two values
 data Compared a = Same a | Diff a a deriving (Show)
 
@@ -550,7 +550,7 @@ Unfortunately, such results are buried in a `Delay`{.haskell} which prevents us
 testing them directly. `Delay`{.haskell} values *could* be a never-ending chain
 of `Later`{.haskell} wrappers, like the following:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 loop :: Delay a
 loop = Later loop
 ```
@@ -559,7 +559,7 @@ work around this using a parameter that counts down until we give up; an
 approach known as
 [fuel](http://blog.ezyang.com/2011/06/debugging-compilers-with-optimization-fuel):
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Represents a parameter for "when to give up"
 type Fuel = Word
 ```
@@ -568,7 +568,7 @@ Now we can write a predicate (a function returning a boolean) to check whether
 its argument is `normalEq`{.haskell} to itself, before its `Fuel`{.haskell} runs
 out:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 normalEqToItself :: (Fuel, Com) -> Bool
 normalEqToItself (n, x) = runDelayOr False (same <$> normalEq x x) n
 ```
@@ -610,7 +610,7 @@ interfaces (`Applicative`{.haskell}, `Monad`{.haskell}, etc.); from primitives
 such as `Gen.inRange`{.haskell}, which samples fixnums from a `Range`{.haskell}
 and is perfect for generating `Fuel`{.haskell}:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Generates a (relatively small) amount of Fuel
 genFuel = genFuelN limit
 
@@ -646,7 +646,7 @@ it out-of-the-box! The `Gen.tree`{.haskell} function generates binary
 `Tree`{.haskell} values of a given size, so we just need to transform those into
 the `Com`{.haskell} values we need:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Create a Com from a binary Tree (with unit values () at the nodes)
 treeToCom :: Tree () -> Com
 treeToCom t = case t of
@@ -676,7 +676,7 @@ genCom = genComN limit
 would declare a big test suite to run all at once, but for this literate/active
 style we'll be testing things as we go, using the following function:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Turn the given predicate into a falsify property, universally quantified
 -- | over the given generator's outputs. Check it on (at least) 100 samples.
 check :: Show a => (a -> Bool) -> Gen a -> IO ()
@@ -723,7 +723,7 @@ claiming every expression is equal to itself (regardless of `Fuel`{.haskell}),
 we claim that every expression is *not unequal* to itself (regardless of
 `Fuel`{.haskell}):
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 notUnnormalEqToItself :: (Fuel, Com) -> Bool
 notUnnormalEqToItself (n, x) = runDelayOr True (not . diff <$> normalEq x x) n
 ```
@@ -771,7 +771,7 @@ results to the second value, and so on. We'll represent such sequences using a
 `Stream`{.haskell}, which is like a list except there is no "nil" case, so it
 goes on forever:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 type InputValue  = Com
 type InputValues = Stream InputValue
 
@@ -784,7 +784,7 @@ agree f g (Cons x xs) = Cons (normalEq f g) (agree (App f x) (App g x) xs)
 Everything that satisfies `normalEq`{.haskell} should also satisfy
 `agree`{.haskell}, which we can state with the following property:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 normalEqImpliesAgree :: (Fuel, Com, Com, InputValues) -> Bool
 normalEqImpliesAgree (n, f, g, xs) =
   case runDelay n (tuple2 (normalEq f g) (sHead (agree f g xs))) of
@@ -809,7 +809,7 @@ $N$ input values; i.e. the input values are universally-quantified, but the
 length of the sequence is not. For example, `SK` and `S(K(SK))(KK)` agree on two
 inputs; which we can test by asserting that they *never disagree*:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 skNeverDisagreesWithSKSKKK :: (Fuel, InputValues) -> Bool
 skNeverDisagreesWithSKSKKK (n, xs) =
     runDelayOr True (not . diff <$> sAt (2 + n) (agree f g xs)) n
@@ -825,7 +825,7 @@ Note that any expressions which agree on $N$ inputs also agree on $N+1$ inputs
 (and so on), since the left child of each root has the same `Normal`{.haskell}
 form (by definition of agreement on $N$ inputs).
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 agreementIsMonotonic :: ((Fuel, Fuel), (Com, Com), InputValues) -> Bool
 agreementIsMonotonic ((n, m), (f, g), xs) =
   case runDelay n (tuple2 (sAt  n      (agree f g xs))
@@ -914,7 +914,7 @@ We don't need to implement this check specially, since we can reuse
 `agree`{.haskell}, just using symbolic values as our inputs instead of concrete
 SK expressions:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Synonym to indicate when we're dealing with uninterpreted symbolic values
 type Symbol = String
 
@@ -927,7 +927,7 @@ symbols = sFilter keep allStrings
 The following `agreeSym`{.haskell} function applies two expressions to more and
 more symbolic inputs, to see if they reduce to the same `Normal`{.haskell} form:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Checks whether two Com values agree on more and more symbolic input values.
 agreeSym :: Com -> Com -> Stream (Delay (Compared Normal))
 agreeSym f g = agree f g (C <$> symbols)
@@ -944,7 +944,7 @@ since a `Delay`{.haskell} might never end. The following `race`{.haskell}
 function is a bit smarter: it acts like a round-robin scheduler, each iteration
 running more expressions until one of them finishes (if ever):
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Runs every 'Delay' element in an interleaved fashion until one of them
 -- | produces a 'Now'. Returns that result, its index in the 'Stream', and a
 -- | 'Stream' of the remaining 'Delay' elements.
@@ -965,7 +965,7 @@ race s = go [] [] s
 The `race`{.haskell} algorithm is a bit tricky, so we'll double-check it with a
 few property tests. First some helper functions:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Wrap the given number of 'Later' constructors around '()'
 wrapLater n | n <= 0 = Now ()
 wrapLater n          = Later (wrapLater (n - 1))
@@ -985,7 +985,7 @@ countMatchesWrap (n, m) = countLaters (n + m) (wrapLater n) == Just n
 main = check countMatchesWrap (tuple2 genFuel genFuel)
 ```
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 runUndoesWrap n = case runDelay n (wrapLater n) of
   Now _ -> True
   _     -> False
@@ -995,7 +995,7 @@ runUndoesWrap n = case runDelay n (wrapLater n) of
 main = check runUndoesWrap genFuel
 ```
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 runStops (n, m) = countLaters m (runDelay n (wrapLater (n + m)) ) == Just m
 ```
 
@@ -1042,7 +1042,7 @@ the number of `Later`{.haskell} wrappers `race`{.haskell} produces for a
 wrappers, and whose other elements are never-ending loops (and hence don't
 contribute any `Now`{.haskell} values of their own):
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Calculates the nth triangular number https://oeis.org/A000217
 triangle :: (Integral n, Integral m) => n -> m
 triangle = fromIntegral . go . fromIntegral . max 0
@@ -1066,7 +1066,7 @@ At the other extreme, `race`{.haskell} will run the *first* step of element
 `triangle (n + 1) - 1`{.haskell} (this is
 [OEIS A000096](https://oeis.org/A000096)):
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 raceHitsNthElementBeforeNextTriangularNumber n =
     countLaters x (race (prog n)) == Just x
   where x      = triangle (n + 1) - 1
@@ -1083,7 +1083,7 @@ main = check raceHitsNthElementBeforeNextTriangularNumber genFuel
 We can use `race`{.haskell} to check whether two expressions ever agree on
 symbolic inputs, and therefore whether they're extensionally equal:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | 'True' iff the given expressions ever agree for any number of inputs.
 everAgree :: Com -> Com -> Delay Bool
 everAgree x y = race (agreeSym x y) >>= go
@@ -1096,7 +1096,7 @@ the latter only checks for agreement on $0$ inputs; although it requires more
 `Fuel`{.haskell} to account for running it interleaved with $1$ input, $2$
 inputs, etc. (see the fold-out section above for more details):
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 normalEqImpliesEverAgree :: (Fuel, Com, Com) -> Bool
 normalEqImpliesEverAgree (n, x, y) =
     if      go (same <$> normalEq x y)  n
@@ -1159,7 +1159,7 @@ disagree with each other. ∎
 The following function will spot when two expressions have different symbols in
 head position, and are hence provably unable to agree, even with more inputs:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Return the head (left-most leaf) of the given Com
 headPos :: Com -> Symbol
 headPos (C c)     = c
@@ -1177,7 +1177,7 @@ distinctSymbolicHeads x y = isSym hX && isSym hY && hX /= hY
 
 We can perform a few sanity checks, to confirm that our argument above holds:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Generate String values to represent uninterpreted symbolic values
 genSymN :: Fuel -> Gen Symbol
 genSymN n = (`sAt` symbols) <$> genFuelN n
@@ -1241,7 +1241,7 @@ The following `unequalArgCount`{.haskell} function will spot when two
 expressions apply a symbol to an unequal number of arguments, and are hence sure
 to be extensionally unequal:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Split a Com value into its head and any arguments that's applied to
 headAndArgs :: Com -> (String, [Com])
 headAndArgs (C x) = (x, [])
@@ -1260,7 +1260,7 @@ unequalArgCount x y = isSym headX
 
 Again, we can sanity-check this:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Order of Com values shouldn't affect result
 unequalArgCountCommutes :: (Com, Com) -> Bool
 unequalArgCountCommutes (x, y) = unequalArgCount x y
@@ -1293,7 +1293,7 @@ The following function checks for the situation described above. It checks
 whether argument values are unequal using a given `unEq`{.haskell} parameter,
 which is more general and useful than if we hard-coded some specific check:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Whether the given Com values have matching symbols in their heads, but
 -- | applied to unequal values (determined by the given unEq function)
 symbolGivenUnequalArgs :: (Com -> Com -> Bool) -> Com -> Com -> Bool
@@ -1324,7 +1324,7 @@ generate a function value just as easily as a "data-like" value. For example, we
 can generate functions which look up their arguments in a (generated) lookup
 table:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 genViaTable :: Eq a => Range Fuel -> Gen a -> Gen b -> Gen (a -> b)
 genViaTable range genA genB = do
   def   <- genB
@@ -1348,7 +1348,7 @@ since the tuples will be handled automatically by type class instance
 resolution. The following helpers let `symbolGivenUnequalArgsCommutes`{.haskell}
 take a `Fun` as argument:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Transform a higher-order function to take a Fun instead
 liftFun :: ((a -> b) -> c) -> Gen.Fun a b -> c
 liftFun f = f . Gen.applyFun
@@ -1364,7 +1364,7 @@ from `Gen.fun`{.haskell}, but that requires an instance of
 `Gen.Function (Com, Com)`{.haskell}. There's an existing instance for tuples,
 but we still need to implement `Gen.Function Com`{.haskell} ourselves:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 instance Gen.Function Com where
   function gen = Gen.functionMap comToPre preToCom <$> Gen.function gen
 ```
@@ -1375,7 +1375,7 @@ another type that already implements `Gen.Function`{.haskell}. The type I've
 chosen is `[Maybe (Either Bool Symbol)]`{.haskell}, and the conversions are
 implemented by `comToPre`{.haskell} & `preToCom`{.haskell}:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Prefix notation for expressions. `Nothing` represents an 'apply' operation.
 type Prefix = [Maybe (Either Bool Symbol)]
 
@@ -1410,7 +1410,7 @@ comToPreRoundtrips c = preToCom (comToPre c) == c
 main = check comToPreRoundtrips genCom
 ```
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 preToComAlmostRoundtrips :: Prefix -> Bool
 preToComAlmostRoundtrips p = comToPre (preToCom p') == p'
   where p' = comToPre (preToCom p)  -- Extra roundtrip to make p "correct"
@@ -1495,7 +1495,7 @@ use than the individual checks, but we can also use it as the `unEq`{.haskell}
 argument of the `symbolGivenUnequalArgs`{.haskell} function, which lets us
 recurse through the given expressions looking for disagreement at any depth!
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 provablyDisagree :: Com -> Com -> Bool
 provablyDisagree x y = distinctSymbolicHeads                   x y
                     || unequalArgCount                         x y
@@ -1517,7 +1517,7 @@ begin by extracting the numerical index provided by `race`{.haskell}, which
 should tell us how many inputs it takes for the given expressions to start
 agreeing:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | 'Just n' if the given expressions agree on 'n' inputs (they might also
 -- | agree on fewer). 'Nothing' if it is determined that they won't agree; if
 -- | that cannot be determined, the 'Delay' will never end.
@@ -1543,7 +1543,7 @@ This is easy to transform into a legitimate predicate for testing extensional
 equality, that's able to answer both `True`{.haskell} and `False`{.haskell} (at
 least, some of the time):
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Whether the given expressions are extensionally equal, i.e. cannot be
 -- | distinguished by an SK expression.
 extEq :: Com -> Com -> Delay Bool
@@ -1552,7 +1552,7 @@ extEq x y = isJust <$> extensionalInputs x y
 
 `extEq`{.haskell} is a generalisation of our previous checks:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 extEqGeneralisesEqAndNormalEqAndEverAgree :: (Fuel, Com, Com) -> Bool
 extEqGeneralisesEqAndNormalEqAndEverAgree (n, x, y) =
     case ( go (            extEq x y)

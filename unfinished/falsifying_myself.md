@@ -96,7 +96,7 @@ with each of the above cases labelled:
 import Test.Falsify.Property (Property, discard, gen, label)
 ```
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 agreeOnExtensionalInputsStats g =
   testProperty "agreeOnExtensionalInputs" $ do
     (n, x, y, ins) <- gen g
@@ -136,7 +136,7 @@ the following fold-out section, since the logic hasn't changed):
 <details class="odd">
 <summary>Labelled properties…</summary>
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 notUnnormalEqToItselfStats g =
   testProperty "notUnnormalEqToItself" $ do
     (n, x) <- gen g
@@ -286,7 +286,7 @@ properties `skNeverDisagreesWithSKSKKKStats`{.haskell} and
 same `Fuel`{.haskell} parameter as the number of inputs and number of steps
 before timing out. We can avoid this by using separate parameters for each:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 skNeverDisagreesWithSKSKKKFixed g =
   testProperty "skNeverDisagreesWithSKSKKK" $ do
     (n, m, xs) <- gen g
@@ -339,7 +339,7 @@ any branches that are "uninteresting", like timeouts:
 <details class="odd">
 <summary>Properties which discard…</summary>
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 notUnnormalEqToItselfDiscard g =
   testProperty "notUnnormalEqToItself" $ do
     (n, x) <- gen g
@@ -467,7 +467,7 @@ running `reduce`{.haskell} on generated `Com`{.haskell} values. That's
 undecidable from *within* a property, but actually quite easy in a generator,
 since we're free to discard problematic values and try again:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Like genComN, but reduces its outputs to normal form. The fuel
 -- | bounds the size of the initial expression (before it's reduced), and
 -- | the number of steps to attempt when normalising.
@@ -496,7 +496,7 @@ result is always `Now`{.haskell}, and hence they can be compared with any amount
 of `Fuel`{.haskell} without timing out. This fixes our very first property, that
 all values are `normalEq`{.haskell} to themselves!
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 normalsAreNormalEqToThemselves :: (Fuel, Normal) -> Bool
 normalsAreNormalEqToThemselves (n, x) = normalEqToItself (n, toCom x)
 ```
@@ -517,7 +517,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 ```
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Accumulate more and more values from the given 'Gen', until we find two
 -- | that satisfy the given relation. The 'i' parameter allows for flexibility.
 genMatching :: Ord o => (i -> Gen o) -> (i -> o -> o -> Bool) -> i -> Gen (o, o)
@@ -574,7 +574,7 @@ main = defaultMain . normalEqImpliesAgreeDiscard $ do
 We can use a similar approach for `agreementIsMonotonic`{.haskell}, generating
 a pair of values which only agree on a non-zero number of inputs:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Generate a pair of 'Com' values which agree on the given number of inputs,
 -- | within the given amount of 'Fuel'.
 genAgreeFromN :: Natural -> Fuel -> Gen (Com, Com)
@@ -648,7 +648,7 @@ hence how much `Fuel`{.haskell} would be needed.
 We'll work around this by *removing* the timeout: this is a bold move, since our
 test suite may run forever if we're wrong!
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Runs a 'Delay' value to completion. This may run forever!
 unsafeRunDelay :: Delay a -> a
 unsafeRunDelay (Now   x) = x
@@ -658,7 +658,7 @@ unsafeRunDelay (Later x) = unsafeRunDelay x
 To represent "swapping any part", we'll use a
 [zipper datastructure](https://en.wikipedia.org/wiki/Zipper_(data_structure)):
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 -- | Represents a 'Com' with one of its sub-expressions "focused"
 type ComZipper = (Com, [Either Com Com])
 
@@ -697,7 +697,7 @@ genPath = genPathN limit
 We'd better do some sanity checks on `ComZipper`{.haskell}, to make sure it
 behaves as we expect:
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 unzipComIgnoresLocation = testProperty "unzipComIgnoresLocation" $ do
   c <- gen genCom
   p <- gen genPath
@@ -716,7 +716,7 @@ import Data.Default (def)
 import Test.Tasty.Falsify (overrideNumTests, testPropertyWith)
 ```
 
-```{.haskell pipe="./show Main.hs"}
+```{.haskell pipe="./show"}
 extEqAreInterchangable = testProperty "extEqAreInterchangable" $ do
   -- Generate an expression in Normal form (to avoid infinite loops); focus on
   -- an arbitrary Path inside it, and discard that focus (creating a "hole").
