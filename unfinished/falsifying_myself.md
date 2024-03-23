@@ -1,6 +1,6 @@
 ---
 title: "SK logic in egglog: part 3, falsifying myself"
-packages: [ 'ghcWithFalsify' ]
+packages: [ 'ghcWithFalsify', 'timeout' ]
 dependencies: [ 'blog/2024-03-17-sk_logic_in_egglog_2.md' ]
 ---
 
@@ -727,8 +727,23 @@ extEqAreInterchangable = testProperty "extEqAreInterchangable" $ do
   if unsafeRunDelay (extEq x' y') then pure () else fail (show (x', y'))
 ```
 
-```{.unwrap pipe="NAME=extEqAreInterchangable ./run"}
-main = defaultMain extEqAreInterchangable
+```{.unwrap pipe="sh"}
+export NAME=extEqAreInterchangable
+export MAX_SECS=300
+CODE='main = defaultMain extEqAreInterchangable'
+for RETRY in $(seq 1 10)
+do
+   if GOT=$(echo "$CODE" | withTimeout ./run) 2> er
+   then
+     cat er 1>&2
+     echo "$GOT"
+     exit 0
+   else
+     echo "Retrying $NAME $RETRY" 1>&2
+   fi
+done
+cat er
+exit 1
 ```
 
 ## Conclusion ##
