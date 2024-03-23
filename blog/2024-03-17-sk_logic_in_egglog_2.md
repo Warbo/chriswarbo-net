@@ -949,11 +949,136 @@ running more expressions until one of them finishes (if ever):
 -- | produces a 'Now'. Returns that result, its index in the 'Stream', and a
 -- | 'Stream' of the remaining 'Delay' elements.
 race :: Stream (Delay a) -> Delay (a, Natural, Stream (Delay a))
-race s = go 1 ([], s)
-  where go !n (  Now x:xs, ys) =   Now (x,  n-1, sPrefix xs               ys)
-        go !n (Later x:xs, ys) = Later (go (n+1) (xs, Cons (runDelay 1 x) ys))
-        go !n ([]        , ys) =        go    1  (sSplitAt n              ys )
+race s = go [] [] s
+  where go ran run next = case (run, next) of
+          (        [], Cons z zs) ->        go []      (reverse (z:ran)) zs
+          (Later y:ys,        zs) -> Later (go (y:ran) ys                zs)
+          (  Now y:ys,        zs) ->   Now ( y
+                                           , fromIntegral (length ran)
+                                           , sPrefix (reverse ran ++ ys) zs
+                                           )
 ```
+
+<details class="odd">
+<summary>Checking `race`{.haskell}…</summary>
+
+The `race`{.haskell} algorithm is a bit tricky, so we'll double-check it with a
+few property tests. First some helper functions:
+
+```{.haskell pipe="./show Main.hs"}
+-- | Wrap the given number of 'Later' constructors around '()'
+wrapLater n | n <= 0 = Now ()
+wrapLater n          = Later (wrapLater (n - 1))
+
+-- | Count the number of 'Later' wrappers around a 'Now' value. Gives up if the
+-- | given 'Fuel' runs out.
+countLaters :: Integral n => Fuel -> Delay a -> Maybe n
+countLaters = go 0
+  where go !n _ (  Now _) = Just n
+        go  _ 0        _  = Nothing
+        go !n m (Later x) = go (n + 1) (m - 1) x
+
+countMatchesWrap (n, m) = countLaters (n + m) (wrapLater n) == Just n
+```
+
+```{.unwrap pipe="./run"}
+main = check countMatchesWrap (tuple2 genFuel genFuel)
+```
+
+```{.haskell pipe="./show Main.hs"}
+runUndoesWrap n = case runDelay n (wrapLater n) of
+  Now _ -> True
+  _     -> False
+```
+
+```{.unwrap pipe="./run"}
+main = check runUndoesWrap genFuel
+```
+
+```{.haskell pipe="./show Main.hs"}
+runStops (n, m) = countLaters m (runDelay n (wrapLater (n + m)) ) == Just m
+```
+
+```{.unwrap pipe="./run"}
+main = check runStops (tuple2 genFuel genFuel)
+```
+
+Now on to `race`{.haskell} itself: it searches for a `Now`{.haskell} value using
+a triangular "flood fill" approach, illustrated below:
+
+<figure>
+
+```
+     ║Cons│Cons│Cons│Cons│Cons│
+═════╬════╪════╪════╪════╪════╪┄
+Later║  0 │  2 │  5 │  9 │ 14 │
+─────╫────┼────┼────┼────┼────┼┄
+Later║  1 │  4 │  8 │ 13 │ 19 │
+─────╫────┼────┼────┼────┼────┼┄
+Later║  3 │  7 │ 12 │ 18 │ 25 │
+─────╫────┼────┼────┼────┼────┼┄
+Later║  6 │ 11 │ 17 │ 24 │ 32 │
+─────╫────┼────┼────┼────┼────┼┄
+Later║ 10 │ 16 │ 23 │ 31 │ 40 │
+─────╫────┼────┼────┼────┼────┼┄
+     ┆    ┆    ┆    ┆    ┆    ┆
+```
+
+<figcaption>
+The order that `race`{.haskell} searches a given `Stream`{.haskell}
+of `Delay`{.haskell} values, looking for a `Now`{.haskell}. Columns are elements
+of the `Stream`{.haskell}, starting on the left; rows are steps into those
+`Delay`{.haskell} values, starting at the top. The search begins at the top left
+(the outer constructor of the first element) and proceeds in diagonal stripes:
+after the top row is reached, the next stripe begins in the left column.
+</figcaption>
+</figure>
+
+The numbers in the first column (i.e. which steps `race`{.haskell} allocates to
+running the first element of the `Stream`{.haskell}) are precisely [the
+triangular numbers](https://oeis.org/A000217). We can check this, by counting
+the number of `Later`{.haskell} wrappers `race`{.haskell} produces for a
+`Stream`{.haskell} whose first element has a known number of `Later`{.haskell}
+wrappers, and whose other elements are never-ending loops (and hence don't
+contribute any `Now`{.haskell} values of their own):
+
+```{.haskell pipe="./show Main.hs"}
+-- | Calculates the nth triangular number https://oeis.org/A000217
+triangle :: (Integral n, Integral m) => n -> m
+triangle = fromIntegral . go . fromIntegral . max 0
+  where go (n :: Natural) = (n * (n + 1)) `div` 2
+
+loops :: Stream (Delay a)
+loops = Cons loop loops
+
+raceFirstUsesTriangularFuel :: Fuel -> Bool
+raceFirstUsesTriangularFuel n =
+    countLaters tn (race (Cons (wrapLater n) loops)) == Just tn
+  where tn = triangle n
+```
+
+```{.unwrap pipe="./run"}
+main = check raceFirstUsesTriangularFuel genFuel
+```
+
+At the other extreme, `race`{.haskell} will run the *first* step of element
+`n`{.haskell} just before it goes back to the first element; i.e. at step
+`triangle (n + 1) - 1`{.haskell} (this is
+[OEIS A000096](https://oeis.org/A000096)):
+
+```{.haskell pipe="./show Main.hs"}
+raceHitsNthElementBeforeNextTriangularNumber n =
+    countLaters x (race (prog n)) == Just x
+  where x      = triangle (n + 1) - 1
+        prog 0 = Cons (Now ()) loops
+        prog m = Cons loop     (prog (m - 1))
+```
+
+```{.unwrap pipe="./run"}
+main = check raceHitsNthElementBeforeNextTriangularNumber genFuel
+```
+
+</details>
 
 We can use `race`{.haskell} to check whether two expressions ever agree on
 symbolic inputs, and therefore whether they're extensionally equal:
@@ -967,14 +1092,17 @@ everAgree x y = race (agreeSym x y) >>= go
 ```
 
 Note that `everAgree`{.haskell} is more general than `normalEq`{.haskell}, since
-the latter only checks for agreement on $0$ inputs:
+the latter only checks for agreement on $0$ inputs; although it requires more
+`Fuel`{.haskell} to account for running it interleaved with $1$ input, $2$
+inputs, etc. (see the fold-out section above for more details):
 
 ```{.haskell pipe="./show Main.hs"}
 normalEqImpliesEverAgree :: (Fuel, Com, Com) -> Bool
-normalEqImpliesEverAgree (n, x, y) = if      go (same <$> normalEq x y)
-                                        then go (        everAgree x y)
-                                        else True
-  where go d = runDelayOr False d n
+normalEqImpliesEverAgree (n, x, y) =
+    if      go (same <$> normalEq x y)  n
+       then go (        everAgree x y) (triangle n)
+       else True
+  where go = runDelayOr False
 ```
 
 ```{.unwrap pipe="./run"}
