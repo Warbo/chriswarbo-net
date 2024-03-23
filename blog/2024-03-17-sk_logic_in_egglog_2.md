@@ -82,7 +82,7 @@ export CLASS='fail'
 # Retry a few times, in case falsify random sampling fails to find a
 # counterexample we wanted to show!
 GIVEN=$(cat)
-for RETRY in seq 1 100
+for RETRY in $(seq 1 100)
 do
   if GOT=$(echo "$GIVEN" | ./run 'cat out err 1>&2 && exit 1' \
                                  'cat out err 2>&1 && exit 0')
