@@ -85,12 +85,14 @@ GIVEN=$(cat)
 for RETRY in $(seq 1 100)
 do
   if GOT=$(echo "$GIVEN" | ./run 'cat out err 1>&2 && exit 1' \
-                                 'cat out err 2>&1 && exit 0')
+                                 'cat out err 2>&1 && exit 0') 2> er
   then
+    cat er 1>&2
     echo "$GOT"
     exit 0
   fi
-  done
+done
+cat er 1>&2
 exit 1
 ```
 
