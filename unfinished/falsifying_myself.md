@@ -569,22 +569,10 @@ main = defaultMain . normalEqImpliesAgreeDiscard $ do
   tuple4 genFuel (pure x) (pure y) genComs
 ```
 
+### A trickier case ###
 
-### A more sophisticated test ###
-
-We're going to come up with a much better test, by applying a few simple ideas.
-The result will be a bit more complicated, but more reliable and (crucially)
-subject our assumption to a *much* more thorough barrage of checks.
-
-#### Smarter generators to avoid discarding ####
-
-The pattern-match in `prop_simplisticTest`{.haskell} will `discard`{.haskell}
-the test unless very specific requirements are met. One is that
-`f /= g`{.haskell} (i.e. `f`{.haskell} and `g`{.haskell} should not be
-equal). Discarding an entire test run is a pretty wasteful way of ensuring this
-precondition: especially since we *already have* the value of `f`{.haskell} when
-we generate `g`{.haskell}! Here's a smarter generator, which keeps retrying
-until it makes a value that's different from the given argument:
+We can use a similar approach for `agreementIsMonotonic`{.haskell}, generating
+a pair of values which only agree on a non-zero number of inputs:
 
 ```{.haskell pipe="./show Main.hs"}
 -- | Generate a pair of 'Com' values which agree on the given number of inputs,
@@ -604,52 +592,33 @@ genAgreeN = genAgreeFromN 1
 genAgree = genAgreeN limit
 ```
 
-This won't prevent *most* of the discarding in this case, but it's a good
-technique to be aware of when writing property-based tests.
-
-#### Generate *collections* to increase chance of collisions ####
-
-The real problem is that a pair of values `f`{.haskell} and `g`{.haskell} are
-very unlikely to be related in the way we need (that they reduce the input
-`v`{.haskell} to the same value).  However, the structure of our test is quite
-wasteful of the opportunities it has: when a test run is discarded, we *also*
-discard the generated values of `f`{.haskell} and `g`{.haskell} values; let's
-call them `f1`{.haskell} and `g1`{.haskell}. On the next iteration we generate a
-fresh pair, say `f2`{.haskell} and `g2`{.haskell}; but we only compare those new
-values to each other, and ignore the discarded values.
-
-What if we *also* compared `f2`{.haskell} with `f1`{.haskell}, and
-`f2`{.haskell} with `g1`{.haskell}, and `g2`{.haskell} with `f1`{.haskell} and
-`g2`{.haskell} with `g1`{.haskell}? There are a total of *six* possible
-relationships between the values we've generated; but we're currently only
-checking ⅓ of them.  If we also discard that second pair and generate a fresh
-`f3`{.haskell} and `g3`{.haskell}, that's *fifteen* possible relationships
-between the values we've generated, of which we're only checking ⅕. Indeed, as
-we generate more and more values the number of possible pairings follows
-[sequence A000217 of the OEIS](https://oeis.org/A000217/graph). Hence the lesson
-is *not* to generate individual pairs of values; but to *accumulate* values as
-they're generated, so later values can be compared against *all* prior ones.
-
-The first step is to generalise the definition of `genUnequal`{.haskell} to take
-a `Set`{.haskell} of arbitrarily-many values which our generated `Com`{.haskell}
-should be distinct from.  (Note that this may get stuck if the `Set`{.haskell}
-already contains all values that can be generated from the chosen amount of
-`fuel`{.haskell}; since the number of such values grows exponentially with the
-amount of fuel, we're unlikely to hit this problem except for very small cases)
-
-```{.haskell pipe="./show Main.hs"}
--- | Generate a Com, in normal form, which does not appear in the given Set
-genDistinctFrom :: Natural -> Set Com -> Gen Com
-genDistinctFrom fuel cs = do
-  c <- genNormalN fuel
-  if Set.member c cs
-    then genDistinctFrom fuel cs
-    else pure c
+```{.unwrap pipe="NAME=agreementIsMonotonic ./run"}
+main = defaultMain . agreementIsMonotonicDiscard . Gen.frequency $
+    [(9, smart), (1, dumb)]
+  where dumb  = tuple4 (tuple2 genNat genNat)
+                       genFuel
+                       (tuple2 genCom genCom)
+                       genComs
+        smart = do
+          n      <- (10 +) <$> genFuel
+          (x, y) <- genAgreeN n  -- Generate values that agree on some inputs
+          case runDelay n (extensionalInputs x y) of  -- Find how many inputs
+            Now (Just i) -> tuple4
+              (tuple2 (pure i) genNat)
+              (pure n)
+              (pure (x, y))
+              (fmap toCom <$> genNormals)  -- Normal values don't need any Fuel
+            _ -> smart  -- absurd, but retry as a fallback
+        genNat = fromIntegral <$> genFuel
 ```
 
-**Note:** This idea of larger collections leading to many more pairwise
-relationships explains the so-called ["birthday paradox"](), and is how
-[the known SHA1 collision]() was found.
+This test now takes a lot longer to run than the others, due to the more precise
+precondition we require of the generator. I see that as a good investment, since
+we're now maxing-out our CPU in a (reasonably targeted) attempt to find mistakes
+in our reasoning; which seems preferable to the original test, which quickly
+gave up even trying. Since the number of runs is configurable, we can choose a
+low number for a fast feedback cycle during development, and crank it up for a
+more thorough check like a pre-push git hook or a continuous integration server.
 
 #### Keep generating until we find what we need ####
 
