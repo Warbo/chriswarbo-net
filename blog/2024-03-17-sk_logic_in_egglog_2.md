@@ -225,12 +225,6 @@ sPrefix (x:xs) ys = Cons x (sPrefix xs ys)
 sFilter :: (a -> Bool) -> Stream a -> Stream a
 sFilter p (Cons x xs) = (if p x then Cons x else id) (sFilter p xs)
 
--- | Split the first 'n' elements off a 'Stream'.
-sSplitAt :: Integral n => n -> Stream a -> ([a], Stream a)
-sSplitAt = go []
-  where go acc n         xs | n <= 0 = (reverse acc, xs)
-        go acc n (Cons x xs)         = go (x:acc) (n - 1) xs
-
 -- | Extract the nth element of a 'Stream'.
 sAt :: Integral n => n -> Stream a -> a
 sAt i (Cons x xs) = if i <= 0 then x else sAt (i - 1) xs

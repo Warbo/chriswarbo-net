@@ -106,6 +106,15 @@ agreeOnExtensionalInputsStats g =
       Left msg         -> label "result" [msg]
       Right (i, True ) -> label "i" [show i] *> label "result" ["True"]
       Right (i, False) -> fail ("Disagree on " ++ show (fst (sSplitAt i ins)))
+
+-- | Huet Zipper, focused on the nth element of a 'Stream'.
+sZipper :: Integral n => n -> Stream a -> ([a], Stream a)
+sZipper = go []
+  where go acc n         xs | n <= 0 = (acc, xs)
+        go acc n (Cons x xs)         = go (x:acc) (n - 1) xs
+
+sTake :: Natural -> Stream a -> [a]
+sTake n = reverse . fst . sZipper n
 ```
 
 ```{.unwrap pipe="NAME=_ ./run"}
