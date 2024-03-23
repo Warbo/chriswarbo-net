@@ -280,7 +280,47 @@ main = defaultMain $ testGroup "Stats"
 
 Again, the exact distribution of these tests will vary from run to run; but I've
 seen some that *always* time-out, or never satisfy the required preconditions,
-etc. There are a couple of ways to improve this.
+etc. Sometimes this is a legitimate problem with our logic: for example, the
+properties `skNeverDisagreesWithSKSKKKStats`{.haskell} and
+`agreementIsMonotonic`{.haskell} always hit a timeout, since they are using the
+same `Fuel`{.haskell} parameter as the number of inputs and number of steps
+before timing out. We can avoid this by using separate parameters for each:
+
+```{.haskell pipe="./show Main.hs"}
+skNeverDisagreesWithSKSKKKFixed g =
+  testProperty "skNeverDisagreesWithSKSKKK" $ do
+    (n, m, xs) <- gen g
+    let f = App s k
+        g = App (App s (App k (App s k))) (App k k)
+    case runDelayOr Nothing (Just <$> sAt (2 + n) (agree f g xs)) (m + n) of
+      Nothing             -> label "result" ["Timeout"]
+      Just     (Same _  ) -> label "result" ["True"   ]
+      Just got@(Diff _ _) -> fail (show got)
+
+agreementIsMonotonicFixed g =
+  testProperty "agreementIsMonotonic" $ do
+    ((i1, i2), n, (f, g), xs) <- gen g
+    case tuple2 (runDelay n (sAt  i1       (agree f g xs)))
+                (runDelay n (sAt (i1 + i2) (agree f g xs))) of
+      Now got@(Same _  , Diff _ _) -> fail (show got)
+      Now     (Same _  , Same _  ) -> label "result" ["Same Same"]
+      Now     (Diff _ _, Same _  ) -> label "result" ["Diff Same"]
+      Now     (Diff _ _, Diff _ _) -> label "result" ["Diff Diff"]
+      Later   _                    -> label "result" ["Timeout"  ]
+```
+
+```{.unwrap pipe="NAME=skNeverDisagreesWithSKSKKK ./run"}
+main = defaultMain (skNeverDisagreesWithSKSKKKFixed
+                     (tuple3 genFuel genFuel genComs))
+```
+
+```{.unwrap pipe="NAME=agreementIsMonotonic ./run"}
+main = defaultMain (agreementIsMonotonicFixed
+                     (tuple4 (tuple2 genFuel genFuel)
+                             genFuel
+                             (tuple2 genCom genCom)
+                             genComs))
+```
 
 ## Discarding uninteresting cases ##
 
