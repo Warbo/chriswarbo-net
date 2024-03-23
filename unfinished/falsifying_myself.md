@@ -179,8 +179,8 @@ agreementIsMonotonicStats g =
 normalEqImpliesEverAgreeStats g =
   testProperty "normalEqImpliesEverAgree" $ do
     (n, x, y) <- gen g
-    let go d = runDelayOr Nothing (Just <$> d) n
-    case (go (same <$> normalEq x y), go (everAgree x y)) of
+    let go d = runDelayOr Nothing (Just <$> d)
+    case (go (same <$> normalEq x y) n, go (everAgree x y) (triangle n)) of
       (Nothing   , _         ) -> label "result" ["Timeout"]
       (Just False, _         ) -> label "result" ["Unequal"]
       (Just True , Just True ) -> label "result" ["True"   ]
@@ -339,8 +339,8 @@ agreementIsMonotonicDiscard g =
 normalEqImpliesEverAgreeDiscard g =
   testProperty "normalEqImpliesEverAgree" $ do
     (n, x, y) <- gen g
-    let go d = runDelayOr Nothing (Just <$> d) n
-    case (go (same <$> normalEq x y), go (everAgree x y)) of
+    let go d = runDelayOr Nothing (Just <$> d)
+    case (go (same <$> normalEq x y) n, go (everAgree x y) (triangle n)) of
       (Nothing   , _         ) -> discard
       (Just False, _         ) -> discard
       (Just True , Just True ) -> pure ()
