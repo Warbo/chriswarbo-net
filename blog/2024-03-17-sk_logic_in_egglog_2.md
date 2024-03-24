@@ -173,7 +173,7 @@ opposite: *always* claiming that *everything* is equal!
 Here's the initial boilerplate for the script; it just needs GHC with `falsify`
 in its package database. For more details on how it's executed, see
 [this page's Markdown
-source](/git/chriswarbo-net/git/branches/master/unfinished/checking_combinators_with_falsify.html).
+source](/git/chriswarbo-net/git/branches/master/blog/2024-03-17-sk_logic_in_egglog_2.html).
 
 ```{.haskell pipe="./show"}
 module Main (main) where
