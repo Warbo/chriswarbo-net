@@ -628,35 +628,84 @@ normalsAreNormalEqToThemselves (n, x) = normalEqToItself (n, toCom x)
 main = check normalsAreNormalEqToThemselves (tuple2 genFuel genNormal)
 ```
 
-The following generator makes pairs of values which are `normalEq`{.haskell} to
-each other (but not identical). It's reasonably rare for independently-generated
-values to match that way, which caused a lot of the discarding above. However,
-our generator can be more efficient by accumulating values until *any* of them
-match (exploiting the so-called
+### Generating related values ###
+
+The following generator makes a `Set`{.haskell} of values which satisfy some
+given binary predicate. The most straightforward way to implement this would be
+generating sets of values over and over until we eventually find one that fits
+our criteria. However, it may be quite rare for values to satisfy that predicate
+and attempting to generate *multiple* at once will just compound that rarity.
+
+Instead, our "smart" generator can be more efficient by accumulating values
+until *any combination* of them satisfies our criteria (exploiting the so-called
 ["birthday paradox"](https://en.wikipedia.org/wiki/Birthday_problem)):
 
 ```{.haskell pipe="./import"}
-import Data.Set (Set)
-import qualified Data.Set as Set
+import           Data.Map.Strict   (Map)
+import qualified Data.Map.Strict as Map
+import           Data.Set          (Set)
+import qualified Data.Set        as Set
 ```
 
 ```{.haskell pipe="./show"}
+-- | Accumulate more and more values from the given 'Gen', until we find 'n'
+-- | that satisfy the given relation. The 'i' parameter allows for flexibility.
+genMatchingN :: Ord o
+             => Natural
+             -> (i -> Gen o)
+             -> (i -> o -> o -> Bool)
+             -> Shrink o
+             -> i
+             -> Gen (Set o)
+genMatchingN n g match shr i = shrinkWith shrink (go Map.empty)
+  where go xss = do
+          -- Check if a freshly generated value matches any known key
+          x <- g i
+          let k   = case filter (match i x) (Map.keys xss) of
+                y:_ -> y
+                _   -> x
+              -- Append x to the Set which matches k (or empty, if not present)
+              xs  = Map.findWithDefault Set.empty k xss
+              xs' = Set.insert x xs
+          -- Finish if we now have enough matching values; otherwise recurse,
+          -- with 'x' included in the known values
+          if len xs' >= n
+             then pure xs'
+             else go (Map.insert k xs' xss)
+
+        -- Try shrinking the elements individually, keeping any that still match
+        shrink =
+          filter ((== n) . len) . (Set.fromList <$>) . shrink' . Set.toList
+
+        shrink' []     = []
+        shrink' (x:xs) =
+          keep (interleave [(:xs) <$> shr x, (x:) <$> shrink' xs])
+
+        len = fromIntegral . Set.size
+
+        keep []           = []
+        keep (    []:xss) = keep xss
+        keep ((x:xs):xss) =
+          (if all (match i x) xs then [x:xs] else []) ++ keep xss
+
 -- | Accumulate more and more values from the given 'Gen', until we find two
 -- | that satisfy the given relation. The 'i' parameter allows for flexibility.
-genMatching :: Ord o => (i -> Gen o) -> (i -> o -> o -> Bool) -> i -> Gen (o, o)
-genMatching g match i = go Set.empty  -- Begin with no known values
-  where go xs = do
-          -- Check if a freshly generated value matches any we know
-          x <- g i
-          let (matched, unmatched) = Set.partition (match i x) xs
-          case Set.toList matched of
-            y:_ -> pure (x, y)
-            []  -> go (Set.insert x unmatched) -- Remember value & try again
+genMatching :: Ord o
+            => (i -> Gen o)
+            -> (i -> o -> o -> Bool)
+            -> Shrink o
+            -> i
+            -> Gen (o, o)
+genMatching g match shr i = genMatchingN 2 g match shr i >>= get
+  where get s = case Set.toList s of
+          x:y:_ -> pure (x, y)
+          _     -> genMatching g match shr i -- absurd but fall back to retrying
 
 -- | Generate pairs of unequal 'Com' values which have the same 'Normal' form.
 genNormalEqN :: Fuel -> Gen (Com, Com)
-genNormalEqN = genMatching genComN match
-  where match n x y = x /= y && runDelayOr False (same <$> normalEq x y) n
+genNormalEqN = genMatching genComN matchNormalEqN shrinkCom
+
+matchNormalEqN n x y = x /= y && runDelayOr False (same <$> normalEq x y) n
 
 genNormalEq :: Gen (Com, Com)
 genNormalEq = genNormalEqN limit
@@ -701,10 +750,11 @@ a pair of values which only agree on a non-zero number of inputs:
 -- | Generate a pair of 'Com' values which agree on the given number of inputs,
 -- | within the given amount of 'Fuel'.
 genAgreeFromN :: Natural -> Fuel -> Gen (Com, Com)
-genAgreeFromN lo = genMatching genComN match
-  where match n x y = case runDelayOr Nothing (extensionalInputs x y) n of
-          Just i  -> i >= lo
-          Nothing -> False
+genAgreeFromN lo = genMatching genComN (matchAgreeFromN lo) shrinkCom
+
+matchAgreeFromN lo n x y = case runDelayOr Nothing (extensionalInputs x y) n of
+  Just i  -> i >= lo
+  Nothing -> False
 
 -- | Generate a pair of 'Com' values which agree on 1 or more inputs. This tends
 -- | to avoid values which agree on 0 inputs, i.e. with equal 'Normal' forms,
