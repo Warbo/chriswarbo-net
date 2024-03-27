@@ -483,9 +483,13 @@ genNormalN n = do
 genNormal :: Gen Normal
 genNormal = genNormalN limit
 
+-- | Generates a 'Stream' from the given generator
+genStream :: Gen a -> Gen (Stream a)
+genStream g = Cons <$> g <*> genStream g
+
 -- | Generates a 'Stream' of 'Normal' values of the given size
 genNormalsN :: Fuel -> Gen (Stream Normal)
-genNormalsN n = Cons <$> genNormalN n <*> genNormalsN n
+genNormalsN = genStream . genNormalN
 
 -- | Generates a 'Stream' of reasonably-sized 'Normal' values
 genNormals :: Gen (Stream Normal)
