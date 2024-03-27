@@ -468,12 +468,16 @@ running `reduce`{.haskell} on generated `Com`{.haskell} values. That's
 undecidable from *within* a property, but actually quite easy in a generator,
 since we're free to discard problematic values and try again:
 
+```{.haskell pipe="./import"}
+import Test.Falsify.Generator (shrinkWith)
+```
+
 ```{.haskell pipe="./show"}
 -- | Like genComN, but reduces its outputs to normal form. The fuel
 -- | bounds the size of the initial expression (before it's reduced), and
 -- | the number of steps to attempt when normalising.
 genNormalN :: Fuel -> Gen Normal
-genNormalN n = do
+genNormalN n = shrinkWith shrinkNormal $ do
   c <- genComN n                  -- Generate a Com value c
   runDelayOr (genNormalN n)       -- Fall back to generating a fresh Com
              (pure <$> reduce c)  -- Try to reduce c to a Normal value
@@ -495,6 +499,120 @@ genNormalsN = genStream . genNormalN
 genNormals :: Gen (Stream Normal)
 genNormals = genNormalsN limit
 ```
+
+### A minor digression about shrinking ###
+
+Property-checkers which generate inputs randomly, like `falsify`, may stumble
+across monstrous counterexamples full of irrelevant structure that is tedious
+for users to tease apart and find the underlying problem. To reduce this burden,
+all such checkers will attempt to "shrink" the counterexamples they find, in the
+hope of discarding irrelevant parts: when a counterexample is found, a
+"shrinker" turns it into a list of possible alternatives. If that list is empty,
+shrinking stops and the counterexample is shown the the user. If the list is not
+empty, the property is retried with the first alternative: if the property holds
+then the next alternative is tried, and so on. If an alternative is found for
+which the property *does not* hold, then we've found a smaller counterexample.
+The shrinking process is repeated for this smaller counterexample, and so on
+until there are no alternatives remaining (either because the counterexample
+cannot be shrunk, like an empty list; or the property held for every smaller
+alternative).
+
+There is no precise definition for what "shrinking" means, other than a
+requirement to avoid cycles: if `foo` can be shrunk to `bar`, then `bar` should
+not also shrink to `foo`, or else the above algorithm can get stuck in a loop.
+
+[QuickCheck](https://hackage.haskell.org/package/QuickCheck) implements
+shrinking alongside, but separately, to its data generators. A QuickCheck-style
+shrinker is a value with the following type:
+
+```{.haskell pipe="./show"}
+type Shrink a = a -> [a]
+```
+
+That is, a function which takes as input the value we want to shrink, and
+outputs a list (potentially empty!) of "smaller" alternatives. For example, we
+could shrink a `Com`{.haskell} value in several ways:
+
+ - Replace leaf values with `K` (the simpler of the two basis values). We can't
+   replace `K` with itself, since that's a cycle, so it has no alternatives.
+ - Replace branches (`App` values) with `S` or `K`, since leaves are smaller.
+ - Replace branches with either of their children.
+ - Shrink either of a branch's children.
+
+```{.haskell pipe="./show"}
+shrinkCom :: Shrink Com
+shrinkCom (C   "K") = []
+shrinkCom (C     _) = [k]
+shrinkCom (App l r) = interleave
+  [ [ k, s ]
+  , filter (`notElem` [k, s]) [ l, r ]  -- Avoid duplicating k or s
+  ,      App l <$> shrinkCom r
+  , flip App r <$> shrinkCom l
+  ]
+
+-- | Alternate taking elements from each list.
+interleave :: [[a]] -> [a]
+interleave ((x:xs):ys) = x : interleave (ys ++ [xs])
+interleave ([]    :ys) =     interleave  ys
+interleave  []         = []
+```
+
+The `shrinkNormal`{.haskell} function we reference above is a simple wrapper
+around `shrinkCom`{.haskell}, which discards non-`Normal`{.haskell} values:
+
+```{.haskell pipe="./show"}
+shrinkNormal :: Shrink Normal
+shrinkNormal = keep . shrinkCom . toCom
+  where keep []     = []
+        keep (c:cs) = case toNormal c of
+          Left  _ ->     keep cs
+          Right n -> n : keep cs
+```
+
+We use `shrinkWith shrinkNormal`{.haskell} in our definition of
+`genNormalN`{.haskell} so that the shrinking algorithm described above will get
+smaller alternatives by calling our `shrinkNormal`{.haskell} function. That
+would be the norm in QuickCheck (or its descendents, like ScalaCheck), but
+`falsify` is a bit smarter: it doesn't need custom shrinking functions, since
+its able to re-run its generators on smaller (trees of) random numbers. Such an
+"integrated shrinking" approach is *usually* good enough, and saves us a bunch
+of effort (after all, we've got this far without having to know about
+shrinking!). Unfortunately, integrated shrinking doesn't work well for smarter
+generators that perform a search, like `genNormalN`{.haskell}: there's no reason
+to expect that re-running the search with some smaller random numbers will find
+a smaller result. Indeed it may find *no* result, and get stuck recursing
+forever. When writing such "smart" generators, it's hence worth thinking about
+their shrinking behaviour, and whether it would be prudent to override.
+
+Here are a few more general-purpose shrinkers (in a [scrap your type
+classes](https://www.haskellforall.com/2012/05/scrap-your-type-classes.html)
+style):
+
+```{.haskell pipe="./show"}
+-- | Shrink the elements of a tuple.
+shrink2 :: Shrink a -> Shrink b -> Shrink (a, b)
+shrink2 sA sB (x, y) = interleave [(,y) <$> sA x, (x,) <$> sB y]
+
+-- | Shrink the elements of a tuple.
+shrink3 :: Shrink a -> Shrink b -> Shrink c -> Shrink (a, b, c)
+shrink3 sA sB sC (x, y, z) = unpack <$> shrink2 sA (shrink2 sB sC) (x, (y, z))
+  where unpack (x', (y', z')) = (x', y', z')
+
+-- | Shrink a list, by dropping and shrinking its elementsthe elements of a tuple.
+shrinkL :: Shrink a -> Shrink [a]
+shrinkL _  []  = []
+shrinkL sA [x] = [] : pure <$> sA x
+shrinkL sA xs  = [] : shrinkElems
+  where len         = length xs
+        shrinkElems = do
+          i <- [0..len-1]
+          case splitAt i xs of
+            -- Try dropping or shrinking the ith element
+            (pre, a:suf) -> (pre ++ suf) : ((pre ++) . (:suf) <$> sA a)
+            _            -> []
+```
+
+### Revisiting our roots ###
 
 Since `Normal`{.haskell} values reduce immediately, their `normalEq`{.haskell}
 result is always `Now`{.haskell}, and hence they can be compared with any amount
