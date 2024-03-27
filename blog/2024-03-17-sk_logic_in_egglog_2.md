@@ -89,7 +89,7 @@ GIVEN=$(cat)
 [[ -n "${NAME:-}" ]] || NAME=$(echo "$GIVEN" | ./name)
 export NAME
 
-for RETRY in $(seq 1 100)
+for RETRY in $(seq 1 10)
 do
   if GOT=$(echo "$GIVEN" | ./run 'cat out err 1>&2 && exit 1' \
                                  'cat out err 2>&1 && exit 0') 2> er
