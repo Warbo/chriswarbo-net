@@ -49,7 +49,7 @@ rm -f "$NAME"
   cat in
   printf '\n```\n\n```{pipe="sh"}\n'
   echo "cp root/$NAME ./"
-  echo "if runhaskell $NAME 1> out 2> err; then"
+  echo "if GHCRTS='-M2G' runhaskell $NAME 1> out 2> err; then"
   echo "${1:-cat out; cat err 1>&2; exit 0}; else"
   echo "${2:-cat out err 1>&2; exit 1}; fi"
   echo '```'
