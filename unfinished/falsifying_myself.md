@@ -811,27 +811,18 @@ such a simple language that these notions end up coinciding!).
 As a consequence, extensionally equal values are interchangable: swapping any
 part of an SK expression for an extensionally-equal alternative should make no
 observable difference to the result; i.e. the results should themselves be
-extensionally equal.
-
-This is difficult to test: the double-negative of being "not unequal" doesn't
-give us much confidence, since we can only prove inequality in certain specific
-cases; yet we don't know how many inputs it may take to prove equality, and
-hence how much `Fuel`{.haskell} would be needed.
-
-We'll work around this by *removing* the timeout: this is a bold move, since our
-test suite may run forever if we're wrong!
-
-```{.haskell pipe="./show"}
--- | Runs a 'Delay' value to completion. This may run forever!
-unsafeRunDelay :: Delay a -> a
-unsafeRunDelay (Now   x) = x
-unsafeRunDelay (Later x) = unsafeRunDelay x
-```
-
-To represent "swapping any part", we'll use a
+extensionally equal. We can represent such "swapping" using a
 [zipper datastructure](https://en.wikipedia.org/wiki/Zipper_(data_structure)):
 
 ```{.haskell pipe="./show"}
+-- | A path down a binary tree
+type Path = [Either () ()]
+
+-- | Replace a part (identified by 'Path') of the first 'Com' with the second.
+swapPart :: Path -> Com -> Com -> Com
+swapPart p whole part = unzipCom (part, position)
+  where (_, position) = focus whole p
+
 -- | Represents a 'Com' with one of its sub-expressions "focused"
 type ComZipper = (Com, [Either Com Com])
 
@@ -841,9 +832,6 @@ unzipCom (x, xs) = case xs of
   []         -> x
   Left  r:ys -> unzipCom (App x r, ys)
   Right l:ys -> unzipCom (App l x, ys)
-
--- | A path down a binary tree
-type Path = [Either () ()]
 
 -- | Focus on a particular sub-expression of the given 'Com', at a position
 -- | identified by the given 'Path' (stopping if it hits a leaf).
@@ -867,8 +855,9 @@ genPath = genPathN limit
 <details class="odd">
 <summary>Checking `ComZipper`{.haskell}…</summary>
 
-We'd better do some sanity checks on `ComZipper`{.haskell}, to make sure it
-behaves as we expect:
+We can sanity-check our `ComZipper`{.haskell} implementation using the property
+that turning them back into a `Com`{.haskell} value doesn't depend on which part
+was "focused":
 
 ```{.haskell pipe="./show"}
 unzipComIgnoresLocation = testProperty "unzipComIgnoresLocation" $ do
@@ -884,9 +873,54 @@ main = defaultMain unzipComIgnoresLocation
 
 </details>
 
-```{.haskell pipe="./import"}
-import Data.Default (def)
-import Test.Tasty.Falsify (overrideNumTests, testPropertyWith)
+Swapping-out part of an *arbitrary* expression, even one in `Normal`{.haskell}
+form, may result in a value which loops forever. For example, consider a classic
+infinite loop like `S(SKK)(SKK)(S(SKK)(SKK))`:
+
+ - The expression `SKK` acts as an
+   [identity function](https://en.wikipedia.org/wiki/Identity_function),
+   reducing to its first input value: `SKKx → Kx(Kx) → x`.
+ - Let's abbreviate `SKK` as `I`, so our loop can be written `SII(SII)`.
+ - Applying the `S` rule, we get `SII(SII) → I(SII)(I(SII))`.
+ - Since `Ix` reduces to `x`, both of those `I(SII)` values reduce to `SII`.
+ - Hence `I(SII)(I(SII)) → SII(SII)`, which is what we started with!
+ - Therefore our original expression `S(SKK)(SKK)(S(SKK)(SKK))` reduces to
+   itself, over and over, forever.
+
+Note that the repeated component `S(SKK)(SKK)` is itself in `Normal`{.haskell}
+form, since each `S` is only applied to two args. Applying `K` to that, like
+`K(S(SKK)(SKK))`, is also `Normal`{.haskell}. If we swap-out that `K` for
+`S(SKK)(SKK)`, we'll get our infinite loop.
+
+Undecidability makes it impossible, in general, to avoid creating such loops; so
+we need our generator to retry if it can't normalise a swapped-out expression in
+a reasonable number of steps:
+
+```{.haskell pipe="./show"}
+genSwappableExtEqValsN :: Fuel -> Gen (Com, Com, [Either Com Com])
+genSwappableExtEqValsN n = do
+    -- Generate a pair of extensionally-equal Coms. Avoid normally-equal values,
+    -- since they don't need symbolic execution.
+    (x, y) <- genMatching genNormalComN matchNontriviallyExtEq shrinkCom n
+    -- Generate a ComZipper whose focus can be swapped-out with 'x' or 'y'
+    -- without diverging
+    zs <- shrinkWith zShrink (genZipperFor x y)
+    pure (x, y, zs)
+  where genZipperFor x y = do
+          zs <- snd . focus <$> genComN n <*> genPathN n
+          if checkZs (x, y, zs) then pure zs else genZipperFor x y
+
+        checkZs (x, y, zs) =
+          let go = isJust . countLaters n . reduce . unzipCom . (, zs)
+           in go x && go y
+
+        zShrink = filter checkZs
+                . shrink3 shrinkCom shrinkCom (shrinkL (const []))
+
+-- | Whether two 'Com' values are 'extEq' but *not* 'normalEq' (within 'Fuel').
+matchNontriviallyExtEq :: Fuel -> Com -> Com -> Bool
+matchNontriviallyExtEq n x y = runDelayOr False (            extEq x y) n
+                            && runDelayOr False (diff <$> normalEq x y) n
 ```
 
 ```{.haskell pipe="./show"}
