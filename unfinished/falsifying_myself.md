@@ -924,6 +924,13 @@ matchNontriviallyExtEq n x y = runDelayOr False (            extEq x y) n
                             && runDelayOr False (diff <$> normalEq x y) n
 ```
 
+Now we can generate extensionally-equal values, an expression to plug them into,
+and a `Path`{.haskell} describing where to plug them in, filtered such that they
+both reduce to a `Normal`{.haskell}. However, one problem remains: we have no
+idea how much `Fuel`{.haskell} will be needed to find when those swapped-out
+expressions begin to agree. We can re-use our double-negative trick of being
+"not unequal":
+
 ```{.haskell pipe="./show"}
 extEqCannotBeDistinguished = testProperty "extEqCannotBeDistinguished" $ do
   -- Use the smart generator 90% of the time, allow 10% to be unconstrained
@@ -941,6 +948,13 @@ extEqCannotBeDistinguished = testProperty "extEqCannotBeDistinguished" $ do
 ```{.unwrap pipe="NAME=extEqCannotBeDistinguished ./run"}
 main = defaultMain extEqCannotBeDistinguished
 ```
+
+However, this doesn't give us much confidence since we can only prove inequality
+in certain specific cases. Expressions which are unequal in a way we can't prove
+will give a never-ending sequence of `Later`{.haskell}, and hence be discarded.
+There *is* a way we can assert that all the results are extensionally equal, by
+removing the timeout: that's risky, since if we're wrong then one of those
+never-ending sequences will cause our test suite to run forever!
 
 ```{.haskell pipe="./show"}
 -- | Runs a 'Delay' value to completion. This may run forever!
@@ -981,6 +995,13 @@ exit 1
 ```{.unwrap pipe="NAME=extEqAreInterchangable MAX_SECS=120 ./timed"}
 main = defaultMain extEqAreInterchangable
 ```
+
+(If you look at
+[this page's Markdown
+source](/git/chriswarbo-net/git/branches/master/unfinished/falsifying_myself.html)
+you'll see that I'm actually a coward, since I'm wrapping the above Haskell
+process in a timeout of a few minutes, just in case!)
+
 ## Conclusion ##
 
 I'm pretty happy that I took this little diversion to double-check my assumption
