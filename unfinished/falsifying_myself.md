@@ -1002,6 +1002,39 @@ source](/git/chriswarbo-net/git/branches/master/unfinished/falsifying_myself.htm
 you'll see that I'm actually a coward, since I'm wrapping the above Haskell
 process in a timeout of a few minutes, just in case!)
 
+### Extensionally unequal values are distinguishable ###
+
+When two values are extensional *unequal*, there exist input values for which
+they disagree. Note that we can't test this by just generating some input values
+and asserting that they disagree, since *some* inputs may happen to agree by
+coincidence. Instead, we'll generate a `Stream`{.haskell} of input
+`Stream`{.haskell}s, and check for disagreement on all of them, and interleave
+their execution using `race`{.haskell}:
+
+```{.haskell pipe="./show"}
+-- | Generate a pair of 'Com' values which are extensionally unequal
+genExtUneqN :: Fuel -> Gen (Com, Com)
+genExtUneqN = genMatching genComN uneq shrinkCom
+  where uneq n x y = runDelayOr False (not . isJust <$> extensionalInputs x y) n
+
+genExtUneq = genExtUneqN limit
+
+extUneqWillDisagree = testProperty "extUneqWillDisagree" $ do
+    (x, y) <- gen genExtUneq
+    len    <- gen genFuel
+    inputs <- gen genInputs
+    let result = race (sAt len . agree x y <$> inputs) >>= findDisagreement
+    pure (unsafeRunDelay result)
+  where genInputs = Cons <$> genComs <*> genInputs
+        findDisagreement (x, _, xs) = if diff x
+                                         then pure ()
+                                         else race xs >>= findDisagreement
+```
+
+```{.unwrap pipe="NAME=extUneqWillDisagree MAX_SECS=120 ./timed"}
+main = defaultMain extUneqWillDisagree
+```
+
 ## Conclusion ##
 
 I'm pretty happy that I took this little diversion to double-check my assumption
