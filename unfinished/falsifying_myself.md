@@ -1035,6 +1035,58 @@ extUneqWillDisagree = testProperty "extUneqWillDisagree" $ do
 main = defaultMain extUneqWillDisagree
 ```
 
+### Transitivity ###
+
+The [transitive property](https://en.wikipedia.org/wiki/Transitive_relation)
+holds for all of the notions of equality we've seen so far: when `foo` equals
+`bar` and `bar` equals `baz`, then `foo` must equal `baz`:
+
+```{.haskell pipe="./show"}
+-- | Assert that the function 'eq' is transitive for the three given args.
+assertTrans eq x y z = case (eq x y, eq y z, eq x z) of
+  (False,     _,    _) -> discard
+  (    _, False,    _) -> discard
+  ( True,  True, True) -> pure ()
+  _                    -> fail "Not transitive"
+
+eqIsTransitive = testProperty "eqIsTransitive" $ do
+    -- Can't use genMatching, since Set will discard == values
+    let g xs = do
+          x <- genCom
+          let got = x : filter (== x) xs
+          if length got >= 3 then pure got else g (x:xs)
+    (x:y:z:_) <- gen $ Gen.shrinkWith (shrinkL shrinkCom) (g [])
+    assertTrans (==) x y z
+  where
+
+normalEqIsTransitive = testProperty "normalEqIsTransitive" $ do
+  let g  = genMatchingN 3 genComN matchNormalEqN shrinkCom limit
+      eq = matchNormalEqN limit
+  (x:y:z:_) <- gen $ Set.toList <$> g
+  assertTrans eq x y z
+
+everAgreeIsTransitive = testProperty "agreeIsTransitive" $ do
+  let g      = genMatchingN 3 genNormalComN (matchAgreeFromN 1) shrinkCom limit
+      eq x y = runDelayOr False (everAgree x y) (limit * limit)
+  (x:y:z:_) <- gen $ Set.toList <$> g
+  assertTrans eq x y z
+
+extEqIsTransitive = testProperty "extEqIsTransitive" $ do
+  let g      = genMatchingN 3 genNormalComN (matchAgreeFromN 1) shrinkCom limit
+      eq x y = runDelayOr False (extEq x y) (limit * limit)
+  (x:y:z:_) <- gen $ Set.toList <$> g
+  assertTrans eq x y z
+```
+
+```{.unwrap pipe="NAME=transitivity ./run"}
+main = defaultMain $ testGroup "transitivity"
+  [ eqIsTransitive
+  , normalEqIsTransitive
+  , everAgreeIsTransitive
+  , extEqIsTransitive
+  ]
+```
+
 ## Conclusion ##
 
 I'm pretty happy that I took this little diversion to double-check my assumption
