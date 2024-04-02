@@ -925,14 +925,21 @@ matchNontriviallyExtEq n x y = runDelayOr False (            extEq x y) n
 ```
 
 ```{.haskell pipe="./show"}
-extEqAreInterchangable = testProperty "extEqAreInterchangable" $ do
-  -- Generate an expression in Normal form (to avoid infinite loops); focus on
-  -- an arbitrary Path inside it, and discard that focus (creating a "hole").
-  (_, zs) <- gen $ focus . toCom <$> genNormal <*> genPath
-  -- Generate extensionally-equal expressions, to plug that hole
-  (x, y ) <- gen genAgree
+extEqCannotBeDistinguished = testProperty "extEqCannotBeDistinguished" $ do
+  -- Use the smart generator 90% of the time, allow 10% to be unconstrained
+  (x, y, zs) <- gen $ Gen.frequency
+    [ (9, genSwappableExtEqValsN limit)
+    , (1, tuple3 genCom genCom (snd <$> (focus <$> genCom <*> genPath)))
+    ]
   let (x', y') = (unzipCom (x, zs), unzipCom (y, zs))
-  if unsafeRunDelay (extEq x' y') then pure () else fail (show (x', y'))
+  case (runDelayOr False (extEq x y) limit, runDelay limit (extEq x' y')) of
+    (True, Now True ) -> pure ()
+    (True, Now False) -> fail (show x' ++ " /= " ++ show y')
+    _                 -> discard
+```
+
+```{.unwrap pipe="NAME=extEqCannotBeDistinguished ./run"}
+main = defaultMain extEqCannotBeDistinguished
 ```
 
 ```{.unwrap pipe="sh"}
