@@ -601,7 +601,7 @@ shrink3 sA sB sC (x, y, z) = unpack <$> shrink2 sA (shrink2 sB sC) (x, (y, z))
 -- | Shrink a list, by dropping and shrinking its elementsthe elements of a tuple.
 shrinkL :: Shrink a -> Shrink [a]
 shrinkL _  []  = []
-shrinkL sA [x] = [] : pure <$> sA x
+shrinkL sA [x] = [] : (pure <$> sA x)
 shrinkL sA xs  = [] : shrinkElems
   where len         = length xs
         shrinkElems = do
@@ -659,19 +659,16 @@ genMatchingN :: Ord o
              -> Gen (Set o)
 genMatchingN n g match shr i = shrinkWith shrink (go Map.empty)
   where go xss = do
-          -- Check if a freshly generated value matches any known key
           x <- g i
-          let k   = case filter (match i x) (Map.keys xss) of
-                y:_ -> y
-                _   -> x
+          let k    = case filter (match i x) (Map.keys xss) of
+                       y:_ -> y
+                       _   -> x
               -- Append x to the Set which matches k (or empty, if not present)
-              xs  = Map.findWithDefault Set.empty k xss
-              xs' = Set.insert x xs
-          -- Finish if we now have enough matching values; otherwise recurse,
-          -- with 'x' included in the known values
-          if len xs' >= n
-             then pure xs'
-             else go (Map.insert k xs' xss)
+              xs   = Map.findWithDefault Set.empty k xss
+          case Set.insert x xs of
+            xs -> if len xs >= n
+                     then pure xs
+                     else go (Map.insert k xs xss)
 
         -- Try shrinking the elements individually, keeping any that still match
         shrink =
@@ -829,17 +826,17 @@ type ComZipper = (Com, [Either Com Com])
 -- | Turns a 'ComZipper' back into a 'Com'
 unzipCom :: ComZipper -> Com
 unzipCom (x, xs) = case xs of
-  []         -> x
-  Left  r:ys -> unzipCom (App x r, ys)
-  Right l:ys -> unzipCom (App l x, ys)
+  []         -> x                       -- x is the root, return it as-is
+  Left  r:ys -> unzipCom (App x r, ys)  -- x is a left child with sibling r
+  Right l:ys -> unzipCom (App l x, ys)  -- x is a right child with sibling l
 
 -- | Focus on a particular sub-expression of the given 'Com', at a position
 -- | identified by the given 'Path' (stopping if it hits a leaf).
 focus :: Com -> Path -> ComZipper
-focus x = go (x      , [])
-  where   go (App l r, xs) ( Left ():p) = go (l,  Left r:xs) p
-          go (App l r, xs) (Right ():p) = go (r, Right l:xs) p
-          go z             _            = z
+focus x = go (x, [])  -- Start focused on the root
+  where go (App l r, xs) ( Left ():p) = go (l,  Left r:xs) p  -- Focus on left
+        go (App l r, xs) (Right ():p) = go (r, Right l:xs) p  -- Focus on right
+        go z             _            = z  -- Reached a leaf or end of Path
 
 -- | Generate a 'Path' through a binary tree (e.g. 'Com').
 genPathN :: Fuel -> Gen Path
@@ -898,16 +895,16 @@ a reasonable number of steps:
 
 ```{.haskell pipe="./show"}
 genSwappableExtEqValsN :: Fuel -> Gen (Com, Com, [Either Com Com])
-genSwappableExtEqValsN n = do
+genSwappableExtEqValsN n = shrinkWith zShrink $ do
     -- Generate a pair of extensionally-equal Coms. Avoid normally-equal values,
     -- since they don't need symbolic execution.
     (x, y) <- genMatching genNormalComN matchNontriviallyExtEq shrinkCom n
     -- Generate a ComZipper whose focus can be swapped-out with 'x' or 'y'
     -- without diverging
-    zs <- shrinkWith zShrink (genZipperFor x y)
+    zs <- genZipperFor x y
     pure (x, y, zs)
   where genZipperFor x y = do
-          zs <- snd . focus <$> genComN n <*> genPathN n
+          (_, zs) <- focus <$> genComN n <*> genPathN n
           if checkZs (x, y, zs) then pure zs else genZipperFor x y
 
         checkZs (x, y, zs) =
@@ -916,6 +913,10 @@ genSwappableExtEqValsN n = do
 
         zShrink = filter checkZs
                 . shrink3 shrinkCom shrinkCom (shrinkL (const []))
+
+-- | More efficient alternative to 'genComN': biased towards smaller values, and
+-- | only generates 'Normal' forms.
+genNormalComN = (toCom <$>) . genNormalN
 
 -- | Whether two 'Com' values are 'extEq' but *not* 'normalEq' (within 'Fuel').
 matchNontriviallyExtEq :: Fuel -> Com -> Com -> Bool
