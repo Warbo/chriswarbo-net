@@ -942,22 +942,23 @@ extEqCannotBeDistinguished = testProperty "extEqCannotBeDistinguished" $ do
 main = defaultMain extEqCannotBeDistinguished
 ```
 
-```{.unwrap pipe="sh"}
-export NAME=extEqAreInterchangable
-export MAX_SECS=300
-CODE='main = defaultMain extEqAreInterchangable'
+```{pipe="cat > timed && chmod +x timed"}
+#!/bin/sh
+set -eu
+set -o pipefail
+GIVEN=$(cat)
 for RETRY in $(seq 1 10)
 do
-   if GOT=$(echo "$CODE" | withTimeout ./run) 2> er
-   then
-     cat er 1>&2
-     echo "$GOT"
-     exit 0
-   else
-     echo "Retrying $NAME $RETRY" 1>&2
-   fi
+  if GOT=$(echo "$GIVEN" | withTimeout ./run) 2> er
+  then
+    cat er 1>&2
+    echo "$GOT"
+    exit 0
+  else
+    echo "Retrying $NAME $RETRY" 1>&2
+  fi
 done
-cat er
+cat er 1>&2
 exit 1
 ```
 
