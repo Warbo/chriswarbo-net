@@ -942,6 +942,22 @@ extEqCannotBeDistinguished = testProperty "extEqCannotBeDistinguished" $ do
 main = defaultMain extEqCannotBeDistinguished
 ```
 
+```{.haskell pipe="./show"}
+-- | Runs a 'Delay' value to completion. This may run forever!
+unsafeRunDelay :: Delay a -> a
+unsafeRunDelay (Now   x) = x
+unsafeRunDelay (Later x) = unsafeRunDelay x
+
+extEqAreInterchangable = testProperty "extEqAreInterchangable" $ do
+  -- For safety, we can only use the smart generator
+  (x, y, zs) <- gen $ genSwappableExtEqValsN limit
+  let (x', y') = (unzipCom (x, zs), unzipCom (y, zs))
+  case (unsafeRunDelay (extEq x y), unsafeRunDelay (extEq x' y')) of
+    (True, True ) -> pure ()
+    (True, False) -> fail (show x' ++ " /= " ++ show y')
+    _             -> discard
+```
+
 ```{pipe="cat > timed && chmod +x timed"}
 #!/bin/sh
 set -eu
@@ -962,6 +978,9 @@ cat er 1>&2
 exit 1
 ```
 
+```{.unwrap pipe="NAME=extEqAreInterchangable MAX_SECS=120 ./timed"}
+main = defaultMain extEqAreInterchangable
+```
 ## Conclusion ##
 
 I'm pretty happy that I took this little diversion to double-check my assumption
