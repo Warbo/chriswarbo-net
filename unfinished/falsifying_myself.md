@@ -1087,14 +1087,70 @@ main = defaultMain $ testGroup "transitivity"
   ]
 ```
 
+## Falsifying myself ##
+
+Thanks to this in-depth testing, I eventually discovered the problem I was
+having in egglog: expressions containing symbolic variables were being used
+interchangably with with concrete (variable-free) expressions. When we use
+symbolic execution to check for agreement, we are assuming that each symbol
+represents an input our expressions have been applied to: if those expressions
+*already* contain symbols, that assumption no longer holds, and our conclusions
+about agreement may be wrong.
+
+Let's walk through a simple example, with the expressions `SKK` (concrete) and
+`Kx` (which contains the symbol `x`). These don't agree on 0 inputs, but if we
+apply them to a single symbolic input `x`:
+
+ - The first expression reduces like `SKKx → Kx(Kx) → x`
+ - The second expression reduces like `Kxx → x`
+
+Hence these *seem* to agree! Unfortunately, this is actually just a coincidence,
+caused by the appearance of the symbol `x` in the latter expression. If we apply
+these expressions to any input value *other* than `x`, they will disagree! To
+see this, notice that the first expression `SKK` is an identity function: it
+returns its argument unchanged; whilst the second, `Kx`, ignores its argument
+and always returns `x`. They only agree when the argument is also `x`: but if
+that is the first symbol we're using to check agreement, we will mistakenly
+conclude that these expressions are extensionally equal!
+
+Once we've made such a mistake, all `Com`{.haskell} expressions will quickly
+merge into one big equivalence class, due to the properties described above. To
+see why, consider an arbitrary value `A`: if we apply our first expression to
+this we get `SKKA` which is equal to `KA(KA)` and ultimately to `A`. However, we
+can also swap-out that `SKK` for the "equal" expression `Kx`, giving `KxA` which
+is equal to `x`. Hence this mistaken equality between `SKK` and `Kx` can be used
+to "prove" that *any* value is equal to `x`; and therefore, by transitivity,
+equal to any other value!
+
+I believe this is why my implementation of extensional equality in egglog caused
+everything to collapse: once symbolic expressions started leaking into
+equivalence classes of concrete expressions (due to my unhygenic mixing of the
+two) the inevitable consequences quickly unfolded, thanks to egglog's powerful
+Equation Graph machinery.
+
 ## Conclusion ##
 
 I'm pretty happy that I took this little diversion to double-check my assumption
-about checking universal quantification through the use of symbolic computation.
-The initial test was quick and direct to write, but didn't give me much
-confidence that it had explored much of the search space. With a little careful
-thought I came up with a much more thorough test, and now I'm quite sure that
-this approach is appropriate to use in my egglog code!
+about using symbolic computation to "fake" universal quantification. It was a
+fun little exercise to learn the particular API features of `falsify`, which
+seems very promising. My initial tests were quick and direct to write, but they
+didn't yield any new information. This didn't give me much confidence, as I
+suspected they weren't exploring much of the search space: and adding
+instrumentation proved as much. Using discards as a guard-rail against
+triviality, plus some careful thought on how to avoid slamming into them
+repeatedly, ultimately lead to some more in-depth understanding of what
+assumptions we can and can't make in this context.
 
-Also, this was a nice way to learn the particular API features of falsify, which
-is a very nice library that I intend to make more use of!
+My ultimate realisation, that it's the "leaking" of symbolic values that caused
+the collapse I was seeing, did not come directly from a failing `falsify` test.
+However, it *did* come from clarification of my mental model, and that
+clarification was largely thanks to these `falsify` tests. That's actually a
+truism I've learned with experience: whether a test failure is caused by a bug
+in an application, or "just" a bug in the tests, those are both symptoms of a
+bug in our *understanding*; which is the most important part.
+
+With this Haskell digression over, future installments will switch back to
+egglog and make sure that we don't check agreement with expressions that already
+contain symbolic values. There are several mechanisms we can use to avoid this,
+and I've already confirmed that a simple `isConcrete` precondition is enough to
+prevent the prior collapse. Stay tuned for part four!
