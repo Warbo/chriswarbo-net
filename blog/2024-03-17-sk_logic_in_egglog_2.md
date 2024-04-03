@@ -104,6 +104,8 @@ cat er 1>&2
 exit 1
 ```
 
+**Update: [part 3 is here](2024-04-02-sk_logic_in_egglog_3.html)**
+
 This is a spiritual follow-on from [part 1 of my experiments with SK logic in
 egglog](/blog/2024-02-25-sk_logic_in_egglog_1.html): that post serves as the
 *motivation* for this one, but the content here is somewhat standalone. It's the
@@ -1573,6 +1575,6 @@ main = check extEqGeneralisesEqAndNormalEqAndEverAgree
 
 ## Next time ##
 
-We've seen how extensional equality works *in theory*, so the next post will
-explore these definitions in more depth, to find out where I was going wrong in
-egglog.
+We've seen how extensional equality works *in theory*, [part 3 explores these
+definitions in more depth](2024-04-02-sk_logic_in_egglog_3.html), to find out
+where I was going wrong in my egglog.
