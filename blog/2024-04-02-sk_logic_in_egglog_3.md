@@ -92,7 +92,7 @@ in `falsify` it's the `Property`{.haskell} type. Here's a pretty direct
 translation of `agreeOnExtensionalInputs`{.haskell} as a `Property`{.haskell},
 with each of the above cases labelled:
 
-```{.haskell pipe="./import"}
+```{pipe="./import"}
 import Test.Falsify.Property (Property, discard, gen, label)
 ```
 
@@ -236,7 +236,7 @@ extEqGeneralisesEqAndNormalEqAndEverAgreeStats g =
 
 </details>
 
-```{.haskell pipe="./import"}
+```{pipe="./import"}
 import Test.Tasty (testGroup)
 ```
 
@@ -468,7 +468,7 @@ running `reduce`{.haskell} on generated `Com`{.haskell} values. That's
 undecidable from *within* a property, but actually quite easy in a generator,
 since we're free to discard problematic values and try again:
 
-```{.haskell pipe="./import"}
+```{pipe="./import"}
 import Test.Falsify.Generator (shrinkWith)
 ```
 
@@ -640,7 +640,7 @@ Instead, our "smart" generator can be more efficient by accumulating values
 until *any combination* of them satisfies our criteria (exploiting the so-called
 ["birthday paradox"](https://en.wikipedia.org/wiki/Birthday_problem)):
 
-```{.haskell pipe="./import"}
+```{pipe="./import"}
 import           Data.Map.Strict   (Map)
 import qualified Data.Map.Strict as Map
 import           Data.Set          (Set)
