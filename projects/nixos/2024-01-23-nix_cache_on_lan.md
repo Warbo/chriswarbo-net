@@ -185,7 +185,7 @@ Nix should now query this cache, as long as I'm on my LAN (and hence the SystemD
 service is tunneling the socket). When I'm *not* on my LAN, the socket will
 disappear and Nix will complain; which I can avoid by passing it
 `--option extra-substituters ''`. However, this cache is currently rather
-useless, since we're not writing anythign to it! To achieve this, we use Nix's
+useless, since we're not writing anything to it! To achieve this, we use Nix's
 "post-build hook". Here's the script I'm using, which is adapted from that given
 in the Nix manual:
 
@@ -194,7 +194,7 @@ in the Nix manual:
 set -e
 set -f # disable globbing
 export IFS=' '
-WANT='my-username
+WANT='my-username'
 REMOTE='ssh://remote-user@rpi.local'
 
 if [[ "$USER" = "$WANT" ]]
