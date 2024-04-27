@@ -1,23 +1,38 @@
 ---
-title: "SK in egglog: part 4"
+title: "SK in egglog: part 4, extensional equality"
+packages: [ 'egglog', 'graphviz' ]
 ---
+
+```{pipe="cat > show && chmod +x show"}
+#!/bin/sh
+set -eu
+F=${1:-sk.egg}
+echo >> "$F"
+tee -a "$F"
+echo >> "$F"
+```
+
+```{pipe="cat > hide && chmod +x hide"}
+#!/bin/sh
+NAME=hide ./show "$@" > /dev/null
+```
 
 This post continues my explorations with egglog, using it to implement SK logic.
 Here's the code so far, with some `ruleset` annotations sprinkled in to give us
 more control over what to `run`:
 
-```
-; Applicative combinatory logic. We use (C "foo") for constants, which will show
-; up in the e-graph and output of egglog.
+```{.scheme pipe="./show"}
+;; Applicative combinatory logic. We use (C "foo") for constants, which will
+;; show up in the e-graph and output of egglog.
 (datatype Com
           (App Com Com)
           (C String))
 
-; Base combinators S and K
+;; Base combinators S and K
 (let S (C "S"))
 (let K (C "K"))
 
-; Example combinators
+;; Example combinators
 (let I     (C "I"    ))
 (let TRUE  (C "TRUE" ))
 (let FALSE (C "FALSE"))
@@ -27,9 +42,9 @@ more control over what to `run`:
 (union FALSE (App S K))
 (union IF    I)
 
-; Rewrite rules for running SK expressions
+;; Rewrite rules for running SK expressions
 (ruleset reduce)
-(rewrite         (App (App K x) y) x                         :ruleset reduce)
+(rewrite      (App (App K x) y)    x                         :ruleset reduce)
 (rewrite (App (App (App S x) y) z) (App (App x z) (App y z)) :ruleset reduce)
 ```
 
@@ -38,274 +53,224 @@ uncover a problem I was running into in egglog. The cause turned out to be using
 symbolic inputs to check if expressions agreed, when those expressions may have
 already contained those symbols.
 
-Now we're switching back to egglog, our first task is to identify whether or not
-an expression contains uninterpreted symbols.
+Now we're switching back to egglog, our first task is to distinguish expressions
+that contain such uninterpreted symbols.
 
-## Concreteness ##
+## Representing symbols ##
 
-We'll call expressions which contain *no* symbols "concrete" (we could also call
-them "closed" or "variable-free", but remember that SK itself doesn't support
-variables!). We'll model this in egglog using a "relation", a partial function
-from its inputs (in this case a single `Com` value) to unit values:
+We'll represent uninterpreted symbols numerically. One way to do this is using a
+unary/Peano-style encoding, with a "zeroth symbol" and a function for the
+"successor symbol". However, egglog has numbers built-in via its `i64`{.scheme}
+`sort`{.scheme}, so we might as well use those (they're also backed by efficient
+Rust code)! We'll turn these `i64`{.scheme} values into `Com`{.scheme} values
+using an egglog `function`{.scheme} called `V`{.scheme} (for Variable; since
+we're already using `S`{.scheme} for something else):
 
-```
-(ruleset annotations)
-(relation concrete (Com))
-```
-
-We'll define `concrete` in a bottom-up way: the basic combinators `S` and `K`
-are `concrete`, which we can state as facts:
-
-```
-(concrete S)
-(concrete K)
+```{.scheme pipe="./show"}
+(function V (i64) Com)
 ```
 
-If two `Com` values `x` and `y` are `concrete`, then their combination
-`(App x y)` is also concrete. It's tempting to do the obvious thing and make a
-rule like this:
+We'll avoid defining any outputs for `V`{.scheme}, so it remains uninterpreted:
+that way egglog can treat `(V 0)`{.scheme}, `(V 1)`{.scheme}, etc. as
+`Com`{.scheme} values, but it cannot make any further assumptions about their
+structure or relationships.
 
-```
-(rule ((concrete x)
-       (concrete y))
-      ((concrete (App x y)))
-      :ruleset annotations)
-```
+We'll still use the idea of taking the "successor symbol", but that can now be
+an ordinary function that increments our `i64`{.scheme} value:
 
-However, this naïve definition introduces a *new* `Com` value `(App x y)` for
-*every* existing pair of `Com` values, and this will keep going until our
-database blows through our memory.
-
-Instead of such unbounded growth, we want our egglog algorithms to (a) run on
-"real" values, like our examples `I`, `TRUE`, `FALSE` and `IF` (rather than
-self-generated inanities), and (b) terminate after a finite number of steps. To
-achieve this we'll use a separate relation called `try`, which we'll only apply
-to expressions that we actually want to check for extensional equality. Once an
-expression is marked with `try`, it will propagate top-down to every component:
-
-```
-(relation try (Com))
-(rule ((try (App x y)))
-      ((try x)
-       (try y))
-      :ruleset annotations)
-```
-
-Now we can restrict our `rule` for `concrete`, so that it only propagates
-upwards to combinations that are already marked as `try`:
-
-```
-(rule ((try (App x y))
-       (concrete x)
-       (concrete y))
-      ((concrete (App x y)))
-      :ruleset annotations)
-```
-
-To see how these work together, consider what will happen if we assert `try` for
-some particular expression, like `(try I)`:
-
- - The initial database contains the facts `(concrete S)` and `(concrete K)`,
-   with no more work left to do.
- - Once we state `(try I)`, we'll need to `run` the `annotations` `ruleset` for
-   a few steps, to propagate this new information.
- - Since `I` is equal to `(App (App S K) K)`, asserting `(try I)` will cause the
-   condition `(try (App x y))` to match, with `x` as `(App S K)` and `y` as `K`.
-    - This causes `try` to propagate down, asserting the facts `(try (App S K))`
-      and `(try K)`.
-    - Nothing else becomes `concrete`, since that `rule` also requires
-      `(concrete x)`, but we do not have `(concrete (App S K))`.
- - `(try K)` does not match the form `(try (App x y))`, so it doesn't lead to
-   any further propagation.
- - `(try (App S K))` *does* have the required form, hence:
-    - `try` propagates to its children, giving `(try S)` (we already had
-      `(try K)`, so that's unchanged).
-    - `concrete` can also propagate upwards, since `(concrete x)` and
-      `(concrete y)` both hold, giving `(concrete (App S K))`.
- - The latter satisfies the `(concrete x)` condition that previously failed, so
-   `concrete` propagates further to give `(concrete (App (App S K) K))`, i.e.
-   `(concrete I)`.
- - At this point we're finished, since `try` has propagated down to all of the
-   sub-expressions of `I`, and `concrete` cannot propagate upwards any further
-   (until more `try` statements are asserted).
-
-In fact, egglog can propagate these relations even further, since it's always
-dealing with *equivalence classes* rather than specific values. In particular,
-we may have defined `I` as `(App (App S K) K)`; but its equivalence class may
-contain other expressions of the form `(App x y)`. Those will *also* be matched
-against `(try (App x y))` and hence propagate `try` to *their* sub-expressions,
-and anything those sub-expressions are equal to, and so on; and that, in turn,
-allows `concrete` to bubble-up through all of those `try` `annotations`.
-Although given the rules we've defined so far, the equivalence class for `I`
-does not *yet* contain any other expressions of the form `(App x y)`!
-
-The important point is that we can use the top-down `relation` `try` as an
-annotation to control the bottom-up calculation of `concrete`, ensuring the
-whole thing terminates after analysing the expressions we care about. We can
-ensure this is working by performing a few checks; firstly that `concrete`
-isn't propagating in the absence of any `try` statements:
-
-```
-(run annotations 10)
-(check (concrete I))
-```
-
-Next we can assert `(try I)`, and ensure that `concrete` *does* propagate:
-
-```
-(try I)
-(run annotations 10)
-(check (concrete I))
-```
-
-Finally, we can check that `concrete` stopped propagating once it reached `I`:
-
-```
-(check (concrete (App K I)))
-```
-
-### Symbolicness ###
-
-The opposite of `concrete` is `symbolic`:
-
-```
-(relation symbolic (Com))
-```
-
-Unlike Haskell, where we represented `symbolic` inputs with a `Stream`{.haskell}
-of explicit `String`{.haskell} values; in egglog we can simply `declare` their
-existence, without pinning down any precise value. We still want an unlimited
-amount of distinct symbols, so we'll count them using a Grassman/Peano-encoding:
-
-```
-; Define symbolic inputs, whose precise values are not defined. Since we do not
-; know the values of 'X', '(nextSymbol X)', '(nextSymbol (nextSymbol X))', etc.
-; they must all be treated as separate entities.
-(declare X Com)
-(function nextSymbol (Com) Com)
-
-(symbolic X)
-```
-
-We would like a `rule` that `(symbolic x)` implies `(symbolic (nextSymbol x))`,
-but that would blow up the memory, similar to the problem we had for `concrete`.
-Instead, we'll defer such assertions until we're performing an actual check for
-extensional equality, which will limit the amount of `symbolic` values to
-exactly as many as we actually need.
-
-## Single-input extensionality ##
-
-The simplest case of extensional equality is when two `concrete` expressions
-give equal results for a single `symbolic` input:
-
-```
-(ruleset single-extensional)
-(rule ((= (App f x) (App g x))
-       (concrete f)
-       (concrete g)
-       (symbolic x))
-      ((union f g))
-      :ruleset single-extensional)
-```
-
-This `rule` is fine, but it will never get triggered when using our model to
-analyse real, `concrete` expressions: it requires some `symbolic` values, but we
-haven't defined any way to introduce those into our database. The following
-`rule` does just that:
-
-```
-(rule ((= (App f x) (App g x)))
-      ((try f)
-       (try g))
-      :ruleset single-extensional)
-```
-
-This `rule` gets triggered whenever two expressions happen to agree on a
-particular input value. It does two important things:
-
- - It applies both of those expressions to the `symbolic` input `X`, introducing
-   `symbolic` expressions into the database which can be picked up by the
-   previous `rule`.
- - It also asserts `try` on both of those expressions, allowing `annotations` to
-   propagate and satisfy those `concrete` pre-conditions.
-
-The problem with such a simplistic approach is that it will only work for
-expressions which agree on *one* input (the explicit symbol `X`). If `foo` and
-`bar` are extensionally equal on, say, three inputs, then this analysis will
-spot that `(App (App foo S) K)` is extensionally equal to `(App (App bar S) K)`,
-that `(App (App foo K) (App S S))` equals `(App (App bar K) (App S S))`, and so
-on; but it will fail to spot the general pattern that `(App (App foo X) Y)`
-equals `(App (App bar X) Y)`, and hence that `foo` equals `bar`.
-
-## Multiple-input extensionality ###
-
-To generalise our extensionality check, we need to generalise the pre-condition
-from `(concrete f)` and `(concrete g)`, to handle cases where `f` and `g` are
-themselves applications involving `symbolic` inputs. We need to be careful here,
-to avoid choosing a `symbolic` input which already appears inside one of these
-expressions (since that broke my first attempt at implementing extensionality,
-described in the previous post)!
-
-We can do this by transforming all of the `symbolic` values in an expression,
-wrapping each in `nextSymbol`: so `X` becomes `(nextSymbol X)`,
-`(nextSymbol X)` becomes `(nextSymbol (nextSymbol X))`, etc. This
-[preserves the meaning](https://ncatlab.org/nlab/show/alpha-equivalence) of the
-expression, whilst guaranteeing that the symbol `X` does not to appear on its
-own (without a `nextSymbol` wrapper), and is hence available to use as our next
-`symbolic` input without conflict:
-
-```
-(ruleset extensional)
+```{.scheme pipe="./show"}
+(ruleset symbols)
 (function bumpSymbols (Com) Com)
+```
 
-; 'App' isn't 'symbolic', so recurse into its children. We require '(try c)' to
-; avoid immediately matching our output, and hence iterating forever.
-(rule ((= c (App f x))
-       (try c))
-      ((union (bumpSymbols c)
-              (App (bumpSymbols f) (bumpSymbols x))))
-      :ruleset extensional)
+```{.scheme pipe="./show bump-quiet.egg"}
+(rewrite (bumpSymbols (V n)) (V (+ n 1))
+         :ruleset symbols)
+```
 
-; A 'concrete' value contains no 'symbolic' values, so is unaffected.
-(rule ((= c (bumpSymbols x))
-       (concrete x))
-      ((union  c x))
-      :ruleset extensional)
+We'll also generalise this to work on *any* `Com`{.scheme} value. As the name
+suggests, it will propagate recursively through the tree structure of a
+`Com`{.scheme} expression, using the above `rewrite`{.scheme} to increment all
+of the symbols it contains:
 
-; Wrap a 'symbolic' value in 'nextSymbol', and make sure to assert that is also
-; 'symbolic'.
-(rule ((= c (bumpSymbols x))
-       (symbolic x))
-      ((union c (nextSymbol x))
-       (symbolic (nextSymbol x)))
+```{.scheme pipe="./show"}
+(birewrite (bumpSymbols (App x y))
+           (App (bumpSymbols x) (bumpSymbols y))
+           :when ((bumpSymbols x) (bumpSymbols y))
+           :ruleset symbols)
+```
+
+The condition `:when ((bumpSymbols x) (bumpSymbols y))`{.scheme} ensures
+termination, by only acting on expressions that already appear in the
+database. It's important that this uses `birewrite`{.scheme}, since we want to
+ensure *uses* of `bumpSymbols`{.scheme} get propagated down through
+sub-expressions; but we also need *known* expressions to coalesce their
+`bumpSymbols`{.scheme} wrappers upwards, for our rules to match on.
+
+Finally, `bumpSymbols`{.scheme} does nothing to leaves, since they contain no
+symbols:
+
+```{.scheme pipe="./show"}
+(birewrite (bumpSymbols (C x)) (C x)
+           :ruleset symbols)
+```
+
+<details class="odd">
+<summary>"Printf debugging" in egglog…</summary>
+
+When we execute an egglog script, it can be difficult to know what it's doing:
+e.g. if some incorrect fact appears, we want some trace of the rules which lead
+to it. Support for "proofs" may help, and this seems to be on egglog's wishlist,
+but it's not yet available (as of 2024-04-24).
+
+For very simple rules, we can sometimes reformulate them so each rule puts a
+marker in its output. However, this can get pretty complicated and tedious for
+larger rulesets; and requires effectively re-implementing many parts of egglog
+inside itself, which wastes a lot of time.
+
+If we just want to see that some `rule` has fired, we can use an `extract`
+action to emit a message. The argument to `extract` can be any expression: the
+most useful are plain strings (to indicate what's happened) and variables (to
+see what values are being processed). For example, if we want to see how many
+symbolic values we're creating, the following variant of the above `rewrite`
+will show us:
+
+```{.scheme pipe="./show bump-loud.egg"}
+(rule ((bumpSymbols (V n)))
+      ((let bumped (V (+ n 1)))
+       (extract "Bumped to:")
+       (extract bumped)
+       (union (bumpSymbols (V n)) bumped))
+      :ruleset symbols)
+```
+
+For example, analysing the current database contents until saturation:
+
+```{.scheme pipe="./show bump-loud.egg"}
+(run-schedule (saturate reduce symbols))
+```
+
+```{pipe="sh"}
+{
+  cat sk.egg
+  echo
+  cat bump-loud.egg
+} > bump-test.egg
+egglog bump-test.egg
+```
+
+</details>
+
+```{pipe="sh"}
+./show < bump-quiet.egg > /dev/null
+```
+
+## Counting symbolic arguments ##
+
+Extensional equality tells us that when two expressions like
+`(App (App foo (V a)) (V b))`{.scheme} and
+`(App (App bar (V a)) (V b))`{.scheme} are equal, then `foo`{.scheme} and
+`bar`{.scheme} are equal; as long as neither contains `(V a)`{.scheme} or
+`(V b)`{.scheme}. This is a bit trickier to represent in egglog, since we're
+dealing with e-graphs rather than specific terms; yet there's a remarkably
+simple way to capture the *essence* of this situation, by counting symbolic
+arguments. Here's the `function`{.scheme} we'll use:
+
+```{.scheme pipe="./show"}
+(function symbolicArgCount (Com) i64 :merge (min old new))
+```
+
+We'll explain the `:merge:`{.scheme} clause in a moment (it's required to avoid
+ambiguity). First we'll define the base case, that expressions involving *no*
+symbols will have a `symbolicArgCount`{.scheme} of zero:
+
+```{.scheme pipe="./show"}
+(rule ((= (bumpSymbols x) x))
+      ((set (symbolicArgCount x) 0))
+      :ruleset symbols)
+```
+
+The pre-condition here requires that `bumpSymbols`{.scheme} leaves `x`{.scheme}
+unchanged: we'll say that such values are "concrete". We know any `Com`{.scheme}
+of the form `(C x)`{.scheme} is concrete, since that's stated by one of the
+rules above; and from this we know `S`{.scheme} and `K`{.scheme} are
+concrete. The rules for `bumpSymbols`{.scheme} also make `(App x y)`{.scheme}
+concrete when both `x`{.scheme} and `y`{.scheme} are concrete. To see this,
+consider what happens to `(bumpSymbols (App x y))`{.scheme}: the rules for
+`bumpSymbols`{.scheme} say that is equal to
+`(App (bumpSymbols x) (bumpSymbols y))`{.scheme}; since we're assuming
+`x`{.scheme} and `y`{.scheme} are concrete (i.e. unaffected by
+`bumpSymbols`{.scheme}) this equals `(App x y)`{.scheme}, which is the argument
+we originally gave to `bumpSymbols`{.scheme}; hence `(App x y)`{.scheme} is
+unaffected by `bumpSymbols`{.scheme}, and therefore is concrete. ∎
+
+There's an interesting subtlety here, since it's really *equivalence classes*
+that are concrete, and those *may* contain symbolic values! For example, it
+seems obvious that `S`{.scheme} is concrete, yet it's equivalence class also
+contains expressions like `(App (App K S) (V 0))`{.scheme}, since that reduces
+to `S`{.scheme} and we've implemented our reduction rules using egglog's
+equality. In such cases, the symbolic values are never *necessary*, since there
+are equivalent expressions which don't contain them. This is why our
+`:merge`{.scheme} clause resolves ambiguity by taking the *minimum* count, since
+that's the more necessary/fundamental value.
+
+Larger counts occur when we apply an expression to a symbol which doesn't occur
+in that expression (or at least, isn't *necessary* for that expression). We can
+ensure this using `bumpSymbols`{.scheme}: since its result has all its symbols
+incremented, we *know* that it cannot contain `(V 0)`{.scheme} (at least, in a
+way that's "necessary", as above).
+
+```{.scheme pipe="./show"}
+(rule ((= n (symbolicArgCount x))
+       (App x y))
+      ((set (symbolicArgCount (App (bumpSymbols x) (V 0)))
+            (+ 1 n)))
+      :ruleset symbols)
+```
+
+In this case we have two pre-conditions: `(App x y)`{.scheme} requires that our
+database already contains `x`{.scheme} applied to *something*, which ensures the
+recursive pattern `(App (bumpSymbols x) (V 0))`{.scheme},
+`(App (App (bumpSymbols (bumpSymbols x)) (V 1)) (V 0))`{.scheme}, etc. will
+eventually terminate. Secondly, we avoid using
+`(+ 1 (symbolicArgCount x))`{.scheme}, since that can again lead to infinite
+recursion; instead we use `(= n (symbolicArgCount x))`{.scheme} to restrict our
+matches to values whose `symbolicArgCount`{.scheme} has already been calculated.
+
+This definition of `symbolicArgCount`{.scheme} does two things for us: firstly,
+it is only defined for expressions which apply a concrete expression to some
+number of symbols with decrementing indices, e.g.
+`(App (App (App (App S K) (V 2)) (V 1)) (V 0))`{.scheme}; secondly, in the cases
+where it's defined, it tells us how many symbols there are.
+
+This is enough for us to implement extensional equality!
+
+## Extensional equality ##
+
+We'll re-use the trick employed by `symbolicArgCount`{.scheme} above, of using
+`bumpSymbols`{.scheme} to ensure all symbol indices are incremented, and hence
+that `(V 0)`{.scheme} does not appear in its result. If *two* such expressions
+are equal when applied to `(V 0)`{.scheme}, that must be due to the expressions
+themselves, and not the value of `(V 0)`{.scheme} (which is uninterpreted, and
+does not appear in the expressions). That proves they are equal for *any*
+argument, and hence they are extensionally equal:
+
+```{.scheme pip="./show"}
+(rule ((= (App (bumpSymbols x) (V 0))
+          (App (bumpSymbols y) (V 0)))
+       (= (symbolicArgCount x)
+          (symbolicArgCount y)))
+      ((union x y))
       :ruleset extensional)
 ```
 
-We can use `bumpSymbols` to implement the following `(sameInputs x y)` relation,
-which is more general than separate `(concrete x)`/`(concrete y)` predicates:
+The use of `symbolicArgCount`{.scheme} ensures that the underlying expressions
+begin with a concrete part (since that's what we really care about), and that
+they have the same arity. For arities greater than one, this rule will work
+backwards recursively: using equality of their final result to make them equal
+without the last argument; then using that equality to make them equal without
+the second-to-last argument; and so on (working beneath another layer of
+`bumpSymbols`{.scheme} each time, so those last arguments always match
+`(V 0)`{.scheme}), until their concrete parts become equal.
 
-```
-; Whether two values involve the same 'symbolic' inputs (and no other symbols)
-(relation sameInputs (Com Com))
-(rule ((sameInputs x y)) ((sameInputs y x)) :ruleset extensional) ; Commutative
-
-; Base case: 'concrete' values contain the same 'symbolic' inputs (namely: none)
-(rule ((concrete x) (concrete y))
-      ((sameInputs x y))
-      :ruleset extensional)
-
-; 'bumpSymbols' preserves the 'sameInputs' relation, whilst also making 'X'
-; available as a fresh, unused 'symbolic' input we can add to both expressions.
-; We use 'try' to cut-off recursion, as before.
-(rule ((sameInputs f g)
-       (try f) (try g))
-      ((sameInputs (App (bumpSymbols f) X)
-                   (App (bumpSymbols g) X)))
-      :ruleset extensional)
-```
-
-## Unused arguments ##
-
-## Cleaning up ##
-
-## Church booleans ##
+## Testing ##
