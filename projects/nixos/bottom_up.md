@@ -209,7 +209,7 @@ use the `nix derivation show` command to display its contents in a more familiar
 JSON representation:
 
 ```sh
-$ nix derivation show /nix/store/i762zk23lrfsz8fjfd4lbjh48073hmlh-myName.drv
+$ nix derivation show /nix/store/xq7zgzsmazhic07ph4kczzals8jgfqmb-myName.drv
 warning: The interpretation of store paths arguments ending in `.drv` recently changed. If this command is now failing try again with '/nix/store/xq7zgzsmazhic07ph4kczzals8jgfqmb-myName.drv^*'
 {
   "/nix/store/xq7zgzsmazhic07ph4kczzals8jgfqmb-myName.drv": {
@@ -244,7 +244,7 @@ this file (although we've not specified any inputs, for simplicity). We can
 `nix-store --realise` command (you could also use `nix-build` instead):
 
 ```sh
-nix-store --realise /nix/store/xq7zgzsmazhic07ph4kczzals8jgfqmb-myName.drv
+$ nix-store --realise /nix/store/xq7zgzsmazhic07ph4kczzals8jgfqmb-myName.drv
 this derivation will be built:
   /nix/store/xq7zgzsmazhic07ph4kczzals8jgfqmb-myName.drv
 building '/nix/store/xq7zgzsmazhic07ph4kczzals8jgfqmb-myName.drv'...
@@ -261,7 +261,7 @@ expect.
 
 This is pretty low-level, and I don't advise using Nix in this way. Thankfully
 there are a few higher-level interfaces built on this foundation, such as the
-[Guix project](https://guix.gnu.org)). Today we'll stick to those offered by a
+[Guix project](https://guix.gnu.org). Today we'll stick to those offered by a
 default Nix installation, which are based around the Nix Expression Language.
 
 #### Derivations in the Nix Expression Language ####
@@ -402,7 +402,6 @@ This derivation produced the following outputs:
   out -> /nix/store/588bzdljdnj4ja6kkwii56l4pyyvil4j-foo
 
 nix-repl> :q
-:q
 $ cat /nix/store/588bzdljdnj4ja6kkwii56l4pyyvil4j-foo
 hello
 ```
@@ -448,7 +447,7 @@ Bash code using `$message`{.sh}.
 If you're not on an `aarch64-linux` machine, you can replace that `system`
 value with the expression `builtins.currentSystem` instead...
 
-<details>
+<details class="odd">
 <summary>The `system` attribute</summary>
 
 We can use any string for the `system`, but Nix will only run derivations whose
@@ -465,7 +464,7 @@ Builders](https://nixos.org/manual/nix/stable/advanced-topics/distributed-builds
 That way, when Nix encounters derivations with an unsupported `system`, it can
 SSH into those other machines to do the build there!
 
-</summary>
+</details>
 
 We can evaluate this `.nix` file to produce a `.drv` file by using the
 `nix-instantiate` command:
@@ -484,7 +483,7 @@ ultimately calling this `builtins.derivation`{.nix} function behind the scenes.
 Again, we can "realise" this derivation, to build its output:
 
 ```sh
-nix-store --realise /nix/store/xh3q9dd1r0nk87kyj2pqf9kscvqsip80-myName.drv
+$ nix-store --realise /nix/store/xh3q9dd1r0nk87kyj2pqf9kscvqsip80-myName.drv
 this derivation will be built:
   /nix/store/xh3q9dd1r0nk87kyj2pqf9kscvqsip80-myName.drv
 building '/nix/store/xh3q9dd1r0nk87kyj2pqf9kscvqsip80-myName.drv'...
