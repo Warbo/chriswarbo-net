@@ -397,25 +397,13 @@ backwards recursively: using equality with `n` arguments to assert equality with
 
 ## Ignored arguments ##
 
-```{.scheme pipe="./show"}
-;; Declare some arbitrary values for use in examples
-(declare foo Com)
-(declare bar Com)
-(declare baz Com)
-
-;; Define them to be concrete, so they satisfy pre-conditions of various rules
-(union (bumpSymbols foo) foo)
-(union (bumpSymbols bar) bar)
-(union (bumpSymbols baz) baz)
-```
-
 One way that two expressions can be extensionally equal is if they *ignore* the
 only terms at which they differ. For example, the `K` reduction rule discards
 its second argument; hence expressions which only differ in the second argument
-to `K` will be equal, like `(App (App K foo) bar)`{.scheme} and
-`(App (App K foo) baz)`{.scheme}. Of course, that doesn't require extensionality,
-since such expressions are equal *due to* that reduction rule (in this example,
-both expressions are equal to `foo`{.scheme}).
+to `K` will be equal, like `(App (App K (V 0)) (V 1))`{.scheme} and
+`(App (App K (V 0)) (V 2))`{.scheme}. Of course, that doesn't require
+extensionality, since such expressions are equal *due to* that reduction rule
+(in this example, both expressions are equal to `(V 0)`{.scheme}).
 
 Yet this simple analysis can be pushed a little further, if we note those
 expressions which will discard their *next* argument. We can represent this with
@@ -442,6 +430,11 @@ of reducible expressions; waiting for some further argument to be applied.
 Consider the following example:
 
 ```{.scheme pipe="./show simple.egg"}
+;; Declare an unspecified, concrete Com value
+(declare foo Com)
+(union (bumpSymbols foo) foo)
+
+;; Two distinct ways of reducing to foo when applied to another argument
 (let kFoo1 (App K foo))
 (let kFoo2 (App (App S (App K (App K foo))) I))
 ```
@@ -449,20 +442,20 @@ Consider the following example:
 Neither of these expressions is reducible, but they *are* extensionally equal,
 since they agree on one argument:
 
- - `(App kFoo1 bar)`{.scheme} reduces to `foo`{.scheme} via the `K` rule
- - `(App kFoo2 bar)`{.scheme} reduces to
-   `(App (App (App K (App K foo)) bar) (App I bar))`{.scheme} via the `S` rule,
-   then via the `K` rule to `(App (App K foo) (App I bar))`{.scheme}, and again
-   to `foo`{.scheme}.
+ - `(App kFoo1 (V 0))`{.scheme} reduces to `foo`{.scheme} via the `K` rule
+ - `(App kFoo2 (V 0))`{.scheme} reduces to
+   `(App (App (App K (App K foo)) (V 0)) (App I (V 0)))`{.scheme} via the `S`
+   rule, then via the `K` rule to `(App (App K foo) (App I (V 0)))`{.scheme},
+   and again to `foo`{.scheme}.
 
 (In fact, the `I`{.scheme} argument at the end of `kFoo2`{.scheme} is *also*
 ignored during reduction!) We can spot this behaviour by noting that if
-`(ignoresArg (App f foo))`{.scheme} (for *all* `foo`{.scheme}), then
+`(ignoresArg (App f x))`{.scheme} for *all* `x`{.scheme}, then
 `(ignoresArg (App S f))`{.scheme}. To see this, give the latter a couple more
-arguments `(App (App (App S f) x) y)`{.scheme}, so it reduces to
-`(App (App f y) (App x y))`: we're assuming that `(App f y)`{.scheme} ignores
-its next argument, making `(App x y)`{.scheme} irrelevant. Since that's the only
-occurence of `x`{.scheme}, its value is also ignored; and `x`{.scheme} is the
+arguments `(App (App (App S f) a) b)`{.scheme}, so it reduces to
+`(App (App f b) (App a b))`: we're assuming that `(App f b)`{.scheme} ignores
+its next argument, making `(App a b)`{.scheme} irrelevant. Since that's the only
+occurence of `a`{.scheme}, its value is also ignored; and `a`{.scheme} is the
 next argument of `(App S f)`{.scheme}. ∎
 
 ```{.scheme pipe="./show"}
@@ -501,7 +494,7 @@ Finally, we can tell egglog that all applications of an an expression which
 This is enough to make our example expressions equal:
 
 ```{.scheme pipe="./show simple.egg"}
-(App kFoo2 bar)  ;; Apply kFoo2 to something, to satisfy pre-conditions
+(App kFoo2 (V 0))  ;; Apply kFoo2 to something, to satisfy pre-conditions
 (run-schedule (repeat 8 (seq reduce symbols extensional ignored)))
 (check (= kFoo1 kFoo2))
 ```
