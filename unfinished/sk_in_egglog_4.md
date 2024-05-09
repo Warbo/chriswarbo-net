@@ -59,10 +59,6 @@ more control over what to `run`:
 (rewrite (App (App (App S x) y) z) (App (App x z) (App y z)) :ruleset reduce)
 ```
 
-The last couple of posts explored the idea of extensionality, using Haskell to
-uncover a problem I was running into in egglog. The cause turned out to be using
-symbolic inputs to check if expressions agreed, when those expressions may have
-already contained those symbols.
 ### A note on infinite loops and recursion ###
 
 Modelling a Turing-complete system like SK requires care, to reach the desired
@@ -93,6 +89,13 @@ set -e
 ```
 
 ## Representing symbols ##
+
+The last couple of installments explored the idea of extensionality, using
+Haskell to uncover a problem I was running into in egglog. The cause turned out
+to be using symbolic inputs to check if expressions agreed, when those
+expressions may have already contained those symbols. Now we're switching back
+to egglog, our first task is to distinguish expressions that contain such
+uninterpreted symbols.
 
 We'll represent uninterpreted symbols numerically. One way to do this is using a
 unary/Peano-style encoding, with a "zeroth symbol" and a function for the
@@ -180,7 +183,8 @@ will show us:
       :ruleset symbols)
 ```
 
-For example, analysing the current database contents until saturation:
+For example, populating the database with some seed values and running until
+saturation:
 
 ```{.scheme pipe="./show bump-loud.egg"}
 (run-schedule (saturate reduce symbols))
@@ -212,7 +216,7 @@ arguments. Here's the `function`{.scheme} we'll use:
 (function symbolicArgCount (Com) i64 :merge (min old new))
 ```
 
-We'll explain the `:merge:`{.scheme} clause in a moment (it's required to avoid
+We'll explain the `:merge`{.scheme} clause in a moment (it's required to avoid
 ambiguity). First we'll define the base case, that expressions involving *no*
 symbols will have a `symbolicArgCount`{.scheme} of zero:
 
@@ -328,13 +332,18 @@ enough information to finally implement extensional equality!
 
 ## Extensional equality ##
 
-We'll re-use the trick employed by `symbolicArgCount`{.scheme} above, of using
-`bumpSymbols`{.scheme} to ensure all symbol indices are incremented, and hence
-that `(V 0)`{.scheme} does not appear in its result. If *two* such expressions
-are equal when applied to `(V 0)`{.scheme}, that must be due to the expressions
-themselves, and not the value of `(V 0)`{.scheme} (which is uninterpreted, and
-does not appear in the expressions). That proves they are equal for *any*
-argument, and hence they are extensionally equal:
+We'll re-use the trick employed by the second `symbolicArgCount`{.scheme} rule,
+that `(bumpSymbols foo)`{.scheme} is guaranteed to not contain `(V 0)`{.scheme}
+(at least, in no place that can affect its result; it may still appear in the
+equivalence classes due to reduction rules, like in the `symbolic`{.scheme}
+example).
+
+If *two* such expressions are equal when applied to `(V 0)`{.scheme}, their
+definitions must be inherently equal *independent* of argument (since
+`bumpSymbols` ensures independence from `(V 0)`{.scheme} *syntactically*; and
+its behaviour as an inert, uninterpreted symbol ensures independence
+*semantically*). That proves they are equal for *any* argument, and hence they
+are extensionally equal:
 
 ```{.scheme pipe="./show"}
 (ruleset extensional)
@@ -346,14 +355,12 @@ argument, and hence they are extensionally equal:
       :ruleset extensional)
 ```
 
-The use of `symbolicArgCount`{.scheme} ensures that the underlying expressions
+This `rule` also requires both expressions to have the same
+`symbolicArgCount`{.scheme}, which ensures that the underlying expressions
 begin with a concrete part (since that's what we really care about), and that
 they have the same arity. For arities greater than one, this rule will work
-backwards recursively: using equality of their final result to make them equal
-without the last argument; then using that equality to make them equal without
-the second-to-last argument; and so on (working beneath another layer of
-`bumpSymbols`{.scheme} each time, so those last arguments always match
-`(V 0)`{.scheme}), until their concrete parts become equal.
+backwards recursively: using equality with `n` arguments to assert equality with
+`n-1` arguments, and so on until their concrete parts become equal.
 
 ## Ignored arguments ##
 
