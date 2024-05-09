@@ -31,7 +31,17 @@ set -e
   echo
   cat "$1"
 } > "run-$1"
-MAX_SECS=120 withTimeout egglog "run-$1" 2> >(tee >(cat 1>&2)) || {
+
+redir() {
+  if [[ -n "$STDERR_FILE" ]]
+  then
+    "$@" 2> >(tee "$STDERR_FILE" 1>&2)
+  else
+    "$@" 2> >(tee >(cat 1>&2))
+  fi
+}
+
+MAX_SECS=120 redir withTimeout egglog "run-$1" || {
   CODE="$?"
   echo "Error running egglog run-$1, contents below"
   cat "run-$1"
@@ -303,7 +313,7 @@ and hence that its `symbolicArgCount`{.scheme} is `0`{.scheme}:
 ```{pipe="sh"}
 set -e
 cat count-redex.egg count-redex1.egg > count-test1.egg
-./run count-test1.egg 2> >(tee count-test1.err 1>&2)
+STDERR_FILE=count-test1.err ./run count-test1.egg
 ```
 
 <details class="odd">
@@ -333,7 +343,7 @@ to be `(+ 1 (symbolicArgCount expr))`{.scheme}, and hence to return `1`:
 ```{pipe="sh"}
 set -e
 cat count-redex.egg count-redex2.egg > count-test2.egg
-./run count-test2.egg 2> >(tee count-test2.err 1>&2)
+STDERR_FILE=count-test2.err ./run count-test2.egg
 ```
 
 <details class="odd">
