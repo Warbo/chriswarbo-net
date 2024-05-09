@@ -665,4 +665,16 @@ set -e
 ./run or.egg
 ```
 
+## Conclusion ##
 
+I've finally achieved what I wanted from my first foray into egglog: an encoding
+of SK combinatory logic which can automatically discover extensional equality.
+It took a few attempts and a bit of head-scratching, to discover that our naïve
+symbolic execution was making inconsistent inferences; and to come up with a
+symbol-counting mechanism to avoid this.
+
+Overall I'm quite happy, since I've learned a bit more about SK, symbolic
+execution and the treatment of free variables. I've also learned *a lot* about
+egglog, and this experience has sharpened some of the vague ideas I'd been
+considering for it. Hopefully I can get something more "serious" working in the
+not-too-distant future!
