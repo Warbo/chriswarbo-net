@@ -3,6 +3,12 @@ title: "SK in egglog: part 4, extensional equality"
 packages: [ 'egglog', 'graphviz', 'timeout' ]
 ---
 
+[Part 1](/blog/2024-02-25-sk_logic_in_egglog_1.html)
+
+[Part 2](/blog/2024-03-17-sk_logic_in_egglog_2.html)
+
+[Part 3](/blog/2024-04-02-sk_logic_in_egglog_3.html)
+
 ```{pipe="cat > show && chmod +x show"}
 #!/bin/sh
 set -eu
@@ -34,9 +40,11 @@ MAX_SECS=120 withTimeout egglog "run-$1" 2> >(tee >(cat 1>&2)) || {
 } 1>&2
 ```
 
-This post continues my explorations with egglog, using it to implement SK logic.
-Here's the code so far, with some `ruleset` annotations sprinkled in to give us
-more control over what to `run`:
+This post continues my explorations with
+[egglog](https://github.com/egraphs-good/egglog), using it to implement [SK
+logic](https://news.ycombinator.com/item?id=22270327). Here's the code so far,
+with some `ruleset` annotations sprinkled in to give us more control over what
+to `run`:
 
 ```{.scheme pipe="./show"}
 ;; Applicative combinatory logic. We use (C "foo") for constants, which will
@@ -82,10 +90,15 @@ states, and stops as soon as the pattern repeats a previous form:
 (check (= omega (App (App I sii) (App I sii))))
 ```
 
+<details class="odd">
+  <summary>**Output…**</summary>
+
 ```{pipe="sh"}
 set -e
 ./run omega.egg
 ```
+
+</details>
 
 ## Representing symbols ##
 
@@ -97,12 +110,14 @@ to egglog, our first task is to distinguish expressions that contain such
 uninterpreted symbols.
 
 We'll represent uninterpreted symbols numerically. One way to do this is using a
-unary/Peano-style encoding, with a "zeroth symbol" and a function for the
-"successor symbol". However, egglog has numbers built-in via its `i64`{.scheme}
-`sort`{.scheme}, so we might as well use those (they're also backed by efficient
-Rust code)! We'll turn these `i64`{.scheme} values into `Com`{.scheme} values
-using an egglog `function`{.scheme} called `V`{.scheme} (for Variable; since
-we're already using `S`{.scheme} for something else):
+[unary/Peano-style encoding](https://en.wikipedia.org/wiki/Peano_axioms#Historic_second-order_formulation),
+with a "zeroth symbol" and [a function for the "successor
+symbol"](https://en.wikipedia.org/wiki/Successor_function). However, egglog has
+numbers built-in via its `i64`{.scheme} `sort`{.scheme}, so we might as well use
+those (they're also backed by efficient Rust code)! We'll turn these
+`i64`{.scheme} values into `Com`{.scheme} values using an egglog
+`function`{.scheme} called `V`{.scheme} (for Variable; since we're already using
+`S`{.scheme} for something else):
 
 ```{.scheme pipe="./show"}
 (function V (i64) Com)
@@ -113,7 +128,7 @@ that way egglog can treat `(V 0)`{.scheme}, `(V 1)`{.scheme}, etc. as
 `Com`{.scheme} values, but it cannot make any further assumptions about their
 structure or relationships.
 
-We'll still use the idea of taking the "successor symbol", but that can now be
+We'll still use the idea of a "successor symbol", but that can now be
 an ordinary function that increments our `i64`{.scheme} value:
 
 ```{.scheme pipe="./show"}
@@ -154,7 +169,7 @@ symbols:
 ```
 
 <details class="odd">
-<summary>"Printf debugging" in egglog…</summary>
+<summary>**Aside: "printf debugging" in egglog…**</summary>
 
 When we execute an egglog script, it can be difficult to know what it's doing:
 e.g. if some incorrect fact appears, we want some trace of the rules which lead
@@ -288,8 +303,17 @@ and hence that its `symbolicArgCount`{.scheme} is `0`{.scheme}:
 ```{pipe="sh"}
 set -e
 cat count-redex.egg count-redex1.egg > count-test1.egg
-./run count-test1.egg
+./run count-test1.egg 2> >(tee count-test1.err 1>&2)
 ```
+
+<details class="odd">
+  <summary>**Stderr…**</summary>
+
+```{pipe="sh"}
+cat count-test1.err
+```
+
+</details>
 
 So far so good. Now let's apply it to a symbolic argument, matching the second
 `rule` for `symbolicArgCount`{.scheme}:
@@ -309,8 +333,17 @@ to be `(+ 1 (symbolicArgCount expr))`{.scheme}, and hence to return `1`:
 ```{pipe="sh"}
 set -e
 cat count-redex.egg count-redex2.egg > count-test2.egg
-./run count-test2.egg
+./run count-test2.egg 2> >(tee count-test2.err 1>&2)
 ```
+
+<details class="odd">
+  <summary>**Stderr…**</summary>
+
+```{pipe="sh"}
+cat count-test2.err
+```
+
+</details>
 
 Uh oh, we got `0` instead! Remember that `(bumpSymbols (App K S))`{.scheme} is
 equal to `(App K S)`{.scheme} (since it's concrete), and the reduction rule for
@@ -473,10 +506,15 @@ This is enough to make our example expressions equal:
 (check (= kFoo1 kFoo2))
 ```
 
+<details class="odd">
+  <summary>**Output…**</summary>
+
 ```{pipe="sh"}
 set -e
 ./run simple.egg
 ```
+
+</details>
 
 Another test for these rules is the identity combinator `I`{.scheme}, which we
 defined as `(App (App S K) K)`{.scheme}. However, that second `K`{.scheme} is
@@ -496,17 +534,23 @@ ignored, so *any* other expression should be usable in its place:
   (= I I4))
 ```
 
+<details class="odd">
+  <summary>**Output…**</summary>
+
 ```{pipe="sh"}
 set -e
 ./run i.egg
 ```
 
+</details>
+
 ## Boolean logic ##
 
 Extensional equality extends beyond simply *ignoring* arguments: expressions
 which *use* their arguments in equal ways are also extensionally equal. We'll
-test this using the following encoding of boolean logic, where
-`(App (App TRUE x) y)`{.scheme} reduces to `x`{.scheme} and
+test this using the following [encoding of
+boolean logic](https://en.wikipedia.org/wiki/Church_encoding#Church_Booleans),
+where `(App (App TRUE x) y)`{.scheme} reduces to `x`{.scheme} and
 `(App (App FALSE x) y)`{.scheme} reduces to `y`{.scheme}:
 
 ```{.scheme pipe="./show"}
@@ -514,9 +558,10 @@ test this using the following encoding of boolean logic, where
 (let FALSE (App S K))
 ```
 
-Boolean operations, such as `NOT`, `AND` and `OR`, can be encoded as SK
-expressions which, when applied to such encoded booleans, reduce to one or the
-other of those encoded booleans.
+[Boolean operations](https://en.wikipedia.org/wiki/Boolean_algebra#Operations),
+such as `NOT`, `AND` and `OR`, can be encoded as SK expressions which, when
+applied to such encoded booleans, reduce to one or the other of those encoded
+booleans.
 
 ### NOT ###
 
@@ -583,11 +628,25 @@ should make them equal:
 (check (= TRUE notFalse))
 ```
 
+<details class="odd">
+  <summary>**Output…**</summary>
+
+I've written the `notTrue`{.scheme} and `notFalse`{.scheme} code into separate
+files. Here's the output from the `notTrue`{.scheme} examples:
+
 ```{pipe="sh"}
 set -e
 ./run notTrue.egg
+```
+
+Here's the output for `notFalse`{.scheme}
+
+```{pipe="sh"}
+set -e
 ./run notFalse.egg
 ```
+
+</details>
 
 ### AND ###
 
@@ -627,10 +686,15 @@ argument: hence it should be equal to `I`:
 (check (= I andTrue))
 ```
 
+<details class="odd">
+  <summary>**Output…**</summary>
+
 ```{pipe="sh"}
 set -e
 ./run and.egg
 ```
+
+</details>
 
 ### OR ###
 
@@ -660,10 +724,15 @@ Whilst `orFalse` depends entirely on its next argument:
 (check (= I orFalse))
 ```
 
+<details class="odd">
+  <summary>**Output…**</summary>
+
 ```{pipe="sh"}
 set -e
 ./run or.egg
 ```
+
+</details>
 
 ## Conclusion ##
 
