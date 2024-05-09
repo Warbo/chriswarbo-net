@@ -69,9 +69,34 @@ The last couple of posts explored the idea of extensionality, using Haskell to
 uncover a problem I was running into in egglog. The cause turned out to be using
 symbolic inputs to check if expressions agreed, when those expressions may have
 already contained those symbols.
+### A note on infinite loops and recursion ###
 
-Now we're switching back to egglog, our first task is to distinguish expressions
-that contain such uninterpreted symbols.
+Modelling a Turing-complete system like SK requires care, to reach the desired
+results whilst avoiding infinite recursion. The SK reduction rules are the main
+danger, since they will attempt to "run" every expression in the database, so we
+need to avoid expressions which blow up.
+
+Note that e-graphs are perfectly happy with infinite *cycles*, for example the
+following expression `omega`{.scheme} will be reduced by the `S`{.scheme} rule,
+but ends up back where it started after a few steps; that's normally considered
+an "infinite loop", but egglog's cumulative approach keeps track of *all* the
+states, and stops as soon as the pattern repeats a previous form:
+
+```{.scheme pipe="./show"}
+(let sii   (App (App S I) I))
+(let omega (App sii sii))
+```
+
+```{.scheme pipe="./show omega.egg"}
+;; A "saturate" schedule will keep running until the database stops changing
+(run-schedule (saturate reduce))
+(check (= omega (App (App I sii) (App I sii))))
+```
+
+```{pipe="sh"}
+set -e
+./run omega.egg
+```
 
 ## Representing symbols ##
 
