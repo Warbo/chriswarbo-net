@@ -51,13 +51,7 @@ more control over what to `run`:
 
 ;; Example combinators
 (let I     (C "I"    ))
-(let TRUE  (C "TRUE" ))
-(let FALSE (C "FALSE"))
-(let IF    (C "IF"   ))
 (union I (App (App S K) K))
-(union TRUE  K)
-(union FALSE (App S K))
-(union IF    I)
 
 ;; Rewrite rules for running SK expressions
 (ruleset reduce)
@@ -500,5 +494,168 @@ set -e
 ./run i.egg
 ```
 
+## Boolean logic ##
 
-## Testing ##
+Extensional equality extends beyond simply *ignoring* arguments: expressions
+which *use* their arguments in equal ways are also extensionally equal. We'll
+test this using the following encoding of boolean logic, where
+`(App (App TRUE x) y)`{.scheme} reduces to `x`{.scheme} and
+`(App (App FALSE x) y)`{.scheme} reduces to `y`{.scheme}:
+
+```{.scheme pipe="./show"}
+(let TRUE  K)
+(let FALSE (App S K))
+```
+
+Boolean operations, such as `NOT`, `AND` and `OR`, can be encoded as SK
+expressions which, when applied to such encoded booleans, reduce to one or the
+other of those encoded booleans.
+
+### NOT ###
+
+Here's a definition of `NOT`:
+
+```{.scheme pipe="./show notTrue.egg | ./show notFalse.egg"}
+(let NOT (App (App S (App (App S (App K S))
+                          (App (App S (App K K))
+                               S)))
+              (App K K)))
+```
+
+It's chosen such that its application to `TRUE` agrees with `FALSE`:
+
+```{.scheme pipe="./show notTrue.egg"}
+(let notTrue       (App NOT TRUE))
+(let notTrueResult (App (App notTrue (V 1)) (V 0)))
+(let   falseResult (App (App FALSE   (V 1)) (V 0)))
+```
+
+And its application to `FALSE` agrees with `TRUE`:
+
+```{.scheme pipe="./show notFalse.egg"}
+(let notFalse       (App NOT FALSE))
+(let notFalseResult (App (App notFalse (V 1)) (V 0)))
+(let     trueResult (App (App TRUE     (V 1)) (V 0)))
+```
+
+These expressions seem to cause our rules to diverge, so we'll only run them
+10 times:
+
+```{.scheme pipe="./show notTrue.egg | ./show notFalse.egg"}
+(run-schedule (repeat 10 (seq reduce symbols extensional ignored)))
+```
+
+First we'll check that our rules are consistent:
+
+```{.scheme pipe="./show notTrue.egg | ./show notFalse.egg"}
+(check (!= TRUE FALSE))
+```
+
+Then we can check the behaviour of `notTrue` and `notFalse`:
+
+```{.scheme pipe="./show notTrue.egg"}
+(check
+  (= falseResult (V 0))
+  (= falseResult notTrueResult))
+```
+
+```{.scheme pipe="./show notFalse.egg"}
+(check
+  (= trueResult (V 1))
+  (= trueResult notFalseResult))
+```
+
+Since these expressions agree on two inputs, our extensional equality rules
+should make them equal:
+
+```{.scheme pipe="./show notTrue.egg"}
+(check (= FALSE notTrue))
+```
+
+```{.scheme pipe="./show notFalse.egg"}
+(check (= TRUE notFalse))
+```
+
+```{pipe="sh"}
+set -e
+./run notTrue.egg
+./run notFalse.egg
+```
+
+### AND ###
+
+Here is `AND`:
+
+```{.scheme pipe="./show and.egg"}
+(let AND (App (App S S) (App K (App K FALSE))))
+```
+
+We can specify its behaviour on *four* arguments: if the first two are `TRUE`,
+it returns the third (i.e. it equals `TRUE`); otherwise it returns the fourth
+(equalling `FALSE`). Thanks to extensional equality, we can test this using only
+values of the *first* argument:
+
+```{.scheme pipe="./show and.egg"}
+(let andTrue  (App AND TRUE ))
+(let andFalse (App AND FALSE))
+
+(App (App (App andFalse (V 2)) (V 1)) (V 0))
+(App (App (App andTrue  (V 2)) (V 1)) (V 0))
+
+(run-schedule (repeat 10 (seq reduce symbols extensional ignored)))
+```
+
+To see this, notice that the behaviour of `andFalse`{.scheme} does not depend on
+its next argument: it will always act like `FALSE`, and hence
+`andFalse`{.scheme} should equal `(App K FALSE)`{.scheme}:
+
+```{.scheme pipe="./show and.egg"}
+(check (= (App K FALSE) andFalse))
+```
+
+Likewise, the behaviour of `andTrue`{.scheme} is entirely determined by its next
+argument: hence it should be equal to `I`:
+
+```{.scheme pipe="./show and.egg"}
+(check (= I andTrue))
+```
+
+```{pipe="sh"}
+set -e
+./run and.egg
+```
+
+### OR ###
+
+We can characterise `OR` in a similar way:
+
+```{.scheme pipe="./show or.egg"}
+(let OR (App (App S I) (App K TRUE)))
+
+(let orTrue  (App OR  TRUE ))
+(let orFalse (App OR  FALSE))
+
+(App (App (App orTrue  (V 2)) (V 1)) (V 0))
+(App (App (App orFalse (V 2)) (V 1)) (V 0))
+
+(run-schedule (saturate reduce symbols extensional))
+```
+
+This time, `orTrue` ignores its next argument:
+
+```{.scheme pipe="./show or.egg"}
+(check (= (App K TRUE) orTrue))
+```
+
+Whilst `orFalse` depends entirely on its next argument:
+
+```{.scheme pipe="./show or.egg"}
+(check (= I orFalse))
+```
+
+```{pipe="sh"}
+set -e
+./run or.egg
+```
+
+
