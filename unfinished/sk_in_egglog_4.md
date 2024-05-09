@@ -242,21 +242,10 @@ consider what happens to `(bumpSymbols (App x y))`{.scheme}: the rules for
 we originally gave to `bumpSymbols`{.scheme}; hence `(App x y)`{.scheme} is
 unaffected by `bumpSymbols`{.scheme}, and therefore is concrete. ∎
 
-There's an interesting subtlety here, since it's really *equivalence classes*
-that are concrete, and those *may* contain symbolic values! For example, it
-seems obvious that `S`{.scheme} is concrete, yet it's equivalence class also
-contains expressions like `(App (App K S) (V 0))`{.scheme}, since that reduces
-to `S`{.scheme} and we've implemented our reduction rules using egglog's
-equality. In such cases, the symbolic values are never *necessary*, since there
-are equivalent expressions which don't contain them. This is why our
-`:merge`{.scheme} clause resolves ambiguity by taking the *minimum* count, since
-that's the more necessary/fundamental value.
-
 Larger counts occur when we apply an expression to a symbol which doesn't occur
-in that expression (or at least, isn't *necessary* for that expression). We can
-ensure this using `bumpSymbols`{.scheme}: since its result has all its symbols
-incremented, we *know* that it cannot contain `(V 0)`{.scheme} (at least, in a
-way that's "necessary", as above).
+in that expression. We can ensure this using `bumpSymbols`{.scheme}: since its
+result has all its symbols incremented, we *know* that it cannot contain the
+first symbol `(V 0)`{.scheme}:
 
 ```{.scheme pipe="./show"}
 (rule ((= n (symbolicArgCount x))
@@ -281,7 +270,67 @@ number of symbols with decrementing indices, e.g.
 `(App (App (App (App S K) (V 2)) (V 1)) (V 0))`{.scheme}; secondly, in the cases
 where it's defined, it tells us how many symbols there are.
 
-This is enough for us to implement extensional equality!
+There's an interesting subtlety here, since it's really *equivalence classes*
+that are concrete, and those *may* contain symbolic values! For example,
+consider the following expression:
+
+```{.scheme pipe="./show count-redex.egg"}
+(let expr (App K S))
+```
+
+We can `check` that this is concrete (i.e. unchanged by `bumpSymbols`{.scheme}),
+and hence that its `symbolicArgCount`{.scheme} is `0`{.scheme}:
+
+```{.scheme pipe="./show count-redex1.egg"}
+(run-schedule (saturate reduce symbols))
+(check (= (bumpSymbols expr) expr))
+(extract (symbolicArgCount expr))
+```
+
+```{pipe="sh"}
+set -e
+cat count-redex.egg count-redex1.egg > count-test1.egg
+./run count-test1.egg
+```
+
+So far so good. Now let's apply it to a symbolic argument, matching the second
+`rule` for `symbolicArgCount`{.scheme}:
+
+```{.scheme pipe="./show count-redex2.egg"}
+(let symbolic (App (bumpSymbols expr) (V 0)))
+```
+
+According to that `rule`, we would expect `(symbolicArgCount symbolic)`{.scheme}
+to be `(+ 1 (symbolicArgCount expr))`{.scheme}, and hence to return `1`:
+
+```{.scheme pipe="./show count-redex2.egg"}
+(run-schedule (saturate reduce symbols))
+(extract (symbolicArgCount symbolic))
+```
+
+```{pipe="sh"}
+set -e
+cat count-redex.egg count-redex2.egg > count-test2.egg
+./run count-test2.egg
+```
+
+Uh oh, we got `0` instead! Remember that `(bumpSymbols (App K S))`{.scheme} is
+equal to `(App K S)`{.scheme} (since it's concrete), and the reduction rule for
+`K`{.scheme} says that `(App (App K S) (V 0))`{.scheme} is equal to `S`. Since
+egglog functions are applied to *equivalence classes*, rather than particular
+terms, the value of `(symbolicArgCount symbolic)`{.scheme} must be the same as
+`(symbolicArgCount S)`{.scheme}, and the latter is clearly `0`{.scheme}. We fix
+this ambiguity using the `:merge` parameter in the definition of
+`symbolicArgCount`{.scheme}: when equal inputs give unequal results, like
+`0`{.scheme} and `1`{.scheme} in this case, the `:merge`{.scheme} expression is
+used, with the conflicting values bound to the names `old`{.scheme} and
+`new`{.scheme}. We use `min`{.scheme} to choose the smaller value (in this case
+`0`{.scheme}), since that is a property of the *class*. Larger values are more
+arbitrary, e.g. in this case the value `1`{.scheme} is due to matching an
+expression that SK will ultimately *discard*, and hence seems less fundamental.
+
+Now that we have a working definition of `symbolicArgCount`{.scheme}, we have
+enough information to finally implement extensional equality!
 
 ## Extensional equality ##
 
