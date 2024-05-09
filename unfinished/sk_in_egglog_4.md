@@ -643,7 +643,7 @@ set -e
 
 ### AND ###
 
-Here is `AND`:
+Here is boolean `AND`:
 
 ```{.scheme pipe="./show and.egg"}
 (let AND (App (App S S) (App K (App K FALSE))))
@@ -691,7 +691,7 @@ set -e
 
 ### OR ###
 
-We can characterise `OR` in a similar way:
+We can characterise boolean `OR` in a similar way:
 
 ```{.scheme pipe="./show or.egg"}
 (let OR (App (App S I) (App K TRUE)))
