@@ -1,6 +1,6 @@
 ---
 title: "SK in egglog: part 4, extensional equality"
-packages: [ 'egglog', 'graphviz' ]
+packages: [ 'egglog', 'graphviz', 'timeout' ]
 ---
 
 ```{pipe="cat > show && chmod +x show"}
@@ -15,6 +15,23 @@ echo >> "$F"
 ```{pipe="cat > hide && chmod +x hide"}
 #!/bin/sh
 NAME=hide ./show "$@" > /dev/null
+```
+
+```{pipe="cat > run && chmod +x run"}
+#!/bin/sh
+set -e
+{
+  cat sk.egg
+  echo
+  cat "$1"
+} > "run-$1"
+MAX_SECS=120 withTimeout egglog "run-$1" 2> >(tee >(cat 1>&2)) || {
+  CODE="$?"
+  echo "Error running egglog run-$1, contents below"
+  cat "run-$1"
+  echo "End contents of run-$1"
+  exit "$CODE"
+} 1>&2
 ```
 
 This post continues my explorations with egglog, using it to implement SK logic.
@@ -151,12 +168,8 @@ For example, analysing the current database contents until saturation:
 ```
 
 ```{pipe="sh"}
-{
-  cat sk.egg
-  echo
-  cat bump-loud.egg
-} > bump-test.egg
-egglog bump-test.egg
+set -e
+./run bump-loud.egg
 ```
 
 </details>
@@ -255,7 +268,8 @@ themselves, and not the value of `(V 0)`{.scheme} (which is uninterpreted, and
 does not appear in the expressions). That proves they are equal for *any*
 argument, and hence they are extensionally equal:
 
-```{.scheme pip="./show"}
+```{.scheme pipe="./show"}
+(ruleset extensional)
 (rule ((= (App (bumpSymbols x) (V 0))
           (App (bumpSymbols y) (V 0)))
        (= (symbolicArgCount x)
