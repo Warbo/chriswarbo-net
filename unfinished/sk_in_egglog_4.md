@@ -517,7 +517,7 @@ ignored, so *any* other expression should be usable in its place:
 (let I1 (App (App S K) K))
 (let I2 (App (App S K) S))
 (let I3 (App (App S K) I))
-(let I4 (App (App S K) foo))
+(let I4 (App (App S K) (V 0)))
 
 (run-schedule (saturate reduce symbols extensional ignored))
 (check
