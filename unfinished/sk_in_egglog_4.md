@@ -49,9 +49,8 @@ more control over what to `run`:
 (let S (C "S"))
 (let K (C "K"))
 
-;; Example combinators
-(let I     (C "I"    ))
-(union I (App (App S K) K))
+;; Example combinator
+(let I (App (App S K) K))
 
 ;; Rewrite rules for running SK expressions
 (ruleset reduce)
@@ -187,6 +186,7 @@ For example, populating the database with some seed values and running until
 saturation:
 
 ```{.scheme pipe="./show bump-loud.egg"}
+(bumpSymbols (App I (V 0)))
 (run-schedule (saturate reduce symbols))
 ```
 
