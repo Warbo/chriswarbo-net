@@ -70,7 +70,7 @@ and `y`{.haskell} are extensionally equal for `i`{.haskell} symbolic inputs,
 they agree on any sequence of `i`{.haskell} concrete input values. This
 assertion has many caveats:
 
- - Unless `x`{.haskell} and `y`{.haskell} are extensioanlly equal, or happen to
+ - Unless `x`{.haskell} and `y`{.haskell} are extensionally equal, or happen to
    match a form that `provablyDisagree`{.haskell} can recognise, then
    `extensionalInputs x y`{.haskell} will never finish. In that case we are
    merely asserting the fallback of `runDelayOr True`{.haskell}, not learning
@@ -328,7 +328,7 @@ main = defaultMain (agreementIsMonotonicFixed
 ## Discarding uninteresting cases ##
 
 Property-checkers, including `falsify`, allow us to "discard" uninteresting
-cases, which aborts the current call generates another input to check instead.
+cases, which aborts the current call; generating another input to check instead.
 Discarded calls do not count towards the reported total, so they avoid the false
 confidence issue we saw above. The downside is that extra calls make the test
 slower; and it will be abandoned entirely if too many are discarded (for
@@ -510,7 +510,7 @@ for users to tease apart and find the underlying problem. To reduce this burden,
 all such checkers will attempt to "shrink" the counterexamples they find, in the
 hope of discarding irrelevant parts: when a counterexample is found, a
 "shrinker" turns it into a list of possible alternatives. If that list is empty,
-shrinking stops and the counterexample is shown the the user. If the list is not
+shrinking stops and the counterexample is shown to the user. If the list is not
 empty, the property is retried with the first alternative: if the property holds
 then the next alternative is tried, and so on. If an alternative is found for
 which the property *does not* hold, then we've found a smaller counterexample.
@@ -600,7 +600,7 @@ shrink3 :: Shrink a -> Shrink b -> Shrink c -> Shrink (a, b, c)
 shrink3 sA sB sC (x, y, z) = unpack <$> shrink2 sA (shrink2 sB sC) (x, (y, z))
   where unpack (x', (y', z')) = (x', y', z')
 
--- | Shrink a list, by dropping and shrinking its elementsthe elements of a tuple.
+-- | Shrink a list, by dropping and shrinking its elements
 shrinkL :: Shrink a -> Shrink [a]
 shrinkL _  []  = []
 shrinkL sA [x] = [] : (pure <$> sA x)
@@ -1093,7 +1093,7 @@ main = defaultMain $ testGroup "transitivity"
 
 Thanks to this in-depth testing, I eventually discovered the problem I was
 having in egglog: expressions containing symbolic variables were being used
-interchangably with with concrete (variable-free) expressions. When we use
+interchangably with concrete (variable-free) expressions. When we use
 symbolic execution to check for agreement, we are assuming that each symbol
 represents an input our expressions have been applied to: if those expressions
 *already* contain symbols, that assumption no longer holds, and our conclusions
