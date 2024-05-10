@@ -17,18 +17,9 @@ echo "hello world!"
 print("hello world!")
 ```
 
-```{pipe="sh"}
-(source "$stdenv/setup" && patchShebangs .)
-```
-
 A "shebang", written as `#!`, is a special code at the start of a file, which is used to tell the OS how to execute that file. For example, the top line of this script tells the OS to run it using the `/bin/sh` program:
 
 ```{.bash pipe="cat shebang.sh"}
-```
-
-If we run this script, we get:
-
-```{pipe="./shebang.sh"}
 ```
 
 Here's an example which runs Python:
@@ -36,7 +27,16 @@ Here's an example which runs Python:
 ```{.python pipe="cat shebang.py"}
 ```
 
-Which outputs:
+```{pipe="sh"}
+(source "$stdenv/setup" && patchShebangs .)
+```
+
+The first outputs:
+
+```{pipe="./shebang.sh"}
+```
+
+Whilst the Python one outputs:
 
 ```{pipe="./shebang.py"}
 ```
