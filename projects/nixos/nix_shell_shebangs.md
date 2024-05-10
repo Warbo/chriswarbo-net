@@ -5,20 +5,19 @@ packages: [ 'python3' ]
 
 # Shebangs #
 
-```{pipe="cat > shebang.sh"}
+```{pipe="cat > shebang.sh && chmod +x shebang.sh"}
 #! /bin/sh
 
 echo "hello world!"
 ```
 
-```{pipe="cat > shebang.py"}
+```{pipe="cat > shebang.py && chmod +x shebang.py"}
 #! /usr/bin/env python3
 
 print("hello world!")
 ```
 
 ```{pipe="sh"}
-chmod +x shebang.*
 (source "$stdenv/setup" && patchShebangs .)
 ```
 
