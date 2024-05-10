@@ -45,6 +45,8 @@ rm -f Main.hs
 mv temp.hs Main.hs
 ```
 
+**Update: [part 4 is here](2024-05-10-sk_logic_in_egglog_4.html)**
+
 In [the previous part](/blog/2024-03-17-sk_logic_in_egglog_2.html) we learned
 some background theory about SK logic, and built up our notion of equality from
 simple identity (`==`{.haskell}), through equivalence of `Normal`{.haskell}
@@ -1153,4 +1155,5 @@ With this Haskell digression over, future installments will switch back to
 egglog and make sure that we don't check agreement with expressions that already
 contain symbolic values. There are several mechanisms we can use to avoid this,
 and I've already confirmed that a simple `isConcrete` precondition is enough to
-prevent the prior collapse. Stay tuned for part four!
+prevent the prior collapse. <del>Stay tuned</del>
+<ins>[Go here](2024-05-10-sk_logic_in_egglog_4.html)</ins> for part four!
