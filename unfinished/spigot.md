@@ -1,15 +1,120 @@
-Use the `spigot` package in Nixpkgs, and investigate whether its
-continued-fraction output gets stuck adding 0.111... to 0.000...
+---
+title: Spigot, and rational approximations
+---
 
-In principle it should be able to return approximations like 1/1,
-2/2, 4/4, etc. since their "neighbours" (2/1 & 0/1, 1/2 & 3/2, 3/4 & 5/4, etc.)
-are known to be further away.
+I recently came across
+[spigot](https://www.chiark.greenend.org.uk/~sgtatham/spigot/spigot.html) (via
+[lobste.rs](https://lobste.rs/s/crimha/spigot_command_line_exact_real)). It's
+available in Nixpkgs via the `spigot` attribute.
 
-According to the manual, spigot uses rational intervals to bound the values it's
-calculating. This can cause a problem with place-value output (is the above
-0.something or 1.something?), and I think it causes a problem with
-continued-fraction representations too; e.g. they can't subtract fractions, so
-they'll put-off crossing the 0 -> 1 threshold until being sure (i.e. when at
-least one of the strings of zeros or ones ends). That makes continued fractions
-a poor choice for internal representation, even if they lead to the "best"
-rational approximations when *not* encountering such problems.
+## Computable numbers ##
+
+Spigot is a calculator, which claims to work with "exact real numbers"; but I
+find that terminology rather confusing, since almost-all "real numbers" cannot
+be described or represented (not just by spigot, but even in principle). Instead
+I would say spigot works with the computable numbers: those which can be
+approximated to arbitrarily-small error.
+
+## On-going and never-ending representations ##
+
+Consider the number ⅓: this has a simple representation as a
+[rational number](https://en.wikipedia.org/wiki/Rational_number) (i.e. as one
+whole number divided by another), but attempting to write it as a decimal
+requires approximation with some amount of error: e.g. 0.3, or 0.33, or
+0.333333333, etc. If we allow the decimal places to go on arbitrarily far, our
+approximation will get an arbitrarily-small error. To represent ⅓ as a decimal
+"exactly" would require a *never-ending* sequence of threes. We can't write down
+such a sequence directly, so we need to use a more expressive language that can
+describe the *pattern* followed by those digits. I'll use the Bash language,
+which can represent ⅓ "exactly" like this:
+
+```bash
+printf '0.'; while true; do printf '3'; done
+```
+
+This is a generalisation of finite decimals, since we can always append a
+never-ending suffix of zeros to the latter. Spigot can consume and produce such
+on-going decimals, but it can't see or understand their "source"; so it doesn't
+actually *know* it's dealing with ⅓. For all spigot knows, some other digit
+could appear at some point.
+
+Despite characterising these numbers as "decimal", Spigot also works with other
+natural-number bases: for example, we can write ⅓ in dozenal as 0.4. However, no
+matter which base we choose, there will always be rational numbers that can't be
+represented with finitely-many places (e.g. dozenal can't represent ⅕ exactly).
+
+### Rational approximants ###
+
+Rational numbers are independent of any particular base, and hence a more
+"fundamental" way to represent non-whole numbers. One downside is that it's not
+obvious how to extend them to the sort of on-going approximation we can get with
+decimals; since the value of the numerator and denominator are coupled.
+
+One rather brute-force approach is to generate an on-going sequence of separate
+rational numbers. Spigot can *output* such sequences, but doesn't support
+reading them; presumably because there's no way to ensure such sequences will
+actually converge to something.
+
+### Continued fractions ###
+
+Continued fractions are a generalisation of rational numbers, which allow
+on-going, never-ending generation *and* ensure convergence. Spigot supports
+reading and writing continued fractions.
+
+## The downside ##
+
+Tools like Spigot allow correct, "exact" arithmetic on a huge space of useful
+numbers. Yet they come with a major downside: equality becomes undecidable! It's
+interesting that we can perform arithmetic with numbers yet not compare them,
+but the reason is simple: it can require information from arbitrarily-far along
+the sequence. For example, consider an on-going decimal which begins like
+0.3333…; is this equal to ⅓? If it's *not* equal to ⅓, then one of its decimal
+places must have a digit other than 3, and Spigot will eventually find that
+discrepancy and tell us that they're not equal. Yet comparing numbers which
+*are* equal will never finish (making equality "semi-decidable")!
+
+## Bounds and boundaries ##
+
+Internally, Spigot represents each number with an upper- and lower-bound, both
+rational. It outputs the next digit, continued-fraction, etc. once these bounds
+agree on that prefix. For example, if our result is a known to sit in the
+interval between 123/1000 and 124/1000, we can output 0.12 with confidence; then
+wait for the bounds to get closer before committing to any more.
+
+There is a famous problem with this approach, caused by boundaries in the
+representation. For example, we cannot output any digits of 0.0000… - 0.0000…,
+since we don't know if it's positive, negative or neither; e.g. the following
+outputs nothing, even with the `-c` option for continued fractions:
+
+```bash
+spigot 'base10fd:3 - base10fd:3' \
+  3< <(printf '0.'; while true; do printf '0'; done)
+```
+
+Unfortunately the sequence of rational convergents (option `-C`) *also* doesn't
+output anything, since it's based on the continued fraction. This is a shame,
+since Spigot does have rational bounds, which could be used to generate
+approximants directly (rather than going through the continued fraction). For
+example, it could output a rational `x/y` for the largest `y` such that the
+upper bound is below `(2x+1)/2y` and the lower bound is above `(2x-1)/2y`; i.e.
+when we can confidently round to the nearest `1/y`. Here's how we can
+approximate the above example, as more and more digits are read in:
+
+ - 0.… - 0.… is between `0 - 1 = -1/1` and `1 - 0 = 1/1` *inclusive* (remember
+   that 0.9̇ = 1). The least-precise rational we could form is `0/1`, but that's
+   only valid for the interval strictly between `(2×0+1)/2 = 1/2` and
+   `(2×0-1)/2 = -1/2`, which is tighter than our bounds so far. Hence we can't
+   output any rational approximation yet.
+ - 0.0… - 0.0… is between `0 - 0.1 = -1/10` and `0.1 - 0 = 1/10`, which *is*
+   between `1/2` and `-1/2`, so `0/1` would be a valid approximation. However,
+   we can be even more precise, since those bounds are also in `(-1/4,1/4)`,
+   `(-1/6,1/6)` and `(-1/8,1/8)`, so `0/2`, `0/3` and `0/4` are also valid
+   approximations. `0/5` is not, since its interval is `(-1/10,1/10)`; since
+   we're not including the end-points, that's strictly tighter than our bounds.
+   The largest denominator gives the most precise approximation, so we should
+   output `0/4`.
+ - 0.00… - 0.00… is between `-1/100` and `1/100`, so it can be approximated by
+   `0/49`, to the nearest `1/49`.
+ - 0.000… - 0.000… can be approximated by `0/499`, to the nearest `1/499`
+ - and so on, with the denominator of the most precise approximation being one
+   less than the next power of 10.
