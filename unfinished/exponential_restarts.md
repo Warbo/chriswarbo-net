@@ -4,8 +4,8 @@ packages: [ 'matplotlib' ]
 ---
 
 Let's say we have some task to perform, like winning a computer game. We don't
-know how long it will take, but every second we spend playing the cake will get
-us one second closer to having won the game. Seems pretty straightforward:
+know how long it will take, but every second we spend playing will get us one
+second closer to having won the game. Seems pretty straightforward:
 
 ```{pipe="cat > head.py"}
 #/usr/bin/env python3
