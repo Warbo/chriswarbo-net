@@ -42,8 +42,8 @@ the `egglog` attribute of Nixpkgs.
 
 ## A trivial example ##
 
-Let's define a very simple datatype called `Expr`, containing just two sorts
-value:
+Let's define a very simple datatype called `Expr`, containing values of just two
+forms:
 
  - A constant value `C`
  - A function `Id` applied to some other `Expr` (like `(Id C)`{.scheme},
