@@ -7,13 +7,11 @@ packages: [ 'python3' ]
 
 ```{pipe="cat > shebang.sh && chmod +x shebang.sh"}
 #! /bin/sh
-
 echo "hello world!"
 ```
 
 ```{pipe="cat > shebang.py && chmod +x shebang.py"}
 #! /usr/bin/env python3
-
 print("hello world!")
 ```
 
@@ -27,7 +25,7 @@ Here's an example which runs Python:
 ```{.python pipe="cat shebang.py"}
 ```
 
-```{pipe="sh"}
+```{pipe="sh > ignore.out"}
 (source "$stdenv/setup" && patchShebangs .)
 ```
 
