@@ -20,20 +20,38 @@ specific aspect of metric: that units are related by powers of 10. For example:
  - 10mm = 1cm
  - 1kN = 1000N
 
-However, this is a red herring! The qualifiers "centi", "kilo", "milli", etc.
-are not unique to metric. If we wanted to, we could use them with imperial units
-too. For example it's perfectly correct (if a little unorthodox) to say that
-there are 100 centifeet in 1 foot and 1000 pounds in 1 kilopound. A listener
-might find it strange, but they could figure out what you meant.
+However, this is a red herring: those examples have *the same units* on each
+side! They only differ in how they factor the multiple; solving these equations
+reveals the definition of those factors:
 
-The "powers of 10" in metric come solely from the common usage of these
-prefices. There are equivalent [prefices for powers of
-2](https://en.wikipedia.org/wiki/Binary_prefix), where "kibi" is 2^10^
-(symbol "Ki"; roughly a thousand), "mibi" is 2^20^ (symbol "Mi"; roughly a
-million), etc. These are used almost exclusively for data sizes and rates, like
-an SSD with a 1TiB capacity (one tibibyte, or 2^40^ bytes). Yet it's perfectly
-correct (if a little unorthodox) to say that 1Mim = 1,048,576m or that there
-are one thousand and twenty four gallons in one kibigallon.
+The first tells us that `c` ("centi") is a hundredth:
+
+```
+100cm = 1m
+100c  = 1
+   c  = 1/100
+```
+
+The second tells us that `m` ("milli") is a thousandth:
+
+```
+10mm = 1cm
+10m  = 1c
+10m  = 1/100
+  m  = 1/1000
+```
+
+The third tells us that `k` ("kilo") is a thousand:
+
+```
+1kN = 1000N
+ k  = 1000
+```
+
+Notice that these are just statements about numbers: the units we wrote in each
+case are irrelevant, since they immediately cancelled-out! We could have done
+the same with inches, pounds, etc. There's also nothing special about ten: there
+are [convenient factors for many bases](prefix_factors.html), e.g. 3Kim = 3072m.
 
 ## Metric is Minimal ##
 

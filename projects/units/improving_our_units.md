@@ -286,20 +286,8 @@ fingers](https://en.wikipedia.org/wiki/Finger_binary), but the dearth of digits
 ("bits") can lead to very long, unwieldy numbers.
 [Hexadecimal (base 16)](https://en.wikipedia.org/wiki/Hexadecimal) is a common
 way to avoid this problem of binary, whilst still following similar patterns.
+See [my page on prefix factors](prefix_factors.html).
 
-I'm not aware of any sexagesimal prefices (powers of 60), but they would be
-useful e.g. for abbreviating times to begin with, and maybe spreading their
-highly composite nature into other areas. The existing system of "minutes",
-"seconds", "thirds", etc. is useful for *dividing* by 60, although it would be
-preferable to use it in prefix rather than postfix position for consistency
-(e.g.  "minutearc" rather than "arcminute"). [Metric prefices traditionally used
-Latin for smaller parts (e.g. "centi" and "milli") and Greek for larger parts
-(e.g.  "kilo" and
-"mega")](https://en.wikipedia.org/wiki/Metric_system#Prefixes_for_multiples_and_submultiples).
-The minutes/seconds/thirds system likewise uses Latin for the smaller parts, so
-we should use Greek for our sexagesimal multiples: "prota" would be sixties,
-"defter" would be three thousand six hundreds, "trito" would be two hundred and
-sixteen thousands, and so on.
 
 Another problem with [current unit
 prefices](https://en.wikipedia.org/wiki/Metric_prefix#List_of_SI_prefixes) is

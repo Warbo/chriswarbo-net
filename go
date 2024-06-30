@@ -26,7 +26,7 @@ show() {
     fi
 }
 
-[[ -n "$PAGE" ]] || PAGE='unfinished.unfinished."falsifying_myself.html"'
+[[ -n "$PAGE" ]] || PAGE='unfinished.unfinished."exploring_enumo.html"'
 F=$(./render page "$PAGE") && show "$F"
 command -v pop > /dev/null && pop
 hostname | grep -q amd64 && ssh pinephone "~/.nix-profile/bin/pop"
