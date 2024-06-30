@@ -3,5 +3,5 @@ import (builtins.fetchGit {
   name = "warbo-packages";
   url = "http://chriswarbo.net/git/warbo-packages.git";
   ref = "master";
-  rev = "0a3714752c36dd8afde9276b7d5f2e054d6d4325";
+  rev = "207b895d916ea91090b61c216a76e3c0f214ffa8";
 }) { }
