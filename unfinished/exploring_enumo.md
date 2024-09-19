@@ -1,21 +1,21 @@
 ---
-title: Exploring Ruler/Enumo
+title: Exploring rational arithmetic
 packages: [ 'mathml' ]
 ---
 
 I've recently been playing with the [Ruler]()/[Enumo]() project (I'm not
-entirely sure about the naming… so I'll stick with Enumo) described in those
-linked papers. These enable theory exploration, akin to systems like
-[QuickSpec]() and [IsaCoSy](), but in an indirect way: rather than using some
-fixed procedure to explore definitions, they break down the problem into
-separate parts, which can be combined into a variety of procedures tailored to
-different use-cases.
+entirely sure about the naming… so I'll stick with Enumo). These enable theory
+exploration, akin to systems like [QuickSpec]() and [IsaCoSy](), but in an
+indirect way: rather than using some fixed procedure to explore definitions,
+they break down the problem into separate parts, which can be combined into a
+variety of procedures tailored to different use-cases.
 
-This post documents some of my initial experiments with Enumo. It's also my
-first time writing Rust, so the examples will be mostly straightforward; and the
-code may be messy!
+This post documents some of my initial experiments, using this approach to
+discover equations in a simple theory of rational numbers. It's also my first
+time writing Rust, so the examples will be mostly straightforward; and the code
+may be messy!
 
-## Exploring rational arithmetic ##
+## Defining rational arithmetic ##
 
 Rational numbers are fractions of the form
 `{ var 'a'; var 'b'; }`{.unwrap pipe="sh | rat | math"}. We can represent these
@@ -26,11 +26,14 @@ in Rust as follows:
 pub struct Rat{ num: i32, den: u32 }
 ```
 
-I want to allow negatives, but allowing both parts to be negative would
-introduce redundancy, e.g.
+That `derive`{.rust} line is just a macro call, to generate trivial
+implementations of a few useful interfaces. I want to allow negatives, but
+allowing both parts to be negative would introduce redundancy, e.g.
 `{ num '1' | neg; num '2' | neg; }`{.unwrap pipe="sh | rat | math minus"} is
-equivalent to `{ num 1; num 2; }`{.unwrap pipe="sh | rat | math"}. Hence we only
-allow the `num`{.rust}erator to be negative. Here are some example values:
+equivalent to `{ num 1; num 2; }`{.unwrap pipe="sh | rat | math"}. Hence we
+allow the `num`{.rust}erator to be negative (`i32`{.rust} is 32bit integers;
+`u32`{.rust} is "unsigned" 32bit, AKA 32bit naturals). Here are some example
+values of this type:
 
 ``` rust
 const zero: Rat = Rat { num: 0, den: 1 };
@@ -42,21 +45,25 @@ fractions like `{ num '2'; num '4'; }`{.unwrap pipe="sh | rat | math"}; and it
 also allows invalid values like
 `{ num '1'; num '0'; }`{.unwrap pipe="sh | rat | math"}. To prevent this, we'll
 avoid constructing `Rat`{.rust} values directly, and instead use the following
-`Rat::new`{.rust} function:
+`rat`{.rust} function:
 
 ```rust
-fn new(num: i64, den: u64) -> Option<Rat> {
+fn rat(num: i64, den: u64) -> Option<Rat> {
+    // Immediately reject division by zero
     if den == 0 {
         return None;
     }
+    // Promote num and den to 128bit, since den won't fit in an i64
     let mut m = i128::from(num);
     let mut n = i128::from(den);
+    // Find their greatest common divisor
     while m != 0 {
         let old_m = m;
         m = n % m;
         n = old_m;
     }
     let common = n.abs();
+    // Reduce by their common divisor, and try to fit into 32 bits
     match (
         i32::try_from(i128::from(num) / common).ok(),
         u32::try_from(i128::from(den) / common).ok(),
@@ -82,8 +89,8 @@ We can use this "smart constructor" to define `Eq`{.rust}uality and
 impl PartialEq for Rat {
     fn eq(&self, other: &Self) -> bool {
         match (
-            Rat::new(i64::from(self.num), u64::from(self.den)),
-            Rat::new(i64::from(other.num), u64::from(other.den))
+            rat(i64::from(self.num), u64::from(self.den)),
+            rat(i64::from(other.num), u64::from(other.den))
         ) {
             (Some(Rat{num: n1, den: d1}), Some(Rat{num: n2, den: d2})) =>
                 n1 == n2 && d1 == d2,
@@ -94,19 +101,11 @@ impl PartialEq for Rat {
 
 impl Eq for Rat {}
 
-impl Neg for Rat {
-        type Output = Self;
-
-    fn neg(self) -> Self::Output {
-        Rat{num: -(self.num), den: self.den}
-    }
-}
-
 impl Ord for Rat {
     fn cmp(&self, other: &Self) -> Ordering {
         match (
-            Rat::new(i64::from( self.num), u64::from( self.den)),
-            Rat::new(i64::from(other.num), u64::from(other.den))
+            rat(i64::from( self.num), u64::from( self.den)),
+            rat(i64::from(other.num), u64::from(other.den))
         ) {
             (Some(Rat { num: n1, den: d1 }), Some(Rat { num: n2, den: d2 })) =>
                 (i64::from(n1) * i64::from(d2)).cmp(
@@ -128,6 +127,14 @@ We can also implement `Neg`{.rust}ation relatively safely:
 
 ```rust
 impl Neg for Rat {
+        type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Rat{num: -(self.num), den: self.den}
+    }
+}
+
+impl Neg for Rat {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -136,7 +143,7 @@ impl Neg for Rat {
 }
 ```
 
-However, due to `Rat::new`{.rust} returning an `Option<Rat>`{.rust} it doesn't
+However, due to `rat`{.rust} returning an `Option<Rat>`{.rust} it doesn't
 quite fit Rust's standard `Add`{.rust} and `Mul`{.rust} traits; so we'll use
 these standalone `add`{.rust} and `mul`{.rust} functions instead:
 
