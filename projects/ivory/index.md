@@ -5,7 +5,11 @@ title: "Ivory: A Mammoth Numerical Tower"
 <figure>
 
 ```
-              ┌─┐ ┌──┐ ┌─┐
+                    ╖◠◡◠◡◠◡╷
+                    ║ void │
+                    ║◠◡◠◡◠◡╵
+                    ║
+              ┌─┐ ┌─╨┐ ┌─┐
               │ └─┘  └─┘ │
               │   zero   │
              ┌┴──────────┴┐
