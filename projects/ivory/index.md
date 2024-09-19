@@ -15,7 +15,7 @@ title: "Ivory: A Mammoth Numerical Tower"
            ┌┴──────────────┴┐
            │     dyadic     │
           ┌┴────────────────┴┐
-          │     decimal      │
+          │    sexagesimal   │
          ┌┴──────────────────┴┐
          │      rational      │
         ┌┴────────────────────┴┐
