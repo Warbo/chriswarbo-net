@@ -111,11 +111,11 @@ at it, what's the actual *distinction* between a "sum" and a "product"?
 ```
 
 ```{pipe="cat > split"}
-;; Return #f when no element of xs  satisfies pred, otherwise return (list a b c)
+;; Return #f when no element of xs satisfies pred, otherwise return (list a b c)
 ;; where (append a (cons b c)) = xs, and (pred b)
 (define ((split pred) xs)
   (match/values (splitf-at xs (negate pred))
-    [(xs (cons y ys)) (list xs y ys)]
+    [(xs (cons y zs)) (list xs y zs)]
     [(_  _          ) #f]))
 ```
 
@@ -345,10 +345,10 @@ splitting up the inputs of a sum or product), by finding an element `y` that
 satisfies a given predicate (above, the predicates are `+?`{.scheme} and `×?`,
 to spot a nested sum or product). The result also includes all the elements
 occuring before `y`{.scheme} (which we call `xs`{.scheme}) and all those
-following `y`{.scheme} (which we call `ys`{.scheme}). If no such element is
+following `y`{.scheme} (which we call `zs`{.scheme}). If no such element is
 found, we return `#f`{.scheme} (and hence the above clauses won't match):
 
-```{pipe="cat split"}
+```{.scheme pipe="cat split"}
 ```
 
 ### Identity ###
@@ -396,10 +396,10 @@ described above, the sum of a single input leaves it unchanged). Here is the
 same example shown graphically (with a half-line `╵` to indicate no inputs):
 
 ```
-   +                +
-┌──┴──┐      =      │      =      a
-a     +             a
-      ╵
+   +                   +                +
+┌──┴──┐      =      ┌──┴──┐      =      │      =      a
+a     +             +     a             a
+      ╵             ╵
 ```
 
 Hence [`(+)`{.scheme}](https://en.wikipedia.org/wiki/Empty_sum) is the identity
@@ -407,12 +407,14 @@ value for sums, and a similar argument shows that
 [`(×)`{.scheme}](https://en.wikipedia.org/wiki/Empty_product) is the identity
 value for products.
 
-Now, we know from primary school that adding `0` to a number *also* leaves it
-unchanged; so zero must *also* be an identity for addition. In which case, what
-happens if we add zero to an empty sum, like `(+ 0 (+))`{.scheme}? Adding `0`
-leaves the empty sum unchanged, so the result is `(+)`{.scheme}; yet we also
-showed that adding `(+)`{.scheme} will leave the `0`{.scheme} unchanged, so the
-result is *also* `0`. This only makes sense if both of these are the same value!
+Now, we know from primary school that adding `0`{.scheme} to a number *also*
+leaves it unchanged; so `0`{.scheme} must *also* be an identity for addition. In
+which case, what happens if we add `0`{.scheme} to an empty sum, like
+`(+ 0 (+))`{.scheme}? Adding `0`{.scheme} leaves the empty sum unchanged, so the
+result is `(+)`{.scheme}; yet we also showed that adding `(+)`{.scheme} will
+leave the `0`{.scheme} unchanged, so the result is *also* `0`{.scheme}. This
+only makes sense if both of these are the same value!
+
 We can use the same approach to find that `(×)`{.scheme} and `1`{.scheme} must
 be the same value. Hence:
 
@@ -432,8 +434,8 @@ be the same value. Hence:
 
 <figcaption>
 A *empty* sum or product (i.e. which has no inputs) is called the *identity
-element* of that operation. These are equal to the values zero and one,
-respectively.
+element* of that operation. These are equal to the values `0`{.scheme} and
+`1`{.scheme}, respectively.
 </figcaption>
 
 </figure>
