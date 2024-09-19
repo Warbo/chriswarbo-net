@@ -21,11 +21,12 @@ title: "Ivory: A Mammoth Numerical Tower"
         ┌┴────────────────────┴┐
         │      algebraic       │
         ├──────────────────────┤
-        │         real         │
-       ┌┴──────────────────────┴┐
+        │        scalar        │
+       ┌┴┐ ┌─┐ ┌──┐  ┌──┐ ┌─┐ ┌┴┐
+       │ └─┘ └─┘  └──┘  └─┘ └─┘ │
        │       geometric        │
        ├────────────────────────┤
-       │         number         │
+       │        nullary         │
       ┌┴┐ ┌─┐  ┌──┐  ┌──┐  ┌─┐ ┌┴┐
       │ └─┘ └──┘  └──┘  └──┘ └─┘ │
       │   univariate-monomial    │
@@ -84,14 +85,14 @@ is undecidable. This requirement for exact, unique representations is why Ivory
 does not currently include transcendental numbers like τ and 𝑒, or operations
 like $sin$ and $log$.
 
-The levels `real`, `number` and `expression` provide no extra values or
+The levels `scalar`, `nullary` and `expression` provide no extra values or
 operations, and act merely as alternative names for the levels above them
 (`algebraic`, `geometric` and `algebraic-expression`, respectively). They
 mark important transitions in the tower, below which some important results can
-no longer be assumed to hold. For example, values above the `real` level can be
-totally ordered into a "number line", whilst such comparisons don't generally
+no longer be assumed to hold. For example, values above the `scalar` level can
+be totally ordered into a "number line", whilst such comparisons don't generally
 hold for the levels below. Applications which need comparable numbers should
-check if they're `real`, rather than `algebraic`; that way, any extra levels
+check if they're `scalar`, rather than `algebraic`; that way, any extra levels
 inserted between these in future revisions will be automatically supported.
 
 ## Required Knowledge ##
@@ -135,7 +136,7 @@ Scheme programming. A "quotation" is prefixed by a single-quote/apostrophe
 `'`{.scheme}, and is used to represent data without attempting to execute
 it. For example, the value of `'(+ 2 5)`{.scheme} is a *list* containing three
 elements (like `["+", 2, 5]`{.python} in other languages; and *unlike*
-`(+ 2 5)`{.scheme}, whose value is the `number`{.scheme} `7`{.scheme}). A
+`(+ 2 5)`{.scheme}, whose value is the `natural`{.scheme} `7`{.scheme}). A
 "quasiquotation" is prefixed by a backtick `` ` ``{.scheme}, and is like a
 quotation except that expressions prefixed with a comma `,`{.scheme} are
 "unquoted"; for instance `` `(10 plus 20 is ,(+ 10 20)) ``{.scheme} gives the
