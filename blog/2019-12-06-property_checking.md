@@ -10,61 +10,111 @@ import Test.Tasty.QuickCheck
 
 ```
 
-Most of the testing I do is integration testing, using property checkers like
-QuickCheck. It's remarkable how well this exposes problems I would never have
-thought to write explicitly (as a unit test, for example). In this post I'll
-be using Haskell, but will stick to a subset that's hopefully widely
-understandable. We'll take an example of a unit test for a (hypothetical)
-key/value data store, see how we can turn it into a property test, how we might
-improve the test, and some of the useful techniques and different alternatives
-that we can choose along the way.
+Most of the testing I do is functional testing: using property checkers like
+QuickCheck, to test the input/output behaviour of high-level functionality. It's
+remarkable how well this exposes problems I would never have thought to write
+explicitly (as a unit test, for example). In this post I'll demonstrate some of
+the techniques and approaches I find useful, to elevate a simple unit test into
+a much more powerful property statement; to automatically check for bugs in far
+more situations than I would think to write as tests.
 
-## From Unit to Property ###
+## Setup ##
 
-Property checking is a generalisation of unit testing, where our assertions can
-contain free variables. Every unit test is hence *already* a property, albeit a
-trivial one; the interesting part is how we might generalise such tests to take
-advantage of some free variables.
+I'll be using Haskell, but will stick to a (non-idiomatic) subset that's
+hopefully widely understandable.
 
-The most obvious generalisation is to replace each hard-coded value with a free
-variable. For example, here is a typical unit test for checking that we can look
-up a value that's been inserted into a key/value database:
+Our examples will be testing a hypothetical key/value store, whose API has the
+following functions (along with their type signatures):
 
-``` haskell
-let key   = "hello"
-    value = "world"
-    db    = addValue key value newDB
-    found = lookup (keyQuery key) db
- in assert (contains value found)
+```haskell
+-- | An empty database
+newDB :: DB
+
+-- | Add a particular Value to a Key in a DB, returning the updated DB
+addValue :: Key -> Value -> DB -> DB
+
+-- | Remove all Values in a DB associated with a particular Key
+removeKey :: Key -> DB -> DB
+
+-- | Run a Query on a DB, returning a (potentially empty) list of Values
+lookup :: Query -> DB -> Result
+```
+
+We'll assume `Key` and `Value` can be written as quoted literals. We'll have a
+few helper functions for the `Query` type:
+
+```haskell
+-- | A Query whose Result is always empty
+emptyQuery :: Query
+
+-- | A Query whose Result always contains every Value
+anyQuery :: Query
+
+-- | The union of two Query arguments
+orQuery :: Query -> Query -> Query
+
+-- | The intersection of two Query arguments
+andQuery :: Query -> Query -> Query
+
+-- | Query for every Value associated with a particular Key
+keyQuery :: Key -> Query
+```
+
+Along with a few helpers for the `Result` type:
+
+```haskell
+-- | A Result containing only the given Value
+aResult :: Value -> Result
+
+-- | A Result containing every Value from each argument
+addResult :: Result -> Result -> Result
+
+-- | Whether a Result contains a particular Value
+contains :: Value -> Result -> Bool
+```
+
+## An Initial Unit Test ###
+
+We'll focus on the following unit test, which asserts that a particular value
+can be looked-up after insertion:
+
+```haskell
+let key   :: Key    = "hello"
+    value :: Value  = "world"
+    db    :: DB     = addValue key value newDB
+    found :: Result = lookup (keyQuery key) db
+in assert (found == singleResult value)
 ```
 
 <details class="odd">
 <summary>Code notes</summary>
 
 This code defines a single value: that of `assert (...)`, given all of the
-bindings specified by the equations. We're assuming that `newDB` is an empty
-key/value database, and that the following functions are defined:
-
- - `addValue` inserts a given value into a given database at a given key.
- - `keyQuery` produces a "query" value, for looking up values associated with a
-   given key.
- - `lookup` runs a given query on a given database.
- - `contains` tests whether a particular value exists in a collection (e.g. an
-   element of a list).
- - `assert` tests a given boolean.
-
+bindings specified by the equations. `newDB` is an empty key/value database, and
+`db` is an updated database which also contains the `Value` `"world"`, under the
+`Key` `"hello"`.
 </details>
 
+## Generalising *Explicit* Constants ##
+
+Property checking is a generalisation of unit testing, where our assertions can
+contain free variables. Every unit test is hence *already* a property, albeit a
+trivial one; the interesting part is how we might generalise such tests to take
+advantage of some free variables.
+
 We can get a stronger test by replacing these arbitrary, hard-coded strings with
-free variables. This way, we're stating that *all* strings should work
-(including, say, special characters, control characters, unicode code points,
-etc.), not *just* those we happened to pick:
+free variables. This way, we're stating that *all* values should work (including
+those with special characters, control characters, unicode code points, etc.),
+not *just* those we happened to pick:
 
 ```haskell
-test key value =
-  let db    = addValue key value newDB
-      found = lookup (keyQuery key) db
-   in assert (contains value found)
+test(
+  key   :: Key,
+  value :: Value
+) =
+  let db    :: DB     = addValue key value newDB
+      found :: Result = lookup (keyQuery key) db
+  in assert (found == singleResult value)
 ```
 
 <details class="odd">
@@ -79,46 +129,156 @@ found.
 
 </details>
 
-This test also uses a value `newDB`, presumably to avoid collision with an
-existing key, which would cause multiple matches to be returned. This is an
-example of an unnecessarily restrictive constraint: we only care whether or not
-`found` contains `value`; we don't care whether or not it contains anything
-else, so we might as well generalise `newDB` to a free variable as well, to get
-a stronger test that may uncover more errors:
+Notice that this property is simpler than the original unit test, since we don't
+need to waste effort defining the particular data to use.
+
+## Generalising Assertions ##
+
+There is another constant value we could try to generalise: `newDB`. However, if
+we tried to make that a free variable we would get a failure: the assertion
+requires exactly *one* `Value` in the `Result`; whereas a general `DB` could
+already contain many `Value` entries for `key`.
+
+This is an example of an unnecessarily restrictive constraint: we only care that
+`value` appears *somewhere* in the `Result`; we don't care whether or not it
+contains anything else. Hence we can weaken our assertion as follows:
 
 ```haskell
-test key value initialDB =
-  let db    = addValue key value initialDB
-      found = lookup (keyQuery key) db
-   in assert (contains value found)
+test(
+  key       :: Key,
+  value     :: Value
+) =
+  let db    :: DB     = addValue key value newDB
+      found :: Result = lookup (keyQuery key) db
+  in assert (contains value found)
 ```
 
-This version is certainly better than we started with, since we've removed some
-irrelevant constraints from the test (that the database starts off empty, and
-the particular choice of `key` and `value`). However, we can go so much further
-when we think about all of the *implicit* actions/values that are involved; or
-which irrelevant constraints are implicitly restricting our tests.
+This is more general, since it holds for more `Result` values; whilst still
+specifying the behaviour we actually want the API to implement.
 
-## Beyond Abstracting Values ##
+## Generalising *Every* Constant ##
 
-Many people would stop here, since all of the *explicit* constraints have been
-removed (i.e. all of our hard-coded values are now replaced by free variables).
-Its simplicity is certainly nice, so I might keep it around as a way to document
-the system's behaviour. However it still contains more unnecessary constraints
-which are *implicit*, which artificially limit the sorts of bugs it can find.
+This more general assertion lets us generalise `newDB` to a free variable, as
+follows:
 
-Firstly, our query is overly restricted: our `value` should be found by all
+```haskell
+test(
+  key       :: Key,
+  value     :: Value,
+  initialDB :: DB
+) =
+  let db    :: DB     = addValue key value initialDB
+      found :: Result = lookup (keyQuery key) db
+  in assert (contains value found)
+```
+
+This version is significantly better than what we started with. The definition
+is simpler, and it specifies what we actually care about (our real use-case will
+probably not involve those `"hello"` and `"world"` strings). Furthermore, by
+generalising the `initialDB` our asserting has become *much* stronger (we won't
+be dealing with empty `DB` values for very long!).
+
+Many people would stop here, since all of the *explicit* constants have been
+replaced by free variables. Its simplicity is certainly nice, so I might keep it
+around as a way to document the system's behaviour. However, we can go so much
+further when we think about all of the *implicit* actions/values that are
+involved; or which irrelevant constraints are implicitly restricting our tests.
+
+## Generalising *Implicit* Constants ##
+
+At first glance, it seems like there's nothing left to generalise. Yet a little
+algebra can reveal some *implicit* constants for us to consider. In particular,
+we can expand the `Query` given to `lookup`:
+
+```haskell
+test(
+  key       :: Key,
+  value     :: Value,
+  initialDB :: DB
+) =
+  let db    :: DB     = addValue key value initialDB
+      query :: Query  = orQuery emptyQuery (keyQuery key)
+      found :: Result = lookup query db
+  in assert (contains value found)
+```
+
+The expression `orQuery emptyQuery` should not affect the `Result` of our
+`keyQuery`, so our assertion should still hold. We could also do the same with
+`andQuery anyQuery`, which should likewise leave the `Result` unchanged. However
+the following steps are more complicated for "and", so I'll just stick to "or"
+in this post.
+
+This transformation has actually improved our test in two important ways: it has
+generalised our assertion to cover behaviour of the `orQuery emptyQuery`; and
+the use of the constant `emptyQuery` is another opportunity to generalise
+further!
+
+Note that our assertion is monotonic: having extra things in the `Result` of
+`query` should not stop `contains` from finding `value`. Hence we can generalise
+`emptyQuery` into another free variable, to strengthen our specification even
+more:
+
+```haskell
+test(
+  key       :: Key,
+  value     :: Value,
+  initialDB :: DB,
+  extraQ    :: Query
+) =
+  let db    :: DB     = addValue key value initialDB
+      query :: Query  = orQuery extraQ (keyQuery key)
+      found :: Result = lookup query db
+  in assert (contains value found)
+```
+
+In fact, there are more "implicit values" lurking in this test:
+
+ - We're using `extraQ` as the first argument of `orQuery`, and our `keyQuery`
+   as the second; but this should also work the other way around! In fact, we
+   should be able to do *both at once*, like
+   `orQuery extraQ1 (orQuery (keyQuery key) extraQ2)`
+ - We can do a similar thing to `found`, since our assertion should still hold
+   for `addResult extraR1 (addResult (lookup query db) extraR2)`
+
+```haskell
+test(
+  key       :: Key,
+  value     :: Value,
+  initialDB :: DB,
+  extraQ1   :: Query,
+  extraQ2   :: Query,
+  extraR1   :: Result,
+  extraR2   :: Result
+) =
+  let db    :: DB     = addValue key value initialDB
+      query :: Query  = orQuery extraQ1 (orQuery (keyQuery key) extraQ2)
+      found :: Result = addResult extraR1 (addResult (lookup query db) extraR2)
+  in assert (contains value found)
+```
+
+## Generalising Operations ##
+
+The
+
+can be written extended will Our assertion applies as long as `db` associates `key` with `value`, regardless
+of what *other* contents are in the `DB`. That allowed us to generalise from
+`newDB` to any `initialDB`. We can do a similar thing for our query, is exists The initial state of the `DB` was irrelevant for We've generalised our assertion to involve arbitrary Firstly, our query is overly restricted: our `value` should be found by all
 queries *containing* our `key`, not just queries for *only* our `key`, so we
 can introduce a new variable for extensions to our query (we stick to
 disjunction, AKA "OR", since there's no way it could accidentally filter out the
 `key` lookup we care about):
 
 ```haskell
-test key value initialDB extraQs =
-  let db    = addValue key value initialDB
-      query = reduce orQuery (keyQuery key) extraQs
-      found = lookup query db
-   in assert (contains value found)
+test(
+  key       :: Key,
+  value     :: Value,
+  initialDB :: DB,
+  extraQs   :: [Query]
+) =
+  let db    :: DB     = addValue key value initialDB
+      query :: Query  = reduce orQuery (keyQuery key) extraQs
+      found :: Result = lookup query db
+  in assert (contains value found)
 ```
 
 <details class="odd">
@@ -150,11 +310,17 @@ variable. We'll call this new variable `preQ` to indicate that it comes "before"
 our `keyQuery`, and rename our `extraQs` variable to `postQs` for symmetry:
 
 ```haskell
-test key value initialDB preQ postQs =
-  let db    = addValue key value initialDB
-      query = reduce orQuery preQ (cons (keyQuery key) postQs)
-      found = lookup query db
-   in assert (contains value found)
+test(
+  key       :: Key,
+  value     :: Value,
+  initialDB :: DB,
+  preQ      :: Query,
+  postQs    :: [Query]
+) =
+  let db    :: DB     = addValue key value initialDB
+      query :: Query  = reduce orQuery preQ (cons (keyQuery key) postQs)
+      found :: Result = lookup query db
+  in assert (contains value found)
 ```
 
 <details class="odd">
@@ -178,12 +344,16 @@ want to de-clutter this test, we might choose to abstract out the details into
 a reusable "query generator", like this:
 
 ```haskell
-test key value initialDB queryWith =
-  let db = addValue key value initialDB
-
-      query = queryWith (keyQuery key)
-      found = lookup query db
-   in assert (contains value found)
+test(
+  key       :: Key,
+  value     :: Value,
+  initialDB :: DB,
+  queryWith :: Query -> Query
+) =
+  let db    :: DB     = addValue key value initialDB
+      query :: Query  = queryWith (keyQuery key)
+      found :: Result = lookup query db
+  in assert (contains value found)
 ```
 
 <details class="odd">
@@ -196,9 +366,7 @@ ordinary values like anything else; and we can use the same code as before to do
 the query manipulation, e.g.:
 
 ```haskell
-genQueryWith preQ postQs =
-  let f q = reduce orQuery preQ (cons q postQs)
-   in f
+genQueryWith preQ postQs q = reduce orQuery preQ (cons q postQs)
 ```
 
 Here the `genQueryWith` function returns another function `f`, and it's those
@@ -238,12 +406,17 @@ which is enforced via the data dependency `db`. We can make this dependency more
 direct by inlining the value of `db`, as a stepping stone to our generalisation:
 
 ```haskell
-test key value initialDB queryWith =
+test(
+  key       :: Key,
+  value     :: Value,
+  initialDB :: DB,
+  queryWith :: Query -> Query
+) =
   let query = queryWith (keyQuery key)
 
       -- Inline the definition of `db`
       found = lookup query (addValue key value initialDB)
-   in assert (contains value found)
+  in assert (contains value found)
 ```
 
 Functional programmers will recognise that this is the [*composition*](
@@ -254,7 +427,12 @@ https://davesquared.net/2012/07/left-to-right-composition.html), since it works
 out nicer in this case than the more common "right to left"):
 
 ```haskell
-test key value initialDB queryWith =
+test(
+  key       :: Key,
+  value     :: Value,
+  initialDB :: DB,
+  queryWith :: Query -> Query
+) =
   let query = queryWith (keyQuery key)
 
       -- Combine our two "actions" into one, using left-to-right composition
@@ -273,7 +451,12 @@ no reason we can't have more! To make this more obvious, we can put our actions
 in a list and `reduce` them together using composition:
 
 ```haskell
-test key value initialDB queryWith =
+test(
+  key       :: Key,
+  value     :: Value,
+  initialDB :: DB,
+  queryWith :: Query -> Query
+) =
   let query = queryWith (keyQuery key)
 
       -- Chain together all (one) actions in the list, ending with `lookup`
@@ -324,7 +507,13 @@ key/value pairs:
 
 ```haskell
 -- `extra` is a list of key/value pairs to add
-test key value initialDB queryWith extra =
+test(
+  key       :: Key,
+  value     :: Value,
+  initialDB :: DB,
+  queryWith :: Query -> Query,
+  extra     :: [(Key, Value)]
+) =
   let query = queryWith (keyQuery key)
 
       -- List of actions to add all of the key/value pairs
@@ -356,7 +545,14 @@ Removing keys shouldn't alter our result either, *unless* they happen to match
 of keys, and use `filter` to avoid accidental matches:
 
 ```haskell
-test key value initialDB queryWith extra removals =
+test(
+  key       :: Key,
+  value     :: Value,
+  initialDB :: DB,
+  queryWith :: Query -> Query,
+  extra     :: [(Key, Value)],
+  removals  :: [Key]
+) =
   let query = queryWith (keyQuery key)
       adds  = map (uncurry addValue)
                   (append extra [(key, value)])
@@ -407,7 +603,14 @@ interleaveRuns xs ys = concat (interleave xs ys)
 If we use this in our test, we get the following:
 
 ```haskell
-test key value initialDB queryWith addRuns removeRuns =
+test(
+  key        :: Key,
+  value      :: Value,
+  initialDB  :: DB,
+  queryWith  :: Query -> Query,
+  addRuns    :: [[(Key, Value)]],
+  removeRuns :: [[Key]]
+) =
   let query = queryWith (keyQuery key)
 
       -- Map twice, since we have a list of lists
@@ -447,7 +650,13 @@ parameters, and use a [sum type](https://en.wikipedia.org/wiki/Tagged_union) to
 distinguish between them:
 
 ```haskell
-test key value initialDB queryWith changes =
+test(
+  key       :: Key,
+  value     :: Value,
+  initialDB :: DB,
+  queryWith :: Query -> Query,
+  changes   :: [Either (Key, Value) Key]
+) =
   let query = queryWith (keyQuery key)
 
       -- Discard any removals of `key`
@@ -542,7 +751,15 @@ list `l`, and the rest of the elements (if any).
 A test taking such an "interleaver" as a parameter would look like this:
 
 ```haskell
-test key value initialDB queryWith extra removals interleaver =
+test(
+  key         :: Key,
+  value       :: Value,
+  initialDB   :: DB,
+  queryWith   :: Query -> Query,
+  extra       :: [(Key, Value)],
+  removals    :: [Key],
+  interleaver :: [(DB -> DB)] -> [(DB -> DB)] -> [(DB -> DB)]
+) =
   let query   = queryWith (keyQuery key)
       adds    = map (uncurry addValue) extra
       removes = map removeKey (filter (notEqual key) removals)
@@ -572,7 +789,7 @@ ensuring the behaviour we want "by construction" (i.e. building our list of
 `actions` such that additions and removals can occur in any order), we're
 instead going to *impose* that behaviour after-the-fact. Note that this isn't
 quite the same as interleaving, since elements may get rearranged as well, but
-that doesn't matter in this ezmple.
+that doesn't matter in this example.
 
 To remain deterministic (and hence reproducible), we seed our "permuter" with
 arbitrary choices, like we did for the "interleaver":
@@ -612,7 +829,15 @@ length is much easier.
 We can use `mkPermuter` to generate values for a `permuter` argument, like this:
 
 ```haskell
-test key value initialDB queryWith extras removals permuter =
+test(
+  key       :: Key,
+  value     :: Value,
+  initialDB :: DB,
+  queryWith :: Query -> Query,
+  extras    :: [(Key, Value)],
+  removals  :: [Key],
+  permuter  :: [(DB -> DB)] -> [(DB -> DB)]
+) =
   let query   = queryWith (keyQuery key)
       adds    = map (curry addValue) extras
       removes = filter (notEqual key)) removals
