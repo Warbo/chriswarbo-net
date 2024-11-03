@@ -99,7 +99,7 @@ default (to indicate absence).
 
 A common solution to this problem is extending the space of values we're using,
 e.g. representing positions using integers lets us represent absence with
-negatives. However, that's [even worse](2) since it erodes safety elsewhere,
+negatives. However, that's even worse[2] since it erodes safety elsewhere,
 e.g. lookups would have to deal with negative positions, traversals would have
 to deal with negative start/end points, etc.
 

@@ -5,7 +5,11 @@ title: "Ivory: A Mammoth Numerical Tower"
 <figure>
 
 ```
-              ┌─┐ ┌──┐ ┌─┐
+                    ╖◠◡◠◡◠◡╷
+                    ║ void │
+                    ║◠◡◠◡◠◡╵
+                    ║
+              ┌─┐ ┌─╨┐ ┌─┐
               │ └─┘  └─┘ │
               │   zero   │
              ┌┴──────────┴┐
@@ -15,17 +19,18 @@ title: "Ivory: A Mammoth Numerical Tower"
            ┌┴──────────────┴┐
            │     dyadic     │
           ┌┴────────────────┴┐
-          │     decimal      │
+          │    sexagesimal   │
          ┌┴──────────────────┴┐
          │      rational      │
         ┌┴────────────────────┴┐
-        │      algebraic       │
+        │        radical       │
         ├──────────────────────┤
-        │         real         │
-       ┌┴──────────────────────┴┐
+        │        scalar        │
+       ┌┴┐ ┌─┐ ┌──┐  ┌──┐ ┌─┐ ┌┴┐
+       │ └─┘ └─┘  └──┘  └─┘ └─┘ │
        │       geometric        │
        ├────────────────────────┤
-       │         number         │
+       │        nullary         │
       ┌┴┐ ┌─┐  ┌──┐  ┌──┐  ┌─┐ ┌┴┐
       │ └─┘ └──┘  └──┘  └──┘ └─┘ │
       │   univariate-monomial    │
@@ -84,14 +89,14 @@ is undecidable. This requirement for exact, unique representations is why Ivory
 does not currently include transcendental numbers like τ and 𝑒, or operations
 like $sin$ and $log$.
 
-The levels `real`, `number` and `expression` provide no extra values or
+The levels `scalar`, `nullary` and `expression` provide no extra values or
 operations, and act merely as alternative names for the levels above them
-(`algebraic`, `geometric` and `algebraic-expression`, respectively). They
+(`radical`, `geometric` and `algebraic-expression`, respectively). They
 mark important transitions in the tower, below which some important results can
-no longer be assumed to hold. For example, values above the `real` level can be
-totally ordered into a "number line", whilst such comparisons don't generally
+no longer be assumed to hold. For example, values above the `scalar` level can
+be totally ordered into a "number line", whilst such comparisons don't generally
 hold for the levels below. Applications which need comparable numbers should
-check if they're `real`, rather than `algebraic`; that way, any extra levels
+check if they're `scalar`, rather than `radical`; that way, any extra levels
 inserted between these in future revisions will be automatically supported.
 
 ## Required Knowledge ##
@@ -135,7 +140,7 @@ Scheme programming. A "quotation" is prefixed by a single-quote/apostrophe
 `'`{.scheme}, and is used to represent data without attempting to execute
 it. For example, the value of `'(+ 2 5)`{.scheme} is a *list* containing three
 elements (like `["+", 2, 5]`{.python} in other languages; and *unlike*
-`(+ 2 5)`{.scheme}, whose value is the `number`{.scheme} `7`{.scheme}). A
+`(+ 2 5)`{.scheme}, whose value is the `natural`{.scheme} `7`{.scheme}). A
 "quasiquotation" is prefixed by a backtick `` ` ``{.scheme}, and is like a
 quotation except that expressions prefixed with a comma `,`{.scheme} are
 "unquoted"; for instance `` `(10 plus 20 is ,(+ 10 20)) ``{.scheme} gives the
@@ -165,6 +170,10 @@ implement useful definitions that make the subsequent sections easier:
  - [Sums And Products](sums_and_products.html) implements these operations
    symbolically, explores the resulting tree structures, and defines algorithms
    to normalise them. Many of our tower's levels are based on these trees.
+ - [Adjoins And Quotients](adjoins_and_quotients.html) shows how we introduce
+   new symbolic values, and a mechanism to define their value.
+ - [Ratioed](ratio.html) explains our high-level structure, as a pair of
+   numerator and denominator (important for expressing fractions and division).
  - [By Your Powers Combined](powers.html) extends the sums and products
    representation to include exponents, useful for reciprocals and roots.
  - [Negatives And Inverses](negatives_and_inverses.html) are used to implement
@@ -173,13 +182,14 @@ implement useful definitions that make the subsequent sections easier:
 
 The levels of the Ivory tower are explained and implemented in the following:
 
- - [Zero, One, Many](zero_one_many.html) describes the top levels of the tower.
- - [Manifest Decimation](dyadic.html) describes `decimal`, those fractions with
-   a power of ten as denominator (i.e. with a finite number of non-repeating
-   decimal places). Also includes the binary equivalent, known as `dyadic`,
-   which are well-suited to efficient algorithms.
- - [Radicals](radicals.html) implements the `algebraic` level, representing
-   roots symbolically.
+ - [Void](void.html) is the very top of our tower.
+ - [Zero](zero.html) is the highest level to actually contain a value.
+ - [Zero, One, Many](zero_one_many.html) describes the "whole number" levels of
+   `natural` and `integer`, and their internal structure.
+ - [Manifest Decimation](dyadic.html) describes the `dyadic` and `sexagesimal`
+   levels, which have a "decimal point" (though they use binary and base-60,
+   respectively; decimal lives inside the latter, along with dozenal).
+ - [Radicals](radicals.html) implements the `radical` level, representing roots.
  - [Geometric Units](geometric_units.html) begins the definition of `geometric`,
    by introducing symbolic values separate from the usual number line.
  - [Complex And Hypercomplex Numbers](complex_and_hypercomplex_numbers.html)

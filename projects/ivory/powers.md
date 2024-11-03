@@ -16,4 +16,8 @@ TODO
      sums-and-products page
    - Normal form is likely to be the fixed point of
      'x = sums-of-products-of-exponents-of x'
- - Fractional exponents give us algebraic numbers; save that for the radical page
+ - Fractional exponents give us radicals; save that for the radical page
+
+Maybe better off as a function, rather than a representation. I think we only
+need one level of fraction, with a polynomial (sum of products) on top and on
+bottom. Radical numbers can be made by "indexing" a √ symbol.
