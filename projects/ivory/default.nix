@@ -36,6 +36,9 @@ with rec {
       sums_and_products = {
         inherit numbers_in_scheme;
       };
+      zero = {
+        inherit numbers_in_scheme;
+      };
       zero_one_many = {
         inherit numbers_in_scheme;
       };
