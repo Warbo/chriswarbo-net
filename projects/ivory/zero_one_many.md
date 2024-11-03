@@ -29,8 +29,9 @@ numbers: `0`, `1`, `2`, `3`, etc. There is rich structure in the `natural`
 numbers, but our requirement for levels to follow a subset relation constrains
 how much we're able to represent.
 
-Ivory exposes the following subsets as [mezannines]() *within* the overall
-`natural` level:
+Ivory exposes the following subsets as
+[mezzanines](numerical_towers.html#mezzanines) *within* the overall `natural`
+level:
 
 <figure>
 
@@ -55,10 +56,12 @@ forms a simple but important numerical system. The `boolean` numbers are closed
 under `×`, `max`, `min`, `gcd`, `lcm` and `/` (excluding division by `0`).
 
 There are many operations which make sense for `boolean` but do not generalise
-well to other levels. For example, the [`xor` operation]() is often seen as a
-form of addition ([modulo 2]()), but that perspective doesn't make much sense
-for supersets like `rational`. If we instead consider `xor` to be a specialised
-form of `≠` then it generalises naturally.
+well to other levels. For example, the
+[`xor` operation](https://en.wikipedia.org/wiki/Exclusive_or) is often seen as a
+form of addition ([modulo 2](https://en.wikipedia.org/wiki/Modular_arithmetic)),
+but that perspective doesn't make much sense for supersets like `rational`. If
+we instead consider `xor` to be a specialised form of `≠` then it generalises
+naturally.
 
 ### `even-square` ###
 
@@ -94,17 +97,18 @@ This set is closed under `+`, `×`, `^`, `max`, `min`, `gcd`,
 
 ### `even` ###
 
-The [even numbers]() are multiples of `2`, of the form `(× 2 n)` for some
-`natural` `n`. When `n` is itself `even`, the result is `doubly-even`; when `n`
-is `doubly-even` the result is triply-even, etc. This set
-is closed under `+`, `×`, `^`, `max`, `min`, `gcd`, `lcm`, etc.
+The [even numbers](https://en.wikipedia.org/wiki/Parity_(mathematics)) are
+multiples of `2`, of the form `(× 2 n)` for some `natural` `n`. When `n` is
+itself `even`, the result is `doubly-even`; when `n` is `doubly-even` the result
+is triply-even, etc. This set is closed under `+`, `×`, `^`, `max`, `min`,
+`gcd`, `lcm`, etc.
 
 ### Leftovers ###
 
 The bottom of the `natural` level fills in any remaining gaps: i.e. odd numbers
-which are not `square`. Many of these remaining numbers will be [odd primes](),
-which would be useful to represent, but doesn't fit as a mezzanine since it's
-not a superset of `zero`.
+which are not `square`. Many of these remaining numbers will be
+[odd primes](https://oeis.org/A065091), which would be useful to represent, but
+doesn't fit as a mezzanine since it's not a superset of `zero`.
 
  - Describe through process regarding powers of two:
    - Would need `0`, which is awkward but still closed under many operations

@@ -15,9 +15,7 @@ The simplest number system appears at the very top of Ivory's numerical tower:
 (define (void? n) #f)
 ```
 
-`void` is an
-[empty type](http://www.chriswarbo.net/blog/2020-02-09-bottom.html), equivalent
-to
+`void` is an [empty type](/blog/2020-02-09-bottom.html), equivalent to
 [`Nothing` in Typed Racket](https://docs.racket-lang.org/ts-reference/type-ref.html#%28form._%28%28lib._typed-racket%2Fbase-env%2Fbase-types..rkt%29._.Nothing%29%29).
 It is an
 [initial object](https://en.wikipedia.org/wiki/Initial_and_terminal_objects),

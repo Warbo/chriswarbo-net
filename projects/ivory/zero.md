@@ -65,14 +65,16 @@ is *closed under multiplication*.
 `zero`{.scheme} is trivially closed under `min`{.scheme} and `max`{.scheme},
 since those return one of their given arguments.
 
-We can extend the `gcd`{.scheme} ([greatest common divisor]()) and
-`lcm`{.scheme} ([least common multiple]()) functions to operate on values from
-`zero`{.scheme}; in which case those are also closed.
+We can extend the `gcd`{.scheme} ([greatest common
+divisor](https://en.wikipedia.org/wiki/Greatest_common_divisor)) and
+`lcm`{.scheme} ([least common
+multiple](https://en.wikipedia.org/wiki/Least_common_multiple)) functions to
+operate on values from `zero`{.scheme}; in which case those are also closed.
 
 
 
 `zero` is hence a
-[unit type](http://www.chriswarbo.net/blog/2020-02-09-bottom.html), and a
+[unit type](/blog/2020-02-09-bottom.html), and a
 [terminal object](https://en.wikipedia.org/wiki/Initial_and_terminal_objects).
 It is dual to [empty type `void`](void.html).
 
