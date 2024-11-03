@@ -14,3 +14,13 @@ TODO
  - Introduce "degree", and `homogeneous` polynomials which sum monomials of the
    same degree
  - Useful for projective geometry, etc.
+
+## Beyond the number lines ##
+
+In the `geometric` level we found values which do not appear on a simple "number
+line", but instead inhabit a larger space full of interesting geometrical
+structure such as rotations. This structure could be neatly described using our
+existing notions of arithmetic, if we allow some extra values like `i₀`, `d₂`,
+etc.
+
+## Symbols without value ##
