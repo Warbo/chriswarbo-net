@@ -19,7 +19,7 @@ done
 `zero` is the highest level that actually contains values. In fact it contains a
 *single* value `(+)`:
 
-```unwrap
+```{.racket}
 (define zero? (curry equal? '(+))
 ```
 
