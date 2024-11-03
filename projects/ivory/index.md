@@ -170,6 +170,10 @@ implement useful definitions that make the subsequent sections easier:
  - [Sums And Products](sums_and_products.html) implements these operations
    symbolically, explores the resulting tree structures, and defines algorithms
    to normalise them. Many of our tower's levels are based on these trees.
+ - [Adjoins And Quotients](adjoins_and_quotients.html) shows how we introduce
+   new symbolic values, and a mechanism to define their value.
+ - [Ratioed](ratio.html) explains our high-level structure, as a pair of
+   numerator and denominator (important for expressing fractions and division).
  - [By Your Powers Combined](powers.html) extends the sums and products
    representation to include exponents, useful for reciprocals and roots.
  - [Negatives And Inverses](negatives_and_inverses.html) are used to implement
@@ -178,11 +182,13 @@ implement useful definitions that make the subsequent sections easier:
 
 The levels of the Ivory tower are explained and implemented in the following:
 
- - [Zero, One, Many](zero_one_many.html) describes the top levels of the tower.
- - [Manifest Decimation](dyadic.html) describes `decimal`, those fractions with
-   a power of ten as denominator (i.e. with a finite number of non-repeating
-   decimal places). Also includes the binary equivalent, known as `dyadic`,
-   which are well-suited to efficient algorithms.
+ - [Void](void.html) is the very top of our tower.
+ - [Zero](zero.html) is the highest level to actually contain a value.
+ - [Zero, One, Many](zero_one_many.html) describes the "whole number" levels of
+   `natural` and `integer`, and their internal structure.
+ - [Manifest Decimation](dyadic.html) describes the `dyadic` and `sexagesimal`
+   levels, which have a "decimal point" (though they use binary and base-60,
+   respectively; decimal lives inside the latter, along with dozenal).
  - [Radicals](radicals.html) implements the `radical` level, representing roots.
  - [Geometric Units](geometric_units.html) begins the definition of `geometric`,
    by introducing symbolic values separate from the usual number line.
