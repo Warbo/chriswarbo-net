@@ -23,7 +23,7 @@ title: "Ivory: A Mammoth Numerical Tower"
          ┌┴──────────────────┴┐
          │      rational      │
         ┌┴────────────────────┴┐
-        │      algebraic       │
+        │        radical       │
         ├──────────────────────┤
         │        scalar        │
        ┌┴┐ ┌─┐ ┌──┐  ┌──┐ ┌─┐ ┌┴┐
@@ -91,12 +91,12 @@ like $sin$ and $log$.
 
 The levels `scalar`, `nullary` and `expression` provide no extra values or
 operations, and act merely as alternative names for the levels above them
-(`algebraic`, `geometric` and `algebraic-expression`, respectively). They
+(`radical`, `geometric` and `algebraic-expression`, respectively). They
 mark important transitions in the tower, below which some important results can
 no longer be assumed to hold. For example, values above the `scalar` level can
 be totally ordered into a "number line", whilst such comparisons don't generally
 hold for the levels below. Applications which need comparable numbers should
-check if they're `scalar`, rather than `algebraic`; that way, any extra levels
+check if they're `scalar`, rather than `radical`; that way, any extra levels
 inserted between these in future revisions will be automatically supported.
 
 ## Required Knowledge ##
@@ -183,8 +183,7 @@ The levels of the Ivory tower are explained and implemented in the following:
    a power of ten as denominator (i.e. with a finite number of non-repeating
    decimal places). Also includes the binary equivalent, known as `dyadic`,
    which are well-suited to efficient algorithms.
- - [Radicals](radicals.html) implements the `algebraic` level, representing
-   roots symbolically.
+ - [Radicals](radicals.html) implements the `radical` level, representing roots.
  - [Geometric Units](geometric_units.html) begins the definition of `geometric`,
    by introducing symbolic values separate from the usual number line.
  - [Complex And Hypercomplex Numbers](complex_and_hypercomplex_numbers.html)
