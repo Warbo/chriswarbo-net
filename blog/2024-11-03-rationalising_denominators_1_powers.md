@@ -43,7 +43,14 @@ def Power(base: int, exp: Fraction) -> Tuple[int, Fraction]:
 ```
 
 I've given this function an uppercased name, to indicate that we'll use `Power`
-as a type annotation as well as for constructing values.
+as a type annotation as well as for constructing values. Here are some useful
+constants of this type:
+
+```python
+power_zero = Power(0, Fraction(1, 1))
+power_one = Power(1, Fraction(1, 1))
+power_neg = Power(-1, Fraction(1, 1))
+```
 
 ## Normalisation ##
 
@@ -140,6 +147,10 @@ def Power(base: int, exp: Fraction) -> Tuple[int, Fraction]:
     if exp == 0:
         base = 1
     return (base, exp)
+
+power_zero = Power(0, Fraction(1, 1))
+power_one = Power(1, Fraction(1, 1))
+power_neg = Power(-1, Fraction(1, 1))
 ```
 
 So far this is a pretty simple way to represent numbers, but it turns out to be
