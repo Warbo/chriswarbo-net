@@ -59,7 +59,7 @@ one:
  - `Power(2, Fraction(0, 1))`
  - `Power(-1, Fraction(2, 1))`
 
-### Powers of zero ###
+### Powers Of Zero ###
 
 When the `base` is zero, we don't allow the exponent to be zero (since that's
 not well-defined mathematically). For every *other* exponent, there is
@@ -74,7 +74,7 @@ function to perform this normalisation:
         exp = Fraction(1, 1)
 ```
 
-### Powers of one ###
+### Powers Of One ###
 
 When the `base` is one, we can add one to the `exponent` without changing the
 overall value; since that corresponds to multiplying the result by the `base`,
@@ -89,7 +89,7 @@ becomes less than one. This corresponds to the
         exp = exp % 1
 ```
 
-### Powers of negative one ###
+### Powers Of Negative One ###
 
 When the `base` is *negative one*, we can add *two* to the `exponent` without
 changing the overall value (adding one will negate the value; [negating twice is
@@ -101,7 +101,7 @@ can reduce exponents using a modulos of *two*:
         exp = exp % 2
 ```
 
-### Zeroth powers ###
+### Zeroth Powers ###
 
 Our final normalisation applies when the `exponent` is zero: any non-zero number
 raised to the power of zero gives a result of one. Hence we can choose a
