@@ -6,9 +6,11 @@ Posts in this series:
 
 [Powers](/blog/2024-11-03-rationalising_denominators_1_powers.html)
 
-[Products](/unfinished/rationalising_denominators_2_products.html)
+[Products](/blog/2024-11-05-rationalising_denominators_2_products.html)
 
 ---
+
+## Introduction ##
 
 [Last time](/blog/2024-11-03-rationalising_denominators_1_powers.html) we used
 Python's `int` and `Fraction` types to implement a new type called `Power`, to
@@ -375,6 +377,9 @@ not have any redundancies.
 Normalising this `Product` representation has exposed some structure that will
 be useful in future installments: namely the use of *prime factors* and *roots
 of unity*.
+
+In the next post, we'll extend our representation again: to *sums* of products
+of powers!
 
 ## Appendixen ##
 

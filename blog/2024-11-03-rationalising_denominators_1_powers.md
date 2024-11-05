@@ -2,6 +2,14 @@
 title: "Rationalising Denominators 1: Fractional Powers"
 ---
 
+Posts in this series:
+
+[Powers](/blog/2024-11-03-rationalising_denominators_1_powers.html)
+
+[Products](/blog/2024-11-05-rationalising_denominators_2_products.html)
+
+---
+
 ## Introduction ##
 
 I've spent the last few weeks playing around with
@@ -156,5 +164,6 @@ power_neg = Power(-1, Fraction(1, 1))
 So far this is a pretty simple way to represent numbers, but it turns out to be
 pretty powerful. We've implemented some normalisation steps, but there are still
 some redundancies (e.g. `Power(4, Fraction(1, 1))`. `Power(2, Fraction(2, 1))`
-and `Power(-2, Fraction(2, 1))` all represent the number four). In the next post
+and `Power(-2, Fraction(2, 1))` all represent the number four). In
+[the next post](/blog/2024-11-05-rationalising_denominators_2_products.html)
 we'll extend this to *products* of powers.
