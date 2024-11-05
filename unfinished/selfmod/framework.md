@@ -22,7 +22,7 @@ echo "" >> code.hs
 
 ```{pipe="sh"}
 chmod +x append
-(source "$stdenv/setup" && patchShebangs .)
+(source "$stdenv/setup" && patchShebangs .) 1>&2
 ```
 
 ```{pipe="./append > /dev/null"}

@@ -41,9 +41,18 @@ Whilst the Python one outputs:
 ```{pipe="./shebang.py"}
 ```
 
+```{pipe="sh > py"}
+# I want to put the Nix store path to a Python binary in this page, but that
+# will be spotted by Nix and drag that store path into our dependencies. To
+# avoid that, we'll split the path into chunks of 8 characters, and join them
+# using a Unicode "word joiner" character
+WJ=$(printf '\u2060')
+command -v python3 | sed "s/.\{8\}/&$WJ/g"
+```
+
 Notice that in the second case we don't call the `python3` command directly;
 instead we call the `env` command, which looks up the `python3` command in our
-`$PATH` variable (in my case, `type -a python3`{.unwrap pipe="sh | pandoc -t
+`$PATH` variable (in my case, `cat py`{.unwrap pipe="sh | pandoc -t
 json"}, which I'd rather not hard-code!).
 
 # `nix-shell` #
