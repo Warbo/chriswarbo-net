@@ -8,6 +8,8 @@ Posts in this series:
 
 [Products](/blog/2024-11-05-rationalising_denominators_2_products.html)
 
+[Sums](/blog/2024-11-08-rationalising_denominators_3_sums.html)
+
 ---
 
 ## Introduction ##
@@ -377,8 +379,8 @@ redundancy; to `Product`, which does not have any redundancies. Normalising this
 `Product` representation has exposed some structure that will be useful in
 future installments: namely the use of *prime factors* and *roots of unity*.
 
-In the next post, we'll extend our representation again: to *sums* of products
-of powers!
+In [the next post](/blog/2024-11-08-rationalising_denominators_3_sums.html)
+we'll extend our representation again: to *sums* of products of powers!
 
 ## Appendixen ##
 

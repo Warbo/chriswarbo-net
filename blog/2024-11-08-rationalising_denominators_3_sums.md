@@ -8,16 +8,18 @@ Posts in this series:
 
 [Products](/blog/2024-11-05-rationalising_denominators_2_products.html)
 
-[Sums](/unfinished/rationalising_denominators_3_sums.html)
+[Sums](/blog/2024-11-08-rationalising_denominators_3_sums.html)
 
 ---
 
 ## Introduction ##
 
-In the [previous post]() we generalised our `Power` type into a `Product` of
-arbitrarily-many powers multiplied together. However, there are values which
-can't be represented that way, such as 1+√7. Instead, these can be represented
-as a *sum* of such products, which we'll define in this post.
+In the
+[previous post](/blog/2024-11-05-rationalising_denominators_2_products.html)
+we generalised our `Power` type into a `Product` of arbitrarily-many powers
+multiplied together. However, there are values which can't be represented that
+way, such as 1+√7. Instead, these can be represented as a *sum* of such
+products, which we'll define in this post.
 
 ## Sums ##
 

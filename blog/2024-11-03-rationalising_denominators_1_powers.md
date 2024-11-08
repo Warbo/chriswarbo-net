@@ -8,6 +8,8 @@ Posts in this series:
 
 [Products](/blog/2024-11-05-rationalising_denominators_2_products.html)
 
+[Sums](/blog/2024-11-08-rationalising_denominators_3_sums.html)
+
 ---
 
 ## Introduction ##
