@@ -32,7 +32,7 @@ completely avoids these redundancies.
 
 ## Products ##
 
-A product is a list of values multiplied together. We'll can define a `Product`
+A product is a list of values multiplied together. We can define a `Product`
 type in Python, whose elements are `Power` values:
 
 ```python
@@ -41,9 +41,11 @@ def Product(*powers: Power) -> List[Power]:
 ```
 
 This simple implementation can represent all the same values as `Power` (by
-using a list with a single value), but it also lets us represent other values
-such as `Product(Power(3, Fraction(1, 1)), Power(2, Fraction(1, 2)))` (three
-times the square root of two).
+using a list with a single value), but it lets us represent some values in a
+different way. For example
+`Product(Power(3, Fraction(1, 3)), Power(2, Fraction(1, 2)))` is the cube root
+of three times the square root of two; which is equivalent to
+`Power(72, Fraction(1, 6))` (the sixth root of seventy-two).
 
 Here are some useful constants for this type:
 
@@ -60,7 +62,7 @@ Since a `Product` represents a multiplication of its elements, we can multiply
 
 ```python
 def multiply_products(*ps: Product) -> Product:
-    return Product(*(sum(ps, [])))
+    return Product(*sum(ps, []))
 ```
 
 ## Normalisation ##
@@ -238,7 +240,7 @@ def factorise() -> Callable[[int], Product]:
             i = (i + 1) % 8
 
         if n > 1:
-            factors.append((n, 1))
+            factors.append(Power(n, Fraction(1, 1)))
 
         return factors
 
@@ -370,13 +372,10 @@ def product_is_rational(p: Product) -> bool:
 
 ## Conclusion ##
 
-We've extended our representation of numbers from `Power`, which was limited and
-suffered from redundancy; to `Product`, which can represent more values and does
-not have any redundancies.
-
-Normalising this `Product` representation has exposed some structure that will
-be useful in future installments: namely the use of *prime factors* and *roots
-of unity*.
+We've extended our representation of numbers from `Power`, which suffered from
+redundancy; to `Product`, which does not have any redundancies. Normalising this
+`Product` representation has exposed some structure that will be useful in
+future installments: namely the use of *prime factors* and *roots of unity*.
 
 In the next post, we'll extend our representation again: to *sums* of products
 of powers!
@@ -385,9 +384,8 @@ of powers!
 
 ### Implementation ###
 
-Here's the implementation of `Product`, assuming that we have an implementation
-of `Power` defined. We also include a helper function `product_is_rational`,
-which is used in the tests below:
+Here's the final implementation of `Product`, assuming that we have an
+implementation of `Power` defined:
 
 ```python
 def Product(*powers: Power) -> List[Power]:
@@ -407,7 +405,7 @@ def Product(*powers: Power) -> List[Power]:
     return result if list(result) == list(powers) else Product(*result)
 
 def multiply_products(*ps: Product) -> Product:
-    return Product(*(sum(ps, [])))
+    return Product(*sum(ps, []))
 
 def eval_product_int(p: Product) -> int:
     result = 1
@@ -469,7 +467,7 @@ def factorise() -> Callable[[int], Product]:
             i = (i + 1) % 8
 
         if n > 1:
-            factors.append((n, 1))
+            factors.append(Power(n, Fraction(1, 1)))
 
         return factors
 
@@ -517,9 +515,9 @@ for our `Product` type:
 
 ```python
 import pytest
-from hypothesis import assume, given, settings, strategies as st, note
-from functools import reduce
-from math import gcd
+from hypothesis import assume, given, strategies as st, note
+
+debug = lambda **xs: (note(repr(dict(**xs))), list(xs.values())[0])[-1]
 
 @lru_cache(maxsize=1024)
 def is_prime(n: int) -> bool:
