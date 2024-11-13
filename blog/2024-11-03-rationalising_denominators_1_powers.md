@@ -10,6 +10,8 @@ Posts in this series:
 
 [Sums](/blog/2024-11-08-rationalising_denominators_3_sums.html)
 
+[Ratios](/blog/2024-11-13-rationalising_denominators_4_ratios.html)
+
 ---
 
 ## Introduction ##

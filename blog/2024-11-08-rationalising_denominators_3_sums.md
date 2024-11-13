@@ -10,6 +10,8 @@ Posts in this series:
 
 [Sums](/blog/2024-11-08-rationalising_denominators_3_sums.html)
 
+[Ratios](/blog/2024-11-13-rationalising_denominators_4_ratios.html)
+
 ---
 
 ## Introduction ##
@@ -203,7 +205,8 @@ no redundancy (like `Product`, but unlike `Power`). To normalise these values we
 split each of its elements into a rational part and an irrational part, then add
 those rational parts as ordinary Python `int`egers.
 
-In the next part we'll introduce one more type by taking *ratios* of these sums!
+In [the next part](/blog/2024-11-13-rationalising_denominators_4_ratios.html)
+we'll introduce one more type by taking *ratios* of these sums!
 
 ## Appendixes ##
 
