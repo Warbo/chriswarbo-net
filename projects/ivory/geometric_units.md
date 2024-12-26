@@ -3,6 +3,43 @@ title: "Ivory: Geometric Units"
 packages: ['racketWithRackCheck']
 ---
 
+<!--
+EXTRA THOUGHTS:
+
+If we only include dual units, we get exterior algbra.
+
+We can implement a dual unit by adding a complex unit to a hyperbolic unit.
+
+What about ordinary complex numbers? e1e2 * e1e2 = e1e2e1e2 = -e1e2e2e1
+If e1 and e2 are hyperbolic, -e1e2e2e1 = -e1e1 = -1
+If e1 and e2 are complexm -e1e2e2e1 = e1e1 = -1
+
+What's the best nesting/mezzanine structure?
+
+Can we use a combination of units to implement an ordinary, commutative
+hyperbolic number (i.e. the split-complex numbers)?
+
+What about (e1 + e2)? (e1 + e2)(e1 + e2) = e1e1 + e1e2 + e2e1 + e2e2
+= e1e1 + e1e2 - e1e2 + e2e2
+= e1e1 + e2e2
+
+If e1 and e2 are complex, this is -2 and hence isomorphic to the complex numbers
+If e1 and e2 are hyperbolic, this is 2. Maybe we can rescale?
+
+(e1 + e2)/2 (e1 + e2)/2 = (e1e1 + e1e2 - e1e2 + e2e2)/2
+= (e1e1 + e2e2)/2
+
+If e1 and e2 are hyperbolic, we get a commutative hyperbolic algebra!
+
+Seems like hyperbolic units can be used to generate the most things:
+
+ - (h1 + h2)/2 gives hyperbolic numbers
+ - h1h2 gives complex numbers
+
+(h1 + i1) gives exterior algebra
+
+-->
+
 ```{pipe="sh"}
 bash $setup geo-units.rkt
 ```
