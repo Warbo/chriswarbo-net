@@ -92,17 +92,28 @@ misunderstanding, so here's an editorialised FAQ:
 Yes, they were. We're not going back. Instead, we should *continue forwards*,
 into a world where lock files *are not necessary*.
 
-The most obvious example of a system which doesn't need lock files is Nix and
-its spinoffs (which [I have written about extensively](/projects/nixos)). Whilst
-many complain about Nix's UI (its CLI, documentation, Nixpkgs repo, etc.),
+The most obvious example of a system which doesn't need lock files is
+[Nix](https://nix.dev) and its spinoffs (which
+[I have written about extensively](/projects/nixos)). Whilst many complain about
+Nix's UI (its CLI, documentation, Nixpkgs repo, etc.),
 [the underlying *idea* of Nix](/projects/nixos/bottom_up.html) is pretty simple
 (it doesn't even have any concept of "package" or "version"!), and it's been
-around for a couple of decades at this point. Newer package managers could learn
-from those ideas; but unfortunately many don't, instead copying the same broken,
-"legacy" approaches seen elsewhere, and hence needing hacky mitigations like
-lock files.
+around for a couple of decades at this point.
 
-We can do better.
+Newer package managers could learn from those ideas. Some examples I'm aware of
+are in Haskell, where [Hackage](https://hackage.haskell.org) lets us
+[pin an "index state" based on
+datetime](https://cabal.readthedocs.io/en/3.4/cabal-project.html?highlight=index-state#cfg-field-index-state),
+and the third-party [all-cabal-hashes
+repository](https://github.com/commercialhaskell/all-cabal-hashes) lets us use a
+git revision instead ([Nixpkgs uses
+this](https://github.com/NixOS/nixpkgs/tree/master/pkgs/data/misc/hackage) to
+make functions like `haskellPackages.callCabal2nix` reproducible); and in Rust,
+where the [crates.io repository](https://crates.io) natively keeps its
+[metadata in a git repository](https://github.com/rust-lang/crates.io-index).
+
+Unfortunately many other tools don't, instead copying the same broken, "legacy"
+approaches that require hacky mitigations like lock files. We can do better.
 
 #### If we write down hashes, isn't that just a lock file? ####
 
@@ -122,7 +133,7 @@ reverse-engineering or debugging. (This also makes lock files attack vectors.)
 #### Version numbers, ranges, etc. ####
 
 *LOADS* of comments talked about version numbers, version ranges (both for and
-against), preferred ways of choosing version numbers (latest versus mininum),
+against), preferred ways of choosing version numbers (latest versus minimum),
 etc. Whilst those are interesting debates to be sure, they're not particularly
 relevant to anything I'm saying here. In particular, those are relevant to
 questions like "how will the result change, when the solver is run against a
