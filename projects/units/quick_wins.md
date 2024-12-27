@@ -14,7 +14,7 @@ benefits!
 
 Imperial units differ between countries, have arbitrary conversion factors, and
 lots of redundancy. Metric is the same in every country, and doesn't require
-conversions (it is *coherent*).
+conversions (it is [coherent](coherence.html)).
 
 #### Use metres instead of yards ####
 

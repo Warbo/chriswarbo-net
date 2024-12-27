@@ -91,12 +91,13 @@ that "power-of-ten conversions are easier" when we could go further and say
 
 ## Metric is Coherent ##
 
-In a 'coherent' system of units, we can combine our units using multiplication
-and division, and alway get another unit of our system. The most obvious example
-is speed, which is the same as a distance divided by a time. There are imperial
-units of speed like the knot, but it's more common to use the "distance over time" form like "miles per
-hour", or "metres per second" in metric. Similarly for pressure, which is often
-measured in "pounds per square inch" or "Newtons per square metre".
+In [a 'coherent' system of units](coherence.html), we can combine our units
+using multiplication and division, and alway get another unit of our system. The
+most obvious example is speed, which is the same as a distance divided by a
+time. There are imperial units of speed like the knot, but it's more common to
+use the "distance over time" form like "miles per hour", or "metres per second"
+in metric. Similarly for pressure, which is often measured in "pounds per square
+inch" or "Newtons per square metre".
 
 We can do the same thing with any dimensions we like. For example, applying a
 force (e.g. Newtons or pounds) over a distance (metres or feet) takes a certain
