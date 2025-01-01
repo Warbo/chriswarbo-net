@@ -9,6 +9,7 @@ TODO:
  - Basic intro to projective geometry and homogeneous coordinates
  - Build up a library for PGA on top of raw GA units
  - Can we remain agnostic about the number of dimensions?
+   - Should work, since it's like "the" Clifford Algebra
    - If not, parameterise it.
    - Might be relevant for taking duals.
  - Try to remain interoperable with conformal geometric algebra:
@@ -23,3 +24,6 @@ TODO:
      - Arrow pointing into `⨂` (fletches) and out-of `⨀` (tip) the screen
      - Make sure to pick the positive/negative for whatever the customary
        orientation is!
+
+We should probably have a projective "point at infinity" in our rational level,
+since
