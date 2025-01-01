@@ -33,8 +33,16 @@ Ratio(sum_one, add_sums(sum_one, sum_root_two))
 
 In this post, we'll extend the normalisation algorithm in the `Ratio` function
 to *rationalise the denominator*, and hence give every `Ratio` value a single,
-normal representation. However, to get there will require a bit of an algebraic
-journey!
+normal representation. However, to get there will require a bit of a journey!
+
+## Algebraic conjugates ##
+
+To multiply a fraction, we just multiply its numerator (then normalise the
+result). To divide a fraction, we multiply its denominator (assuming our
+multiplier is non-zero). Multiplying both the numerator *and* denominator leaves
+the value unchanged, but it may cause changes to our `Sum` representation. In
+particular, we can always find a
+can use this to normalise a `Ratio`, by we're going to look
 
 ## Roots Of Unity ##
 

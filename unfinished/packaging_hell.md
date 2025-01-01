@@ -25,7 +25,8 @@ My thoughts:
    tool, e.g. by symlinking to some global cache of extracted tarballs.
  - In a related way: always assume that your current program will be abstracted
    over or scripted by some future program. Cabal, etc. do this to some extent
-   by providing the `Cabal` library, but
+   by providing the `Cabal` library, but that requires a bunch of decisions and
+   fallback logic which the `cabal` CLI performs automatically.
 
 The default/de-facto Haskell setup of GHC + Hackage/Stackage + Cabal/Stack is
 enormously complicated, and only seems to be getting worse as more options and
