@@ -44,8 +44,8 @@ directory. The other is to use a pre-built version (basically an archive of the
 directory made by `debootstrap`). Since we're aiming to use pre-built binaries,
 I opted to also use a pre-built filesystem image.
 
-Here's a Nix expression forgetting a Debian filesystem image, which we take from
-a collection of Docker resources:
+Here's a Nix expression for getting a Debian filesystem image, which we take
+from a collection of Docker resources:
 
 ```
 { fetchurl }:
@@ -70,7 +70,7 @@ nix-repl> with import <nixpkgs> {}; callPackage ./debian-rootfs.nix {}
 
 OK, now that we have a Debian filesystem image, we'll need to unpack it and add
 in the changes we need (e.g. installing Chromium). I'll do this in one go, to
-prevent cluttering up our Nix store with intermediate result. The approach we
+prevent cluttering up our Nix store with intermediate results. The approach we
 take is to write all of our customisations in a shell script, then run that
 shell script within the Debian environment using `proot`. Note that Nix packages
 get built by unprivileged users (usually called something like `nixbld`), and

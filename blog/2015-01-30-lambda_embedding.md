@@ -2,15 +2,28 @@
 title: Embedding Lambda Calculus
 ---
 
-Functional programming makes heavy use of *embedded domain-specific languages* (EDSLs). These make our programming language (the *host language*) *behave like* another language (the *embedded language*). This is similar to the way Object-Oriented libraries often choose class, property and method names which 'chain together' nicely, eg. `Mailer.send(Order.invoiceFor(Session.user))`{.java}; except functional languages aren't limited to `arg1.method(arg2, arg3, ...)`{.java} syntax. We can use `function arg1 arg2 arg3 ...`, and use functions as arguments (higher-order functions).
+Functional programming makes heavy use of *embedded domain-specific languages*
+(EDSLs). These make our programming language (the *host language*) *behave like*
+another language (the *embedded language*). This is similar to the way
+Object-Oriented libraries often choose class, property and method names which
+'chain together' nicely,
+eg. `Mailer.send(Order.invoiceFor(Session.user))`{.java}; except functional
+languages aren't limited to `arg1.method(arg2, arg3, ...)`{.java} syntax. We can
+use `function arg1 arg2 arg3 ...`, and use functions as arguments (higher-order
+functions).
 
-Due to this interest in embedding, the desire to use purely-functional languages, and the desire for minimalism/simplicity, we functional programmers spend an unhealthy amount of time trying to embed various forms of lambda calculus inside our functional languages (which themselves are usually some form of lambda calculus).
+Due to this interest in embedding, the desire to use purely-functional
+languages, and the desire for minimalism/simplicity, we functional programmers
+spend an unhealthy amount of time trying to embed various forms of lambda
+calculus inside our functional languages (which themselves are usually some form
+of lambda calculus).
 
 There are a few ways we can do this:
 
 ## First-Order Representations ##
 
-A *first-order* representation uses *data* to represent lambda calculus *programs*. An example would be:
+A *first-order* representation uses *data* to represent lambda calculus
+*programs*. An example would be:
 
 ```haskell
 data FirstOrderTerm = Var String
@@ -21,10 +34,20 @@ data FirstOrderTerm = Var String
 This represents the three syntactic forms of lambda calculus terms directly:
 
  - `Var`{.haskell}iables with a `String`{.haskell} for a name
- - `Lam`{.haskell}bda abstractions with a `String`{.haskell} for the argument name and a `FirstOrderTerm`{.haskell} for the body
+ - `Lam`{.haskell}bda abstractions with a `String`{.haskell} for the argument
+   name and a `FirstOrderTerm`{.haskell} for the body
  - `App`{.haskell}lication of one `FirstOrderTerm`{.haskell} to another
 
-This is fine for *human* use, but it's no good for a machine; the space of `String`{.haskell}s is too large and complicated for software to understand. It's very unlikely that two arbitrary strings will match, so therefore unlikely that an auto-generated variable will match the argument of an auto-generated binder. We're much better off *numbering* our arguments, which limits our options and increases the chances of a match. If we use *de Bruijn indices*, which I've blogged about before, the numbers have a *consistent meaning* in the meta-language (although they're often avoided by humans because they have inconsistent, or rather *context-dependent*, meanings in the object language):
+This is fine for *human* use, but it's no good for a machine; the space of
+`String`{.haskell}s is too large and complicated for software to
+understand. It's very unlikely that two arbitrary strings will match, so
+therefore unlikely that an auto-generated variable will match the argument of an
+auto-generated binder. We're much better off *numbering* our arguments, which
+limits our options and increases the chances of a match. If we use *de Bruijn
+indices*, which I've blogged about before, the numbers have a *consistent
+meaning* in the meta-language (although they're often avoided by humans because
+they have inconsistent, or rather *context-dependent*, meanings in the object
+language):
 
 ```haskell
 data Nat = Z | S Nat
@@ -36,14 +59,19 @@ data DeBruijnTerm = Var Nat
 
 ## Higher-Order Representations ##
 
-A higher-order representation uses *functions* to represent part of a lambda term. A classic implementation of *Higher Order Abstract Syntax* looks like this:
+A higher-order representation uses *functions* to represent part of a lambda
+term. A classic implementation of *Higher Order Abstract Syntax* looks like
+this:
 
 ```haskell
 data HigherOrderTerm = Lam (HigherOrderTerm -> HigherOrderTerm)
                      | App HigherOrderTerm HigherOrderTerm
 ```
 
-There are two clear differences to note: firstly, `Lam`{.haskell} now takes a function rather than a term. We can understand this by thinking of the `Lam`{.haskell} as a 'term containing *holes*'; to "filled in" those holes, we must pass in a term, hence the use of a function type.
+There are two clear differences to note: firstly, `Lam`{.haskell} now takes a
+function rather than a term. We can understand this by thinking of the
+`Lam`{.haskell} as a 'term containing *holes*'; to "fill in" those holes, we
+must pass in a term, hence the use of a function type.
 
 So what are those 'holes'? *They're the variables!* Notice that we don't need a separate `Var`{.haskell} constructor, because:
 

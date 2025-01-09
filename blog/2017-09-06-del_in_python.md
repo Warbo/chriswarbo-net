@@ -121,4 +121,4 @@ up the scope, but we *don't* want to introduce new functions, etc. (since that
 would *complicate* the code), then it can often be enough to introduce fresh
 variables with assignments, use them for whatever *would have* gone into a
 scope's body, then use `del` to "clean them up", so their presence doesn't
-complicate our understanding of the ubsequent code.
+complicate our understanding of the subsequent code.
