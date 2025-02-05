@@ -162,7 +162,7 @@ multiplication). The simplest of these is the product which *only* contains
 
 ### Discarding Ones ###
 
-The number <abbr title="Power(1, Fraction(0, 1))">1 is the
+The number <abbr title="Power(1, Fraction(0, 1))">1</abbr> is the
 [identity value](https://en.wikipedia.org/wiki/Identity_element) for
 multiplication, so its presence in a product does not alter the result. Hence
 the normalisation of a `Product`{.python} should remove any such
