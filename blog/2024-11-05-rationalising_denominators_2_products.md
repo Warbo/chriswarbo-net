@@ -67,14 +67,35 @@ product_zero = Product(power_zero)
 product_one = Product(power_one)
 ```
 
+### Representing negatives ###
+
+Another advantage of `Product`{.python} is that it could represent *negative*
+numbers, if we're somehow able to represent -1. To do this, we'll use a neat
+insight: that square roots have *two* solutions, e.g. √4 = 2 *and* √4 = -2. When
+we interpret a `Power`{.python} representing a square root, we've been assuming
+that it refers to the *positive* root; and that's a good convention to stick
+with. However, we'll make a special exception for the value
+<abbr title="Power(1, Fraction(1, 2))">√1</abbr>: in that case, the positive
+root is <abbr title="Power(1, Fraction(0, 1))">1</abbr>, which is perfectly
+represented already, without the need to take a square root. That redundancy
+allows us to instead use √1 to represent -1, which has no other encoding in our
+representation.
+
+Whilst this interpretation only expands the range of `Power`{.python} by a
+single extra value, the inclusion of
+<abbr title="Power(1, Fraction(1, 2))">-1</abbr> in a `Product`{.python} allows
+us to represent the *negative* of all our values!
+
 ### Improving our representation ###
 
-Since we're dealing with [commutative]() multiplication (for the moment),
-changing the order of arguments given to `Product`{.python} should not affect
-its result; yet the order *does* matter if we represent them with a `list`.
-Instead, we could use a [bag]() (AKA a multiset); which can be implemented as a
-dictionary which counts the number of times a particular `Power`{.python}
-appears:
+Since we're dealing with
+[commutative](https://en.wikipedia.org/wiki/Commutative_property) multiplication
+(for the moment), changing the order of arguments given to `Product`{.python}
+should not affect its result; yet the order *does* matter if we represent them
+with a `list`.  Instead, we could use a
+[bag](https://en.wikipedia.org/wiki/Multiset) (AKA a multiset); which can be
+implemented as a dictionary which counts the number of times a particular
+`Power`{.python} appears:
 
 ```python
 def Product(*powers: Power) -> List[Power]:
@@ -100,6 +121,12 @@ def Product(*powers: Power) -> List[Power]:
 
 To turn such a `Product`{.python} back into a list of `Power`{.python} values,
 we can call its `.items()`{.python} method.
+
+Note that this will automatically handle double-negatives, since
+<abbr title="Power(1, Fraction(1, 2))"√1</abbr> has an `exp`{.python}onent of ½,
+so a pair of them will have their `exp`{.python}onents added to give a positive
+factor of <abbr title="Power(1, Fraction(1, 1))">1¹</abbr>, and this will keep
+cycling each time another `exp`{.python}onent of ½ gets added.
 
 ## Multiplication ##
 
@@ -139,9 +166,7 @@ The number <abbr title="Power(1, Fraction(0, 1))">1 is the
 [identity value](https://en.wikipedia.org/wiki/Identity_element) for
 multiplication, so its presence in a product does not alter the result. Hence
 the normalisation of a `Product`{.python} should remove any such
-`Power`{.python}. Thankfully, we can rely on `Power`{.python} to normalise such
-values to <abbr title="Power(1, Fraction(1, 0))">`power_one`{.python}<abbr>,
-which we can check for in our loop:
+`Power`{.python}, which we can check for in our loop:
 
 ```python
         if (base, exp) != power_one:
@@ -324,6 +349,13 @@ Note that we don't perform this factorising in `Power`{.python}, since it may
 require a `Product`{.python} of multiple elements. For example, normalising
 <abbr title="Product(Power(18, Fraction(2, 1)))">18²</abbr> produces
 <abbr title="Product(Power(2, Fraction(2, 1)), Power(3, Fraction(4, 1)))">2²×3⁴</abbr>.
+
+Also note that the use of `b, e = Power(…)`{.python} will normalise any powers
+of 1, which may have accumulated due to repeated negation, into having an
+`exp`{.python}onent that's strictly less than one. In particular, factors of
+<abbr title="Power(1, Fraction(1, 1))">1¹</abbr> (caused by double-negatives)
+will get normalised to <abbr title="Power(1, Fraction(0, 1))">1⁰</abbr>, and
+hence get skipped by the `if (b, e) != power_one:`{.python} check.
 
 <!--
 
