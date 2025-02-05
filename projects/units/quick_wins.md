@@ -47,7 +47,7 @@ suffix, like ¼τ, works for *both* of these units:
    turns, with a value around 6.28… radians per turn. In which case ¼τ can be
    read as "a quarter of the radians in a turn", which is about 1.57… radians.
 
-Both of these interpetations are equivalent/interchangable: the syntax we write
+Both of these interpretations are equivalent/interchangable: the syntax we write
 down is the same for both, how we choose to interpret them is a matter of taste
 and convenience.
 

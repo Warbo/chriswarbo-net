@@ -28,7 +28,7 @@ metres per square second. Hence the Newton is short for the "kilogram metre per
 square second".
 
 It's fine for a coherent system to give more convenient names to combinations of
-its existing units; so long those combinations involve no scaling. The metric
+its existing units; so long as those combinations involve no scaling. The metric
 system is hence *not* coherent, since it defines scaled units like the litre
 (0.001 cubic metres), the hour (3600 seconds) and the tonne (1000 kilograms).
 
@@ -40,8 +40,9 @@ equivalent; again, such scaling makes these systems incoherent.
 ## Numerical prefixes are not redundant units ##
 
 "10 seconds" is not a unit of time distinct from the second, it's just ten of
-them. Likewise, a "dozen Volts" is not a unit of potential-difference distinct
-from the Volt, it's just twelve of them. Therefore a "kilometre" is not a unit
-of distance distinct from the metre, it's just a thousand of them.
+the latter. Likewise, a "dozen Volts" is not a unit of potential-difference
+distinct from the Volt, it's just twelve of the latter. Therefore a "kilometre"
+is not a unit of distance distinct from the metre, it's just a thousand of the
+latter.
 
 Numerical prefixes do not give rise to distinct units.
