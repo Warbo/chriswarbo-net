@@ -709,7 +709,7 @@ Some points to notice about this code:
  - We've gone from for-loops, to forEach functions, to map function, to reduce functions, and now we don't seem to have any loops at all. We could be rather Zen about this and say that, after all, the best way to do a loop is to not do one at all!
  - This code is in a style called "point-free", which can lead to very terse (although sometimes unreadable!) code.
 
-Whilst it can be difficult to write code directly in a point-free style, I find it useful to write code in a less terse way, then move it closer and closer to point-free. By doing this, we remove redundant cruft and reveal more of our problem's real structure, making it much clearer what's really involved. Once we've fished out the real solution hidden amongst our original, naive code, we can clean it up now that we know what we're doing.
+Whilst it can be difficult to write code directly in a point-free style, I find it useful to write code in a less terse way, then move it closer and closer to point-free. By doing this, we remove redundant cruft and reveal more of our problem's real structure, making it much clearer what's really involved. Once we've fished out the real solution hidden amongst our original, naïve code, we can clean it up now that we know what we're doing.
 
 Do you notice how the vast majority of the code we started with had nothing to do with the problem? Most of it was trying to deal with the mess caused by other parts. Looking at the final definition, it's obvious what's going on: collapse our argument into a table, transforming each element by collapsing them into rows, transforming their elements by tagging them as cells. It's obviously right, since it *feels* so right. How could something so elegant be wrong?
 

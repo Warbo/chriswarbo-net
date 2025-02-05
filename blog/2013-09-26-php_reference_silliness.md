@@ -1,7 +1,7 @@
 ---
 title: PHP Reference Silliness
 ---
-Today I needed to pop arrays in a loop in PHP, starting with one and falling back to another when it runs out. A naive implementation might do this:
+Today I needed to pop arrays in a loop in PHP, starting with one and falling back to another when it runs out. A naïve implementation might do this:
 
 ```php
 if (count($bar)) {

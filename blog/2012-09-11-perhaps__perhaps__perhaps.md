@@ -149,7 +149,7 @@ branches, since the entire point is that they're conditional; they shouldn't run
 every time!
 
 If you're performing pure computation, then there's not much to worry about
-except possibly a performance hit if you've got a naive compiler. If you're
+except possibly a performance hit if you've got a naïve compiler. If you're
 using a language with side-effects then you're in trouble.
 
 If you're using a language with call-by-name or call-by-need then you're safer,

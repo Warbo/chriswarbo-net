@@ -190,7 +190,7 @@ implementation I've used.
 
 Factorising can be slow, and was the bottleneck in my initial experiments. The
 following function uses a few tricks to speed up calculations, compared to a
-naive approach:
+naïve approach:
 
  - The `lru_cache`{.python} decorator gives the function a
    [memo table](https://en.wikipedia.org/wiki/Memoization), so results which

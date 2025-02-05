@@ -8,7 +8,7 @@ Whenever I'm using a language without tail-call optimisation, I usually find mys
 
 > Go and calculate `my_function`{.javascript} with `x`{.javascript}, `y`{.javascript} and `z`{.javascript}. Once we have the result, return it.
 
-Whilst correct, that's quite a naive perspective. Here's an example of some nested tail-calls, with the functions being tail-called in-lined for simplicity:
+Whilst correct, that's quite a naïve perspective. Here's an example of some nested tail-calls, with the functions being tail-called in-lined for simplicity:
 
 ```javascript
 foo();
@@ -26,7 +26,7 @@ return (function() {
 
 We can only nest calls like this to a finite-depth before exhausting the memory. Most languages bail out much earlier than that, after 100 or 1000 levels.
 
-Why is this naive? Well, the above execution path is clearly equivalent (ignoring backtraces, exception handling, etc.) to the following:
+Why is this naïve? Well, the above execution path is clearly equivalent (ignoring backtraces, exception handling, etc.) to the following:
 
 ```
 foo();

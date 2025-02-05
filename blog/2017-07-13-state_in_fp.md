@@ -48,7 +48,7 @@ incrementally evaluated). In this sense, garbage collection is an optimisation,
 and we can sometimes get away without it (relying on the OS to reclaim all
 memory when we're finished).
 
-Often such naive "block universe" implementation is inadequate for our resource
+Often such naïve "block universe" implementation is inadequate for our resource
 constraints, so we're required to find some optimisation (like garbage
 collection, or tail-call elimination, or collapsing together log entries,
 etc.). Optimisations don't alter the semantics, so our programming model and
@@ -169,7 +169,7 @@ Now here's the key insight: a "list of actions to take" is nothing other than
 defines an imperative program which would, if it were ever executed, *cause* the
 world to follow the "history" it describes.
 
-That's the pure FP semantics, but the naive implementation described above would
+That's the pure FP semantics, but the naïve implementation described above would
 be very inefficient. We can easily optimise it without altering the semantics:
 rather than generating a "history" of the world, and executing it as a program,
 we can interleave the two. First we write an interpreter for this separate,

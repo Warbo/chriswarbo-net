@@ -103,7 +103,7 @@ length :: [a] -> Natural
 sqrt :: (Positive a, Positive b) => a -> b -- for simplicity we only care about the positive root
 ```
 
-The new types are quite naive and inefficient here, but it will do for demonstration.
+The new types are quite naïve and inefficient here, but it will do for demonstration.
 
 Now what about the infinite list problem? We could force Haskell to evaluate our lists before sending them to `length`{.haskell} (making `length`{.haskell}'s argument 'strict'). That would fix `length`{.haskell}, but the problem would just be shifted up the hierarchy to `sqrtOfLengths`{.haskell}, and if we make that strict it would just shift the problem to whoever calls us. We're heading in the right direction, since it puts the burden of finiteness on the programmer who's creating the list, but this may not be the person using our `sqrtOfLengths`{.haskell} function; we need something which will permeate the whole call stack, all the way back to wherever the problem originates. For this, of course, we need a new type.
 
@@ -180,7 +180,7 @@ instance (FiniteNat n) => FiniteNat (OnePlus n) where
   toInteger (OnePlus n) = 1 + toInteger n
 ```
 
-This is exactly the same as the lists, except we don't have to care about containing elements. Of course, that naive implementation of `toInteger`{.haskell} for `OnePlus`{.haskell} can easily cause a stack overflow, so we should do something more like:
+This is exactly the same as the lists, except we don't have to care about containing elements. Of course, that naïve implementation of `toInteger`{.haskell} for `OnePlus`{.haskell} can easily cause a stack overflow, so we should do something more like:
 
 ```haskell
   toInteger (OnePlus n) = foldr (+) 1 [0..n]

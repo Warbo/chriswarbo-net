@@ -71,7 +71,7 @@ to a non-halting program. We might try to fix this by only checking those
 programs which halt and ignoring those which don't. However, that can't be done
 due to the undecidability of the halting problem.
 
-## Naive Complexity ##
+## Naïve Complexity ##
 
 One way to avoid the halting problem is to weaken our the problem and only check
 programs which *provably* halt; skipping those which don't *provably* halt. The

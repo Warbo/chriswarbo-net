@@ -136,7 +136,7 @@ As you can see, `append` and `join-together` give the same result when normalise
 
 ## The Problem
 
-Although this works, unfortunately my naive Racket implementation was pretty slow. Measuring its runtime on one particular file gave `2m30.439s`. Since I have a bunch of tests around these scripts, which try various different edge-cases, that was tediously slow!
+Although this works, unfortunately my naïve Racket implementation was pretty slow. Measuring its runtime on one particular file gave `2m30.439s`. Since I have a bunch of tests around these scripts, which try various different edge-cases, that was tediously slow!
 
 ### Solution 1
 

@@ -9,7 +9,7 @@ task is to find the correct password.
 
 Rather than look at the file, let's dive straight into the code. I found
 this particularly enjoyable, since it's essentially an exercise in debugging
-and refactoring, which is how I tend to write code. I'll write a naive version
+and refactoring, which is how I tend to write code. I'll write a naïve version
 which is generally very inefficient, over-complicated, repetitive, hard-coded
 and fragile. I'll then repeatedly refactor it until it becomes efficient,
 simple, terse, generic and robust (I hope!). I assume no knowledge of Haskell,

@@ -78,7 +78,7 @@ bet to go with the latter. The real issues with clever code are:
  - How difficult it would be to replace; or whether it's possible to replace at
    all.
 
-This last point is what annoys me in naive "clever vs verbose" debates, and
+This last point is what annoys me in naïve "clever vs verbose" debates, and
 prompted this rant, since it's often assumed that the only difference is line
 count. To me, the best "clever" code isn't that which reduces its own line
 count; it's the code which removes problems entirely; i.e. where the alternative

@@ -31,4 +31,4 @@ Like the other algorithms, the edges will wrap around. For simplicity, when this
 
 Click the box to start the search. The fittest solution found so far is highlighted in green.
 
-Levy flights are quite simple search algorithms, but their results can be pretty good compared to naive enumeration and random walks. Their lack of any form of memory is their major weakness, as memory can give us huge improvements.
+Levy flights are quite simple search algorithms, but their results can be pretty good compared to naïve enumeration and random walks. Their lack of any form of memory is their major weakness, as memory can give us huge improvements.

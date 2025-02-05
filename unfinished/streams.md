@@ -23,7 +23,7 @@ Church-encoding of Haskell's `Monad IO` record; i.e. a pair of functions
 `(pure, >>=)`, AKA `(λx..., λx.λf...)`. Hmm, we need a more direct
 representation of `IO a`, e.g. using a 'real world'...
 
-Since this is just a demonstration, we'll use an incredibly naive implementation
+Since this is just a demonstration, we'll use an incredibly naïve implementation
 which works on one `Problem`{.ocaml} at a time until it's solved. First we need
 to define the streams; we currently have a `NoWorseStream`{.ocaml} which
 contains `Solvers`{.ocaml} which turn a `p : Problem`{.ocaml} into a

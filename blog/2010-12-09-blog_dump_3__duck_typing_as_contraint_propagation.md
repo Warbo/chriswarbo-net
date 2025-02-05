@@ -107,7 +107,7 @@ def recursive(x):
     return recursive(x)
 ```
 
-Attempting to inspect this in a naive way would result in endless attempts to find types for both, since it will accept anything and never halt (or in the case of real hardware, the stack depth will be exceeded and the program will exit with an error). Of course, as human programmers we know what this will do, so we could make a more sophisticated system for inspecting our code, which can notice such recursion and tell us that the type of x is just "object" and the return value of recursive(x) is "RuntimeError". This would be necessary to reason about the following perfectly valid Python:
+Attempting to inspect this in a naïve way would result in endless attempts to find types for both, since it will accept anything and never halt (or in the case of real hardware, the stack depth will be exceeded and the program will exit with an error). Of course, as human programmers we know what this will do, so we could make a more sophisticated system for inspecting our code, which can notice such recursion and tell us that the type of x is just "object" and the return value of recursive(x) is "RuntimeError". This would be necessary to reason about the following perfectly valid Python:
 
 ```
 def infinity(x):
