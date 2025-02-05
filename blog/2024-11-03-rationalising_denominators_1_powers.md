@@ -29,8 +29,9 @@ We'll start by defining a `Power`{.python} as a pair of numbers, which we'll
 call [a `base`{.python} and an
 `exp`{.python}onent](https://en.wikipedia.org/wiki/Exponentiation):
 
-The `base`{.python} can be any [natural number](), i.e. a whole number which is
-either positive or zero.
+The `base`{.python} can be any
+[natural number](https://en.wikipedia.org/wiki/Natural_number), i.e. a whole
+number which is either positive or zero.
 
 The `exp`{.python}onent can be a
 [`Fraction`{.python}](https://en.wikipedia.org/wiki/Fraction) (a
