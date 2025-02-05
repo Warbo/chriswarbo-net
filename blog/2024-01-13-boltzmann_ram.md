@@ -164,14 +164,22 @@ setup in a scientific way; more akin to a
 [Boltzmann brain](https://en.wikipedia.org/wiki/Boltzmann_brain).
 
 The idea of a Boltzmann brain is that random movements in some collection of
-matter, like a gas cloud, may *occasionally* bring their consistents together in
-a way which is
+matter, like a gas cloud, may *occasionally* bring their constituent parts
+together in a way which is
 [capable of thought](https://en.wikipedia.org/wiki/Cogito,_ergo_sum). The usual
 argument against this as an explanation for our observations is that
 smaller arrangements of matter are exponentially more likely to occur by chance
 than larger arrangements. Hence, if we were such a Boltzmann brain, we would
 expect to see very little structure or order around us; yet we observe a vast
 Universe filled with structure.
+
+(Of course, such "observations" might have simply appeared, by pure coincidence,
+as "memories" inside a randomly assembled Boltzmann brain which *thinks* it's
+observed a structured Universe; and this line of reasoning can never be
+completely disproved. However, the further we travel down that road, the closer
+we get to those unfalsifiable-by-definition ideas like the simulation hypothesis
+and the brain in a jar; and hence the easier it becomes to dismiss that whole
+direction as empirically irrelevant!)
 
 ### Boltzmann RAM ###
 
