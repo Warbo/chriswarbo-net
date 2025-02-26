@@ -7,12 +7,8 @@ packages: [ 'mathml' ]
 
 "Negatives" (like [negative
 numbers](https://en.wikipedia.org/wiki/Negative_number)) are a great idea in
-many situations, but they can be tricky to learn and are a common source of
-mistakes. Here are some less-conventional ways to make them easier to work with,
-and hopefully easier to understand.
-
-Caveat: I'm talking about normal, everyday maths here; nothing exotic, like
-finite fields or whatever!
+many situations, but they can also be tricky. Here are some suggestions for
+making them easier to work with, and hopefully easier to understand.
 
 NOTE: I will be using
 ["over-bar" notation for negation](negative_bar_notation.html) (like
@@ -20,26 +16,18 @@ NOTE: I will be using
 
 ## You Ain't Gonna Need It! ##
 
-As always, we should avoid unnecessary complications where possible. Situations
-which are easily modelled without negative numbers shouldn't have them
-shoe-horned in "for the sake of it", or "by default" (the same way we shouldn't
-default to fractions, complex numbers, surreal numbers, etc. when they're
-not needed).
+Whilst this may seem obvious, we should avoid unnecessary complications where
+possible. Situations which are easily modelled without negative numbers
+shouldn't have them shoe-horned in.
 
-For example: Alice has `3`{.unwrap pipe="num | math"} apples, Bob has
-`4`{.unwrap pipe="num | math"} apples; Alice gives
-`2`{.unwrap pipe="num | math"} apples to Bob, how many apples does Bob then
-have? Bob is *gaining* apples, so negatives aren't needed. Of course, when a
-situation *does* make sense with negatives we *should* use them: e.g. extending
-the example to ask how many apples *Alice* ends up with, which we can model by
-adding `2`{.unwrap pipe="num | neg | math"} to her
-`3`{.unwrap pipe="num | math"}. We could instead use subtraction, but that
-*also* requires negatives (in case of "underflow"), so
-[I prefer to stick with addition](subtraction.html).
-
-Whilst this may seem obvious, note that many programming languages get it wrong,
-e.g. encoding `length` as a (signed) *integer*, rather than an
-(unsigned) *natural number*; forcing callers to account for the negative cases.
+One case where this happens often is in computer programming, where many
+programming languages have no way to represent
+[natural numbers](https://en.wikipedia.org/wiki/Natural_number); and even those
+which do can use confusing terminology like
+["unsigned integer"](https://www.gnu.org/software/c-intro-and-ref/manual/html_node/Signed-and-Unsigned-Types.html).
+Values like `length`, `size`, etc. are often represented with "signed" types,
+which forces all of the code using them to handle negative values, which make no
+sense and should (hopefully) never occur!
 
 ## Defining Negatives with Plus and Zero ##
 
