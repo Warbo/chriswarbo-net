@@ -4,18 +4,18 @@ with rec {
   inherit (defs) render;
   inherit (nixpkgs-lib) mapAttrs mapAttrs';
 
-  renderPage = name: extraVars:
+  renderPage = name: vars:
     render {
+      inherit vars;
       name = "${name}.html";
       file = ./. + "/${name}.md";
       SOURCE_PATH = "projects/units/${name}.md";
       TO_ROOT = "./../..";
-      vars = extraVars;
     };
 
   pages = mapAttrs (_: _: { }) (nix-helpers.suffixedFilesIn ".md" ./.);
 
-  allPages = mapAttrs renderPage (with allPages; pages);
+  allPages = mapAttrs renderPage pages;
 };
 mapAttrs' (name: value: {
   inherit value;

@@ -43,7 +43,6 @@ negs() {
 }
 
 # Convert Content MathML to Presentation MathML
-# TODO: Add a semantic element with the original Content MathML
 format() {
     # The $OURS stylesheet lets us tweak the presentation unconditionally. We
     # apply it twice, so it can preprocess the Content MathML and postprocess
