@@ -2,6 +2,8 @@
 title: Improving our Units
 ---
 
+<small>Part of [my units pages](/projects/units)</small>
+
 This began as a companion to my post about
 [the metric red-herring](../../blog/2020-05-22-metric_red_herring.html). That
 post was a simple claim that the main benefit of the metric system is not the

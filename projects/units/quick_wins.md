@@ -3,6 +3,8 @@ title: Quick wins for improving units
 packages: [ 'mathml' ]
 ---
 
+<small>Part of [my units pages](/projects/units)</small>
+
 Some of the ideas described in this project are more aspirational than
 practical, and need adoption by many people in order to be worth switching. In
 contrast, the entries on this page can be followed *right now*, with instant

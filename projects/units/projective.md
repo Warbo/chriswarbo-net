@@ -2,6 +2,8 @@
 title: Geometry
 ---
 
+<small>Part of [my units pages](/projects/units)</small>
+
 ## Introduction ##
 
 Probably the simplest, most-tactile form of geometry is

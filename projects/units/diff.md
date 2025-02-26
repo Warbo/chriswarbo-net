@@ -2,6 +2,8 @@
 title: Differences
 ---
 
+<small>Part of [my units pages](/projects/units)</small>
+
 *Differences* between values are distinct from those values themselves. For
 example, *n-dimensional points* can be related using an *affine space*; whilst
 the *difference between these points* is better represented as a *vector space*.

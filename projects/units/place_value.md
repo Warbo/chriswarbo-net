@@ -3,6 +3,8 @@ title: Generalising place-value numbers to polynomials
 packages: [ 'mathml' ]
 ---
 
+<small>Part of [my units pages](/projects/units)</small>
+
 "Place-value" numbers, also known as Hindu-Arabic numbers, are the 'normal' way
 we write down numbers, e.g. `123`{.unwrap pipe="num | math"} to represent "a
 hundred and twenty three" (AKA 'CXXIII' in roman numerals).

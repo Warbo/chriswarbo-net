@@ -3,6 +3,8 @@ title: Torsors
 packages: [ 'mathml' ]
 ---
 
+<small>Part of [my units pages](/projects/units)</small>
+
 *Torsors* are 'relative' values, where we can't add them but we can find their
 difference. Cruicially, such 'differences' are *not* values of our torsor. For
 example, points in space (of any dimension) cannot be meaningfully 'added'; but

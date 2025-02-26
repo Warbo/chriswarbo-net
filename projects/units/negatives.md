@@ -3,6 +3,8 @@ title: Negatives
 packages: [ 'mathml' ]
 ---
 
+<small>Part of [my units pages](/projects/units)</small>
+
 "Negatives" (like [negative
 numbers](https://en.wikipedia.org/wiki/Negative_number)) are a great idea in
 many situations, but they can be tricky to learn and are a common source of

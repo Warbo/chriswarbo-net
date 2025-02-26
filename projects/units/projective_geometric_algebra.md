@@ -2,6 +2,8 @@
 title: Projective Geometric Algebra
 ---
 
+<small>Part of [my units pages](/projects/units)</small>
+
 Projective geometry is a particularly simple form of geometry: it consists only
 of points and lines; the only equipment needed (other than pen & paper) is a
 straight-edge; the only skills needed are to identify where two lines cross, and

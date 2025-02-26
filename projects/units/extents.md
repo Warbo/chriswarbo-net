@@ -2,6 +2,8 @@
 title: Extents (work in progress)
 ---
 
+<small>Part of [my units pages](/projects/units)</small>
+
 TODO: This is closely related to the idea of [Torsors](torsors.html), and the
 difference between affine points being vectors.
 

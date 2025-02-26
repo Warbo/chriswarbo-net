@@ -2,6 +2,8 @@
 title: Prefix factors
 ---
 
+<small>Part of [my units pages](/projects/units)</small>
+
 Dealing with very large or very small numbers can be awkward. To make life
 easier we can factor our quantities into multiples of some convenient magnitude.
 This approach is taken by scientific notation, and floating-point arithmetic.

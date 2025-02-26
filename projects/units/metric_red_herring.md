@@ -2,6 +2,8 @@
 title: The Metric Red Herring
 ---
 
+<small>Part of [my units pages](/projects/units)</small>
+
 This began as a companion to my post about
 [improving our units](../../blog/2020-05-22-improving_our_units.html), which
 discusses some problems with the metric system, SI and related ideas. This post

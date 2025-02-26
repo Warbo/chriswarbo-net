@@ -2,6 +2,8 @@
 title: Coherent units
 ---
 
+<small>Part of [my units pages](/projects/units)</small>
+
 A system of measurement is
 [coherent](https://en.wikipedia.org/wiki/Coherence_(units_of_measurement)) when
 it only contains *one* unit of distance, *one* unit of force, *one* unit of

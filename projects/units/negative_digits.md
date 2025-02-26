@@ -3,6 +3,8 @@ title: Negative Digits
 packages: [ 'mathml' ]
 ---
 
+<small>Part of [my units pages](/projects/units)</small>
+
 This page describes an elegant method for taking one number away from another,
 which I claim is simpler than the traditional "long subtraction" (that I was
 taught in school), and it requires no "carrying". It uses the idea of
