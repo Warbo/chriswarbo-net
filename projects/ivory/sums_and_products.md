@@ -1,6 +1,7 @@
 ---
 title: "Ivory: Sums And Products"
-packages: ['racketWithRackCheck']
+packages: [ 'racketWithRackCheck', 'mathml' ]
+postprocessor: htmlUnwrap
 ---
 
 ```{pipe="sh > /dev/null"}
@@ -38,22 +39,111 @@ school or even before. We also learn about products ("times-ing numbers")
 shortly after. We often represent each using a table, to show their
 patterns. For example:
 
+```{pipe="cat > math.css"}
+figcaption {
+  margin-top: 1em;
+}
+
+figure math {
+  margin: 3em;
+}
+
+figure mtd:first-child {
+  border-right-color: black;
+  border-right-style: solid;
+  border-right-width: 1px;
+}
+
+figure mtr:first-child mtd {
+  border-bottom-color: black;
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+}
+```
+
+```{.htmlunwrap pipe="sh"}
+printf '<link href="data:text/css;base64,'
+base64 -w0 < math.css
+printf '" rel="stylesheet" />'
+```
+
+```{pipe="cat > ./table-helpers.sh"}
+mwrap() {
+  echo "<$1>"
+  cat
+  echo "</$1>"
+}
+
+cell() {
+  mwrap 'mtd'
+}
+
+row() {
+  mwrap 'mtr'
+}
+
+table() {
+  mwrap 'mtable'
+}
+
+mo() {
+  printf "$1" | mwrap 'mo'
+}
+
+positive() {
+  printf "$1" | mwrap 'mn'
+}
+
+negative() {
+  {
+    positive "$1"
+    mo '¯'
+  } | mwrap 'mover'
+}
+
+signed() {
+  if [[ "$1" -lt 0 ]]
+  then
+    negative "$(( -1 * $1 ))"
+  else
+    positive "$1"
+  fi
+}
+```
+
 <figure>
 
-```
-┏━━━┳━━━┯━━━┯━━━┯━━━┯━━━┓
-┃ + ┃ 2̅ │ 1̅ │ 0 │ 1 │ 2 ┃
-┣━━━╋━━━┿━━━┿━━━┿━━━┿━━━┫
-┃ 2̅ ┃ 4̅ │ 3̅ │ 2̅ │ 1̅ │ 0 ┃
-┠───╂───┼───┼───┼───┼───┨
-┃ 1̅ ┃ 3̅ │ 2̅ │ 1̅ │ 0 │ 1 ┃
-┠───╂───┼───┼───┼───┼───┨
-┃ 0 ┃ 2̅ │ 1̅ │ 0 │ 1 │ 2 ┃
-┠───╂───┼───┼───┼───┼───┨
-┃ 1 ┃ 1̅ │ 0 │ 1 │ 2 │ 3 ┃
-┠───╂───┼───┼───┼───┼───┨
-┃ 2 ┃ 0 │ 1 │ 2 │ 3 │ 4 ┃
-┗━━━┻━━━┷━━━┷━━━┷━━━┷━━━┛
+```{.unwrap pipe="sh | math"}
+source ./table-helpers.sh
+
+nums() {
+  seq "$(( $1 - 2 ))" "$(( $1 + 2 ))" | while read -r N
+  do
+    signed "$N" | cell
+  done
+}
+
+header() {
+  {
+    mo '+' | cell
+    nums 0
+  } | row
+}
+
+num_row() {
+  {
+    signed "$1" | cell
+    nums "$1"
+  } | row
+}
+
+{
+  header
+  for N in $(seq -2 2)
+  do
+    num_row "$N"
+  done
+} | table
 ```
 
  <figcaption>Addition table for integers</figcaption>
@@ -61,20 +151,40 @@ patterns. For example:
 
 <figure>
 
-```
-┏━━━┳━━━┯━━━┯━━━┯━━━┯━━━┓
-┃ × ┃ 2̅ │ 1̅ │ 0 │ 1 │ 2 ┃
-┣━━━╋━━━┿━━━┿━━━┿━━━┿━━━┫
-┃ 2̅ ┃ 4 │ 2 │ 0 │ 2̅ │ 4̅ ┃
-┠───╂───┼───┼───┼───┼───┨
-┃ 1̅ ┃ 2 │ 1 │ 0 │ 1̅ │ 2̅ ┃
-┠───╂───┼───┼───┼───┼───┨
-┃ 0 ┃ 0 │ 0 │ 0 │ 0 │ 0 ┃
-┠───╂───┼───┼───┼───┼───┨
-┃ 1 ┃ 2̅ │ 1̅ │ 0 │ 1 │ 2 ┃
-┠───╂───┼───┼───┼───┼───┨
-┃ 2 ┃ 4̅ │ 2̅ │ 0 │ 2 │ 4 ┃
-┗━━━┻━━━┷━━━┷━━━┷━━━┷━━━┛
+```{.unwrap pipe="sh | math"}
+source ./table-helpers.sh
+
+nums() {
+  for N in $(seq -2 2)
+  do
+    signed "$(( $N * $1 ))" | cell
+  done
+}
+
+header() {
+  {
+    mo '×' | cell
+    for N in $(seq -2 2)
+    do
+      signed "$N" | cell
+    done
+  } | row
+}
+
+num_row() {
+  {
+    signed "$1" | cell
+    nums "$1"
+  } | row
+}
+
+{
+  header
+  for N in $(seq -2 2)
+  do
+    num_row "$N"
+  done
+} | table
 ```
 
  <figcaption>Multiplication table for integers</figcaption>
