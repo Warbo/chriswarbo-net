@@ -13,7 +13,7 @@ def unwrap(e):
         if 'htmlunwrap' not in e['class']:
             return
     except KeyError:
-        pass
+        return
     code    = e.code
     content = BeautifulSoup(''.join(code.strings), 'html.parser')
     e.replace_with(content)
