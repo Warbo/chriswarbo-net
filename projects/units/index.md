@@ -2,6 +2,12 @@
 title: Improving our units and notation
 ---
 
+**tl;dr** The [quick wins](quick_wins.html) page shows how to make numbers and
+measurements easier to deal with, simpler and more consistent. The suggestions
+are mostly uncontroversial, and can be adopted by anyone right now.
+
+## Introduction ##
+
 Many of the systems and ideas we use every day, like the way we count and
 measure things, were developed over centuries. They have managed to "stand the
 test of time", which is certainly an advantage; but they also suffer a form of
@@ -12,8 +18,8 @@ For example, we still talk about 90°, 120° and 180° instead of ¼, ⅓ and ½
 essentially because the Babylonians didn't have fractions 5000 years ago. We
 also have redundant units like the tonne (Megagram) and litre
 (milli-cubic-metre); we waste time learning tricky, niche concepts (like
-subtraction and pseudovectors) rather than more elegant, general alternatives
-(like negatives and rotors, in the cases mentioned).
+[subtraction](subtraction.html) and pseudovectors) rather than more elegant,
+general alternatives (like [negatives](negatives.html) and rotors).
 
 These pages are my ongoing attempt to find such situations, where we can replace
 complicated approaches with simpler ones; combine a bunch of ad-hoc choices into
@@ -35,10 +41,6 @@ cohesive way (for example, long-subtraction uses the notation from negatives);
 I'll try to cross-link such cases.
 
 ## Categories ##
-
-[Quick wins](quick_wins.html) lists some ideas which are relatively easy to
-adopt right now. More specific, in-depth pages are collected below, into rough
-categories.
 
 ### Units of Measure ###
 
