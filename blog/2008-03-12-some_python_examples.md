@@ -5,6 +5,11 @@ Hello, been working on some tiny Python scripts to show off the bindings and stu
 
 Here's the first of them:
 
-<a href="/git/python-examples/git/branches/master/Scribble/scribble.py.raw.html">Scribble</a> - This simply makes a window in which you can scribble with the mouse
+## [Scribble](/git/python-examples/git/branches/master/Scribble/scribble.py.raw.html) ##
 
-<a href="/git/python-examples/git/branches/master/Microblogger/server.py.raw.html">Microblogger</a> - This listens on a Jabber account for incoming messages, then publishes them on a web page
+This simply makes a window in which you can scribble with the mouse.
+
+## [Microblogger](/git/python-examples/git/branches/master/Microblogger/server.py.raw.html) ##
+
+This listens on a Jabber account for incoming messages, then publishes them on a
+web page.
