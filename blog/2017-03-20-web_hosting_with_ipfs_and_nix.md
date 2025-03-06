@@ -390,7 +390,7 @@ particular ports, and simple experiments with trying to add/get data across the
 two nodes shows that they're clearly not connecting directly.
 
 As a workaround, I've written
-[a script which will transfer IPFS blocks over SSH](/git/chriswarbo-net/branches/master/static/ipfs-blocksend.raw.html).
+[a script which will transfer IPFS blocks over SSH](/git/chriswarbo-net/git/branches/master/static/ipfs-blocksend.raw.html).
 Note that some IPFS commands don't preserve data through a round trip, e.g.
 `ipfs object get <foo> | ipfs object put`, since we can get double-encoding
 issues ([probably a bug](https://github.com/ipfs/go-ipfs/issues/1724), but in

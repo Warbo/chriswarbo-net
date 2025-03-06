@@ -4,8 +4,8 @@ title: A Few Site Updates
 
 So it appears that [tidy](https://github.com/htacg/tidy-html5) has been updated
 for HTML5, so I've added it as a
-[test](/git/chriswarbo-net/branches/master/tests/tidy_html5.raw.html) for this
-site.
+[test](/git/chriswarbo-net/git/branches/master/tests/tidy_html5.raw.html) for
+this site.
 
 In the process, I've fixed a bunch of dodgy HTML in old pages, and finally got
 READMEs to render in [my git repositories](/projects/repos/).

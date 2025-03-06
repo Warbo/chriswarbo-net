@@ -53,29 +53,29 @@ This will extract metadata from the PDFs, search for it online (eg. using Google
 
 [Docear](http://www.docear.org/) is a rather bloated application for managing "projects", which just-so-happen to contain bibliographies. Its reference management is built on [JabRef](http://jabref.sourceforge.net/), but seems to work better in my experience. Similar to Zotero, this can work well for getting the "low hanging fruit", like PDFs with existing metadata.
 
-I've made a quick and dirty [Nix package for Docear](/git/warbo-dotfiles/branches/master/nixpkgs/local/docear.nix).
+I've made a quick and dirty [Nix package for Docear](/git/warbo-dotfiles/git/branches/master/nixpkgs/local/docear.nix).
 
 ### Scholar.py ###
 
 [scholar.py](https://github.com/ckreibich/scholar.py) is a script for querying Google Scholar from the commandline. Whilst not the most useful thing in the world on its own, it's great for embedding into scripts. One thing to keep in mind when calling `scholar.py` is that it will crash if given non-ascii characters, so you should run your strings through `iconv` first to transliterate them.
 
-I've made a little [Nix package for scholar.py](/git/warbo-dotfiles/branches/master/nixpkgs/local/scholar.nix).
+I've made a little [Nix package for scholar.py](/git/warbo-dotfiles/git/branches/master/nixpkgs/local/scholar.nix).
 
 ### pdfmeat ###
 
 [pdfmeat](https://code.google.com/p/pdfmeat/) is a Python script which tries to extract data from a PDF.
 
-I've made a little [Nix package for pdfmeat](/git/warbo-dotfiles/branches/master/nixpkgs/local/pdfmeat.nix), although you'll have to download the source yourself since Google Code was giving me inconsistent hashes. I've also packaged its dependencies [translitcodec](/git/warbo-dotfiles/branches/master/nixpkgs/local/translitcodec.nix) and [subdist](/git/warbo-dotfiles/branches/master/nixpkgs/local/subdist.nix).
+I've made a little [Nix package for pdfmeat](/git/warbo-dotfiles/git/branches/master/nixpkgs/local/pdfmeat.nix), although you'll have to download the source yourself since Google Code was giving me inconsistent hashes. I've also packaged its dependencies [translitcodec](/git/warbo-dotfiles/git/branches/master/nixpkgs/local/translitcodec.nix) and [subdist](/git/warbo-dotfiles/git/branches/master/nixpkgs/local/subdist.nix).
 
 ### pdfssa4met ###
 
-This [bizarrely named tool](https://code.google.com/p/pdfssa4met) is yet another Python script for handling PDF files. Once again, I've [packaged it for Nix](/git/warbo-dotfiles/branches/master/nixpkgs/local/pdfssa4met.nix).
+This [bizarrely named tool](https://code.google.com/p/pdfssa4met) is yet another Python script for handling PDF files. Once again, I've [packaged it for Nix](/git/warbo-dotfiles/git/branches/master/nixpkgs/local/pdfssa4met.nix).
 
 ### searchtobibtex ###
 
 [searchtobibtex](https://github.com/atisharma/searchtobibtex) is a collection of handy scripts for extracting information from PDF files. Be warned: it includes tools to destructively rename PDF files based on its results. I tend to avoid this, and instead just get the metadata printed out, which I can act on in a subsequent "phase".
 
-Here's my [Nix package for searchtobibtex](/git/warbo-dotfiles/branches/master/nixpkgs/local/searchtobibtex.nix), as well as one for [bibclean](/git/warbo-dotfiles/branches/master/nixpkgs/local/bibclean.nix) which it depends on.
+Here's my [Nix package for searchtobibtex](/git/warbo-dotfiles/git/branches/master/nixpkgs/local/searchtobibtex.nix), as well as one for [bibclean](/git/warbo-dotfiles/git/branches/master/nixpkgs/local/bibclean.nix) which it depends on.
 
 ### pdf-extract ###
 
