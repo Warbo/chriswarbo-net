@@ -13,6 +13,9 @@ This blog has moved. If you're not redirected, check the [archive](./blog/).
 /index.php?page=cedi&type=misc&id=1%2F4%2F28%2F29 -> /projects/optimisation
 /index.php?page=cedi&type=misc&id=1%2F4%2F28%2F29%2F46 -> /projects/optimisation/levin.html
 
+We moved git2html pages in 2017, but some things were linking to specific files:
+/git/foo/branches/... -> /git/foo/git/branches/...
+
 -->
 
 ```{.unwrap pipe="bash | pandoc -f markdown -t json"}
