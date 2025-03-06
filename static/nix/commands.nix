@@ -142,7 +142,6 @@ with rec {
 
   wrapped = extras // pythonScripts // mapAttrs wrapScript {
     file2img = { };
-    git2md = { paths = [ git wget ]; };
     mkRedirectTo = { vars = { TEMPLATE = ../redirectTemplate.html; }; };
     renderHcard = { };
     showPosts = { paths = [ wrapped.showPost ]; };
