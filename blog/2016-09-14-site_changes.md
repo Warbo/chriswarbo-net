@@ -3,9 +3,9 @@ title: Site Changes
 ---
 
 I am a big fan of automation, and have a particular set of scripts for managing
-[my git repositories](/git). In particular, when I push changes to a repo, they
-get pushed to my own domain as well as [GitHub](http://github.com), and the
-[pages describing them](/projects/repos/) are also updated.
+[my git repositories](/projects/repos). In particular, when I push changes to a
+repo, they get pushed to my own domain as well as [GitHub](http://github.com),
+and the [pages describing them](/projects/repos/) are also updated.
 
 Unfortunately, my site's build process was pushing the whole thing over the
 network every time, which made this quite tedious. I've now altered the process

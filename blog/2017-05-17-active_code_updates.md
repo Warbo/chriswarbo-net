@@ -24,10 +24,10 @@ date back to my first forays into [Cabal](https://www.haskell.org/cabal), and it
 appears I'd used `cabal init` to generate a package with a bunch of example
 dependencies, and never removed those examples!
 
-These packages are all cleaned up now, and pushed to [git](/git). I've set the
-version bounds on their other dependencies (including `base`) such that they'll
-hopefully build with GHC versions between 7.8 and 8.0; Hydra's currently
-churning through them :)
+These packages are all cleaned up now, and pushed to [git](/projects/repos).
+I've set the version bounds on their other dependencies (including `base`) such
+that they'll hopefully build with GHC versions between 7.8 and 8.0; Hydra's
+currently churning through them :)
 
 I've also taken this opportunity to finally sort out the naming of these
 packages. They are now `panpipe` and `panhandle`, which is in line with

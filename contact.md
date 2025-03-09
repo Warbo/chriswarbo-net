@@ -6,7 +6,7 @@ The easiest way to contact me is email. My email address looks like chriswarbo@e
 
 ## Me Around the Web ##
 
-I keep my code in [Git](/git).
+I keep my code in [Git](/projects/repos).
 
 I enjoy answering [programming questions](http://stackexchange.com/users/474782/warbo).
 

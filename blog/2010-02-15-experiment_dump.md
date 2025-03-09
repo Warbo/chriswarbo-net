@@ -6,8 +6,8 @@ abandoned experimental programs in my
 /home/chris/Files/Documents/Play/Programming directory (yes, I am somewhat OCD
 about file organisation). Since they might be interesting to some people, as
 they were obviously so interesting to me that I wanted to write them, I've
-started to upload them to [git](/git). Here's a list, along with a brief
-description.
+started to upload them to [git](/projects/repos). Here's a list, along with a
+brief description.
 
 ## [MaxInt.java](/git/java-maxint/git/branches/master/MaxInt.java) ##
 

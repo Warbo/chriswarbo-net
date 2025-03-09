@@ -25,10 +25,11 @@ commercial agreement in place. The question to ask is what impact might there be
 if the service disappeared overnight?
 
 If this site disappeared, it would cause me some significant short-term pain
-since I currently host many software repositories at [/git](/git); I have
-multiple clones/backups of these, but pushing them somewhere else and updating
-the URLs I use would be frustrating. Longer-term, there are
-[several links scattered around the Web](https://www.google.co.uk/search?q=chriswarbo.net+-site:chriswarbo.net)
+since I currently host many software repositories at [/git](/projects/repos); I
+have multiple clones/backups of these, but pushing them somewhere else and
+updating the URLs I use would be frustrating. Longer-term, there are
+[several links scattered around the
+Web](https://www.google.co.uk/search?q=chriswarbo.net+-site:chriswarbo.net)
 which would break; not many, but in places which I find important, e.g.
 discussions I've been involved in; answers on sites like
 [stackexchange](http://stackexchange.com/users/474782/warbo); etc.
@@ -145,7 +146,7 @@ of the build process pinned down where problems occur quite nicely.
 
 One particular issue I ran into was generating
 [pages from my git repositories](/projects/repos/). With make, I was fetching a
-directory listing of [chriswarbo.net/git](/git), checking each
+directory listing of [chriswarbo.net/git](/projects/repos), checking each
 repo for when it was last modified and comparing these to the pages we already
 had, to see if they needed regenerating.
 
@@ -265,9 +266,9 @@ ipfs name publish "$(ipfs resolve -r /ipns/my.domain)"
 ### Git Repos ###
 
 As mentioned in the introduction, I host git repositories on my site at
-[`/git`](/git). I really don't want to break these URLs, but since IPFS
-generates a whole new address when any content changes, this requires adding a
-whole new version of the site to IPFS whenever any repo gets updated.
+[`/git`](/projects/repos). I really don't want to break these URLs, but since
+IPFS generates a whole new address when any content changes, this requires
+adding a whole new version of the site to IPFS whenever any repo gets updated.
 
 This can be *very* slow; Nix will cache all of the intermediate build products,
 so *generating* the site is quite fast if only a few things have changed, but

@@ -83,4 +83,4 @@ Which, even if you've never programmed before, should look like a bloody stupid 
 
 So, there's a little insight into how even high-level, meta, abstract things can be hindered by ancient, low-level implementation artifacts, and possibly an insight into the angry posts I was making to Indenti.ca whilst writing this stuff six months ago ;)
 
-My code, as always, is in <a href="/git">git</a>, and now that I've turned the Diet Python translator into a tree transform it should be much easier to strip away more and more layers of unnecessary Python (and thus pave the way for some interesting programming experiments!)
+My code, as always, is in <a href="/projects/repos">git</a>, and now that I've turned the Diet Python translator into a tree transform it should be much easier to strip away more and more layers of unnecessary Python (and thus pave the way for some interesting programming experiments!)
