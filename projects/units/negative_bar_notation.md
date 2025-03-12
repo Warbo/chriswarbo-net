@@ -269,20 +269,10 @@ which makes for unfortunate clashes. Here are some I'm aware of:
     <mrow>
       <mn>2</mn>
       <mv>i</mv>
-    </mrow>
-    <mo>&#175;</mo>
-  </mover>
-  <mo>+</mo>
-  <mover>
-    <mrow>
+      <mo>+</mo>
       <mn>3</mn>
       <mv>j</mv>
-    </mrow>
-    <mo>&#175;</mo>
-  </mover>
-  <mo>+</mo>
-  <mover>
-    <mrow>
+      <mo>+</mo>
       <mn>4</mn>
       <mv>k</mv>
     </mrow>
