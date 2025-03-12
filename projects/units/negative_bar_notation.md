@@ -226,6 +226,110 @@ which makes for unfortunate clashes. Here are some I'm aware of:
 
 **Please suggest more clashes!**
 
+### Complex Conjugates ###
+
+```{pipe="cat > conjugate_bar.mml"}
+<mover>
+  <mrow>
+    <mn>1</mn>
+    <mo>+</mo>
+    <mn>2</mn>
+    <mv>i</mv>
+    <mo>+</mo>
+    <mn>3</mn>
+    <mv>j</mv>
+    <mo>+</mo>
+    <mn>4</mn>
+    <mv>k</mv>
+  </mrow>
+  <mo>&#175;</mo>
+</mover>
+```
+
+```{pipe="cat > conjugate_subtract.mml"}
+<mrow>
+  <mn>1</mn>
+  <mo>-</mo>
+  <mn>2</mn>
+  <mv>i</mv>
+  <mo>-</mo>
+  <mn>3</mn>
+  <mv>j</mv>
+  <mo>-</mo>
+  <mn>4</mn>
+  <mv>k</mv>
+</mrow>
+```
+
+```{pipe="cat > conjugate_neg.mml"}
+<mrow>
+  <mn>1</mn>
+  <mo>+</mo>
+  <mover>
+    <mrow>
+      <mn>2</mn>
+      <mv>i</mv>
+    </mrow>
+    <mo>&#175;</mo>
+  </mover>
+  <mo>+</mo>
+  <mover>
+    <mrow>
+      <mn>3</mn>
+      <mv>j</mv>
+    </mrow>
+    <mo>&#175;</mo>
+  </mover>
+  <mo>+</mo>
+  <mover>
+    <mrow>
+      <mn>4</mn>
+      <mv>k</mv>
+    </mrow>
+    <mo>&#175;</mo>
+  </mover>
+</mrow>
+```
+
+```{pipe="cat > conjugate_star.mml"}
+<msup>
+  <mrow>
+    <mo>(</mo>
+    <mn>1</mn>
+    <mo>+</mo>
+    <mn>2</mn>
+    <mv>i</mv>
+    <mo>+</mo>
+    <mn>3</mn>
+    <mv>j</mv>
+    <mo>+</mo>
+    <mn>4</mn>
+    <mv>k</mv>
+    <mo>)</mo>
+  </mrow>
+  <mo>⋆</mo>
+</msup>
+```
+
+Lobste.rs user xigoi
+[pointed out](https://lobste.rs/s/tyws8h/mathml_core#c_irm5i6) that overbar
+notation is already used for (hyper)complex conjugation. This is mentioned above
+as a «sort of "inverse"», which can be seen if we conjugate a
+[Quaternion](https://en.wikipedia.org/wiki/Quaternion) like
+`cat conjugate_bar.mml`{.unwrap pipe="sh | math nosem"}: this will negate its
+imaginary components to give
+`cat conjugate_subtract.mml`{.unwrap pipe="sh | math nosem"}; or (using overbars
+for negation): `cat conjugate_neg.mml`{.unwrap pipe="sh | math nosem"}.
+
+Thankfully there is another common notation for conjugation, which is to use an
+operator like ⋆ ("star"; or sometimes ∗, or even a "dagger" †). Hence our
+example could also be written like
+`cat conjugate_star.mml`{.unwrap pipe="sh | math nosem"}. A nice advantage of
+the operator notation is that it remains unchanged as we generalise to things
+like [adjugates](https://en.wikipedia.org/wiki/Adjugate_matrix) (which happens
+to be the same as conjugation in low-dimensional cases like
+[complex numbers](https://en.wikipedia.org/wiki/Complex_number)).
+
 ### Repeating Decimals ###
 
 ```{pipe="cat > repeating_decimal_bar.mml"}
