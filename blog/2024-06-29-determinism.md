@@ -7,7 +7,7 @@ it claims to add nothing else to the underlying theory (such as "wavefunction
 collapse").
 
 So-called "superdeterminism" takes the determinism of observers seriously; I
-claim it adds nothing else to the underlying theory of determinism (suvh as
+claim it adds nothing else to the underlying theory of determinism (such as
 "randomness" or "choice").
 
 I don't know if either is right, but I never understood objections to
