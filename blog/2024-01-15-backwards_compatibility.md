@@ -22,16 +22,16 @@ features](https://en.wikipedia.org/wiki/UTF-8#Comparison_with_other_encodings):
  - It's variable-width: characters can take up one, two, three or four bytes
  - The single-byte characters are exactly the same as the older ASCII standard
  - UTF-8 bytes begin either:
-  - `0` (for single-byte characters)
-  - `110` and `10` (for two-byte characters)
-  - `1110`, `10` and `10` (for three-byte characters)
-  - `11110`, `10`, `10` and `10` (for four-byte characters)
+   - `0` (for single-byte characters)
+   - `110` and `10` (for two-byte characters)
+   - `1110`, `10` and `10` (for three-byte characters)
+   - `11110`, `10`, `10` and `10` (for four-byte characters)
  - This pattern ensures UTF-8 text is "prefix-free" and "self-synchronising":
-  - No character appears inside another
-  - There's no ambiguity, e.g. between a single long character vs a pair of
-    shorter ones
-  - We can start reading a UTF-8 stream part-way-through (just ignore any
-    initial bytes beginning `10`)
+   - No character appears inside another
+   - There's no ambiguity, e.g. between a single long character vs a pair of
+     shorter ones
+   - We can start reading a UTF-8 stream part-way-through (just ignore any
+     initial bytes beginning `10`)
  - The first bits tell us a character's width, which is good for skipping ahead
    (`0` = skip one byte; `110` = skip two bytes; `1110` = skip three; `11110` =
    skip four)
@@ -42,30 +42,31 @@ ASCII encodes the latin alphabet (A-Z, upper- and lower-case) as well as digits,
 some punctuation and "control codes":
 
  - ASCII is 7-bit
-  - Bytes only standardised on 8 bits later ([mostly due to IBM using
-    EBCDIC](https://www.youtube.com/watch?v=ixJCo0cyAuA))
-  - Most computers prefix ASCII characters with a `0` to make 8-bit bytes
-  - Such zero-padded ASCII characters are exactly the one-byte UTF-8 characters
+   - Bytes only standardised on 8 bits later ([mostly due to IBM using
+     EBCDIC](https://www.youtube.com/watch?v=ixJCo0cyAuA))
+   - Most computers prefix ASCII characters with a `0` to make 8-bit bytes
+   - Such zero-padded ASCII characters are exactly the one-byte UTF-8 characters
  - ASCII is an extension of [older teleprinter/teletypewriter
    standards](https://en.wikipedia.org/wiki/ASCII#Bit_width) dating back to the
    19th century
-  - Hence ASCII includes control codes like 'line feed', 'carriage return' and,
-    of course, 'ring the bell'!
-   - Modern computers can simulate a virtual typewriter bell, e.g. beeping,
-     flashing the screen, etc. 
-   - A major incompatibility between operating systems is that UNIX (Linux, OSX)
-     ends lines with 'line feed', but Windows uses 'carriage return' then 'line
-     feed' (i.e. the incompatibility comes from their simulated typewriters!)
+   - Hence ASCII includes control codes like 'line feed', 'carriage return' and,
+     of course, 'ring the bell'!
+     - Modern computers can simulate a virtual typewriter bell, e.g. beeping,
+       flashing the screen, etc. 
+     - A major incompatibility between operating systems is that UNIX (Linux,
+       OSX) ends lines with 'line feed', but Windows uses 'carriage return' then
+       'line feed' (i.e. the incompatibility comes from their simulated
+       typewriters!)
  - [ASCII was often used on punched
    tape](https://en.wikipedia.org/wiki/Punched_tape#Minicomputers)
-  - ASCII character `0000000` is `NUL`, used to end a string of text; i.e. stop
-    reading once we hit the un-punched part of a tape
-   - Fun fact: `NUL`-terminated strings lead to ["Shlemiel the Painter's
-     Algorithm"](https://www.joelonsoftware.com/2001/12/11/back-to-basics)
-  - [Character `1111111` is
-    `DEL`](https://en.wikipedia.org/wiki/Delete_character), used to skip a
-    character; i.e. we can't un-punch a tape, but we can skip our mistakes by
-    punching out the rest of their spaces.
+   - ASCII character `0000000` is `NUL`, used to end a string of text; i.e. stop
+     reading once we hit the un-punched part of a tape
+     - Fun fact: `NUL`-terminated strings lead to ["Shlemiel the Painter's
+       Algorithm"](https://www.joelonsoftware.com/2001/12/11/back-to-basics)
+   - [Character `1111111` is
+     `DEL`](https://en.wikipedia.org/wiki/Delete_character), used to skip a
+     character; i.e. we can't un-punch a tape, but we can skip our mistakes by
+     punching out the rest of their spaces.
 
 There are some good videos about
 [EBCDIC](https://www.youtube.com/watch?v=FUIqtevjod4) (and [earlier
@@ -87,12 +88,12 @@ operating systems and programming languages:
  - Once computers could draw 'proper' pixel-based graphics, programs like Xterm
    appeared, which are 'terminal emulators': they emulate a video terminal
    (often a VT100), which itself is an emulation of a teletypewriter!
-  - Terminal emulators don't just *look* like video terminals; they're true
-    emulations: we can feed them the same ASCII control codes as a real video
-    terminal or teletypewriter.
-  - Terminal emulators don't interact with the user directly: they attach a
-    [pseudo-teletypewriter device](https://en.wikipedia.org/wiki/Pseudoterminal)
-    to the operating system, which acts like a serial line!
+   - Terminal emulators don't just *look* like video terminals; they're true
+     emulations: we can feed them the same ASCII control codes as a real video
+     terminal or teletypewriter.
+   - Terminal emulators don't interact with the user directly: they attach a
+     [pseudoteletypewriter device](https://en.wikipedia.org/wiki/Pseudoterminal)
+     to the operating system, which acts like a serial line!
  - The Hello World program uses `print` since it's sending real print commands
    over a (pseudo) serial connection to an (emulated) video terminal, which is
    emulating a teletypewriter device!
