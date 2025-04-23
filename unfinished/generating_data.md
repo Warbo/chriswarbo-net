@@ -34,3 +34,5 @@ For example, we can use numbers to calculate various quantities as we go:
    'f <*> x' having to choose 'f' and 'x', whilst each 'x <|> y' increments.
  - Having <|> take the min and <*> take the max gives the minimum depth (i.e.
    before we reach a leaf)
+
+Maybe the parser/gen combo used in that PhD thesis?

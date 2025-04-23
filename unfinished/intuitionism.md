@@ -23,16 +23,14 @@ but to understand it we can't "just" calculate or measure more digits.
 
 ### Intuitionism and constructivism ###
 
-Full disclaimer, I'm not a trained mathematician (I have a Masters in Physics
-with Computer Science), but I have immersed myself enough in formal proof, type
-theory and computation to pursue a PhD in the area (though I burned out before
-completing it). Still, I wanted to get across the big picture, and try to
-clarify some of the points Sabine made.
+Full disclaimer, I'm not a trained mathematician, but I have done work in formal
+systems, proof assistants and type theory; so I want to get across a high-level
+picture, and try to clarify some of the points Sabine made.
 
 I'll also note that the "intuitionist" maths that Sabine describes (where
 mathematical objects 'exist in the mind', and are only 'real' once thought of)
 is closely related to the idea of "constructive" maths (where mathematical
-proofs must be direct, not double-negatives). I'll actually fovus on the latter
+proofs must be direct, not double-negatives). I'll actually focus on the latter
 (since I'm more familiar, and inclined to agree, with that perspective), which
 is a bit of a philosophical bait-and-switch; but the practical results are
 essentially the same (e.g. axiomatic systems which don't allow a general law of
@@ -50,7 +48,7 @@ dichotomy, they let us naturally consider aspects like (un)provability,
 ### Information, not decimal places ###
 
 Sabine rightly points out a problem when considering a quantity's "number of
-decimal places": that it can change dramatically; giving logarithms and
+decimal places": that it can change dramatically. She gives logarithms and
 exponentials as an example.
 
 We can clarify the situation by taking a step back, and recalling what a
