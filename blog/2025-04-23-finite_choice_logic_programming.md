@@ -73,11 +73,11 @@ frac 1 24
 To select which choice to make, we start at the root and pick a child uniformly
 at random: if we hit a leaf, that's the choice we make next; otherwise we
 recurse. In the above example, `A1`, `A2` and `A3` will each be chosen
-``{.unwrap pipe="math < As.mathml"} of the time; `B1` and `B2` will each be
-chosen ``{.unwrap pipe="math < EqBs.mathml"} of the time; `C1` will be
-chosen ``{.unwrap pipe="math < EqCs.mathml"} of the time; and the remaining
-``{.unwrap pipe="math < Cs.mathml"} of the time we'll recurse down to something
-in the '…' branch.
+`cat As.mathml`{.unwrap pipe="sh | math"} of the time; `B1` and `B2` will each
+be chosen `cat EqBs.mathml`{.unwrap pipe="sh | math"} of the time; `C1` will be
+chosen `cat EqCs.mathml`{.unwrap pipe="sh | math"} of the time; and the
+remaining `cat Cs.mathml`{.unwrap pipe="sh | math"} of the time we'll recurse
+down to something in the '…' branch.
 
 This may be a nice framework for a `Gen a` implementation, useful for property
 checking; and indeed for generating/enumerating expressions. Would be useful to
